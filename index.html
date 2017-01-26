@@ -32,6 +32,10 @@
       font-weight: 400;
       }
 
+      h1 {
+        font-size: 2em;
+      }
+
       strong {
       font-weight: bolder;
       }
@@ -63,10 +67,14 @@
 
       .hello h1 {
         white-space: nowrap;
+        margin-bottom: 0;
       }
 
-      h1 {
-        font-size: 2em;
+      .hello h2 {
+        font-weight: lighter;
+        color: #525252;
+        font-size: 1.21em;
+        margin-top: 0.5em;
       }
 
       .cursor {
@@ -86,13 +94,19 @@
           opacity: 0;
         }
       }
-
     </style>
   </head>
   <body>
     <section class="hello">
       <span class="img"></span>
-      <h1>Hello, I'm <strong>Mat</strong><span class="cursor">_</span></h1>
+      <h1>Hello, I'm <strong>Mat</strong></h1>
+      <h2>I enjoy crafting digital things<span class="cursor">_</span></h2>
+      <script type="text/javascript">
+        console.info('Hello, I’m Mat');
+        console.log('Follow @daformat on twitter / dribbble / git(hub|lab)');
+        console.log('Drop me a note:', 'mat.jouhet -at- gmail -dot- com'.replace(/\s\-at\-\s/g, '@').replace(/\s\-dot\-\s/g, '.'))
+        console.log('Or give me a call: +33 680 159 157');
+      </script>
     </section>
   </body>
 </html>
