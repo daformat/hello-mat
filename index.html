@@ -23,9 +23,6 @@
             "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell",
             "Fira Sans", "Droid Sans", "Helvetica Neue", 'Open Sans', sans-serif;
         background-color: #eee;
-        border: 16px solid #fff;
-        box-sizing: border-box;
-        overflow-y: auto;
       }
 
       h1, h2, h3, h4, h5, h6 {
@@ -46,12 +43,34 @@
         justify-content: center;
         align-items: center;
         text-align: center;
-        height: 100%;
+        min-height: 100%;
+        overflow-y: auto;
+        border: 16px solid #fff;
+        box-sizing: border-box;
       }
 
       .hello > * {
         flex: 1;
         flex-grow: 0;
+      }
+
+      .hello div {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        flex-grow: 1;
+        min-height: 20.42em;
+      }
+
+      .hello footer {
+        font-size: 0.84em;
+        min-height: 2em;
+        margin-top: -2.42em;
+        margin-bottom: 2.42em;
+        color: #424242;
+        opacity: 0.42;
       }
 
       .hello a {
@@ -86,6 +105,7 @@
         margin-left: -0.5em;
       }
 
+
       @keyframes blink {
         0%, 49.9% {
           opacity: 1;
@@ -98,9 +118,14 @@
   </head>
   <body>
     <section class="hello">
-      <span class="img"></span>
-      <h1>Hello, I'm <strong>Mat</strong></h1>
-      <h2>I enjoy crafting digital things<span class="cursor">_</span></h2>
+      <div>
+        <span class="img"></span>
+        <h1>Hello, I'm <strong>Mat</strong></h1>
+        <h2>I enjoy crafting digital things<span class="cursor">_</span></h2>
+      </div>
+      <footer>
+        (Open up your console to get in touch)
+      </footer>
       <script type="text/javascript">
         console.info('Hello, I’m Mat');
         console.log('Follow @daformat on twitter / dribbble / git(hub|lab)');
