@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Hello, I'm Mat</title>
+    <style>
+      html,
+      body,
+      #root,
+      #app {
+      height: 100%;
+      margin: 0;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont,
+            "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell",
+            "Fira Sans", "Droid Sans", "Helvetica Neue", 'Open Sans', sans-serif;
+        background-color: #eee;
+        border: 16px solid #fff;
+        box-sizing: border-box;
+        overflow-y: auto;
+      }
+
+      h1, h2, h3, h4, h5, h6 {
+      font-weight: 400;
+      }
+
+      strong {
+      font-weight: bolder;
+      }
+
+      .hello {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        height: 100%;
+      }
+
+      .hello > * {
+        flex: 1;
+        flex-grow: 0;
+      }
+
+      .hello a {
+        font-size: 1.4rem;
+      }
+
+      .hello img {
+        min-width: 5.42em;
+        min-height: 5.42em;
+      }
+
+      .hello h1 {
+        white-space: nowrap;
+      }
+
+      h1 {
+        font-size: 2em;
+      }
+
+    </style>
+  </head>
+  <body>
+    <section class="hello">
+      <img src="./public/m.svg"/>
+      <h1>Hello, I'm <strong>Mat</strong></h1>
+    </section>
+  </body>
+</html>
