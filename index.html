@@ -13,6 +13,9 @@
     <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#388096">
     <meta name="theme-color" content="#ffffff">
     <style>
+
+      /* General styling */
+
       html,
       body,
       #root,
@@ -40,6 +43,8 @@
       font-weight: bolder;
       }
 
+      /* Landing page styling */
+
       .hello {
         display: flex;
         flex-direction: column;
@@ -48,8 +53,14 @@
         text-align: center;
         min-height: 100%;
         overflow-y: auto;
-        box-shadow: inset 0.84em 0.84em 0 #fff, inset -0.84em -0.84em 0 #fff;
         background-color: hsla(0, 0%, 42%, 0.15);
+        /*
+          The following is a trick used to make nice looking borders that are
+          screen density independent (same border width on retina, yay!).
+          As a bonus, this does not affect the box in anyway so it's easier
+          to make sure our container doesn't get any bigger than 100%.
+        */
+        box-shadow: inset 0.84em 0.84em 0 #fff, inset -0.84em -0.84em 0 #fff;
       }
 
       .hello > * {
@@ -67,15 +78,6 @@
         min-height: 20.42em;
       }
 
-      .hello footer {
-        font-size: 0.9em;
-        min-height: 2em;
-        margin-top: -6.42vh;
-        margin-bottom: 6.42vh;
-        color: #424242;
-        opacity: 0.42;
-      }
-
       .hello a {
         font-size: 1.4rem;
       }
@@ -83,13 +85,27 @@
       .hello .img {
         min-width: 5.5em;
         min-height: 5.5em;
+        animation: grow 0.42s ease-out 1;
+        /*
+          Ok, bare with me, we are inlining a vector image here, so the image is
+          loaded right away and there's no blinking or popping after the page
+          was displayed, because, there's no need for an additionnal request.
+        */
         background: url(data:image/svg+xml;base64,PHN2ZyBpZD0iQ2FscXVlXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDE0MiAxNDIiPjxzdHlsZT4uc3Qwe2ZpbGw6IzFGMUUyMTt9IC5zdDF7ZmlsbDojRkZGRkZGO308L3N0eWxlPjxjaXJjbGUgY2xhc3M9InN0MCIgY3g9IjcxIiBjeT0iNzEiIHI9IjcxIi8+PHBhdGggY2xhc3M9InN0MSIgZD0iTTQ5LjQ4IDEwMy4yN0gzNC40NHYtNi4zNWg4LjZWNDUuMThoLTguNnYtNi40NWgxNS4wNXY2NC41NHpNNjQuNTUgOTAuMzZsLTEyLjktNTEuNjNoNS40TDcwLjkgOTAuMzZoLTYuMzZ6TTcwLjkgOTAuMzZsMTMuOS01MS42M2g1LjU3TDc3LjQ1IDkwLjM2SDcwLjl6TTkyLjUyIDEwMy4yN1YzOC43M2gxNS4wNnY2LjQ1aC04LjZ2NTEuNzRoOC42djYuMzVIOTIuNTJ6Ii8+PC9zdmc+) no-repeat;
+        /*
+          We set up overflow as visible just to make sure the background is not
+          cropped at all (there's a weird bug where it could lead to a missing
+          pixel on certain sizes)
+        */
         overflow: visible;
       }
 
       .hello h1 {
         white-space: nowrap;
         margin-bottom: 0;
+        opacity: 0;
+        animation: fadein 1s 0.21s ease 1;
+        animation-fill-mode: forwards;
       }
 
       .hello h2 {
@@ -97,17 +113,39 @@
         color: #525252;
         font-size: 1.21em;
         margin-top: 0.5em;
+        opacity: 0;
+        animation: fadein 1s 2s ease 1;
+        animation-fill-mode: forwards;
       }
 
       .cursor {
         position: relative;
         top: -0.084em;
         left: 0.32em;
-        animation: blink 0.84s linear infinite;
+        opacity: 0;
+        animation: blink 0.84s 2.42s linear infinite;
         color: #424242;
         margin-left: -0.25em;
       }
 
+      .hello footer {
+        font-size: 0.9em;
+        min-height: 2em;
+        margin-top: -6.42vh;
+        margin-bottom: 6.42vh;
+        color: #424242;
+        opacity: 0.42;
+        text-align: center;
+      }
+
+      .hello footer p {
+        opacity: 0;
+        transform: translateY(100%);
+        animation: enterbottom 0.42s 3s ease-out 1;
+        animation-fill-mode: forwards;
+      }
+
+      /* Animation keyframes */
 
       @keyframes blink {
         0%, 49.9% {
@@ -115,6 +153,40 @@
         }
         50%, 100% {
           opacity: 0;
+        }
+      }
+
+      @keyframes grow {
+        0% {
+          transform: scale(0);
+          opacity: 0;
+        }
+        42% {
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadein {
+        0% {
+          opacity: 0;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      @keyframes enterbottom {
+        0% {
+          opacity: 0;
+          transform: translateY(100%);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
         }
       }
     </style>
@@ -127,7 +199,7 @@
         <h2>I enjoy crafting digital things<span class="cursor">_</span></h2>
       </div>
       <footer>
-        (Open up your console to get in touch)
+        <p>(Open up your console to get in touch)</p>
       </footer>
       <script type="text/javascript">
         console.info('Hello, I’m Mat');
