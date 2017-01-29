@@ -241,7 +241,7 @@
         <span class="img"></span>
         <h1>Hello, I'm <strong>Mat</strong></h1>
         <h2><span class="subtitle">I enjoy crafting digital things</span><span class="cursor">_</span></h2>
-        <a class="button" id="color-toggle" onclick="toggleColors()">I don’t like gray</a>
+        <a class="button" id="color-toggle" onclick="toggleAnimation()">I don’t like gray</a>
       </div>
       <footer>
         <p>(Open up your console to get in touch)</p>
@@ -258,17 +258,18 @@
       console.log('Drop me a note:', 'mat.jouhet -at- gmail -dot- com'.replace(/\s\-at\-\s/g, '@').replace(/\s\-dot\-\s/g, '.'))
       console.log('Or give me a call: +33 680 159 157');
 
-
       var playing = false;
       var fps = 4;
       var frequency = .3;
-      var colors = [];
+      var colors = {background: [], main: []};
       var currentColor = 0;
       var range = 42;
       var timeout;
 
+      // Following functions are almost exactly the ones found on
       // https://krazydad.com/tutorials/makecolors.php
-      function RGB2Color(r,g,b) {
+      // As noted in the article, you can definitely go with hsl or rgb colors
+      function RGB2Color(r, g, b) {
         return '#' + byte2Hex(r) + byte2Hex(g) + byte2Hex(b);
       }
 
@@ -293,31 +294,10 @@
           var green = Math.sin(frequency2*i + phase2) * width + center;
           var blue = Math.sin(frequency3*i + phase3) * width + center;
           colors.push({r: red, g: green, b: blue});
+          // Uncomment if you want to display the generated colors within the page
           // document.write( '<font color="' + RGB2Color(red, green, blue) + '">&#9608;</font>');
         }
         return colors;
-      }
-
-      // http://creativejs.com/resources/requestanimationframe/
-      function draw() {
-        if(playing === true) {
-          timeout = setTimeout(function() {
-              requestAnimationFrame(draw);
-              var t = currentColor;
-              changeBackgroundColor(RGB2Color(colors[t].r, colors[t].g, colors[t].b));
-              currentColor = (currentColor + 1) % colors.length;
-          }, 1000 / fps);
-        } else {
-          changeBackgroundColor();
-        }
-      }
-
-      function startColors() {
-        playing = true;
-        colors = makeColorGradient(.1, .1, .1, 4, 0, 2, 128 + 84, 127 - 84, 64);
-        changeBackgroundColor(RGB2Color(colors[currentColor].r, colors[currentColor].g, colors[currentColor].b));
-        currentColor = (currentColor + 1) % colors.length;
-        draw();
       }
 
       function changeBackgroundColor(color) {
@@ -325,18 +305,82 @@
         document.querySelector('.background').style.backgroundColor = color;
       }
 
-      function toggleColors() {
+      // The following function is a polyfill (something that ensures consistency
+      // across different browsers, so old browsers can still keep up),
+      // it makes sure requestAnimationFrame actually exists and create
+      // a fallback function for it if not.
+      // ---
+      // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+      // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+      // requestAnimationFrame polyfill by Erik Möller
+      // fixes from Paul Irish and Tino Zijdel
+      (function() {
+        var lastTime = 0;
+        var vendors = ['ms', 'moz', 'webkit', 'o'];
+        for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+          window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+          window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
+                                     || window[vendors[x]+'CancelRequestAnimationFrame'];
+        }
+
+        if (!window.requestAnimationFrame)
+          window.requestAnimationFrame = function(callback, element) {
+            var currTime = new Date().getTime();
+            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+            var id = window.setTimeout(function() { callback(currTime + timeToCall); },
+              timeToCall);
+            lastTime = currTime + timeToCall;
+            return id;
+          };
+
+        if (!window.cancelAnimationFrame)
+          window.cancelAnimationFrame = function(id) {
+            clearTimeout(id);
+          };
+      }());
+
+      // We using the draw function to limit the framerate
+      // http://creativejs.com/resources/requestanimationframe/
+      function draw() {
+        if(playing === true) {
+          timeout = setTimeout(function() {
+              var index = currentColor;
+              var bgColors = colors.background;
+              requestAnimationFrame(draw);
+              changeBackgroundColor(RGB2Color(bgColors[index].r, bgColors[index].g, bgColors[index].b));
+              currentColor = (currentColor + 1) % bgColors.length;
+          }, 1000 / fps);
+        } else {
+          changeBackgroundColor();
+        }
+      }
+
+      function startAnimation() {
+        var bgColors = makeColorGradient(.1, .1, .1, 4, 0, 2, 128 + 84, 127 - 84, 64);
+        playing = true;
+        colors.background = bgColors;
+        changeBackgroundColor(RGB2Color(bgColors[currentColor].r, bgColors[currentColor].g, bgColors[currentColor].b));
+        currentColor = (currentColor + 1) % bgColors.length;
+        draw();
+      }
+
+      function toggleAnimation() {
         var btn = document.getElementById('color-toggle');
         var subtitle = document.querySelector('.hello h2 .subtitle');
 
         if(playing === true) {
+          // We're currently playing the animation, so we have to stop it
+          // And reset the text in both the button and the subtitle
           playing = false;
           btn.innerText = 'I don’t like gray';
           subtitle.innerText = 'I enjoy crafting digital things';
         } else {
+          // The animation is not currently playing, so we change the text inside
+          // of the button and the subtitle to give both feedback and a way to
+          // stop the animation
           btn.innerText = 'Make it stop';
           subtitle.innerText = 'Ok well, taste the rainbow';
-          startColors();
+          startAnimation();
         }
       }
 
