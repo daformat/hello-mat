@@ -316,7 +316,7 @@
         playing = true;
         colors = makeColorGradient(.1, .1, .1, 4, 0, 2, 128 + 84, 127 - 84, 64);
         changeBackgroundColor(RGB2Color(colors[currentColor].r, colors[currentColor].g, colors[currentColor].b));
-        currentColor++;
+        currentColor = (currentColor + 1) % colors.length;
         draw();
       }
 
