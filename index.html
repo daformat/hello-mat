@@ -43,9 +43,33 @@
       font-weight: bolder;
       }
 
+      .button {
+        cursor: pointer;
+        display: inline-block;
+        font-weight: 400;
+        font-size: 1em;
+        color: #fff;
+        padding: 0.75em 1.24em;
+        border-radius: 4px;
+        background-color: #2196f3;
+        transition: all cubic-bezier(0.13, 1.24, 0.74, 1.21) 0.15s;
+      }
+
+      .button:hover {
+        background-color: #1e88e5;
+        transform: scale(1.042);
+      }
+      .button:active {
+        background-color: #1e88e5;
+        transform: scale(1);
+      }
       /* Landing page styling */
 
+      /* .hello is our main layer, containing the page's relevant content */
+
       .hello {
+        position: relative; /* We set the position as relative so we can use z-index */
+        z-index: 1; /* Our background will be at z-index: 0, so .hello will be display on top of it */
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -115,6 +139,15 @@
         animation-fill-mode: forwards;
       }
 
+      .hello .button {
+        visibility: hidden;
+        margin-top: 0.5em;
+        font-weight: lighter;
+        opacity: 0;
+        animation: fadein 1s 4.42s ease 1;
+        animation-fill-mode: forwards;
+      }
+
       .cursor {
         position: relative;
         top: -0.084em;
@@ -170,9 +203,11 @@
       @keyframes fadein {
         0% {
           opacity: 0;
+          visibility: visible;
         }
         100% {
           opacity: 1;
+          visibility: visible;
         }
       }
 
@@ -186,6 +221,17 @@
           transform: translateY(0);
         }
       }
+
+      /* Style for the background layer */
+      .background {
+        position: absolute;
+        z-index: 0; /* Actually use it as a background, even though our html element appears after .hello */
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        transition: background-color linear 0.25s;
+      }
     </style>
   </head>
   <body>
@@ -193,17 +239,103 @@
       <div>
         <span class="img"></span>
         <h1>Hello, I'm <strong>Mat</strong></h1>
-        <h2>I enjoy crafting digital things<span class="cursor">_</span></h2>
+        <h2><span class="subtitle">I enjoy crafting digital things</span><span class="cursor">_</span></h2>
+        <a class="button" id="color-toggle" onclick="toggleColors()">I don’t like gray</a>
       </div>
       <footer>
         <p>(Open up your console to get in touch)</p>
       </footer>
-      <script type="text/javascript">
-        console.info('Hello, I’m Mat');
-        console.log('Follow @daformat on twitter / dribbble / git(hub|lab)');
-        console.log('Drop me a note:', 'mat.jouhet -at- gmail -dot- com'.replace(/\s\-at\-\s/g, '@').replace(/\s\-dot\-\s/g, '.'))
-        console.log('Or give me a call: +33 680 159 157');
-      </script>
     </section>
+    <div class="background">
+    </div>
+
+    <script type="text/javascript">
+      console.info('Hello, I’m Mat');
+      console.log('Follow @daformat on twitter / dribbble / git(hub|lab)');
+      console.log('Drop me a note:', 'mat.jouhet -at- gmail -dot- com'.replace(/\s\-at\-\s/g, '@').replace(/\s\-dot\-\s/g, '.'))
+      console.log('Or give me a call: +33 680 159 157');
+
+      var playing = false;
+      var fps = 4;
+      var frequency = .3;
+      var colors = [];
+      var currentColor = 0;
+      var range = 42;
+      var timeout;
+
+      // https://krazydad.com/tutorials/makecolors.php
+      function RGB2Color(r,g,b) {
+        return '#' + byte2Hex(r) + byte2Hex(g) + byte2Hex(b);
+      }
+
+      function byte2Hex(n) {
+        var nybHexString = "0123456789ABCDEF";
+        return String(nybHexString.substr((n >> 4) & 0x0F,1)) + nybHexString.substr(n & 0x0F,1);
+      }
+
+      function makeColorGradient(
+        frequency1, frequency2, frequency3,
+        phase1, phase2, phase3,
+        center, width, len)
+      {
+        var colors = [];
+        if (center == undefined)   center = 128;
+        if (width == undefined)    width = 127;
+        if (len == undefined)      len = 50;
+
+        for (var i = 0; i < len; ++i)
+        {
+          var red = Math.sin(frequency1*i + phase1) * width + center;
+          var green = Math.sin(frequency2*i + phase2) * width + center;
+          var blue = Math.sin(frequency3*i + phase3) * width + center;
+          colors.push({r: red, g: green, b: blue});
+          // document.write( '<font color="' + RGB2Color(red, green, blue) + '">&#9608;</font>');
+        }
+        return colors;
+      }
+
+      // http://creativejs.com/resources/requestanimationframe/
+      function draw() {
+        if(playing === true) {
+          timeout = setTimeout(function() {
+              requestAnimationFrame(draw);
+              var t = currentColor;
+              changeBackgroundColor(RGB2Color(colors[t].r, colors[t].g, colors[t].b));
+              currentColor = (currentColor + 1) % colors.length;
+          }, 1000 / fps);
+        } else {
+          changeBackgroundColor();
+        }
+      }
+
+      function startColors() {
+        playing = true;
+        colors = makeColorGradient(.1, .1, .1, 4, 0, 2, 128 + 84, 127 - 84, 64);
+        changeBackgroundColor(RGB2Color(colors[currentColor].r, colors[currentColor].g, colors[currentColor].b));
+        currentColor++;
+        draw();
+      }
+
+      function changeBackgroundColor(color) {
+        if(!color) color = '';
+        document.querySelector('.background').style.backgroundColor = color;
+      }
+
+      function toggleColors() {
+        var btn = document.getElementById('color-toggle');
+        var subtitle = document.querySelector('.hello h2 .subtitle');
+
+        if(playing === true) {
+          playing = false;
+          btn.innerText = 'I don’t like gray';
+          subtitle.innerText = 'I enjoy crafting digital things';
+        } else {
+          btn.innerText = 'Make it stop';
+          subtitle.innerText = 'Ok well, taste the rainbow';
+          startColors();
+        }
+      }
+
+    </script>
   </body>
 </html>
