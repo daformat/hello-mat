@@ -398,6 +398,7 @@
       // http://creativejs.com/resources/requestanimationframe/
       function animateBackgroundColor() {
         if(playing === true) {
+          clearTimeout(timeouts.bgColors);
           timeouts.bgColors = setTimeout(function() {
               var index = currentColor;
               var bgColors = colors.background;
@@ -410,12 +411,36 @@
 
       function animateParticles() {
         if(playing === true) {
+          clearTimeout(timeouts.particles);
           timeouts.particles = setTimeout(function() {
             requestAnimationFrame(animateParticles);
             for (var i = 0; i < particles.length; i++) {
               particles[i].update();
             }
           }, 1000 / 60);
+        }
+      }
+
+      function initParticles() {
+        if(playing === true) {
+          particles = [];
+          var mainColors = colors.main;
+
+          document.querySelector('.background').innerHTML = '';
+
+          for (var i = 0; i < particleCount; i++) {
+            var randomColorIndex = Math.floor(Math.random() * mainColors.length);
+            var randomColor = RGB2Color(mainColors[randomColorIndex].r, mainColors[randomColorIndex].g, mainColors[randomColorIndex].b);
+             particles.push(new Particle({
+              color: randomColor,
+              radius: Math.floor(Math.random() * 10) + 15,
+              speed: Math.random() * 5 + 5,
+              position: {
+                x: Math.floor(Math.random() * window.innerWidth),
+                y: Math.floor(Math.random() * window.innerHeight) - window.innerHeight - 142
+              }
+            }, document.querySelector('.background')));
+          }
         }
       }
 
@@ -426,22 +451,7 @@
         colors.main = mainColors;
 
         playing = true;
-        particles = [];
-
-        for (var i = 0; i < particleCount; i++) {
-          var randomColorIndex = Math.floor(Math.random() * mainColors.length);
-          var randomColor = RGB2Color(mainColors[randomColorIndex].r, mainColors[randomColorIndex].g, mainColors[randomColorIndex].b);
-           particles.push(new Particle({
-            color: randomColor,
-            radius: Math.floor(Math.random() * 10) + 15,
-            speed: Math.random() * 5 + 5,
-            position: {
-              x: Math.floor(Math.random() * window.innerWidth),
-              y: Math.floor(Math.random() * window.innerHeight) - window.innerHeight - 142
-            }
-          }, document.querySelector('.background')));
-        }
-
+        initParticles();
         animateBackgroundColor();
         animateParticles();
       }
@@ -469,6 +479,8 @@
           startAnimation();
         }
       }
+
+      window.onresize = initParticles;
 
     </script>
   </body>
