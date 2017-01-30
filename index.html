@@ -43,9 +43,34 @@
       font-weight: bolder;
       }
 
+      .button {
+        cursor: pointer;
+        display: inline-block;
+        font-weight: 400;
+        font-size: 1em;
+        color: #fff;
+        padding: 0.75em 1.24em;
+        border-radius: 4px;
+        background-color: #2196f3;
+        transition: all cubic-bezier(0.13, 1.24, 0.74, 1.21) 0.15s;
+        user-select: none;
+      }
+
+      .button:hover {
+        background-color: #1e88e5;
+        transform: scale(1.042);
+      }
+      .button:active {
+        background-color: #1e88e5;
+        transform: scale(1);
+      }
       /* Landing page styling */
 
+      /* .hello is our main layer, containing the page's relevant content */
+
       .hello {
+        position: relative; /* We set the position as relative so we can use z-index */
+        z-index: 1; /* Our background will be at z-index: 0, so .hello will be display on top of it */
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -53,7 +78,7 @@
         text-align: center;
         min-height: 100%;
         overflow-y: auto;
-        background-color: hsla(0, 0%, 42%, 0.15);
+        background-color: hsla(184, 10%, 42%, 0.15);
         /*
           The following is a trick used to make nice looking borders that are
           screen density independent (same border width on retina, yay!).
@@ -78,9 +103,6 @@
         min-height: 20.42em;
       }
 
-      .hello a {
-        font-size: 1.4rem;
-      }
 
       .hello .img {
         min-width: 5.5em;
@@ -115,6 +137,15 @@
         margin-top: 0.5em;
         opacity: 0;
         animation: fadein 1s 1s ease 1;
+        animation-fill-mode: forwards;
+      }
+
+      .hello .button {
+        visibility: hidden;
+        margin-top: 0.5em;
+        font-weight: lighter;
+        opacity: 0;
+        animation: fadein 1s 4.42s ease 1;
         animation-fill-mode: forwards;
       }
 
@@ -173,9 +204,11 @@
       @keyframes fadein {
         0% {
           opacity: 0;
+          visibility: visible;
         }
         100% {
           opacity: 1;
+          visibility: visible;
         }
       }
 
@@ -189,6 +222,18 @@
           transform: translateY(0);
         }
       }
+
+      /* Style for the background layer */
+      .background {
+        position: absolute;
+        z-index: 0; /* Actually use it as a background, even though our html element appears after .hello */
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        transition: background-color linear 0.25s;
+        overflow: hidden;
+      }
     </style>
   </head>
   <body>
@@ -196,17 +241,247 @@
       <div>
         <span class="img"></span>
         <h1>Hello, I'm <strong>Mat</strong></h1>
-        <h2>I enjoy crafting digital things<span class="cursor">_</span></h2>
+        <h2><span class="subtitle">I enjoy crafting digital things</span><span class="cursor">_</span></h2>
+        <a class="button" id="color-toggle" onclick="toggleAnimation()">I don’t like gray</a>
       </div>
       <footer>
         <p>(Open up your console to get in touch)</p>
       </footer>
-      <script type="text/javascript">
-        console.info('Hello, I’m Mat');
-        console.log('Follow @daformat on twitter / dribbble / git(hub|lab)');
-        console.log('Drop me a note:', 'mat.jouhet -at- gmail -dot- com'.replace(/\s\-at\-\s/g, '@').replace(/\s\-dot\-\s/g, '.'))
-        console.log('Or give me a call: +33 680 159 157');
-      </script>
     </section>
+    <div class="background">
+    </div>
+
+    <script type="text/javascript">
+      console.info(']V[');
+      console.log('---');
+      console.log('Hello, I’m Mat');
+      console.log('Follow @daformat on twitter / dribbble / git(hub|lab)');
+      console.log('Drop me a note:', 'mat.jouhet -at- gmail -dot- com'.replace(/\s\-at\-\s/g, '@').replace(/\s\-dot\-\s/g, '.'))
+      console.log('Or give me a call: +33 680 159 157');
+
+      var playing = false;
+      var fps = 4;
+      var frequency = .3;
+      var colors = {background: [], main: []};
+      var currentColor = 0;
+      var range = 42;
+      var timeouts = {};
+      var particles = [];
+      var particleCount = 42;
+
+      function Particle(props, parent) {
+        this.color = props.color || "#848484";
+        this.radius = props.radius || 42;
+        this.speed = props.speed || 1;
+        this.rotationSpeed = props.rotationSpeed || {x: 10, y: 10, z: 0};
+
+        var defaultPos = {
+          x: Math.floor(Math.random() * window.innerWidth),
+          y: -this.radius
+        };
+
+        var defaultRotation = {
+          x: Math.floor(Math.random() * 360),
+          y: Math.floor(Math.random() * 360),
+          z: Math.floor(Math.random() * 360)
+        };
+
+        this.position = props.position || defaultPos;
+        this.rotation = props.rotation || defaultRotation;
+        this.element = document.createElement('span');
+        this.element.style.height = this.radius * 2 + 'px';
+        this.element.style.width = this.radius * 2 + 'px';
+        this.element.style.borderRadius = '100%';
+        this.element.style.display = 'inline-block';
+        this.element.style.position = 'absolute';
+        this.element.style.left = this.position.x + 'px';
+        this.element.style.top = '0';
+
+        this.update();
+        this.attachToDOMelement(parent || document.body);
+      }
+
+      Particle.prototype.update = function() {
+        this.rotation.x = (this.rotation.x + this.rotationSpeed.x) % 360;
+        this.rotation.y = (this.rotation.y + this.rotationSpeed.y) % 360;
+        this.rotation.z = (this.rotation.z + this.rotationSpeed.z) % 360;
+
+        if (this.position.y < window.innerHeight + this.radius) {
+          this.position.y += this.speed;
+        } else {
+          this.position.y = -this.radius;
+        }
+
+        // Apply new style to html element
+        this.element.style.backgroundColor = this.color;
+        this.element.style.transform = 'translateY(' + this.position.y + 'px) rotateX(' + this.rotation.x + 'deg) rotateY(' + this.rotation.y + 'deg) rotateZ(' + this.rotation.z + 'deg)';
+      }
+
+      Particle.prototype.attachToDOMelement = function(parent) {
+        parent.appendChild(this.element);
+      }
+
+      // Following functions are almost exactly the ones found on
+      // https://krazydad.com/tutorials/makecolors.php
+      // As noted in the article, you can definitely go with hsl or rgb colors
+      function RGB2Color(r, g, b) {
+        return '#' + byte2Hex(r) + byte2Hex(g) + byte2Hex(b);
+      }
+
+      function byte2Hex(n) {
+        var nybHexString = "0123456789ABCDEF";
+        return String(nybHexString.substr((n >> 4) & 0x0F,1)) + nybHexString.substr(n & 0x0F,1);
+      }
+
+      function makeColorGradient(
+        frequency1, frequency2, frequency3,
+        phase1, phase2, phase3,
+        center, width, len)
+      {
+        var colors = [];
+        if (center == undefined)   center = 128;
+        if (width == undefined)    width = 127;
+        if (len == undefined)      len = 50;
+
+        for (var i = 0; i < len; ++i)
+        {
+          var red = Math.sin(frequency1*i + phase1) * width + center;
+          var green = Math.sin(frequency2*i + phase2) * width + center;
+          var blue = Math.sin(frequency3*i + phase3) * width + center;
+          colors.push({r: red, g: green, b: blue});
+          // Uncomment if you want to display the generated colors within the page
+          // document.write( '<font color="' + RGB2Color(red, green, blue) + '">&#9608;</font>');
+        }
+        return colors;
+      }
+
+      function changeBackgroundColor(color) {
+        if(!color) color = '';
+        document.querySelector('.background').style.backgroundColor = color;
+      }
+
+      // The following function is a polyfill (something that ensures consistency
+      // across different browsers, so old browsers can still keep up),
+      // it makes sure requestAnimationFrame actually exists and create
+      // a fallback function for it if not.
+      // ---
+      // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+      // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+      // requestAnimationFrame polyfill by Erik Möller
+      // fixes from Paul Irish and Tino Zijdel
+      (function() {
+        var lastTime = 0;
+        var vendors = ['ms', 'moz', 'webkit', 'o'];
+        for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+          window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+          window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
+                                     || window[vendors[x]+'CancelRequestAnimationFrame'];
+        }
+
+        if (!window.requestAnimationFrame)
+          window.requestAnimationFrame = function(callback, element) {
+            var currTime = new Date().getTime();
+            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+            var id = window.setTimeout(function() { callback(currTime + timeToCall); },
+              timeToCall);
+            lastTime = currTime + timeToCall;
+            return id;
+          };
+
+        if (!window.cancelAnimationFrame)
+          window.cancelAnimationFrame = function(id) {
+            clearTimeout(id);
+          };
+      }());
+
+      // We using the draw function to limit the framerate
+      // http://creativejs.com/resources/requestanimationframe/
+      function animateBackgroundColor() {
+        if(playing === true) {
+          clearTimeout(timeouts.bgColors);
+          timeouts.bgColors = setTimeout(function() {
+              var index = currentColor;
+              var bgColors = colors.background;
+              requestAnimationFrame(animateBackgroundColor);
+              changeBackgroundColor(RGB2Color(bgColors[index].r, bgColors[index].g, bgColors[index].b));
+              currentColor = (currentColor + 1) % bgColors.length;
+          }, 1000 / fps);
+        }
+      }
+
+      function animateParticles() {
+        if(playing === true) {
+          clearTimeout(timeouts.particles);
+          timeouts.particles = setTimeout(function() {
+            requestAnimationFrame(animateParticles);
+            for (var i = 0; i < particles.length; i++) {
+              particles[i].update();
+            }
+          }, 1000 / 60);
+        }
+      }
+
+      function initParticles() {
+        if(playing === true) {
+          particles = [];
+          var mainColors = colors.main;
+
+          document.querySelector('.background').innerHTML = '';
+
+          for (var i = 0; i < particleCount; i++) {
+            var randomColorIndex = Math.floor(Math.random() * mainColors.length);
+            var randomColor = RGB2Color(mainColors[randomColorIndex].r, mainColors[randomColorIndex].g, mainColors[randomColorIndex].b);
+             particles.push(new Particle({
+              color: randomColor,
+              radius: Math.floor(Math.random() * 10) + 15,
+              speed: Math.random() * 5 + 5,
+              position: {
+                x: Math.floor(Math.random() * window.innerWidth),
+                y: Math.floor(Math.random() * window.innerHeight) - window.innerHeight - 142
+              }
+            }, document.querySelector('.background')));
+          }
+        }
+      }
+
+      function startAnimation() {
+        var bgColors = makeColorGradient(.1, .1, .1, 4, 0, 2, 128 + 94, 127 - 94, 64);
+        var mainColors = makeColorGradient(.1, .1, .1, 4, 0, 2, 128 + 64, 127 - 64, 64);
+        colors.background = bgColors;
+        colors.main = mainColors;
+
+        playing = true;
+        initParticles();
+        animateBackgroundColor();
+        animateParticles();
+      }
+
+      function toggleAnimation() {
+        var btn = document.getElementById('color-toggle');
+        var subtitle = document.querySelector('.hello h2 .subtitle');
+
+        if(playing === true) {
+          // We're currently playing the animation, so we have to stop it
+          // And reset the text in both the button and the subtitle
+          playing = false;
+          clearTimeout(timeouts.bgColors);
+          clearTimeout(timeouts.particles);
+          btn.innerText = 'I don’t like gray';
+          subtitle.innerText = 'I enjoy crafting digital things';
+          changeBackgroundColor();
+          document.querySelector('.background').innerHTML = '';
+        } else {
+          // The animation is not currently playing, so we change the text inside
+          // of the button and the subtitle to give both feedback and a way to
+          // stop the animation
+          btn.innerText = 'Make it stop';
+          subtitle.innerText = 'Ok well, taste the rainbow';
+          startAnimation();
+        }
+      }
+
+      window.onresize = initParticles;
+
+    </script>
   </body>
 </html>
