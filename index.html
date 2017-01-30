@@ -244,10 +244,12 @@
         display: inline-block;
         list-style-type: none;
         padding: 0;
-        filter: grayscale(1) brightness(0.7) opacity(0.5) contrast(2);
+        filter: grayscale(1) brightness(0.6) opacity(0.5) contrast(1.84);
         transform: scale(0.8);
         transition: transform 0.25s cubic-bezier(0.68, -0.55, 0.54, 2.69), filter 0.25s ease-out;
-        mix-blend-mode: color-burn;
+      }
+
+      .rainbow-color-animation .social-profiles li {
       }
 
       .social-profiles li:hover {
@@ -264,6 +266,7 @@
         vertical-align: middle;
         opacity: 0;
         background-repeat: no-repeat;
+        mix-blend-mode: color-burn;
       }
 
       .icon-medium, .icon-twitter {
@@ -271,7 +274,6 @@
       }
 
       .icon-dribbble, .icon-github {
-        filter: grayscale(1) brightness(1.42);
       }
 
       .icon-dribbble:hover, .icon-github:hover {
@@ -577,6 +579,7 @@
           subtitle.innerText = 'Ok well, taste the rainbow';
           startAnimation();
         }
+        document.body.className = (playing === true ? 'rainbow-color-animation' : '');
       }
 
       window.onresize = initParticles;
