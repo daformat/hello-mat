@@ -298,6 +298,7 @@
       }
 
       .social-icon {
+        position: relative;
         display: inline-block;
         width: 2em;
         height: 2em;
@@ -306,6 +307,54 @@
         opacity: 0;
         background-repeat: no-repeat;
         mix-blend-mode: color-burn;
+      }
+
+      .social-icon:before {
+        display: inline-block;
+        position: absolute;
+        bottom: 100%;
+        transform: translateX(-50%);
+
+        content: attr(data-tooltip);
+
+        background-color: #424242;
+        color: #fff;
+        background-color: attr(data-bgcolor);
+        color: attr(data-textcolor);
+
+        padding: 0.35em 0.75em;
+        border-radius: 42px;
+        opacity: 0;
+        font-size: 0.5em;
+        white-space: nowrap;
+
+        transition: all ease-out 0.25s;
+      }
+
+      .social-icon:hover:before {
+        opacity: 1;
+        font-size: 0.75em;
+        transform: translateY(-1em) translateX(-50%);
+      }
+
+      .social-icon:after {
+        bottom: 0;
+        position: absolute;
+        content: " ";
+        border: .5em solid transparent;
+        border-top-color: #424242;
+        border-top-color: attr(data-bgcolor);
+        width: 0px;
+        height: 0px;
+        transform: translateY(-200%) translateX(-50%);
+        opacity: 0;
+        font-size: 0.75em;
+        transition: all ease-out 0.25s;
+      }
+
+      .social-icon:hover:after {
+        opacity: 1;
+        transform: translateY(-300%) translateX(-50%);
       }
 
       .icon-medium, .icon-twitter {
@@ -379,11 +428,11 @@
       </div>
       <footer>
         <ul class="social-profiles">
-          <li><a title="@daformat on twitter" href="https://twitter.com/daformat" target="_blank" class="social-icon icon-twitter"></a></li>
-          <li><a title="@daformat on dribbble" href="https://dribbble.com/daformat" target="_blank" class="social-icon icon-dribbble"></a></li>
-          <li><a title="@daformat on github" href="https://github.com/daformat/" target="_blank" class="social-icon icon-github"></a></li>
-          <li><a title="@daformat on gitlab" href="https://gitlab.com/daformat/" target="_blank" class="social-icon icon-gitlab"></a></li>
-          <li><a title="@daformat on medium" href="https://medium.com/@daformat" target="_blank" class="social-icon icon-medium"></a></li>
+          <li><a data-tooltip="I tweet, therefore I am" title="@daformat on twitter" href="https://twitter.com/daformat" target="_blank" class="social-icon icon-twitter"></a></li>
+          <li><a data-tooltip="Pushing pixels on dribbble" title="@daformat on dribbble" href="https://dribbble.com/daformat" target="_blank" class="social-icon icon-dribbble"></a></li>
+          <li><a data-tooltip="Codito ergo sum" title="@daformat on github" href="https://github.com/daformat/" target="_blank" class="social-icon icon-github"></a></li>
+          <li><a data-tooltip="Most recent git repositories" title="@daformat on gitlab" href="https://gitlab.com/daformat/" target="_blank" class="social-icon icon-gitlab"></a></li>
+          <li><a data-tooltip="Tutorials, articles and recommended reads" title="@daformat on medium" href="https://medium.com/@daformat" target="_blank" class="social-icon icon-medium"></a></li>
         </ul>
         <p>(Open up your console to get in touch)</p>
       </footer>
