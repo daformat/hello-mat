@@ -223,6 +223,38 @@
         }
       }
 
+      @media only screen
+      and (max-device-width: 642px)
+      {
+        body {
+          font-size: 12px;
+        }
+        .hello .img {
+          min-width: 4.84em;
+          min-height: 4.84em;
+        }
+      }
+
+      @media only screen
+      and (max-device-width: 642px)
+      and (orientation: portrait) {
+        body {
+          font-size: 14px;
+        }
+      }
+
+      @media only screen
+      and (min-device-width: 643px)
+      and (max-device-width: 736px)
+      and (orientation: landscape) {
+        body {
+          font-size: 14px;
+        }
+        .button {
+          font-size: 16px;
+        }
+      }
+
       /* Style for the background layer */
       .background {
         position: absolute;
