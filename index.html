@@ -55,11 +55,13 @@
         background-color: #2196f3;
         transition: all cubic-bezier(0.13, 1.24, 0.74, 1.21) 0.15s;
         user-select: none;
+        text-decoration: none;
       }
 
-      .button:hover {
+      .button:hover, .button:focus {
         background-color: #1e88e5;
         transform: scale(1.042);
+        outline: none;
       }
       .button:active {
         background-color: #1e88e5;
@@ -333,13 +335,12 @@
 
       .social-icon:hover:before, .social-icon:focus:before {
         opacity: 1;
-        font-size: 0.7em;
+        font-size: 0.8em;
         transform: translateY(-1em) translateX(-50%);
       }
 
       .social-icon:focus:before {
-        font-size: 0.9em;
-        transform: translateY(-0.9em) translateX(-50%);
+        transform: translateY(-1.1em) translateX(-50%) scale(1.1);
       }
 
       .social-icon:after {
@@ -427,7 +428,7 @@
         <span class="img"></span>
         <h1>Hello, I'm <strong>Mat</strong></h1>
         <h2><span class="subtitle">I enjoy crafting digital things</span><span class="cursor">_</span></h2>
-        <a class="button" id="color-toggle" onclick="toggleAnimation()">I don’t like gray</a>
+        <a href="#" class="button" id="color-toggle" onclick="toggleAnimation()">I don’t like gray</a>
       </div>
       <footer>
         <ul class="social-profiles">
