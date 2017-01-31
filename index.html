@@ -321,18 +321,19 @@
         content: attr(data-tooltip);
         background-color: #424242;
         color: #fff;
-        padding: 0.42em 0.75em;
-        border-radius: 42px;
+        padding: 0.32em 1em 0.42em;
+        border-radius: 2em;
         opacity: 0;
         font-size: 0.5em;
         white-space: nowrap;
-
+        overflow: visible;
         transition: all ease-out 0.25s;
+        box-sizing: border-box;
       }
 
       .social-icon:hover:before, .social-icon:focus:before {
         opacity: 1;
-        font-size: 0.75em;
+        font-size: 0.7em;
         transform: translateY(-1em) translateX(-50%);
       }
 
