@@ -309,6 +309,10 @@
         mix-blend-mode: color-burn;
       }
 
+      .social-icon:focus {
+        outline: none;
+      }
+
       .social-icon:before {
         display: inline-block;
         position: absolute;
@@ -322,7 +326,7 @@
         background-color: attr(data-bgcolor);
         color: attr(data-textcolor);
 
-        padding: 0.35em 0.75em;
+        padding: 0.42em 0.75em;
         border-radius: 42px;
         opacity: 0;
         font-size: 0.5em;
@@ -331,14 +335,19 @@
         transition: all ease-out 0.25s;
       }
 
-      .social-icon:hover:before {
+      .social-icon:hover:before, .social-icon:focus:before {
         opacity: 1;
         font-size: 0.75em;
         transform: translateY(-1em) translateX(-50%);
       }
 
+      .social-icon:focus:before {
+        font-size: 0.9em;
+        transform: translateY(-0.9em) translateX(-50%);
+      }
+
       .social-icon:after {
-        bottom: 0;
+        bottom: 100%;
         position: absolute;
         content: " ";
         border: .5em solid transparent;
@@ -346,15 +355,15 @@
         border-top-color: attr(data-bgcolor);
         width: 0px;
         height: 0px;
-        transform: translateY(-200%) translateX(-50%);
+        transform: translateY(100%) translateX(-50%);
         opacity: 0;
-        font-size: 0.75em;
+        font-size: 0.85em;
         transition: all ease-out 0.25s;
       }
 
-      .social-icon:hover:after {
+      .social-icon:hover:after, .social-icon:focus:after {
         opacity: 1;
-        transform: translateY(-300%) translateX(-50%);
+        transform: translateY(0%) translateX(-50%);
       }
 
       .icon-medium, .icon-twitter {
