@@ -29,6 +29,7 @@
             "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell",
             "Fira Sans", "Droid Sans", "Helvetica Neue", 'Open Sans', sans-serif;
         background-color: #fff;
+        font-size: 14px;
       }
 
       h1, h2, h3, h4, h5, h6 {
@@ -105,8 +106,9 @@
 
 
       .hello .img {
-        min-width: 5.5em;
-        min-height: 5.5em;
+        background-size: cover;
+        min-width: 4.84em;
+        min-height: 4.95em;
         animation: grow 0.42s ease-out 1;
         /*
           Ok, bare with me, we are inlining a vector image here, so the image is
@@ -223,32 +225,37 @@
         }
       }
 
+      /* General media queries, applies to all devices */
+
       @media only screen
-      and (max-device-width: 642px)
+      and (min-height: 484px)
+      {
+        body {
+          font-size: 16px;
+        }
+        .hello .img {
+          min-width: 5.84em;
+          min-height: 5.84em;
+        }
+      }
+
+      /* Mobile devices only */
+      /* iPhone <= 5s */
+      @media only screen
+      and (max-device-width: 568px)
       {
         body {
           font-size: 12px;
         }
-        .hello .img {
-          min-width: 4.84em;
-          min-height: 4.84em;
-        }
       }
 
+      /* iPhone >= 6 */
       @media only screen
-      and (max-device-width: 642px)
-      and (orientation: portrait) {
-        body {
-          font-size: 14px;
-        }
-      }
-
-      @media only screen
-      and (min-device-width: 643px)
+      and (min-device-width: 568px)
       and (max-device-width: 736px)
       and (orientation: landscape) {
         body {
-          font-size: 14px;
+          font-size: 15px;
         }
         .button {
           font-size: 16px;
