@@ -91,6 +91,7 @@
         align-items: center;
         text-align: center;
         min-height: 100%;
+        overflow-x: hidden;
         overflow-y: auto;
         background-color: hsla(184, 10%, 42%, 0.15);
         /*
@@ -318,7 +319,6 @@
       }
 
       .social-icon {
-        position: relative;
         display: inline-block;
         width: 2em;
         height: 2em;
@@ -331,58 +331,6 @@
 
       .social-icon:focus {
         outline: none;
-      }
-
-      .social-icon:before {
-        display: inline-block;
-        position: absolute;
-        bottom: 100%;
-        transform-origin: center;
-        transform: translateX(-50%);
-        content: attr(data-tooltip);
-        background-color: #424242;
-        color: #fff;
-        padding: 5px 16px 4px;
-        border-radius: 2em;
-        opacity: 0;
-        font-size: 0.5em;
-        white-space: nowrap;
-        overflow: visible;
-        transition: all ease-out 0.25s;
-        box-sizing: border-box;
-        pointer-events: none;
-        font-weight: lighter;
-      }
-
-      .social-icon:hover:before, .social-icon:focus:before {
-        opacity: 1;
-        font-size: 0.8em;
-        transform: translateY(-1em) translateX(-50%);
-      }
-
-      .social-icon:focus:before {
-        transform: translateY(-1.1em) translateX(-50%) scale(1.1);
-      }
-
-      .social-icon:after {
-        bottom: 100%;
-        position: absolute;
-        content: " ";
-        border: .5em solid transparent;
-        border-top-color: #424242;
-        width: 0px;
-        height: 0px;
-        transform-origin: center;
-        transform: translateY(100%) translateX(-50%);
-        opacity: 0;
-        font-size: 0.85em;
-        transition: all ease-out 0.25s;
-        pointer-events: none;
-      }
-
-      .social-icon:hover:after, .social-icon:focus:after {
-        opacity: 1;
-        transform: translateY(-0.05em) translateX(-50%);
       }
 
       .icon-medium, .icon-twitter {
@@ -443,6 +391,92 @@
           transform: scale(1);
         }
       }
+
+      /* Tooltips */
+      /* Read https://webdesign.tutsplus.com/tutorials/css-tooltip-magic--cms-28082 */
+      [tooltip] {
+        position: relative;
+      }
+
+      [tooltip]::after,
+      [tooltip]::before
+      {
+        line-height: 1;
+        user-select: none;
+        pointer-events: none;
+        position: absolute;
+        display: none;
+        opacity: 0;
+        animation: tooltips 0.24s ease-out forwards;
+      }
+
+      /* Small triangle */
+      [tooltip]::before {
+          content: '';
+          z-index: 1001;
+          border: 5px solid transparent;
+          border-top-color: rgba(0, 0, 0, 0.84);
+          border-bottom-width: 0;
+          width: 0px;
+          height: 0px;
+      }
+
+      [tooltip]::after {
+        z-index: 1000;
+        content: attr(tooltip);
+        background-color: rgba(0, 0, 0, 0.84);
+        color: #fefefe;
+        padding: 5px 16px 5px;
+        border-radius: 2em;
+        white-space: nowrap;
+        font-weight: lighter;
+        font-size: 0.8em;
+      }
+
+      [tooltip]:hover::before,
+      [tooltip]:focus::before,
+      [tooltip]:hover::after,
+      [tooltip]:focus::after {
+        display: block;
+        left: 50%;
+        transform: translate(-50%, 10px) scale(0.84);
+      }
+
+      [tooltip]:hover::before,
+      [tooltip]:focus::before
+      {
+        transform-origin: top;
+        bottom: calc(100% + 6px);
+      }
+
+      [tooltip]:hover::after,
+      [tooltip]:focus::after {
+        transform-origin: bottom;
+        bottom: calc(100% + 5px + 5px); /* we take a "safety pixel" */
+      }
+
+      [tooltip]:focus::before {
+        border-top-color: #000;
+      }
+      [tooltip]:focus::after {
+        color: #fff;
+        background-color: #000;
+      }
+      /* don't show empty tooltips */
+      [tooltip='']::before,
+      [tooltip='']::after {
+          display: none !important;
+      }
+
+      @keyframes tooltips {
+        50% {
+          opacity: 0.42;
+        }
+        100% {
+          opacity: 1;
+          transform: translate(-50%, 0) scale(1);
+        }
+      }
     </style>
   </head>
   <body>
@@ -455,11 +489,11 @@
       </div>
       <footer>
         <ul class="social-profiles">
-          <li><a data-tooltip="I tweet, therefore I am" title="@daformat on twitter" href="https://twitter.com/daformat" target="_blank" class="social-icon icon-twitter"></a></li>
-          <li><a data-tooltip="Pushing pixels on dribbble" title="@daformat on dribbble" href="https://dribbble.com/daformat" target="_blank" class="social-icon icon-dribbble"></a></li>
-          <li><a data-tooltip="Codito ergo sum (git repos)" title="@daformat on github" href="https://github.com/daformat/" target="_blank" class="social-icon icon-github"></a></li>
-          <li><a data-tooltip="Alternative to github, occasionally deletes production data (pun intended)" title="@daformat on gitlab" href="https://gitlab.com/daformat/" target="_blank" class="social-icon icon-gitlab"></a></li>
-          <li><a data-tooltip="Tutorials, articles and recommended reads" title="@daformat on medium" href="https://medium.com/@daformat" target="_blank" class="social-icon icon-medium"></a></li>
+          <li><a tooltip="I tweet, therefore I am" title="@daformat on twitter" href="https://twitter.com/daformat" target="_blank" class="social-icon icon-twitter"></a></li>
+          <li><a tooltip="Pushing pixels on dribbble" title="@daformat on dribbble" href="https://dribbble.com/daformat" target="_blank" class="social-icon icon-dribbble"></a></li>
+          <li><a tooltip="Codito ergo sum (git repos)" title="@daformat on github" href="https://github.com/daformat/" target="_blank" class="social-icon icon-github"></a></li>
+          <li><a tooltip="Alternative to github, occasionally deletes production data (pun intended)" title="@daformat on gitlab" href="https://gitlab.com/daformat/" target="_blank" class="social-icon icon-gitlab"></a></li>
+          <li><a tooltip="Tutorials, articles and recommended reads" title="@daformat on medium" href="https://medium.com/@daformat" target="_blank" class="social-icon icon-medium"></a></li>
         </ul>
         <p><small>New website coming soon, <a href="http://mathieujouhet.com">previous version</a></small>
       </footer>
