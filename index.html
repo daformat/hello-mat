@@ -455,6 +455,7 @@
         bottom: calc(100% + 5px + 5px); /* we take a "safety pixel" */
       }
 
+      /* Maximize contrast */
       [tooltip]:focus::before {
         border-top-color: #000;
       }
@@ -462,6 +463,7 @@
         color: #fff;
         background-color: #000;
       }
+
       /* don't show empty tooltips */
       [tooltip='']::before,
       [tooltip='']::after {
