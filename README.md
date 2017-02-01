@@ -22,3 +22,5 @@ If you feel like it helped you, please let me know by
 
 ## Status
 Work in progress.
+
+As of 2017/02/01 I made a nice placeholder with a useless yet fun javascript particles animation.
