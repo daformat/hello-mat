@@ -23,7 +23,5 @@ If you feel like it helped you, please let me know by
 ## Status
 Work in progress.
 
-As of 2017/02/01 I made a nice placeholder with a useless yet fun javascript particles animation:
-![alt text][placeholder]
-
-[placeholder]: https://media.giphy.com/media/26xBD02GC5q7Rw9mo/source.gif "The placeholder as of 2017/02/01"
+As of 2017/02/01 I made a nice placeholder with a useless yet fun javascript particles animation:  
+![The placeholder as of 2017/02/01](https://cloud.githubusercontent.com/assets/1694893/22500152/f2faac82-e862-11e6-8874-fc824a31748c.gif)
