@@ -13,9 +13,7 @@
     <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#388096">
     <meta name="theme-color" content="#ffffff">
     <style>
-
       /* General styling */
-
       html,
       body,
       #root,
@@ -30,7 +28,9 @@
             "Fira Sans", "Droid Sans", "Helvetica Neue", 'Open Sans', sans-serif;
         background-color: #fff;
         font-size: 14px;
+        line-height: 1.77;
         position: relative;
+        min-width: 320px;
       }
 
       h1, h2, h3, h4, h5, h6 {
@@ -45,10 +45,13 @@
       font-weight: bolder;
       }
 
+      small {
+        line-height: 1.42;
+      }
+
       a {
-        color: #455a64;
+        color: #1e88e5;
         text-decoration: none;
-        font-weight: bolder;
       }
 
       a:hover, a:active {
@@ -61,7 +64,7 @@
         font-weight: 400;
         font-size: 1em;
         color: #fff;
-        padding: 0.75em 1.24em;
+        padding: 0.5em 1.24em;
         border-radius: 4px;
         background-color: #2196f3;
         transition: all cubic-bezier(0.13, 1.24, 0.74, 1.21) 0.15s;
@@ -69,15 +72,11 @@
         text-decoration: none;
       }
 
-      .button:hover, .button:focus {
+      .button:hover, .button:focus, .button:active {
         text-decoration: none;
         background-color: #1e88e5;
-        transform: scale(1.042);
         outline: none;
-      }
-      .button:active {
-        background-color: #1e88e5;
-        transform: scale(1);
+        color: #fff;
       }
       /* Landing page styling */
 
@@ -94,6 +93,7 @@
         min-height: 100%;
         overflow-x: hidden;
         overflow-y: auto;
+        padding: 0 0.84em 0;
         /*
           The following is a trick used to make nice looking borders that are
           screen density independent (same border width on retina, yay!).
@@ -115,15 +115,17 @@
         align-items: center;
         text-align: center;
         flex-grow: 1;
-        min-height: 20.42em;
+        margin-top: 6.42em;
+        margin-bottom: 1.84em;
       }
 
 
       .hello .logo {
         background-size: cover;
-        min-width: 4.84em;
-        min-height: 4.95em;
-        animation: grow 0.42s ease-out 1;
+        min-width: 4em;
+        min-height: 4em;
+        opacity: 0;
+        animation: grow 0.42s 0.1s ease-out 1 forwards;
         /*
           Ok, bare with me, we are inlining a vector image here, so the image is
           loaded right away and there's no blinking or popping after the page
@@ -144,25 +146,34 @@
         opacity: 0;
         animation: fadein 1s 0.21s ease 1;
         animation-fill-mode: forwards;
+        line-height: 1;
       }
 
       .hello h2 {
         font-weight: lighter;
         color: #525252;
         font-size: 1.21em;
-        margin-top: 0.5em;
+        margin: 0.5em 0;
         opacity: 0;
         animation: fadein 1s 0.84s ease 1;
         animation-fill-mode: forwards;
       }
 
-      .hello .button {
+
+      .hello > div .button {
         visibility: hidden;
         margin-top: 0.5em;
         font-weight: lighter;
         opacity: 0;
         animation: fadein 1s 2.84s ease 1;
         animation-fill-mode: forwards;
+      }
+      .hello > div .button:hover, .hello > div .button:focus {
+        transform: scale(1.042);
+      }
+
+      .hello > div .button:active {
+        transform: scale(1);
       }
 
       .cursor {
@@ -176,27 +187,31 @@
       }
 
       .hello footer {
-        font-size: 0.9em;
         min-height: 2em;
-        margin-top: -6.42vh;
         margin-bottom: 6.42vh;
-        color: #424242;
-        opacity: 1;
+        color: rgba(42, 42, 42, 0.65);
         text-align: center;
       }
 
       .hello footer p {
-        line-height: 1.42;
         opacity: 0;
-        font-weight: lighter;
-        color: #848484;
         transform: translateY(100%);
         animation: enterbottom 0.42s 1.84s ease-out 1;
         animation-fill-mode: forwards;
+        margin-bottom: 0.42em;
       }
 
       .hello footer p small {
         display: block;
+      }
+
+      .hello .legal {
+        margin-top: 0.42em;
+      }
+
+      .hello .legal a {
+        color: inherit;
+        font-size: 84%;
       }
 
       /* Animation keyframes */
@@ -249,7 +264,16 @@
       /* General media queries, applies to all devices */
 
       @media only screen
-      and (min-height: 484px)
+      and (min-height: 500px)
+      {
+        .hello .logo {
+          min-width: 4.84em;
+          min-height: 4.84em;
+        }
+      }
+
+      @media only screen
+      and (min-height: 684px)
       {
         body {
           font-size: 16px;
@@ -276,10 +300,10 @@
       and (max-device-width: 736px)
       and (orientation: landscape) {
         body {
-          font-size: 15px;
+          font-size: 13px;
         }
         .button {
-          font-size: 16px;
+          font-size: 13px;
         }
       }
 
@@ -291,7 +315,7 @@
         min-height: 100%;
         left: 0;
         width: 100%;
-        background-color: hsla(184, 10%, 42%, 0.15);
+        background-color: #eceff1;
         transition: background-color linear 0.25s;
         overflow: hidden;
       }
@@ -453,7 +477,7 @@
         bottom: calc(100% + 5px + 5px); /* we take a "safety pixel" */
       }
 
-      /* Maximize contrast */
+      /* Maximize contrast on focus, we should refactor this though */
       [tooltip]:focus::before {
         border-top-color: #000;
       }
@@ -468,6 +492,7 @@
           display: none !important;
       }
 
+      /* Tooltip animation */
       @keyframes tooltips {
         50% {
           opacity: 0.42;
@@ -477,9 +502,84 @@
           transform: translate(-50%, 0) scale(1);
         }
       }
+
+      /* Aside styles (for the heads up about cookies) */
+      .cookies-banner {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0.84em;
+        right: 0.84em;
+        -webkit-text-size-adjust: none;
+        order: -1;
+        margin-top: 0.84em;
+        background-color: rgba(255, 255, 255, 0.42);
+        animation: cookiebanner 0.42s ease-out 1;
+        -webkit-backdrop-filter: blur(1.5em);
+      }
+
+      .cookies-banner > small {
+        display: block;
+        padding: 0.84em;
+        font-size: 0.9em;
+        color: rgba(42, 42, 42, 0.75);
+        vertical-align: middle;
+      }
+
+      .cookies-banner a {
+        white-space: nowrap;
+      }
+
+      .cookies-banner .button {
+        margin: 0 0 0 0.25em;
+        padding: 0.42em 1.1em;
+      }
+
+      .cookies-banner strong {
+        font-weight: 500;
+        color: #424242;
+      }
+
+      @keyframes cookiebanner {
+        0% {
+          opacity: 0;
+          transform: translateY(-42%);
+          visibility: visible;
+        }
+        50% {
+          opacity: 0;
+          transform: translateY(-25%);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
     </style>
+    <script type="text/javascript">
+      // https://gist.github.com/kylebarrow/1042026
+      (function(document,navigator,standalone) {
+        // prevents links from apps from oppening in mobile safari
+        // this javascript must be the first script in your <head>
+        if ((standalone in navigator) && navigator[standalone]) {
+          var curnode, location=document.location, stop=/^(a|html)$/i;
+          document.addEventListener('click', function(e) {
+            curnode=e.target;
+            while (!(stop).test(curnode.nodeName)) {
+              curnode=curnode.parentNode;
+            }
+            // Condiditions to do this only on links to your own app
+            // if you want all links, use if('href' in curnode) instead.
+            if('href' in curnode && ( curnode.href.indexOf('http') || ~curnode.href.indexOf(location.host) ) ) {
+              e.preventDefault();
+              location.href = curnode.href;
+            }
+          },false);
+        }
+      })(document,window.navigator,'standalone');
+    </script>
   </head>
-  <body>
+  <body onload='showCookieBannerIfNeeded()'>
     <section class="hello">
       <div>
         <span class="logo"></span>
@@ -489,14 +589,18 @@
       </div>
       <footer>
         <ul class="social-profiles">
-          <li><a tooltip="I tweet, therefore I am" title="@daformat on twitter" href="https://twitter.com/daformat" target="_blank" class="social-icon icon-twitter"></a></li>
-          <li><a tooltip="Pushing pixels on dribbble" title="@daformat on dribbble" href="https://dribbble.com/daformat" target="_blank" class="social-icon icon-dribbble"></a></li>
-          <li><a tooltip="Codito ergo sum (git repos)" title="@daformat on github" href="https://github.com/daformat/" target="_blank" class="social-icon icon-github"></a></li>
-          <li><a tooltip="Alternative to github, occasionally deletes production data (pun intended)" title="@daformat on gitlab" href="https://gitlab.com/daformat/" target="_blank" class="social-icon icon-gitlab"></a></li>
-          <li><a tooltip="Tutorials, articles and recommended reads" title="@daformat on medium" href="https://medium.com/@daformat" target="_blank" class="social-icon icon-medium"></a></li>
+          <li><a rel="noopener noreferrer" tooltip="I tweet, therefore I am" title="@daformat on twitter" href="https://twitter.com/daformat" target="_blank" class="social-icon icon-twitter"></a></li>
+          <li><a rel="noopener noreferrer" tooltip="Pushing pixels on dribbble" title="@daformat on dribbble" href="https://dribbble.com/daformat" target="_blank" class="social-icon icon-dribbble"></a></li>
+          <li><a rel="noopener noreferrer" tooltip="Codito ergo sum (git repos)" title="@daformat on github" href="https://github.com/daformat/" target="_blank" class="social-icon icon-github"></a></li>
+          <li><a rel="noopener noreferrer" tooltip="Alternative to github, occasionally deletes production data (pun intended)" title="@daformat on gitlab" href="https://gitlab.com/daformat/" target="_blank" class="social-icon icon-gitlab"></a></li>
+          <li><a rel="noopener noreferrer" tooltip="Tutorials, articles and recommended reads" title="@daformat on medium" href="https://medium.com/@daformat" target="_blank" class="social-icon icon-medium"></a></li>
         </ul>
-        <p><small>New website coming soon, <a href="http://mathieujouhet.com">view previous version</a></small>
+        <p><small>New website coming soon, <a href="http://mathieujouhet.com">view previous version</a></small></p>
+        <p class="legal"><small><a href="./legal">Legal notices</a></small></p>
       </footer>
+      <aside class="cookies-banner">
+        <small>We're using cookies, <a href="./legal#cookies">see why and how to refuse them</a> <a class="button" href="#" onclick="acceptCookies(event)">Ok</a></small>
+      </aside>
     </section>
     <div class="background">
     </div>
@@ -509,6 +613,50 @@
       console.log('Drop me a note:', 'mat.jouhet -at- gmail -dot- com'.replace(/\s\-at\-\s/g, '@').replace(/\s\-dot\-\s/g, '.'))
       console.log('Or give me a call: +33 680 159 157');
 
+      /* Cookies */
+      function createCookie(name, value, days) {
+        var expires;
+        if (days) {
+          var date = new Date();
+          date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+          expires = '; expires=' + date.toGMTString();
+        }
+        else {
+          expires = '';
+        }
+        document.cookie = name + '=' + value + expires + '; path=/';
+      }
+
+      function getCookie(c_name) {
+        if (document.cookie.length > 0) {
+          c_start = document.cookie.indexOf(c_name + '=');
+          if (c_start != -1) {
+            c_start = c_start + c_name.length + 1;
+            c_end = document.cookie.indexOf(';', c_start);
+            if (c_end == -1) {
+              c_end = document.cookie.length;
+            }
+            return unescape(document.cookie.substring(c_start, c_end));
+          }
+        }
+        return '';
+      }
+
+      function acceptCookies(e) {
+        e.preventDefault();
+        console.log('You accepted our cookies, yummy!');
+        createCookie('user-accepted-cookies', true, 13 * 365);
+        document.querySelector('.cookies-banner').remove();
+      }
+
+      function showCookieBannerIfNeeded() {
+        var acceptedCookies = getCookie('user-accepted-cookies');
+        if(acceptedCookies !== 'true') {
+          document.querySelector('.cookies-banner').style.display = 'block';
+        }
+      }
+
+      /* Background and particles animation */
       var playing = false;
       var fps = 4;
       var frequency = .3;
