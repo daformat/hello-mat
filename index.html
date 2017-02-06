@@ -508,10 +508,10 @@
         display: none;
         position: absolute;
         top: 0;
-        left: 0;
+        left: 0.84em;
+        right: 0.84em;
         -webkit-text-size-adjust: none;
         order: -1;
-        width: 100%;
         margin-top: 0.84em;
         background-color: rgba(255, 255, 255, 0.42);
         animation: cookiebanner 0.42s ease-out 1;
@@ -556,6 +556,28 @@
         }
       }
     </style>
+    <script type="text/javascript">
+      // https://gist.github.com/kylebarrow/1042026
+      (function(document,navigator,standalone) {
+        // prevents links from apps from oppening in mobile safari
+        // this javascript must be the first script in your <head>
+        if ((standalone in navigator) && navigator[standalone]) {
+          var curnode, location=document.location, stop=/^(a|html)$/i;
+          document.addEventListener('click', function(e) {
+            curnode=e.target;
+            while (!(stop).test(curnode.nodeName)) {
+              curnode=curnode.parentNode;
+            }
+            // Condiditions to do this only on links to your own app
+            // if you want all links, use if('href' in curnode) instead.
+            if('href' in curnode && ( curnode.href.indexOf('http') || ~curnode.href.indexOf(location.host) ) ) {
+              e.preventDefault();
+              location.href = curnode.href;
+            }
+          },false);
+        }
+      })(document,window.navigator,'standalone');
+    </script>
   </head>
   <body onload='showCookieBannerIfNeeded()'>
     <section class="hello">
