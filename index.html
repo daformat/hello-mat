@@ -28,6 +28,7 @@
             "Fira Sans", "Droid Sans", "Helvetica Neue", 'Open Sans', sans-serif;
         background-color: #fff;
         font-size: 14px;
+        line-height: 1.77;
         position: relative;
         min-width: 320px;
       }
@@ -63,7 +64,7 @@
         font-weight: 400;
         font-size: 1em;
         color: #fff;
-        padding: 0.75em 1.24em;
+        padding: 0.5em 1.24em;
         border-radius: 4px;
         background-color: #2196f3;
         transition: all cubic-bezier(0.13, 1.24, 0.74, 1.21) 0.15s;
@@ -114,14 +115,15 @@
         align-items: center;
         text-align: center;
         flex-grow: 1;
-        min-height: 18.42em;
+        margin-top: 6.42em;
+        margin-bottom: 1.84em;
       }
 
 
       .hello .logo {
         background-size: cover;
-        min-width: 3.84em;
-        min-height: 3.84em;
+        min-width: 4em;
+        min-height: 4em;
         opacity: 0;
         animation: grow 0.42s 0.1s ease-out 1 forwards;
         /*
@@ -144,17 +146,19 @@
         opacity: 0;
         animation: fadein 1s 0.21s ease 1;
         animation-fill-mode: forwards;
+        line-height: 1;
       }
 
       .hello h2 {
         font-weight: lighter;
         color: #525252;
         font-size: 1.21em;
-        margin-top: 0.5em;
+        margin: 0.5em 0;
         opacity: 0;
         animation: fadein 1s 0.84s ease 1;
         animation-fill-mode: forwards;
       }
+
 
       .hello > div .button {
         visibility: hidden;
@@ -248,14 +252,6 @@
       }
 
       /* General media queries, applies to all devices */
-      @media only screen
-      and (min-height: 400px)
-      {
-        .hello .logo {
-          min-width: 4.42em;
-          min-height: 4.42em;
-        }
-      }
 
       @media only screen
       and (min-height: 500px)
@@ -500,6 +496,8 @@
       /* Aside styles (for the heads up about cookies) */
       .cookies-banner {
         display: none;
+        position: fixed;
+        top: 0;
         -webkit-text-size-adjust: none;
         order: -1;
         width: 100%;
@@ -567,7 +565,7 @@
         <p><small>New website coming soon, <a href="http://mathieujouhet.com">view previous version</a></small>
       </footer>
       <aside class="cookies-banner">
-        <small>We're using cookies, <a href="./cookies/">see why and how to refuse them</a> <a class="button" href="#" onclick="acceptCookies(event)">Ok</a></small>
+        <small>We're using cookies, <a href="./legal.html#cookies">see why and how to refuse them</a> <a class="button" href="#" onclick="acceptCookies(event)">Ok</a></small>
       </aside>
     </section>
     <div class="background">
