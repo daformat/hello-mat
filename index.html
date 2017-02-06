@@ -566,7 +566,7 @@
         <p><small>New website coming soon, <a href="http://mathieujouhet.com">view previous version</a></small>
       </footer>
       <aside class="cookies-banner">
-        <small>We're using cookies, <a href="./cookies/">see why and how to refuse them</a> <a class="button" href="#" onclick="acceptCookies()">Ok</a></small>
+        <small>We're using cookies, <a href="./cookies/">see why and how to refuse them</a> <a class="button" href="#" onclick="acceptCookies(event)">Ok</a></small>
       </aside>
     </section>
     <div class="background">
@@ -609,7 +609,8 @@
         return '';
       }
 
-      function acceptCookies() {
+      function acceptCookies(e) {
+        e.preventDefault();
         console.log('You accepted our cookies, yummy!');
         createCookie('user-accepted-cookies', true, 13 * 365);
         document.querySelector('.cookies-banner').remove();
