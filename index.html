@@ -505,6 +505,7 @@
         width: 100%;
         margin-top: 0.84em;
         background-color: rgba(255, 255, 255, 0.42);
+        animation: cookiebanner 0.42s ease-out 1;
         -webkit-backdrop-filter: blur(1.5em);
       }
 
@@ -528,6 +529,22 @@
       .cookies-banner strong {
         font-weight: 500;
         color: #424242;
+      }
+
+      @keyframes cookiebanner {
+        0% {
+          opacity: 0;
+          transform: translateY(-42%);
+          visibility: visible;
+        }
+        50% {
+          opacity: 0;
+          transform: translateY(-25%);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
     </style>
   </head>
