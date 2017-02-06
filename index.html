@@ -198,10 +198,20 @@
         transform: translateY(100%);
         animation: enterbottom 0.42s 1.84s ease-out 1;
         animation-fill-mode: forwards;
+        margin-bottom: 0.42em;
       }
 
       .hello footer p small {
         display: block;
+      }
+
+      .hello .legal {
+        margin-top: 0.42em;
+      }
+
+      .hello .legal a {
+        color: inherit;
+        font-size: 84%;
       }
 
       /* Animation keyframes */
@@ -563,7 +573,8 @@
           <li><a rel="noopener noreferrer" tooltip="Alternative to github, occasionally deletes production data (pun intended)" title="@daformat on gitlab" href="https://gitlab.com/daformat/" target="_blank" class="social-icon icon-gitlab"></a></li>
           <li><a rel="noopener noreferrer" tooltip="Tutorials, articles and recommended reads" title="@daformat on medium" href="https://medium.com/@daformat" target="_blank" class="social-icon icon-medium"></a></li>
         </ul>
-        <p><small>New website coming soon, <a href="http://mathieujouhet.com">view previous version</a></small>
+        <p><small>New website coming soon, <a href="http://mathieujouhet.com">view previous version</a></small></p>
+        <p class="legal"><small><a href="./legal">Legal notices</a></small></p>
       </footer>
       <aside class="cookies-banner">
         <small>We're using cookies, <a href="./legal#cookies">see why and how to refuse them</a> <a class="button" href="#" onclick="acceptCookies(event)">Ok</a></small>
