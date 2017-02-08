@@ -1,16 +1,16 @@
 <svg id="cookie" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 242 208">
   <defs>
     <filter id="drop_shadow" x="0" y="0" width="200%" height="200%">
-      <feOffset result="offOut" in="SourceAlpha" dy="2"/>
-      <feGaussianBlur result="blurOut" in="offOut" stdDeviation="1"/>
-      <feBlend in="SourceGraphic" in2="blurOut"/>
-      <feComponentTransfer>
-        <feFuncA type="linear" slope=".2"/>
-      </feComponentTransfer>
-      <feMerge>
-        <feMergeNode/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+      <feOffset result="offOut" in="SourceGraphic" dy="2" />
+      <feColorMatrix result = "matrixOut" in = "offOut" type = "matrix" values = "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2 0"/>
+      <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="1" />
+      <feBlend in="SourceGraphic" in2="blurOut" mode="normal" />
+    </filter>
+    <filter id="drop_shadow2" x="0" y="0" width="200%" height="200%">
+      <feOffset result="offOut" in="SourceGraphic" dy="0.5" />
+      <feColorMatrix result = "matrixOut" in = "offOut" type = "matrix" values = "0.2 0 0 0 0 0 0.2 0 0 0 0 1 0.1 0 0 0 0 0 0.4 0"/>
+      <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="1" />
+      <feBlend in="SourceGraphic" in2="blurOut" mode="normal" />
     </filter>
   </defs>
   <style>
@@ -34,7 +34,7 @@
     </radialGradient>
     <path id="inner" class="st3" d="M120.7 20.57c55.8 0 101.2 34.03 101.2 75.87 0 18.5-8.8 32.36-26.92 42.32-17.82 9.8-43.5 14.97-74.3 14.97h-3.44l-2.97 1.83-36.08 22.46 8.7-26.13-12.88-3c-36.2-8.48-54.54-26.13-54.54-52.46 0-41.84 45.4-75.88 101.2-75.88"/>
     <g id="highlights">
-      <path class="st4" d="M86.9 151.9l-6.15-6.14-12.87-3.02c-16.5-3.85-29.26-9.62-38.3-17.24 8.95 10.72 23.78 18.55 44.44 23.4l12.87 3zM198.56 48.02c10.86 12.1 17.2 26.64 17.2 42.28 0 18.52-8.8 32.36-26.92 42.32-17.82 9.8-43.5 14.97-74.3 14.97L78.2 178l36.07-22.47 2.97-1.82h3.45c30.77 0 56.46-5.18 74.28-14.97 18.12-9.96 26.93-23.8 26.93-42.32 0-18.4-8.77-35.28-23.34-48.42z"/>
+      <path style="opacity:0.75" class="st4" d="M86.9 151.9l-6.15-6.14-12.87-3.02c-16.5-3.85-29.26-9.62-38.3-17.24 8.95 10.72 23.78 18.55 44.44 23.4l12.87 3zM198.56 48.02c10.86 12.1 17.2 26.64 17.2 42.28 0 18.52-8.8 32.36-26.92 42.32-17.82 9.8-43.5 14.97-74.3 14.97L78.2 178l36.07-22.47 2.97-1.82h3.45c30.77 0 56.46-5.18 74.28-14.97 18.12-9.96 26.93-23.8 26.93-42.32 0-18.4-8.77-35.28-23.34-48.42z"/>
       <linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="19.48" y1="81.82" x2="182.71" y2="81.82">
         <stop offset=".09" stop-color="#EFF8F8"/>
         <stop offset=".71" stop-color="#C8EAFA"/>
@@ -49,7 +49,7 @@
       <path class="st6" d="M93.68 145.56l-6.8 6.33c-.13-.04-.86 3.06-1 3.02l-7.7 23.1 15.5-32.46z"/>
     </g>
   </g>
-  <g id="sprinkles" filter="url(#drop_shadow)">
+  <g id="sprinkles" filter="url(#drop_shadow2)">
     <linearGradient id="SVGID_3_" gradientUnits="userSpaceOnUse" x1="454.2" y1="292.42" x2="457.3" y2="292.42" gradientTransform="rotate(63.5 469.582 -35.39)">
       <stop offset="0" stop-color="#ACCF49"/>
       <stop offset=".48" stop-color="#70BC53"/>
