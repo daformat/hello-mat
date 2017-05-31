@@ -661,7 +661,8 @@
 
       /* Background and particles animation */
       var playing = false;
-      var fps = 4;
+      var fps = 5;
+      var particlesFps = 80;
       var frequency = .3;
       var colors = {background: [], main: []};
       var currentColor = 0;
@@ -818,7 +819,7 @@
             for (var i = 0; i < particles.length; i++) {
               particles[i].update();
             }
-          }, 1000 / 60);
+          }, 1000 / particlesFps);
         }
       }
 
@@ -835,7 +836,7 @@
              particles.push(new Particle({
               color: randomColor,
               radius: Math.floor(Math.random() * 10) + 15,
-              speed: Math.random() * 5 + 5,
+              speed: Math.random() * 5 + 3,
               position: {
                 x: Math.floor(Math.random() * window.innerWidth),
                 y: Math.floor(Math.random() * window.innerHeight) - window.innerHeight - 142
