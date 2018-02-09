@@ -661,7 +661,7 @@
 
       /* Background and particles animation */
       var playing = false;
-      var fps = 5;
+      var fps = 3;
       var particlesFps = 60;
       var frequency = .3;
       var colors = {background: [], main: []};
@@ -670,8 +670,10 @@
       var timeouts = {};
       var particles = [];
       var particleCount = 42;
+      var prevRule;
 
-      function Particle(props, parent) {
+      function Particle(props, parent, id) {
+        this.id = id;
         this.color = props.color || "#848484";
         this.radius = props.radius || 42;
         this.speed = props.speed || 1;
@@ -691,6 +693,7 @@
         this.position = props.position || defaultPos;
         this.rotation = props.rotation || defaultRotation;
         this.element = document.createElement('span');
+        this.element.className = 'particle-' + id;
         this.element.style.height = this.radius * 2 + 'px';
         this.element.style.width = this.radius * 2 + 'px';
         this.element.style.borderRadius = '100%';
@@ -698,12 +701,13 @@
         this.element.style.position = 'absolute';
         this.element.style.left = this.position.x + 'px';
         this.element.style.top = '0';
+        this.element.style.backgroundColor = this.color;
 
         this.update();
         this.attachToDOMelement(parent || document.body);
       }
 
-      Particle.prototype.update = function() {
+      Particle.prototype.update = function(id) {
         this.rotation.x = (this.rotation.x + this.rotationSpeed.x) % 360;
         this.rotation.y = (this.rotation.y + this.rotationSpeed.y) % 360;
         this.rotation.z = (this.rotation.z + this.rotationSpeed.z) % 360;
@@ -714,9 +718,8 @@
           this.position.y = -this.radius;
         }
 
-        // Apply new style to html element
-        this.element.style.backgroundColor = this.color;
-        this.element.style.transform = 'translateY(' + this.position.y + 'px) rotateX(' + this.rotation.x + 'deg) rotateY(' + this.rotation.y + 'deg) rotateZ(' + this.rotation.z + 'deg)';
+        var transformStr = 'translateY(' + this.position.y + 'px) rotateX(' + this.rotation.x + 'deg) rotateY(' + this.rotation.y + 'deg) rotateZ(' + this.rotation.z + 'deg)';
+        this.element.style.transform = transformStr;
       }
 
       Particle.prototype.attachToDOMelement = function(parent) {
@@ -757,9 +760,25 @@
         return colors;
       }
 
+      function addCSSRule(sheet, selector, rules, index) {
+        // console.log('Adding css rules', arguments);
+        sheet.addRule(selector, rules);
+        sheet.insertRule(selector + "{" + rules + "}", index);
+      };
+
       function changeBackgroundColor(color) {
-        if(!color) color = '';
-        document.querySelector('.background').style.backgroundColor = color;
+        if(!color) color = 'transparent';
+        if (prevRule) {
+          document.styleSheets[0].removeRule(0);
+        }
+        addCSSRule(
+          document.styleSheets[0],
+          '.background',
+          'background-color: ' + color,
+          0
+        );
+
+        // document.querySelector('.background').style.backgroundColor = color;
       }
 
       // The following function is a polyfill (something that ensures consistency
@@ -817,7 +836,7 @@
           timeouts.particles = setTimeout(function() {
             requestAnimationFrame(animateParticles);
             for (var i = 0; i < particles.length; i++) {
-              particles[i].update();
+              particles[i].update(i);
             }
           }, 1000 / particlesFps);
         }
@@ -836,12 +855,12 @@
              particles.push(new Particle({
               color: randomColor,
               radius: Math.floor(Math.random() * 10) + 15,
-              speed: Math.random() * 5 + 3,
+              speed: Math.round(Math.random() * 4 + 3),
               position: {
                 x: Math.floor(Math.random() * window.innerWidth),
                 y: Math.floor(Math.random() * window.innerHeight) - window.innerHeight - 142
               }
-            }, document.querySelector('.background')));
+            }, document.querySelector('.background'), i));
           }
         }
       }
