@@ -1,0 +1,64 @@
+@use 'lib/mixins';
+
+@media all and (display-mode: standalone) {
+  html {
+    margin: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+    min-height: -webkit-fill-available; // stylelint-disable-line
+    position: relative;
+  }
+
+  // Make the page content smoothly disappear below header by using an opaque pseudo
+  // the size of the status bar, and with a box shadow to make the content disappear as it approach it
+  // (background-image gradient can't animate, hence the use of box-shadow)
+  @media screen and (orientation: portrait) {
+    body {
+      &::before {
+        background-color: var(--color-background);
+        background-position: 100% 0;
+        box-shadow: 0 0 0 var(--header-height)
+            var(--color-header-frosted-background-translucent),
+          0 0 var(--header-height) var(--color-background),
+          0 0 var(--header-height) var(--color-background);
+        content: '';
+        height: env(safe-area-inset-top);
+        left: 0;
+        position: fixed;
+        right: 0;
+        top: 0;
+        transition: mixins.theme-transition(background-color, box-shadow);
+        z-index: 4;
+
+        @include mixins.remove-transition;
+      }
+    }
+
+    // Deal with the iOS status bar in light mode by creating an out of viewport box with
+    // a shadow to create a transition to a darker background color for the status bar content
+    // to be legible (iOS only give `black-translucent` option if you want the status bar transparent
+    // while still displaying its content)
+    body {
+      &::after {
+        --c: rgba(42, 40, 34, 0.3);
+        background-color: rgba(0, 0, 0, 0.5);
+        box-shadow: 0 0 30px var(--c), 0 0 50px var(--c), 0 0 60px var(--c),
+          0 0 70px var(--c), 0 0 80px var(--c), 0 0 90px var(--c);
+        content: '';
+        height: 64px;
+        left: -8px;
+        position: fixed;
+        right: -8px;
+        top: 0;
+        transform: translateY(-100%);
+        z-index: 4;
+      }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        &::after {
+          display: none;
+        }
+      }
+    }
+  }
+}

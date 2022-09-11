@@ -1,0 +1,137 @@
+// Hello fellow developer, these are the scss mixins we use
+// ask questions about the mixins you don't understand
+
+// -----------------
+// Responsive mixins
+// -----------------
+// Favor a mobile first approach where the base styles should be the ones applying
+// to the smallest screen and using media queries to qualify styles for larger devices
+
+@mixin above-medium() {
+  @media (min-width: 859px) {
+    @content;
+  }
+}
+
+@mixin up-to-medium() {
+  @media (max-width: 858px) {
+    @content;
+  }
+}
+
+@mixin above-large() {
+  @media (min-width: 1181px) {
+    @content;
+  }
+}
+
+@mixin above-extra-large() {
+  @media (min-width: 1640px) {
+    @content;
+  }
+}
+
+@mixin height-above-medium() {
+  @media (min-height: 681px) {
+    @content;
+  }
+}
+
+// ------------------------
+// Interaction media mixins
+// ------------------------
+// Use this to conditionally apply styles based on the pointing + hovering capabilities
+// Again, prefer a mobile-first approach and qualify styles for precise devices using `device-with-precise-input`
+
+// Target "precise" device with hover capability (~ mouse enabled computers)
+// we also only target if the screen is large
+@mixin device-with-precise-input {
+  @media (hover: hover) and (pointer: fine) {
+    @include above-medium {
+      @content;
+    }
+  }
+}
+
+// Target "imprecise" devices:
+// - ☝️Prefer using `device-with-precise-input` and a mobile-first approach
+// - A device is "imprecise" when it doesn't have hover capability, or the pointer is coarse
+@mixin device-with-imprecise-input {
+  // smartphones, touchscreens,
+  // stylus-based screens
+  // Nintendo Wii controller, Microsoft Kinect
+  @media (hover: none) and (pointer: coarse),
+    (hover: none) and (pointer: fine),
+    (hover: hover) and (pointer: coarse) {
+    @content;
+  }
+}
+
+// ----------
+// UI helpers
+// ----------
+
+@mixin disable-selection() {
+  -webkit-user-select: none; // stylelint-disable-line
+  user-select: none;
+}
+
+@mixin restore-selection() {
+  -webkit-user-select: auto; // stylelint-disable-line
+  user-select: auto;
+}
+
+// Make an element visually hidden while keeping it available for screen readers or keyboard events
+@mixin visually-hidden() {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+// Takes an image and use is as a mask so we can, for instance,
+// color it by changing the `background-color` property
+@mixin mask-image($url) {
+  --image: #{$url};
+  mask: var(--image) no-repeat 50% 50%;
+  -webkit-mask: var(--image) no-repeat 50% 50%; // stylelint-disable-line
+  mask-size: contain;
+  -webkit-mask-size: contain; // stylelint-disable-line
+}
+
+// ------------------
+// Transition helpers
+// ------------------
+
+// Returns comma separated transition values for each given css property to use for theme transitions
+// ex: `transition: mixins.theme-transition(background-color, color, opacity);`
+@function theme-transition($properties...) {
+  $transitions: ();
+  @each $property in $properties {
+    $transitions: append($transitions, $property 0.2s ease-in-out, comma);
+  }
+  @return $transitions;
+}
+
+// Prefers reduced motion
+// TODO - we should probably move to the opposite approach where we only add transitions
+//  if accepted / not prevented by the user preferences
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
+// Remove all transitions if user prefers reduced motion
+// TODO - we should probably move to the opposite approach where we only add transitions
+//  if accepted / not prevented by the user preferences
+@mixin remove-transition {
+  @include reduced-motion {
+    transition: none;
+  }
+}

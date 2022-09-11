@@ -1,6 +1,7 @@
 import Head from 'next/head'
 import { ReactNode } from 'react'
 import styles from './Layout.module.scss'
+import { StartupImages } from './StartupImages'
 
 export const Layout = ({ children }: { children: ReactNode }) => (
   <>
@@ -35,6 +36,16 @@ export const Layout = ({ children }: { children: ReactNode }) => (
         content="#0d0a15"
         media="(prefers-color-scheme: dark)"
       />
+      <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="black-translucent"
+      />
+      <meta
+        name="viewport"
+        content="viewport-fit=cover, user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <StartupImages />
     </Head>
     <div className={styles.layout}>
       <svg
