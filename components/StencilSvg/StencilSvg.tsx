@@ -265,6 +265,7 @@ export const StencilSvgAnimation = () => {
         {paths.map((path, i) => (
           <li key={path.name}>
             <button
+              aria-label={path.name}
               onMouseMove={() => {
                 if (index !== i) {
                   if (timeoutRef.current) {
