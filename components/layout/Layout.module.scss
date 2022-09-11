@@ -5,9 +5,14 @@
   flex-grow: 1;
   justify-content: center;
   min-height: 100vh;
-  min-height: 100dvh;
   position: relative;
   width: 100%;
+
+  /* Avoid Chrome to see Safari hack */
+  @supports (-webkit-touch-callout: none) {
+    /* The hack for Safari */
+    min-height: 100dvh;
+  }
 }
 
 .logo {
