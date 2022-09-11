@@ -1,5 +1,9 @@
 @use './lib/colors.scss';
 
+* {
+  box-sizing: border-box;
+}
+
 html,
 body {
   padding: 0;
@@ -10,6 +14,7 @@ body {
 
 body {
   background-color: var(--color-background);
+  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
 a {

@@ -38,18 +38,32 @@
   }
 }
 
+.container {
+  align-items: center;
+  display: flex;
+  flex-grow: 1;
+  justify-content: center;
+  // max-height: 42em;
+}
+
 .wrapper {
+  margin-top: clamp(0em, 5vh, 8em);
   position: relative;
+
+  svg {
+    max-width: 84vw;
+    max-height: 60vh;
+  }
 }
 
 .svg {
   --duration: 1000ms;
   --delay-factor: 0.5;
   animation: svg-in 1s ease-in-out both;
-  transition: transform 0.2s ease-in-out;
-  position: absolute;
   left: 0;
+  position: absolute;
   top: 0;
+  transition: transform 0.2s ease-in-out;
 
   &.svgIn {
     position: initial;
@@ -94,30 +108,55 @@
 }
 
 .controls {
+  align-items: center;
+  background-color: var(--color-toolbar-background);
+  border-radius: 14px;
+  box-shadow: 0px 1px 12px var(--color-shadow-1);
   display: flex;
   flex-direction: row;
-  margin: 0;
-  padding: 0;
+  gap: 4px;
+  justify-content: center;
+  margin: 0 0 clamp(42px, 10vh, 84px);
+  padding: 7px 7px;
+  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
 
   li {
+    display: inline-flex;
     list-style-type: none;
     margin: 0;
     padding: 0;
 
     button {
-      border-radius: 6px;
-      display: inline-block;
       appearance: none;
-      background-color: transparent;
+      background-color: var(--color-toolbar-button-background);
       border: 0;
+      border-radius: 6px;
+      color: var(--color-toolbar-button-color);
+      display: inline-block;
+      height: 3.3em;
+      padding: 0;
+      transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out,
+        width 0.2s ease-in-out, height 0.2s ease-in-out;
+      width: 3.3em;
 
       &:hover {
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: var(--color-toolbar-button-background-hover);
+        color: var(--color-toolbar-button-color-hover);
+      }
+
+      &:active {
+        background-color: var(--color-toolbar-button-background-active);
+        color: var(--color-toolbar-button-color-active);
       }
 
       svg {
-        display: inline-block;
-        width: 2em;
+        transform: scale(0.8);
+      }
+
+      @media (min-width: 900px) {
+        height: 4.2em;
+        width: 4.2em;
       }
     }
   }

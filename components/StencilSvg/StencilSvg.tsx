@@ -62,14 +62,14 @@ const paths = [
       },
     ],
   },
-  {
-    name: 'Cross',
-    paths: [
-      {
-        d: 'M117.485 55.6154L115.563 57.5368C107.032 66.0679 93.3135 66.1063 84.744 57.6137L82.592 55.5386C75.0985 48.1219 63.0705 48.1603 55.6154 55.6154C48.1988 63.0321 48.1988 75.0985 55.6154 82.5152L57.5368 84.4366C66.0679 92.9676 66.1063 106.687 57.6137 115.256L55.5386 117.408C48.1219 124.901 48.1603 136.93 55.6154 144.385C63.0705 151.84 75.0985 151.878 82.592 144.461L84.744 142.386C93.3135 133.894 107.032 133.932 115.563 142.463L117.485 144.385C124.901 151.801 136.968 151.801 144.385 144.385C151.84 136.93 151.878 124.901 144.461 117.408L142.386 115.256C133.894 106.687 133.932 92.9676 142.463 84.4366L144.385 82.5152C151.801 75.0985 151.801 63.0321 144.385 55.6154C136.968 48.1988 124.901 48.1988 117.485 55.6154Z',
-      },
-    ],
-  },
+  // {
+  //   name: 'Cross',
+  //   paths: [
+  //     {
+  //       d: 'M117.485 55.6154L115.563 57.5368C107.032 66.0679 93.3135 66.1063 84.744 57.6137L82.592 55.5386C75.0985 48.1219 63.0705 48.1603 55.6154 55.6154C48.1988 63.0321 48.1988 75.0985 55.6154 82.5152L57.5368 84.4366C66.0679 92.9676 66.1063 106.687 57.6137 115.256L55.5386 117.408C48.1219 124.901 48.1603 136.93 55.6154 144.385C63.0705 151.84 75.0985 151.878 82.592 144.461L84.744 142.386C93.3135 133.894 107.032 133.932 115.563 142.463L117.485 144.385C124.901 151.801 136.968 151.801 144.385 144.385C151.84 136.93 151.878 124.901 144.461 117.408L142.386 115.256C133.894 106.687 133.932 92.9676 142.463 84.4366L144.385 82.5152C151.801 75.0985 151.801 63.0321 144.385 55.6154C136.968 48.1988 124.901 48.1988 117.485 55.6154Z',
+  //     },
+  //   ],
+  // },
 ]
 
 type StencilSvgPath = { d: string; direction?: string }
@@ -231,7 +231,7 @@ export const StencilSvgAnimation = () => {
     timeoutRef.current = setTimeout(() => {
       const nextIndexInSet = (index + 1) % paths.length
       setIndex(nextIndexInSet)
-    }, 5000)
+    }, 3500)
     return () => {
       clearTimeout(timeoutRef.current)
     }
@@ -248,18 +248,20 @@ export const StencilSvgAnimation = () => {
   console.log({ index, prevIndex })
   return (
     <>
-      <div className={styles.wrapper} key="wrapper" ref={wrapperRef}>
-        {paths.map((path, i) => (
-          <StencilSvg
-            enter={!started.current}
-            key={path.name}
-            transition={i === index ? 'in' : 'out'}
-            width={300}
-            height={300}
-            path={path}
-            display={i === index || (started.current && i === prevIndex)}
-          />
-        ))}
+      <div className={styles.container}>
+        <div className={styles.wrapper} key="wrapper" ref={wrapperRef}>
+          {paths.map((path, i) => (
+            <StencilSvg
+              enter={!started.current}
+              key={path.name}
+              transition={i === index ? 'in' : 'out'}
+              width={442}
+              height={442}
+              path={path}
+              display={i === index || (started.current && i === prevIndex)}
+            />
+          ))}
+        </div>
       </div>
       <ul className={styles.controls}>
         {paths.map((path, i) => (
