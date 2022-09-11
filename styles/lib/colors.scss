@@ -1,0 +1,23 @@
+@use './palette.scss';
+
+@mixin light-theme {
+  --color-background: #{palette.$light-desert-sky-1};
+}
+
+@mixin dark-theme {
+  --color-background: #{palette.$dark-desert-sky-1};
+}
+
+:root {
+  @include light-theme();
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    @include dark-theme();
+
+    html {
+      color-scheme: dark;
+    }
+  }
+}
