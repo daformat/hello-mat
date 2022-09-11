@@ -145,13 +145,11 @@ const createThemedStartupImages = (startupImages: StartupImage[]) =>
     {
       ...imageInfos,
       orientation: 'portrait',
-      mode: Theme.dark,
       image: imagePath(imageInfos.portrait),
     },
     {
       ...imageInfos,
       orientation: 'landscape',
-      mode: Theme.dark,
       image: imagePath(imageInfos.landscape),
     },
   ])
@@ -163,19 +161,24 @@ export const StartupImages = ({
   startupImages = defaultStartupImages,
 }: {
   startupImages?: StartupImage[]
-}) => (
-  <>
-    {createThemedStartupImages(startupImages).map((startupImageInfos) => {
-      const { width, height, pixel_ratio, orientation, image, mode } =
-        startupImageInfos
-      return (
-        <link
-          key={`${orientation}-${mode}-${width}x${height}@${pixel_ratio}x`}
-          rel="apple-touch-startup-image"
-          media={`screen and (prefers-color-scheme: ${mode}) and (device-width: ${width}px) and (device-height: ${height}px) and (-webkit-device-pixel-ratio: ${pixel_ratio}) and (orientation: ${orientation})`}
-          href={image}
-        />
-      )
-    })}
-  </>
-)
+}) => {
+  const themedImages = createThemedStartupImages(startupImages)
+  console.log(startupImages.length, themedImages.length)
+  return (
+    <>
+      {createThemedStartupImages(startupImages).map((startupImageInfos) => {
+        const { width, height, pixel_ratio, orientation, image } =
+          startupImageInfos
+        console.log(image)
+        return (
+          <link
+            key={`${image}`}
+            rel="apple-touch-startup-image"
+            media={`screen and (device-width: ${width}px) and (device-height: ${height}px) and (-webkit-device-pixel-ratio: ${pixel_ratio}) and (orientation: ${orientation})`}
+            href={image}
+          />
+        )
+      })}
+    </>
+  )
+}

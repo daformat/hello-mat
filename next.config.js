@@ -14,6 +14,9 @@ const nextConfig = {
   sassOptions: {
     includePaths: [path.join(__dirname, 'styles')],
   },
+  experimental: {
+    optimizeCss: true,
+  },
 }
 
 const withMDX = require('@next/mdx')({
