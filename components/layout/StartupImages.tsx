@@ -1,3 +1,4 @@
+import Head from 'next/head'
 import React from 'react'
 
 enum Theme {
@@ -165,11 +166,11 @@ export const StartupImages = ({
   const themedImages = createThemedStartupImages(startupImages)
   console.log(startupImages.length, themedImages.length)
   return (
-    <>
-      {createThemedStartupImages(startupImages).map((startupImageInfos) => {
+    <Head>
+      {themedImages.map((startupImageInfos, i) => {
         const { width, height, pixel_ratio, orientation, image } =
           startupImageInfos
-        console.log(image)
+        console.log(i, image)
         return (
           <link
             key={`${image}`}
@@ -179,6 +180,6 @@ export const StartupImages = ({
           />
         )
       })}
-    </>
+    </Head>
   )
 }

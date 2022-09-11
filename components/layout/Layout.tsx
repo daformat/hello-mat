@@ -45,8 +45,8 @@ export const Layout = ({ children }: { children: ReactNode }) => (
         name="viewport"
         content="viewport-fit=cover, user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1"
       />
-      <StartupImages />
     </Head>
+    <StartupImages />
     <div className={styles.layout}>
       <svg
         className={styles.logo}
