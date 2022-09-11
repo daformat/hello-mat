@@ -120,11 +120,6 @@ export const StencilSvg = ({
               getRelativeDistance: () => 3,
             },
             {
-              intersections: ~~((totalLength / 8) * factor),
-              getRadius: () => ~~(Math.random() ** 2 * 5 * factor) + 1,
-              getRelativeDistance: () => 3,
-            },
-            {
               intersections: ~~((totalLength / 12) * factor),
               getRadius: () => ~~(Math.random() * Math.random() * 2) + 1,
               getRelativeDistance: () =>
