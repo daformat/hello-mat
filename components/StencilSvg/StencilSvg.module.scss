@@ -1,0 +1,106 @@
+// @keyframes svg-in {
+//   0% {
+//     filter: blur(15px);
+//   }
+
+//   100% {
+//     filter: blur(0px);
+//   }
+// }
+
+@keyframes circle-in {
+  0% {
+    transform: translate(0, calc(-1 * var(--offset, 15px))) scale(0)
+      translate(var(--sx), var(--sy));
+  }
+  100% {
+    transform: translate(0, 0) scale(1) translate(var(--sx), var(--sy));
+  }
+}
+
+@keyframes circle-out {
+  0% {
+    transform: translate(0, 0) scale(1) translate(var(--sx), var(--sy));
+  }
+  100% {
+    transform: translate(0, calc(var(--offset))) scale(0)
+      translate(var(--sx), var(--sy));
+  }
+}
+
+@keyframes circle-pump {
+  0% {
+    transform: none;
+  }
+
+  100% {
+    transform: var(--t);
+  }
+}
+
+.wrapper {
+  position: relative;
+}
+
+.svg {
+  --duration: 1000ms;
+  --delay-factor: 0.5;
+  animation: svg-in 1s ease-in-out both;
+  transition: transform 0.2s ease-in-out;
+  position: absolute;
+  left: 0;
+  top: 0;
+
+  &.svgIn {
+    position: initial;
+  }
+
+  g {
+    transform-origin: center;
+  }
+
+  .circle {
+    // mix-blend-mode: multiply;
+    --d: calc(var(--random) * var(--duration) * var(--delay-factor));
+    --sx: calc(var(--random) / 100 * var(--pointer-x, 0px) * -1); // TODO
+    --sy: calc(var(--random) / 100 * var(--pointer-y, 0px) * -1); // TODO
+    transform-origin: var(--x) var(--y);
+
+    circle {
+      --tx: calc(var(--dx, 0) * var(--random) * -4px);
+      --ty: calc(var(--dy, 0) * var(--random) * -4px);
+      --t: translate(var(--tx), var(--ty));
+      // transform: var(--t);
+      transform-origin: var(--x) var(--y);
+      // animation: circle-pump calc((var(--random)) * 1s) ease-in-out infinite
+      //   alternate;
+    }
+  }
+
+  .in {
+    > .circle {
+      --easing: cubic-bezier(0, 0, 0, 1);
+      --delay: calc(var(--d) + var(--added-delay, var(--duration)));
+      animation: circle-in var(--duration) var(--delay) var(--easing) backwards;
+    }
+  }
+
+  .out {
+    > .circle {
+      --easing: cubic-bezier(1, 0, 1, 1);
+      animation: circle-out var(--duration) var(--d) var(--easing) forwards;
+    }
+  }
+}
+
+body {
+  &:not(:hover) {
+    .circle {
+      circle {
+        // --tx: calc(var(--dx, 0) * var(--random) * -4px);
+        // --ty: calc(var(--dy, 0) * var(--random) * -4px);
+        // --t: translate(var(--tx), var(--ty));
+      }
+    }
+  }
+}
