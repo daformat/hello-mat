@@ -233,6 +233,39 @@ export const StencilSvgAnimation = () => {
 
   const prevIndex = prevIndexRef.current
   console.log({ index, prevIndex })
+  const getHandleTargetPath = (i) => () => {
+    if (index !== i) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+      prevIndexRef.current = index
+      nextDirectIndexRef.current = i
+    }
+  }
+  const getHandleAnimatePath = (i) => () => {
+    if (index !== i) {
+      const refresh = () => {
+        if (nextDirectIndexRef.current === i) {
+          if (
+            wrapperRef.current
+              ?.getAnimations({ subtree: true })
+              .some((a) => a.playState === 'running')
+          ) {
+            console.log('animations running')
+            requestAnimationFrame(refresh)
+          } else {
+            console.log('animations over', index, i)
+            setTimeout(() => {
+              prevIndexRef.current = index
+              nextDirectIndexRef.current = i
+              setIndex(i)
+            })
+          }
+        }
+      }
+      requestAnimationFrame(refresh)
+    }
+  }
   return (
     <>
       <div className={styles.container}>
@@ -255,39 +288,12 @@ export const StencilSvgAnimation = () => {
           <li key={path.name}>
             <button
               aria-label={path.name}
-              onMouseMove={() => {
-                if (index !== i) {
-                  if (timeoutRef.current) {
-                    clearTimeout(timeoutRef.current)
-                  }
-                  prevIndexRef.current = index
-                  nextDirectIndexRef.current = i
-                }
+              onClick={() => {
+                getHandleTargetPath(i)()
+                getHandleAnimatePath(i)()
               }}
-              onMouseEnter={() => {
-                if (index !== i) {
-                  const refresh = () => {
-                    if (nextDirectIndexRef.current === i) {
-                      if (
-                        wrapperRef.current
-                          ?.getAnimations({ subtree: true })
-                          .some((a) => a.playState === 'running')
-                      ) {
-                        console.log('animations running')
-                        requestAnimationFrame(refresh)
-                      } else {
-                        console.log('animations over', index, i)
-                        setTimeout(() => {
-                          prevIndexRef.current = index
-                          nextDirectIndexRef.current = i
-                          setIndex(i)
-                        })
-                      }
-                    }
-                  }
-                  requestAnimationFrame(refresh)
-                }
-              }}
+              onMouseMove={() => getHandleTargetPath(i)()}
+              onMouseEnter={() => getHandleAnimatePath(i)()}
             >
               <svg viewBox="0 0 200 200">
                 <path

@@ -140,9 +140,11 @@
       width: 3.5em;
       -webkit-tap-highlight-color: transparent;
 
-      &:hover {
+      &:hover,
+      &:focus {
         background-color: var(--color-toolbar-button-background-hover);
         color: var(--color-toolbar-button-color-hover);
+        outline: 0;
       }
 
       &:active {
@@ -157,17 +159,6 @@
       @media (min-width: 900px) {
         height: 4.2em;
         width: 4.2em;
-      }
-    }
-  }
-}
-body {
-  &:not(:hover) {
-    .circle {
-      circle {
-        // --tx: calc(var(--dx, 0) * var(--random) * -4px);
-        // --ty: calc(var(--dy, 0) * var(--random) * -4px);
-        // --t: translate(var(--tx), var(--ty));
       }
     }
   }
