@@ -231,7 +231,7 @@ export const StencilSvgAnimation = () => {
     timeoutRef.current = setTimeout(() => {
       const nextIndexInSet = (index + 1) % paths.length
       setIndex(nextIndexInSet)
-    }, 3500)
+    }, 3000)
     return () => {
       clearTimeout(timeoutRef.current)
     }
