@@ -204,9 +204,7 @@ export const StencilSvg = ({
           // '--pointer-y': pointer.y
           //   ? `${(pointer.y / window.innerHeight - 0.5) * window.innerHeight}px`
           //   : '',
-          '--added-delay': !enter
-            ? 'calc(var(--duration) * 0.9)'
-            : 'calc(var(--duration) / 2)',
+          '--added-delay': !enter ? 'calc(var(--duration) * 0.9)' : '0ms',
         } as CSSProperties
       }
     >
