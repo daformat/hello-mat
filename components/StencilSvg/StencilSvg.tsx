@@ -218,30 +218,100 @@ export const StencilSvg = ({
 export const StencilSvgAnimation = () => {
   const [index, setIndex] = useState<number>(0)
   const started = useRef<boolean>(false)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>()
+  const prevIndexRef = useRef<number>()
+  const nextDirectIndexRef = useRef<number>()
+  const wrapperRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
-    const inTimeout = setTimeout(() => {
-      started.current = true
-      setIndex((index + 1) % paths.length)
-    }, 3000)
+    started.current = true
+  }, [])
+
+  useEffect(() => {
+    timeoutRef.current = setTimeout(() => {
+      const nextIndexInSet = (index + 1) % paths.length
+      setIndex(nextIndexInSet)
+    }, 5000)
     return () => {
-      clearTimeout(inTimeout)
+      clearTimeout(timeoutRef.current)
     }
   }, [index, setIndex])
-  const prevIndex = (index > 0 ? index : paths.length) - 1
+
+  useEffect(() => {
+    prevIndexRef.current = nextDirectIndexRef.current || index
+    if (nextDirectIndexRef.current === index) {
+      nextDirectIndexRef.current = undefined
+    }
+  }, [index])
+
+  const prevIndex = prevIndexRef.current
+  console.log({ index, prevIndex })
   return (
-    <div className={styles.wrapper} key="wrapper">
-      {paths.map((path, i) => (
-        <StencilSvg
-          enter={!started.current}
-          key={path.name}
-          transition={i === index ? 'in' : 'out'}
-          width={300}
-          height={300}
-          path={path}
-          display={i === index || (started.current && i === prevIndex)}
-        />
-      ))}
-    </div>
+    <>
+      <div className={styles.wrapper} key="wrapper" ref={wrapperRef}>
+        {paths.map((path, i) => (
+          <StencilSvg
+            enter={!started.current}
+            key={path.name}
+            transition={i === index ? 'in' : 'out'}
+            width={300}
+            height={300}
+            path={path}
+            display={i === index || (started.current && i === prevIndex)}
+          />
+        ))}
+      </div>
+      <ul className={styles.controls}>
+        {paths.map((path, i) => (
+          <li key={path.name}>
+            <button
+              onMouseMove={() => {
+                if (index !== i) {
+                  if (timeoutRef.current) {
+                    clearTimeout(timeoutRef.current)
+                  }
+                  prevIndexRef.current = index
+                  nextDirectIndexRef.current = i
+                }
+              }}
+              onMouseEnter={() => {
+                if (index !== i) {
+                  const refresh = () => {
+                    if (nextDirectIndexRef.current === i) {
+                      if (
+                        wrapperRef.current
+                          ?.getAnimations({ subtree: true })
+                          .some((a) => a.playState === 'running')
+                      ) {
+                        console.log('animations running')
+                        requestAnimationFrame(refresh)
+                      } else {
+                        console.log('animations over', index, i)
+                        setTimeout(() => {
+                          prevIndexRef.current = index
+                          nextDirectIndexRef.current = i
+                          setIndex(i)
+                        })
+                      }
+                    }
+                  }
+                  requestAnimationFrame(refresh)
+                }
+              }}
+            >
+              <svg viewBox="0 0 200 200">
+                <path
+                  fill="currentColor"
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d={path.paths.map((p) => p.d).join('')}
+                ></path>
+              </svg>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </>
   )
 }
 

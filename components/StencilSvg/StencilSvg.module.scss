@@ -93,6 +93,35 @@
   }
 }
 
+.controls {
+  display: flex;
+  flex-direction: row;
+  margin: 0;
+  padding: 0;
+
+  li {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+
+    button {
+      border-radius: 6px;
+      display: inline-block;
+      appearance: none;
+      background-color: transparent;
+      border: 0;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+
+      svg {
+        display: inline-block;
+        width: 2em;
+      }
+    }
+  }
+}
 body {
   &:not(:hover) {
     .circle {
