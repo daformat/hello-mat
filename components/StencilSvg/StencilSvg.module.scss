@@ -1,0 +1,175 @@
+// @keyframes svg-in {
+//   0% {
+//     filter: blur(15px);
+//   }
+
+//   100% {
+//     filter: blur(0px);
+//   }
+// }
+
+@keyframes circle-in {
+  0% {
+    transform: translate(0, calc(-1 * var(--offset, 15px))) scale(0)
+      translate(var(--sx), var(--sy));
+  }
+  100% {
+    transform: translate(0, 0) scale(1) translate(var(--sx), var(--sy));
+  }
+}
+
+@keyframes circle-out {
+  0% {
+    transform: translate(0, 0) scale(1) translate(var(--sx), var(--sy));
+  }
+  100% {
+    transform: translate(0, calc(var(--offset))) scale(0)
+      translate(var(--sx), var(--sy));
+  }
+}
+
+@keyframes circle-pump {
+  0% {
+    transform: none;
+  }
+
+  100% {
+    transform: var(--t);
+  }
+}
+
+.container {
+  align-items: center;
+  display: flex;
+  flex-grow: 1;
+  justify-content: center;
+  // max-height: 42em;
+}
+
+.wrapper {
+  margin-top: clamp(0em, 5vh, 8em);
+  position: relative;
+
+  svg {
+    max-width: 84vw;
+    max-height: 60vh;
+  }
+}
+
+.svg {
+  --duration: 1000ms;
+  --delay-factor: 0.5;
+  animation: svg-in 1s ease-in-out both;
+  left: 0;
+  position: absolute;
+  top: 0;
+  transition: transform 0.2s ease-in-out;
+
+  &.svgIn {
+    position: initial;
+  }
+
+  g {
+    transform-origin: center;
+  }
+
+  .circle {
+    // mix-blend-mode: multiply;
+    --d: calc(var(--random) * var(--duration) * var(--delay-factor));
+    --sx: calc(var(--random) / 100 * var(--pointer-x, 0px) * -1); // TODO
+    --sy: calc(var(--random) / 100 * var(--pointer-y, 0px) * -1); // TODO
+    transform-origin: var(--x) var(--y);
+
+    circle {
+      --tx: calc(var(--dx, 0) * var(--random) * -4px);
+      --ty: calc(var(--dy, 0) * var(--random) * -4px);
+      --t: translate(var(--tx), var(--ty));
+      // transform: var(--t);
+      transform-origin: var(--x) var(--y);
+      // animation: circle-pump calc((var(--random)) * 1s) ease-in-out infinite
+      //   alternate;
+    }
+  }
+
+  .in {
+    > .circle {
+      --easing: cubic-bezier(0, 0, 0, 1);
+      --delay: calc(var(--d) + var(--added-delay, var(--duration)));
+      animation: circle-in var(--duration) var(--delay) var(--easing) backwards;
+    }
+  }
+
+  .out {
+    > .circle {
+      --easing: cubic-bezier(1, 0, 1, 1);
+      animation: circle-out var(--duration) var(--d) var(--easing) forwards;
+    }
+  }
+}
+
+.controls {
+  align-items: center;
+  background-color: var(--color-toolbar-background);
+  border-radius: 14px;
+  box-shadow: 0px 1px 12px var(--color-shadow-1);
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  justify-content: center;
+  margin: 0 0 clamp(42px, 10vh, 84px);
+  padding: 7px 7px;
+  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+
+  li {
+    display: inline-flex;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+
+    button {
+      appearance: none;
+      background-color: var(--color-toolbar-button-background);
+      border: 0;
+      border-radius: 6px;
+      color: var(--color-toolbar-button-color);
+      display: inline-block;
+      height: 3.5em;
+      padding: 0;
+      transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out,
+        width 0.2s ease-in-out, height 0.2s ease-in-out;
+      width: 3.5em;
+      -webkit-tap-highlight-color: transparent;
+
+      &:hover {
+        background-color: var(--color-toolbar-button-background-hover);
+        color: var(--color-toolbar-button-color-hover);
+      }
+
+      &:active {
+        background-color: var(--color-toolbar-button-background-active);
+        color: var(--color-toolbar-button-color-active);
+      }
+
+      svg {
+        transform: scale(0.8);
+      }
+
+      @media (min-width: 900px) {
+        height: 4.2em;
+        width: 4.2em;
+      }
+    }
+  }
+}
+body {
+  &:not(:hover) {
+    .circle {
+      circle {
+        // --tx: calc(var(--dx, 0) * var(--random) * -4px);
+        // --ty: calc(var(--dy, 0) * var(--random) * -4px);
+        // --t: translate(var(--tx), var(--ty));
+      }
+    }
+  }
+}

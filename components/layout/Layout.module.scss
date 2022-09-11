@@ -1,0 +1,19 @@
+.layout {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  position: relative;
+  width: 100%;
+}
+
+.logo {
+  color: var(--color-logo);
+  position: absolute;
+  right: 44px;
+  top: 44px;
+  transition: color 0.2s ease-in-out;
+}
