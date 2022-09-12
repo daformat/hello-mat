@@ -8,6 +8,8 @@ import {
   Vector,
 } from '../../utlis/geometry'
 import { start } from 'repl'
+import { usePointer } from '../../hooks/usePointer'
+import { globalWindowValue } from '../../hooks/useEventListener'
 
 const paths = [
   {
@@ -91,6 +93,17 @@ export const StencilSvg = ({
   height,
   path,
 }: StencilSvgProps) => {
+  const pointer = usePointer()
+  const { x, y } = pointer
+  const dX = globalWindowValue && x ? x - window.innerWidth / 2 : 1
+  const dY = globalWindowValue && y ? y - window.innerHeight / 2 : 1
+  const dist = Math.hypot(dX, dY)
+  const max = globalWindowValue
+    ? Math.hypot(window.innerWidth / 2, window.innerHeight / 2) * 0.5
+    : 1
+  const ratio = Math.min(1, dist / max)
+  const t = (1 - ratio) ** 2
+
   const [points, setPoints] = useState<JSX.Element[]>([])
   // const [prevPoints, setPrevPoints] = useState<JSX.Element[]>([])
   const svgRef = useRef<SVGSVGElement>(null)
@@ -194,6 +207,7 @@ export const StencilSvg = ({
           //   ? `${(pointer.y / window.innerHeight - 0.5) * window.innerHeight}px`
           //   : '',
           '--added-delay': !enter ? 'calc(var(--duration) * 0.9)' : '0ms',
+          '--circle-pump-distance-max': `${-6 * (1 + t * 40)}px`,
         } as CSSProperties
       }
     >
@@ -247,9 +261,11 @@ export const StencilSvgAnimation = () => {
       const refresh = () => {
         if (nextDirectIndexRef.current === i) {
           if (
-            wrapperRef.current
-              ?.getAnimations({ subtree: true })
-              .some((a) => a.playState === 'running')
+            wrapperRef.current?.getAnimations({ subtree: true }).some((a) => {
+              /* @ts-expect-error the animationName seems to be there */
+              const name = a.animationName
+              return a.playState === 'running' && name !== styles['circle-pump']
+            })
           ) {
             console.log('animations running')
             requestAnimationFrame(refresh)
@@ -341,7 +357,8 @@ function distribute(
     svgPoint.y = offsetPoint.y
     const inFill = svgPath.isPointInFill(svgPoint)
 
-    if ((path.direction === 'inside' && !inFill) || inFill) {
+    const isInside = (path.direction === 'inside' && !inFill) || inFill
+    if (isInside) {
       offsetPoint = translate(
         point,
         point.v.normal,
@@ -383,7 +400,13 @@ function distribute(
         key={`${key}-circle-${result.length}`}
         x={offsetPoint.x}
         y={offsetPoint.y}
-        pointVector={{ ...point.v }}
+        pointVector={{
+          ...point.v,
+          normal: {
+            x: point.v.normal.x * (isInside ? 1 : -1),
+            y: point.v.normal.y * (isInside ? 1 : -1),
+          },
+        }}
         radius={radius}
         color={color}
         opacity={opacity}

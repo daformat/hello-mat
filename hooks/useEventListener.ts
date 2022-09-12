@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-const globalWindowValue = typeof window !== 'undefined' ? window : null
+export const globalWindowValue = typeof window !== 'undefined' ? window : null
 
 type EventMap = WindowEventMap & DocumentEventMap & ElementEventMap
 

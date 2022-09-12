@@ -1,3 +1,5 @@
+@use '/styles/lib/mixins.scss';
+
 // @keyframes svg-in {
 //   0% {
 //     filter: blur(15px);
@@ -59,7 +61,9 @@
 .svg {
   --duration: 1000ms;
   --delay-factor: 0.5;
+  --circle-pump-distance-max: -6px;
   left: 0;
+  overflow: visible;
   position: absolute;
   top: 0;
   transition: transform 0.2s ease-in-out;
@@ -80,13 +84,22 @@
     transform-origin: var(--x) var(--y);
 
     circle {
-      --tx: calc(var(--dx, 0) * var(--random) * -4px);
-      --ty: calc(var(--dy, 0) * var(--random) * -4px);
+      --tx: calc(
+        var(--dx, 0) * clamp(0.1, var(--random), 1) *
+          var(--circle-pump-distance-max)
+      );
+      --ty: calc(
+        var(--dy, 0) * clamp(0.1, var(--random), 1) *
+          var(--circle-pump-distance-max)
+      );
       --t: translate(var(--tx), var(--ty));
       // transform: var(--t);
       transform-origin: var(--x) var(--y);
-      // animation: circle-pump calc((var(--random)) * 1s) ease-in-out infinite
-      //   alternate;
+
+      @include mixins.device-with-precise-input {
+        animation: circle-pump calc(0.2s + (var(--random) * 1s)) ease-in-out
+          infinite alternate;
+      }
     }
   }
 
