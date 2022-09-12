@@ -7,13 +7,15 @@
   --color-toolbar-background: #{rgba(palette.$light-desert-sky-2, 1)};
   --color-toolbar-button-background: transparent;
   --color-toolbar-button-color: #{palette.$light-ivory-4};
-  --color-toolbar-button-background-hover: #{palette.$light-desert-sky-3};
+  --color-toolbar-button-background-hover: #{palette.$light-desert-sky-4};
   --color-toolbar-button-color-hover: #{palette.$light-ivory-3};
-  --color-toolbar-button-background-active: #{palette.$light-desert-sky-4};
-  --color-toolbar-button-color-active: #{palette.$light-ivory-1};
+  --color-toolbar-button-background-active: #{palette.$light-desert-sky-3};
+  --color-toolbar-button-color-active: #{palette.$light-ivory-2};
+
   --color-shadow-1: rgba(32, 27, 33, 0.05);
-  --color-border-1: #{rgba(#fff, 1)};
-  --color-border-2: #{rgba(palette.$light-desert-sky-1, 1)};
+  --color-shadow-2: rgba(32, 27, 33, 0.025);
+  --color-border-1: #{rgba(#fff, 0.6)};
+  --color-border-2: #{rgba(#fff, 0.001)};
 }
 
 @mixin dark-theme {
@@ -26,9 +28,11 @@
   --color-toolbar-button-background-hover: #{palette.$dark-desert-sky-3};
   --color-toolbar-button-color-hover: #{palette.$dark-ivory-3};
   --color-toolbar-button-background-active: #{palette.$dark-desert-sky-4};
-  --color-toolbar-button-color-active: #{palette.$dark-ivory-1};
+  --color-toolbar-button-color-active: #{palette.$dark-ivory-2};
+
   --color-shadow-1: rgba(0, 0, 0, 0.08);
-  --color-border-1: #{rgba(palette.$dark-desert-sky-4, 0.35)};
+  --color-shadow-2: rgba(0, 0, 0, 0.04);
+  --color-border-1: #{rgba(palette.$dark-desert-sky-4, 0.2)};
   --color-border-2: #{rgba(palette.$dark-desert-sky-3, 0.15)};
 }
 
