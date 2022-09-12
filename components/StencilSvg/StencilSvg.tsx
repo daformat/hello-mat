@@ -455,7 +455,7 @@ function Circle({
           '--y': `${y}px`,
           '--dx': `${pointVector.normal.x}`,
           '--dy': `${pointVector.normal.y}`,
-          '--offset': `${15}px`,
+          '--offset': `clamp(14px, 8vh, 16px)`,
           '--random': `${Math.random()}`,
         } as CSSProperties
       }

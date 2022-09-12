@@ -12,6 +12,10 @@
   @supports (-webkit-touch-callout: none) {
     /* The hack for Safari */
     min-height: 100dvh;
+
+    @media all and (display-mode: standalone) {
+      min-height: 100vh;
+    }
   }
 }
 
