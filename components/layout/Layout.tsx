@@ -67,13 +67,13 @@ export const Header = () => (
         <LogoObservable />
       </a>
     </Link>
-    <Link aria-label="Updates on twitter" href="https://twitter.com/daformat">
-      <a target="_blank" rel="noopener">
+    <Link href="https://twitter.com/daformat">
+      <a aria-label="Updates on twitter" target="_blank" rel="noopener">
         <LogoTwitter />
       </a>
     </Link>
-    <Link aria-label="Meet the bright web" href="https://beamapp.co">
-      <a target="_blank" rel="noopener">
+    <Link href="https://beamapp.co">
+      <a aria-label="Meet the bright web" target="_blank" rel="noopener">
         <LogoBeam />
       </a>
     </Link>
