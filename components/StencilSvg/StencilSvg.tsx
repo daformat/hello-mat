@@ -99,10 +99,10 @@ export const StencilSvg = ({
   const dY = globalWindowValue && y ? y - window.innerHeight / 2 : 1
   const dist = Math.hypot(dX, dY)
   const max = globalWindowValue
-    ? Math.hypot(window.innerWidth / 2, window.innerHeight / 2) * 0.5
+    ? Math.hypot(window.innerWidth / 2, window.innerHeight / 2) * 0.35
     : 1
-  const ratio = Math.min(1, dist / max)
-  const t = (1 - ratio) ** 2
+  const ratio = Math.min(1, dist / max) ** 2
+  const t = 1 - ratio
 
   const [points, setPoints] = useState<JSX.Element[]>([])
   // const [prevPoints, setPrevPoints] = useState<JSX.Element[]>([])
@@ -231,6 +231,10 @@ export const StencilSvgAnimation = () => {
   useEffect(() => {
     timeoutRef.current = setTimeout(() => {
       const nextIndexInSet = (index + 1) % paths.length
+      const active = document.activeElement
+      if (active instanceof HTMLButtonElement) {
+        active.blur()
+      }
       setIndex(nextIndexInSet)
     }, 3000)
     return () => {
@@ -247,7 +251,8 @@ export const StencilSvgAnimation = () => {
 
   const prevIndex = prevIndexRef.current
   console.log({ index, prevIndex })
-  const getHandleTargetPath = (i) => () => {
+
+  const getHandleTargetPath = (i: number) => () => {
     if (index !== i) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
@@ -256,7 +261,8 @@ export const StencilSvgAnimation = () => {
       nextDirectIndexRef.current = i
     }
   }
-  const getHandleAnimatePath = (i) => () => {
+
+  const getHandleAnimatePath = (i: number) => () => {
     if (index !== i) {
       const refresh = () => {
         if (nextDirectIndexRef.current === i) {
@@ -309,7 +315,14 @@ export const StencilSvgAnimation = () => {
                 getHandleAnimatePath(i)()
               }}
               onMouseMove={() => getHandleTargetPath(i)()}
-              onMouseEnter={() => getHandleAnimatePath(i)()}
+              onMouseEnter={(event) => {
+                event.currentTarget.focus()
+                getHandleAnimatePath(i)()
+              }}
+              style={{
+                color:
+                  i === index ? 'var(--color-toolbar-button-color-hover)' : '',
+              }}
             >
               <svg viewBox="0 0 200 200">
                 <path
