@@ -113,6 +113,35 @@ export const StencilSvg = ({
   const pathName = useRef<string>()
   // const pointer = usePointer()
 
+  useEffect(() => {
+    let raf:
+      | ReturnType<typeof requestAnimationFrame>
+      | ReturnType<typeof requestIdleCallback>
+    const styles = svgRef.current && getComputedStyle(svgRef.current)
+    const refresh = () => {
+      if (styles) {
+        const target = parseFloat(
+          styles.getPropertyValue('--circle-pump-distance-max-target')
+        )
+        const current = parseFloat(
+          styles.getPropertyValue('--circle-pump-distance-max')
+        )
+        if (current && target && Math.abs(target - current) > 2) {
+          svgRef.current.style.setProperty(
+            '--circle-pump-distance-max',
+            `${current + (target - current) / 4}px`
+          )
+          raf =
+            typeof requestIdleCallback !== 'undefined'
+              ? requestIdleCallback(refresh)
+              : requestAnimationFrame(refresh)
+        }
+      }
+    }
+    refresh()
+    return () => cancelAnimationFrame(raf)
+  })
+
   const pathCallback = useCallback(
     (node: SVGPathElement) => {
       requestAnimationFrame(() => {
@@ -207,7 +236,7 @@ export const StencilSvg = ({
           //   ? `${(pointer.y / window.innerHeight - 0.5) * window.innerHeight}px`
           //   : '',
           '--added-delay': !enter ? 'calc(var(--duration) * 0.9)' : '0ms',
-          '--circle-pump-distance-max': `${-6 * (1 + t * 40)}px`,
+          '--circle-pump-distance-max-target': `${-6 * (1 + t * 40)}px`,
         } as CSSProperties
       }
     >
@@ -347,7 +376,7 @@ function distribute(
   svgPath: SVGPathElement,
   intersections: number,
   getRadius: () => number,
-  getRelativeDistance = (radius: number) => 1
+  getRelativeDistance = (_radius: number) => 1
 ) {
   const totalLength = svgPath.getTotalLength()
   const evenDistance = (1 / intersections) * totalLength
