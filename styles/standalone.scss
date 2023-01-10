@@ -1,8 +1,9 @@
-@use 'lib/mixins';
+@use "lib/mixins";
 
 @media all and (display-mode: standalone) {
   html {
     margin: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+    //noinspection CssInvalidPropertyValue
     min-height: -webkit-fill-available; // stylelint-disable-line
     position: relative;
   }
@@ -19,7 +20,7 @@
             var(--color-header-frosted-background-translucent),
           0 0 var(--header-height) var(--color-background),
           0 0 var(--header-height) var(--color-background);
-        content: '';
+        content: "";
         height: env(safe-area-inset-top);
         left: 0;
         position: fixed;
@@ -42,7 +43,7 @@
         background-color: rgba(0, 0, 0, 0.5);
         box-shadow: 0 0 30px var(--c), 0 0 50px var(--c), 0 0 60px var(--c),
           0 0 70px var(--c), 0 0 80px var(--c), 0 0 90px var(--c);
-        content: '';
+        content: "";
         height: 64px;
         left: -8px;
         position: fixed;

@@ -1,4 +1,4 @@
-@use './palette.scss';
+@use "./palette.scss";
 
 @mixin light-theme {
   --color-background: #{palette.$light-desert-sky-1};

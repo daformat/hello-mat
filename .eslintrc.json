@@ -1,11 +1,36 @@
 {
-  "extends": ["eslint-config-next", "next/core-web-vitals", "plugin:@typescript-eslint/recommended", "plugin:mdx/recommended", "prettier"],
-  // optional, if you want to lint code blocks at the same time
-  "settings": {
-    "mdx/code-blocks": true
-    // optional, if you want to disable language mapper, set it to `false`
-    // if you want to override the default language mapper inside, you can provide your own
-    // "mdx/language-mapper": {}
+  "plugins": ["@typescript-eslint"],
+  "extends": [
+    "next",
+    "next/core-web-vitals",
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
+  ],
+  "ignorePatterns": ["coverage/*"],
+  "rules": {
+    "@next/next/no-img-element": "off",
+    "@typescript-eslint/ban-types": "warn",
+    "@typescript-eslint/no-empty-interface": "off",
+    "@typescript-eslint/no-var-requires": "warn",
+    "@typescript-eslint/no-this-alias": "off",
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-useless-constructor": "error",
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      {
+        "varsIgnorePattern": "^_",
+        "argsIgnorePattern": "^_"
+      }
+    ],
+    "semi": ["warn", "never"],
+    "quotes": ["warn", "double"],
+    "comma-dangle": ["warn", "always-multiline"],
+    "no-unused-vars": "off",
+    "no-irregular-whitespace": [
+      "error",
+      {
+        "skipTemplates": true
+      }
+    ]
   }
-
 }

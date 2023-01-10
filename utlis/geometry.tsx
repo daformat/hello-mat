@@ -22,6 +22,7 @@ export type Vector = {
     degreesNormalized: number
   }
 }
+
 /**
  * Returns a ( p1 o-> p2 ) vector object
  * given p1 and p2 objects with the shape {x: number, y: number}
@@ -62,6 +63,7 @@ export function vec(p1: Position, p2: Position): Vector {
     },
   }
 }
+
 function rotate(point: Position, center: Position, radians: number) {
   const cos = Math.cos(radians)
   const sin = Math.sin(radians)
@@ -69,6 +71,7 @@ function rotate(point: Position, center: Position, radians: number) {
   const ny = cos * (point.y - center.y) - sin * (point.x - center.x) + center.y
   return { x: nx, y: ny }
 }
+
 export function translate(
   point: Position,
   vec: Position,
@@ -81,6 +84,7 @@ export function translate(
   }
   return resultingPoint
 }
+
 export function plotCircle(
   center: Position,
   radius: number,

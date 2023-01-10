@@ -14,8 +14,13 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "plugins": [{ "name": "typescript-plugin-css-modules" }]
+    "baseUrl": ".",
+    "plugins": [{ "name": "typescript-plugin-css-modules"}]
   },
-  "include": ["next-env.d.ts", "**/.d.ts", "**/*.ts", "**/*.tsx", "**/*.mdx"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx"
+  ],
   "exclude": ["node_modules"]
 }

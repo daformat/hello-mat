@@ -1,4 +1,4 @@
-@use '/styles/lib/mixins.scss';
+@use "/styles/lib/mixins.scss";
 
 .layout {
   align-items: center;
@@ -38,8 +38,12 @@
   }
 
   .logo {
-    transition: color 0.2s ease-in-out;
     margin-bottom: 1em;
+    transition: color 0.2s ease-in-out;
+  }
+
+  .test {
+    color: #fff;
   }
 
   a:hover {

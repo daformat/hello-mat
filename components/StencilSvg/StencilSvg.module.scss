@@ -1,4 +1,4 @@
-@use '/styles/lib/mixins.scss';
+@use "/styles/lib/mixins.scss";
 
 // @keyframes svg-in {
 //   0% {
@@ -12,9 +12,10 @@
 
 @keyframes circle-in {
   0% {
-    transform: translate(0, calc(-1 * var(--offset, 15px))) scale(0)
+    transform: translate(0, calc(-1 * var(--offset, 15px) + 0px)) scale(0)
       translate(var(--sx), var(--sy));
   }
+
   100% {
     transform: translate(0, 0) scale(1) translate(var(--sx), var(--sy));
   }
@@ -24,8 +25,9 @@
   0% {
     transform: translate(0, 0) scale(1) translate(var(--sx), var(--sy));
   }
+
   100% {
-    transform: translate(0, calc(var(--offset))) scale(0)
+    transform: translate(0, var(--offset)) scale(0)
       translate(var(--sx), var(--sy));
   }
 }
@@ -53,8 +55,8 @@
   position: relative;
 
   svg {
-    max-width: 84vw;
     max-height: 60vh;
+    max-width: 84vw;
   }
 }
 
@@ -68,7 +70,7 @@
   top: 0;
   transition: transform 0.2s ease-in-out;
 
-  &.svgIn {
+  &.svg_in {
     position: initial;
   }
 
@@ -123,7 +125,7 @@
   align-items: center;
   background-color: var(--color-toolbar-background);
   border-radius: 14px;
-  box-shadow: 0px 1px 12px var(--color-shadow-1),
+  box-shadow: 0 1px 12px var(--color-shadow-1),
     inset 0 0 2px 0.75px var(--color-border-2),
     inset 0 0 0 0.75px var(--color-border-1);
   display: flex;
@@ -131,7 +133,7 @@
   gap: 8px;
   justify-content: center;
   margin: 0 0 clamp(42px, 10vh, 84px);
-  padding: 7px 7px;
+  padding: 7px;
   transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out,
     box-shadow 0.2s ease-in-out;
 
@@ -150,17 +152,17 @@
       display: inline-block;
       height: 3.5em;
       padding: 0;
+      -webkit-tap-highlight-color: transparent;
       transition: color 0.2s ease-in-out, background-color 0.1s ease-in-out,
         width 0.1s ease-in-out, height 0.1s ease-in-out,
         box-shadow 0.1s ease-in-out;
       width: 3.5em;
-      -webkit-tap-highlight-color: transparent;
 
       &:hover,
       &:focus {
         background-color: var(--color-toolbar-button-background-hover);
-        box-shadow: 0px 0px 24px var(--color-shadow-2),
-          inset 0 0 2px 0px var(--color-border-2),
+        box-shadow: 0 0 24px var(--color-shadow-2),
+          inset 0 0 2px 0 var(--color-border-2),
           inset 0 0 0 0.5px var(--color-border-1);
         color: var(--color-toolbar-button-color-hover);
         outline: 0;
