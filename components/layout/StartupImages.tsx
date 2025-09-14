@@ -164,13 +164,11 @@ export const StartupImages = ({
   startupImages?: StartupImage[]
 }) => {
   const themedImages = createThemedStartupImages(startupImages)
-  console.log(startupImages.length, themedImages.length)
   return (
     <Head>
-      {themedImages.map((startupImageInfos, i) => {
+      {themedImages.map((startupImageInfos) => {
         const { width, height, pixel_ratio, orientation, image } =
           startupImageInfos
-        console.log(i, image)
         return (
           <link
             key={`${image}`}

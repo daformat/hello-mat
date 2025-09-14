@@ -2,7 +2,7 @@
 
 @mixin light-theme {
   --color-background: #{palette.$light-desert-sky-1};
-  --color-logo: #{palette.$light-ivory-1};
+  --color-logo: #{palette.$light-ivory-2};
 
   --color-toolbar-background: #{rgba(palette.$light-desert-sky-2, 1)};
   --color-toolbar-button-background: transparent;
@@ -16,11 +16,23 @@
   --color-shadow-2: rgba(32, 27, 33, 0.025);
   --color-border-1: #{rgba(#fff, 0.6)};
   --color-border-2: #{rgba(#fff, 0.001)};
+
+  --text-primary: #{palette.$light-ivory-3};
+  --text-primary-hover: #{palette.$light-ivory-2};
+
+  --color-bullet: #{palette.$light-ivory-4};
+  --color-bullet-focus: #{palette.$light-ivory-3};
+
+  // standalone components
+
+  --color-toc-dash: #{palette.$light-ivory-3};
+  --color-toc-link: #{palette.$light-ivory-3};
+  --color-toc-link-active: #{palette.$light-ivory-1};
 }
 
 @mixin dark-theme {
   --color-background: #{palette.$dark-desert-sky-1};
-  --color-logo: #{palette.$dark-ivory-4};
+  --color-logo: #{palette.$dark-ivory-3};
 
   --color-toolbar-background: #{palette.$dark-desert-sky-2};
   --color-toolbar-button-background: transparent;
@@ -34,6 +46,18 @@
   --color-shadow-2: rgba(0, 0, 0, 0.04);
   --color-border-1: #{rgba(palette.$dark-desert-sky-4, 0.2)};
   --color-border-2: #{rgba(palette.$dark-desert-sky-3, 0.15)};
+
+  --text-primary: #{palette.$dark-ivory-3};
+  --text-primary-hover: #{palette.$dark-ivory-2};
+
+  --color-bullet: #{palette.$dark-ivory-4};
+  --color-bullet-focus: #{palette.$dark-ivory-3};
+
+  // standalone components
+
+  --color-toc-dash: #{palette.$dark-ivory-3};
+  --color-toc-link: #{palette.$dark-ivory-3};
+  --color-toc-link-active: #{palette.$dark-ivory-1};
 }
 
 :root {

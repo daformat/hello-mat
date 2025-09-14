@@ -8,7 +8,7 @@
 // to the smallest screen and using media queries to qualify styles for larger devices
 
 @mixin above-medium() {
-  @media (min-width: 859px) {
+  @media (min-width: 759px) {
     @content;
   }
 }

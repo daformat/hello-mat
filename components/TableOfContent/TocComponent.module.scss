@@ -1,0 +1,196 @@
+@use "/styles/lib/mixins";
+
+.toc {
+  --toc-distance: 1.84em;
+  --font-size: 12px;
+  --line-height: 1.2;
+  --visible-lines: 2;
+  --dash-size: 26px;
+  --dash-active-added-size: 4px;
+  --max-dash-size: 26px;
+  --spring-easing: linear(
+      0, 0.006, 0.024, 0.054 3.8%, 0.098 5.3%, 0.193 8.1%, 0.533 16.9%, 0.634,
+      0.718, 0.79, 0.85 28.7%, 0.898, 0.937, 0.966 38.6%, 0.987 42.3%, 1.001 46.5%,
+      1.009 51.3%, 1.012 59.2%, 1.003 81.7%, 1
+  );
+
+  bottom: 0;
+  clip-path: inset(0 42px 0 0); // mask scroll bar
+  color: var(--color-toc-link);
+  display: flex;
+  font-size: 14px;
+  left: var(--toc-distance);
+  max-width: 50vw;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-bottom: var(--toc-margin-bottom);
+  padding-top: var(--toc-margin-top);
+  pointer-events: none;
+  position: fixed;
+  top: 0;
+  transition: mixins.theme-transition(color, width);
+  -webkit-user-select: none; // stylelint-disable-line
+  width: 100%;
+
+  @include mixins.remove-transition;
+
+  ul {
+    margin: 0;
+    padding: 0;
+    pointer-events: auto;
+
+    li {
+      --padding-v: 5px;
+      --single-line-height: calc(
+        var(--line-height) * var(--font-size) + 2 * var(--padding-v)
+      );
+
+      display: block;
+      padding: 0 0 0 10px; // indent
+
+      // Text
+      a {
+        color: var(--color-toc-link);
+        display: inline-block;
+        font-size: var(--font-size);
+        height: 100%;
+        line-height: var(--line-height);
+        max-height: calc(var(--visible-lines) * var(--single-line-height));
+        max-width: 10vw;
+        opacity: 0;
+        overflow: hidden;
+        padding: var(--padding-v) 0;
+        text-decoration: none;
+        text-overflow: ellipsis;
+        transform: translateX(-200%);
+        transition: opacity 0.5s var(--spring-easing) 0.05s,
+        color 0.5s var(--spring-easing), transform 0.5s var(--spring-easing);
+        white-space: nowrap; // remove if you want to allow multiple lines
+        width: 100%;
+
+        @include mixins.remove-transition;
+
+        &:empty {
+          display: none;
+        }
+      }
+
+      &[data-text=""] {
+        padding-left: 0;
+
+        > a {
+          display: none;
+        }
+      }
+
+      // Dash is a ::before on the list item
+      &:not([data-text=""])::before {
+        --t: calc(var(--single-line-height) * 0.5);
+
+        background-color: var(--color-toc-dash);
+        border-radius: 2px;
+        content: "";
+        display: inline-block;
+        height: 2px;
+        left: 0;
+        margin-right: 0.5em;
+        opacity: 0.4;
+        position: absolute;
+        transform: translate(0, var(--t));
+        transform-origin: 0 50%;
+        transition: mixins.theme-transition(background-color, opacity),
+        transform 0.3s ease-in-out;
+        vertical-align: middle;
+        width: var(--dash-size);
+
+        @include mixins.remove-transition;
+      }
+
+      &.level_1 {
+        --dash-size: 20px;
+        --dash-active-added-size: 8px;
+      }
+
+      &.level_2 {
+        --dash-size: 14px;
+        --dash-active-added-size: 10px;
+      }
+    }
+
+
+    li:is(:hover, :focus-within, .active) {
+      > a:is(:hover, :focus) {
+        color: var(--color-toc-link-active);
+        outline: none;
+      }
+
+      &::before {
+        opacity: 1;
+        transition: mixins.theme-transition(background-color),
+        transform 0.3s ease-in-out 0.1s, opacity 0.1s ease-in-out,
+        width 0.1s ease-in-out;
+        width: calc(var(--dash-size) + var(--dash-active-added-size));
+
+        @include mixins.remove-transition;
+      }
+    }
+
+    li.active {
+      > a {
+        color: var(--color-toc-link-active);
+      }
+    }
+
+  }
+
+  // root ul in toc
+  > ul {
+    margin: auto 0;
+    padding: 1em 0;
+    position: relative;
+    transform: translateX(-100% + var(--max-dash-size));
+    transition: width 0.3s ease-in-out;
+    width: calc(var(--max-dash-size) * 2);
+
+    @include mixins.remove-transition;
+
+    > li {
+      padding-left: 0;
+    }
+
+    // Add an extra hovering area to the left edge of the TOC,
+    // so it's easier to reveal when moving cursor quickly
+    &::before {
+      --width: 10px;
+      bottom: 0;
+      content: "";
+      left: calc(var(--toc-distance) - var(--width));
+      position: fixed;
+      top: 0;
+      width: var(--width);
+    }
+
+    @include mixins.above-medium() {
+      &:hover, &:focus-within {
+        transform: none;
+        width: 35%;
+
+        li {
+          &::before {
+            opacity: 0;
+            transform: scaleX(0.5) translate(0, var(--t));
+          }
+
+          a {
+            opacity: 1;
+            transform: translateX(0);
+
+            &:not(:focus-within, :hover) {
+              color: var(--color-toc-link);
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -57,7 +57,11 @@ export const Layout = ({ children }: { children: ReactNode }) => (
 
 export const Header = () => (
   <div className={styles.header}>
-    <Logo />
+    <Link href={"/"}>
+      <a>
+        <Logo />
+      </a>
+    </Link>
     <Link href="https://observablehq.com/@daformat">
       <a
         aria-label="Code explorations and how-to's on Observable"

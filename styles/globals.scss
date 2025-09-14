@@ -1,14 +1,32 @@
 @use "./lib/colors.scss";
+@use "./lib/variables.scss";
 @use "./standalone.scss";
+@use "./lib/mixins.scss";
+
+:root {
+  --font-size: 16px;
+  --font-size-h1: clamp(1.72857143em, 1.72857143rem, 1.72857143rem);
+  --font-size-h2: clamp(1.38571429em, 1.38571429rem, 1.38571429rem);
+  --line-height: 1.6;
+  --line-height-heading: 1.4;
+  --bullet-size: 1.48em;
+
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
+  Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+}
 
 * {
+  --single-line-height: calc(var(--font-size) * var(--line-height));
+
   box-sizing: border-box;
+
 }
 
 html,
 body {
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  color: var(--text-primary);
+  font-size: var(--font-size);
+  line-height: var(--line-height);
   margin: 0;
   padding: 0;
 }
@@ -18,11 +36,98 @@ body {
   transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  --line-height: var(--line-height-heading);
+  font-weight: 600;
+  line-height: var(--line-height);
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+}
+
+
 a {
   color: inherit;
   text-decoration: none;
+
+  &:hover {
+    color: var(--text-primary-hover);
+  }
 }
 
 * {
   box-sizing: border-box;
+}
+
+@keyframes highlight-animation {
+  20% {
+    color: var(--text-primary-hover);
+  }
+
+  100% {
+    color: var(--text-primary);
+  }
+}
+
+.prose {
+  * {
+    scroll-margin-top: 1em;
+  }
+
+  *:target, .targeted {
+    animation: highlight-animation 2s ease-in-out;
+  }
+
+  a {
+    color: var(--text-primary-hover);
+  }
+
+  [data-details] {
+    margin-top:0.75em;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 0;
+
+    li {
+      list-style: none;
+      margin-top:0.75em;
+      position: relative;
+
+      &::marker {
+        display: none;
+      }
+
+      &::before {
+        --size: var(--bullet-size);
+        background-color: var(--color-bullet);
+        content: "";
+        height: var(--size);
+        left: calc(-1 * var(--size));
+        margin-top: 1px;
+        position: absolute;
+        top: calc((var(--single-line-height) - var(--size)) / 2);
+        transition: mixins.theme-transition(background-color);
+        -webkit-user-select: none; // stylelint-disable-line
+        width: var(--size);
+
+        @include mixins.remove-transition;
+        @include mixins.mask-image(
+            url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='10' cy='10' r='2' fill='%234D4D4D'/%3E%3C/svg%3E%0A")
+        );
+      }
+    }
+  }
+
 }

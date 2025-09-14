@@ -9,6 +9,7 @@ import {
 } from "../../utlis/geometry"
 import { usePointer } from "../../hooks/usePointer"
 import { globalWindowValue } from "../../hooks/useEventListener"
+import Link from "next/link"
 
 const paths = [
   {
@@ -278,7 +279,6 @@ export const StencilSvgAnimation = () => {
   }, [index])
 
   const prevIndex = prevIndexRef.current
-  console.log({ index, prevIndex })
 
   const getHandleTargetPath = (i: number) => () => {
     if (index !== i) {
@@ -301,10 +301,8 @@ export const StencilSvgAnimation = () => {
               return a.playState === "running" && name !== styles["circle-pump"]
             })
           ) {
-            console.log("animations running")
             requestAnimationFrame(refresh)
           } else {
-            console.log("animations over", index, i)
             setTimeout(() => {
               prevIndexRef.current = index
               nextDirectIndexRef.current = i
@@ -364,6 +362,14 @@ export const StencilSvgAnimation = () => {
           </li>
         ))}
       </ul>
+      <Link href={"/design-engineering"}>
+        <a
+          className={styles.controls}
+          style={{ marginTop: -70, paddingLeft: 18, paddingRight: 18 }}
+        >
+          <small>-&gt; &nbsp;&nbsp;Browse design engineering gallery</small>
+        </a>
+      </Link>
     </>
   )
 }
