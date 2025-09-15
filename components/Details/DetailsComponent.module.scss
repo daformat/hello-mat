@@ -70,11 +70,11 @@
 
     // Like a native details tag, we want the content out-of the a11y tree
     // so that the content isn't read until the details is opened
-    &:not(.animating) {
-      > .content {
-        display: none;
-      }
-    }
+    //&:not(.animating) {
+    //  > .content {
+    //    display: none;
+    //  }
+    //}
   }
 
   &.animating {

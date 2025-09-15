@@ -58,21 +58,28 @@ const getAnimationDuration = (before: number, after: number) => {
  * @param opening
  * @param duration
  * @param lastAnimationValues
+ * @param prevHeight
+ * @param nextHeight
  */
 function animateContentVisibility(
   content: HTMLDivElement,
   opening: boolean,
   duration: number,
-  lastAnimationValues: AnimationValues
+  lastAnimationValues: AnimationValues,
+  prevHeight: number,
+  nextHeight: number
 ) {
   const startOpacity = lastAnimationValues.opacity ?? (opening ? 0 : 1)
   const endOpacity = opening ? 1 : 0
   const contentAnimationOptions: KeyframeAnimationOptions = {
     duration,
-    easing: opening ? "ease-in" : "ease-out",
+    easing: "ease-in-out",
   }
   content.animate(
-    [{ opacity: startOpacity }, { opacity: endOpacity }],
+    [
+      { opacity: startOpacity, height: `${prevHeight}px` },
+      { opacity: endOpacity, height: `${nextHeight}px` },
+    ],
     contentAnimationOptions
   )
 }
@@ -104,10 +111,12 @@ function animateDetailsHeight(
  * @param setAnimating
  */
 function animateOpenClose(
-  details: HTMLElement,
+  details: HTMLDetailsElement,
   content: HTMLDivElement,
   setAnimating: Dispatch<SetStateAction<boolean>>
 ) {
+  const summaryHeight =
+    details.querySelector("summary")?.getBoundingClientRect().height ?? 0
   const animations = [...details.getAnimations(), ...content.getAnimations()]
   const lastAnimationValues = cancelAnimationsAndGetValues(
     animations,
@@ -117,17 +126,23 @@ function animateOpenClose(
   // First, measure, resume using last interrupted animation value if any
   let prevHeight = lastAnimationValues.height
   prevHeight = prevHeight ?? details.getBoundingClientRect().height
-  // Toggle class to trigger final values and measure again
-  details.classList.toggle(detailsStyles.collapsed)
-  details.setAttribute("open", "")
+  details.open = !details.open
   const nextHeight = details.getBoundingClientRect().height
+  details.open = !details.open
   // Animate content and details, accounting for previous animation elapsed time
   details.classList.add(detailsStyles.animating)
   let duration = getAnimationDuration(prevHeight, nextHeight)
   duration -= lastAnimationValues.elapsed
   // Animate content visibility
   const opening = prevHeight <= nextHeight
-  animateContentVisibility(content, opening, duration, lastAnimationValues)
+  animateContentVisibility(
+    content,
+    opening,
+    duration,
+    lastAnimationValues,
+    prevHeight - summaryHeight,
+    nextHeight - summaryHeight
+  )
   // Animate details height
   console.log({ prevHeight, nextHeight, duration })
   const detailsAnimation = animateDetailsHeight(
@@ -142,6 +157,9 @@ function animateOpenClose(
     detailsAnimation.oncancel = detailsAnimation.onfinish = () => undefined
     setAnimating(false)
     details.classList.remove(detailsStyles.animating)
+    if (!opening) {
+      details.open = false
+    }
   }
   detailsAnimation.oncancel = detailsAnimation.onfinish = reset
   setAnimating(true)
@@ -281,13 +299,14 @@ export const DetailsComponent = ({
   return (
     <details className={detailsClassName} ref={detailsRef} open={detailsOpen}>
       <summary className={detailsStyles.summary} onClick={chevronClickHandler}>
-        <button
+        <span
           ref={chevronRef}
           className={detailsStyles.chevron}
           aria-label={ariaLabel}
           aria-expanded={open}
           aria-controls={contentId}
-        ></button>
+          role={"button"}
+        />
         {summary}
       </summary>
       <div ref={contentRef} className={detailsStyles.content} id={contentId}>
