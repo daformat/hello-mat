@@ -44,8 +44,9 @@
     color: #fff;
   }
 
-  a:hover {
+  a:hover, a:focus-visible {
     color: var(--color-logo-hover);
+    outline: none;
   }
 
   @include mixins.device-with-imprecise-input {
