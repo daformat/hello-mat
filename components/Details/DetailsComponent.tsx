@@ -83,10 +83,6 @@ function animateContentVisibility(
     contentAnimationOptions
   )
 
-  console.log([
-    { opacity: startOpacity, height: `${prevHeight}px`, overflow: "hidden" },
-    { opacity: endOpacity, height: `${nextHeight}px`, overflow: "hidden" },
-  ])
   const keyframes: Keyframe[] = [
     {
       maskImage: "linear-gradient(180deg, black, black 50%, transparent)",
@@ -238,7 +234,6 @@ const cancelAnimationsAndGetValues = (
               lastAnimationValues.opacity = parseFloat(
                 getComputedStyle(content).opacity
               )
-              console.log(lastAnimationValues.opacity)
             }
           }
         }
@@ -337,7 +332,6 @@ export const DetailsComponent = ({
   }
 
   const detailsOpen = open || animating
-  console.log({ open, animating, detailsOpen })
 
   return (
     <details
