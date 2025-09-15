@@ -109,11 +109,13 @@ function animateDetailsHeight(
  * @param details
  * @param content
  * @param setAnimating
+ * @param newOpen
  */
 function animateOpenClose(
   details: HTMLDetailsElement,
   content: HTMLDivElement,
-  setAnimating: Dispatch<SetStateAction<boolean>>
+  setAnimating: Dispatch<SetStateAction<boolean>>,
+  newOpen: boolean
 ) {
   const summaryHeight =
     details.querySelector("summary")?.getBoundingClientRect().height ?? 0
@@ -123,30 +125,33 @@ function animateOpenClose(
     details,
     content
   )
-  // First, measure, resume using last interrupted animation value if any
-  let prevHeight = lastAnimationValues.height
-  prevHeight = prevHeight ?? details.getBoundingClientRect().height
-  details.open = !details.open
-  const nextHeight = details.getBoundingClientRect().height
-  details.open = !details.open
+  // resume using the last interrupted animation value if any or measure details
+  const prevHeight =
+    lastAnimationValues.height ?? details.getBoundingClientRect().height
+  // if the details tag is closing, then the final height is the summary height
+  let nextHeight = summaryHeight
+  // if opening, then the final height is the fully expanded details height
+  if (newOpen) {
+    const prevOpen = details.open
+    details.open = true
+    nextHeight = details.getBoundingClientRect().height
+    details.open = prevOpen
+  }
+  // set the closing attribute to allow proper styling
+  if (!newOpen) {
+    details.dataset.closing = ""
+  }
   // Animate content and details, accounting for previous animation elapsed time
   let duration = getAnimationDuration(prevHeight, nextHeight)
   duration -= lastAnimationValues.elapsed
-  // Animate content visibility
-  const opening = prevHeight <= nextHeight
-  if (!opening) {
-    details.dataset.closing = ""
-  }
   animateContentVisibility(
     content,
-    opening,
+    newOpen,
     duration,
     lastAnimationValues,
     prevHeight - summaryHeight,
     nextHeight - summaryHeight
   )
-  // Animate details height
-  console.log({ prevHeight, nextHeight, duration })
   const detailsAnimation = animateDetailsHeight(
     details,
     duration,
@@ -154,21 +159,19 @@ function animateOpenClose(
     nextHeight
   )
   // Handle animation end / cancel
-  const reset = () => {
+  const cancel = () => {
     // Make sure the handler can only be executed once, replace with no-op
     detailsAnimation.oncancel = detailsAnimation.onfinish = () => undefined
-    setAnimating(false)
-    details.classList.remove(detailsStyles.animating)
     delete details.dataset.closing
+    setAnimating(false)
   }
-
   const finish = () => {
-    reset()
-    if (!opening) {
+    if (!newOpen) {
       details.open = false
     }
+    cancel()
   }
-  detailsAnimation.oncancel = reset
+  detailsAnimation.oncancel = cancel
   detailsAnimation.onfinish = finish
   setAnimating(true)
 }
@@ -234,26 +237,34 @@ export const DetailsComponent = ({
   /**
    * Toggle the details open / close, optionally animating the transition
    */
-  const toggleOpen = useCallback(() => {
-    const details = detailsRef.current
-    const content = contentRef.current
-    // We do this hack to set the max-height only for animating
-    if (!reduceMotion && details && content) {
-      animateOpenClose(details, content, setAnimating)
-    }
-    setOpen((open) => !open)
-  }, [reduceMotion])
+  const toggleOpen = useCallback(
+    (animate = true) => {
+      const details = detailsRef.current
+      const content = contentRef.current
+      setOpen((open) => {
+        if (!reduceMotion && details && content && animate) {
+          animateOpenClose(details, content, setAnimating, !open)
+        }
+        return !open
+      })
+    },
+    [reduceMotion]
+  )
 
-  // useEffect(() => {
-  //   const details = detailsRef.current
-  //   if (details) {
-  //     details.addEventListener("toggle", toggleOpen)
-  //
-  //     return () => {
-  //       details.removeEventListener("toggle", toggleOpen)
-  //     }
-  //   }
-  // }, [toggleOpen])
+  useEffect(() => {
+    const details = detailsRef.current
+    if (details) {
+      const handleToggle = () => {
+        if (open !== details.open) {
+          toggleOpen(false)
+        }
+      }
+      details.addEventListener("toggle", handleToggle)
+      return () => {
+        details.removeEventListener("toggle", handleToggle)
+      }
+    }
+  }, [open, toggleOpen])
 
   /**
    * Target custom event handler, specific to the DetailsComponent
