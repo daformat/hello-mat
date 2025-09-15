@@ -82,6 +82,28 @@ function animateContentVisibility(
     ],
     contentAnimationOptions
   )
+
+  console.log([
+    { opacity: startOpacity, height: `${prevHeight}px`, overflow: "hidden" },
+    { opacity: endOpacity, height: `${nextHeight}px`, overflow: "hidden" },
+  ])
+  const keyframes: Keyframe[] = [
+    {
+      maskImage: "linear-gradient(180deg, black, black 50%, transparent)",
+      maskSize: "100% 200%",
+    },
+    {
+      maskImage: "linear-gradient(180deg, black, black 50%, transparent)",
+      maskSize: "100% 100%",
+    },
+  ]
+
+  content.animate(opening ? keyframes.reverse() : keyframes, {
+    duration: opening ? duration / 2 : duration / 4,
+    easing: "ease-out",
+    fill: "both",
+    delay: opening ? (duration / 4) * 3 : 0,
+  })
 }
 
 /**
@@ -207,9 +229,18 @@ const cancelAnimationsAndGetValues = (
           lastAnimationValues.height = details.getBoundingClientRect().height
         }
         if (effect.target === content) {
-          lastAnimationValues.opacity = parseFloat(
-            getComputedStyle(content).opacity
-          )
+          if (effect instanceof KeyframeEffect) {
+            const keyframes = effect.getKeyframes()
+            const hasOpacityKeyframe = keyframes.some(
+              (keyframe) => keyframe.opacity !== undefined
+            )
+            if (hasOpacityKeyframe) {
+              lastAnimationValues.opacity = parseFloat(
+                getComputedStyle(content).opacity
+              )
+              console.log(lastAnimationValues.opacity)
+            }
+          }
         }
       }
       animation.cancel()
