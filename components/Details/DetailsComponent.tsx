@@ -275,7 +275,7 @@ export const DetailsComponent = ({
    */
 
   // The current aria label based on the collapsed state
-  const ariaLabel = open ? "expand details" : "collapse details"
+  const ariaLabel = open ? "collapse details" : "expand details"
 
   // The html id for the details content (used for aria-controls)
   const contentId = `${id}-content`
