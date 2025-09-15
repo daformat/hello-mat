@@ -3,6 +3,7 @@
 @mixin light-theme {
   --color-background: #{palette.$light-desert-sky-1};
   --color-logo: #{palette.$light-ivory-2};
+  --color-logo-hover: #{palette.$light-ivory-3};
 
   --color-toolbar-background: #{rgba(palette.$light-desert-sky-2, 1)};
   --color-toolbar-button-background: transparent;
@@ -33,6 +34,7 @@
 @mixin dark-theme {
   --color-background: #{palette.$dark-desert-sky-1};
   --color-logo: #{palette.$dark-ivory-3};
+  --color-logo-hover: #{palette.$dark-ivory-2};
 
   --color-toolbar-background: #{palette.$dark-desert-sky-2};
   --color-toolbar-button-background: transparent;

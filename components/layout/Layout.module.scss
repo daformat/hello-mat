@@ -31,15 +31,13 @@
   top: calc(env(safe-area-inset-top) + 44px);
   z-index: 1;
 
-  a,
-  .logo {
+  a {
     color: var(--color-logo);
     transition: color 0.2s ease-in-out;
   }
 
   .logo {
     margin-bottom: 1em;
-    transition: color 0.2s ease-in-out;
   }
 
   .test {
@@ -47,7 +45,7 @@
   }
 
   a:hover {
-    color: var(--color-toolbar-button-color-hover);
+    color: var(--color-logo-hover);
   }
 
   @include mixins.device-with-imprecise-input {
