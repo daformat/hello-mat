@@ -1,8 +1,10 @@
 import React, {
   Dispatch,
+  MouseEventHandler,
   ReactNode,
   SetStateAction,
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from "react"
@@ -10,10 +12,11 @@ import detailsStyles from "./DetailsComponent.module.scss"
 import { useReducedMotion } from "../../hooks/useReducedMotion"
 
 export type DetailsComponentProps = {
-  id: string
+  id?: string
   summary: ReactNode
   children: ReactNode
   defaultOpen?: boolean
+  // nodeRef: RefObject<HTMLLIElement>
 }
 
 /**
@@ -82,7 +85,7 @@ function animateContentVisibility(
  * @param nextHeight
  */
 function animateDetailsHeight(
-  details: HTMLDivElement,
+  details: HTMLElement,
   duration: number,
   prevHeight: number,
   nextHeight: number
@@ -101,7 +104,7 @@ function animateDetailsHeight(
  * @param setAnimating
  */
 function animateOpenClose(
-  details: HTMLDivElement,
+  details: HTMLElement,
   content: HTMLDivElement,
   setAnimating: Dispatch<SetStateAction<boolean>>
 ) {
@@ -116,6 +119,7 @@ function animateOpenClose(
   prevHeight = prevHeight ?? details.getBoundingClientRect().height
   // Toggle class to trigger final values and measure again
   details.classList.toggle(detailsStyles.collapsed)
+  details.setAttribute("open", "")
   const nextHeight = details.getBoundingClientRect().height
   // Animate content and details, accounting for previous animation elapsed time
   details.classList.add(detailsStyles.animating)
@@ -125,6 +129,7 @@ function animateOpenClose(
   const opening = prevHeight <= nextHeight
   animateContentVisibility(content, opening, duration, lastAnimationValues)
   // Animate details height
+  console.log({ prevHeight, nextHeight, duration })
   const detailsAnimation = animateDetailsHeight(
     details,
     duration,
@@ -150,7 +155,7 @@ function animateOpenClose(
  */
 const cancelAnimationsAndGetValues = (
   animations: Animation[],
-  details: HTMLDivElement,
+  details: HTMLElement,
   content: HTMLDivElement
 ): AnimationValues => {
   const lastAnimationValues: AnimationValues = {
@@ -196,32 +201,40 @@ export const DetailsComponent = ({
   const reduceMotion = useReducedMotion()
   const [animating, setAnimating] = useState<boolean>(false)
   const [open, setOpen] = useState<boolean>(defaultOpen ?? false)
-  const detailsRef = useRef<HTMLDivElement>(null)
+  const detailsRef = useRef<HTMLDetailsElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const chevronRef = useRef<HTMLButtonElement>(null)
 
   /**
    * Toggle the details open / close, optionally animating the transition
    */
-  const toggleOpen = useCallback(
-    (animate = true) => {
-      const details = detailsRef.current
-      const content = contentRef.current
-      // We do this hack to set the max-height only for animating
-      if (!reduceMotion && animate && details && content) {
-        animateOpenClose(details, content, setAnimating)
-      }
-      setOpen((open) => !open)
-    },
-    [reduceMotion]
-  )
+  const toggleOpen = useCallback(() => {
+    const details = detailsRef.current
+    const content = contentRef.current
+    // We do this hack to set the max-height only for animating
+    if (!reduceMotion && details && content) {
+      animateOpenClose(details, content, setAnimating)
+    }
+    setOpen((open) => !open)
+  }, [reduceMotion])
+
+  // useEffect(() => {
+  //   const details = detailsRef.current
+  //   if (details) {
+  //     details.addEventListener("toggle", toggleOpen)
+  //
+  //     return () => {
+  //       details.removeEventListener("toggle", toggleOpen)
+  //     }
+  //   }
+  // }, [toggleOpen])
 
   /**
    * Target custom event handler, specific to the DetailsComponent
    * (main logic is handled by the bullet)
    */
   // useEffect(() => {
-  //   const node = nodeRef.current as Element
+  //   const node = nodeRef.current
   //   const handleTarget: EventListener = () => {
   //     // If the details isn't opened, we want to open it,
   //     // We animate the opening only if it does not have a collapsed ancestor
@@ -233,10 +246,9 @@ export const DetailsComponent = ({
   //   // Register handler
   //   if (node) {
   //     node.addEventListener("target", handleTarget)
-  //   }
-  //   // Cleanup callback
-  //   return () => {
-  //     node.removeEventListener("target", handleTarget)
+  //     return () => {
+  //       node.removeEventListener("target", handleTarget)
+  //     }
   //   }
   // }, [nodeRef, open, toggleOpen])
 
@@ -245,7 +257,7 @@ export const DetailsComponent = ({
    */
 
   // The current aria label based on the collapsed state
-  const ariaLabel = open ? "collapse details" : "expand details"
+  const ariaLabel = open ? "expand details" : "collapse details"
 
   // The html id for the details content (used for aria-controls)
   const contentId = `${id}-content`
@@ -256,26 +268,31 @@ export const DetailsComponent = ({
   } ${animating ? detailsStyles.animating : ""}`
 
   // Clicking the chevron toggles the collapsed state
-  const chevronClickHandler = () => toggleOpen()
+  const chevronClickHandler: MouseEventHandler<HTMLElement> = (event) => {
+    event.preventDefault()
+    toggleOpen()
+  }
 
+  const detailsOpen = open || animating
+  console.log({ open, animating, detailsOpen })
   /**
    * Render
    */
   return (
-    <div className={detailsClassName} ref={detailsRef} data-details={""}>
-      <div className={detailsStyles.summary} onClick={chevronClickHandler}>
+    <details className={detailsClassName} ref={detailsRef} open={detailsOpen}>
+      <summary className={detailsStyles.summary} onClick={chevronClickHandler}>
         <button
           ref={chevronRef}
           className={detailsStyles.chevron}
           aria-label={ariaLabel}
-          aria-expanded={!open}
+          aria-expanded={open}
           aria-controls={contentId}
-        />
+        ></button>
         {summary}
-      </div>
+      </summary>
       <div ref={contentRef} className={detailsStyles.content} id={contentId}>
         {children}
       </div>
-    </div>
+    </details>
   )
 }
