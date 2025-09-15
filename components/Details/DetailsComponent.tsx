@@ -77,8 +77,8 @@ function animateContentVisibility(
   }
   content.animate(
     [
-      { opacity: startOpacity, height: `${prevHeight}px` },
-      { opacity: endOpacity, height: `${nextHeight}px` },
+      { opacity: startOpacity, height: `${prevHeight}px`, overflow: "hidden" },
+      { opacity: endOpacity, height: `${nextHeight}px`, overflow: "hidden" },
     ],
     contentAnimationOptions
   )
@@ -130,11 +130,13 @@ function animateOpenClose(
   const nextHeight = details.getBoundingClientRect().height
   details.open = !details.open
   // Animate content and details, accounting for previous animation elapsed time
-  details.classList.add(detailsStyles.animating)
   let duration = getAnimationDuration(prevHeight, nextHeight)
   duration -= lastAnimationValues.elapsed
   // Animate content visibility
   const opening = prevHeight <= nextHeight
+  if (!opening) {
+    details.dataset.closing = ""
+  }
   animateContentVisibility(
     content,
     opening,
@@ -157,11 +159,17 @@ function animateOpenClose(
     detailsAnimation.oncancel = detailsAnimation.onfinish = () => undefined
     setAnimating(false)
     details.classList.remove(detailsStyles.animating)
+    delete details.dataset.closing
+  }
+
+  const finish = () => {
+    reset()
     if (!opening) {
       details.open = false
     }
   }
-  detailsAnimation.oncancel = detailsAnimation.onfinish = reset
+  detailsAnimation.oncancel = reset
+  detailsAnimation.onfinish = finish
   setAnimating(true)
 }
 
@@ -280,11 +288,6 @@ export const DetailsComponent = ({
   // The html id for the details content (used for aria-controls)
   const contentId = `${id}-content`
 
-  // The derived class name for our pseudo details component
-  const detailsClassName = `${detailsStyles.details} ${
-    open ? "" : detailsStyles.collapsed
-  } ${animating ? detailsStyles.animating : ""}`
-
   // Clicking the chevron toggles the collapsed state
   const chevronClickHandler: MouseEventHandler<HTMLElement> = (event) => {
     event.preventDefault()
@@ -293,11 +296,13 @@ export const DetailsComponent = ({
 
   const detailsOpen = open || animating
   console.log({ open, animating, detailsOpen })
-  /**
-   * Render
-   */
+
   return (
-    <details className={detailsClassName} ref={detailsRef} open={detailsOpen}>
+    <details
+      ref={detailsRef}
+      open={detailsOpen}
+      className={detailsStyles.details}
+    >
       <summary className={detailsStyles.summary} onClick={chevronClickHandler}>
         <span
           ref={chevronRef}

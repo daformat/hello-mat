@@ -61,28 +61,11 @@
   }
 
   // When the details is collapsed (= not `open`)
-  &.collapsed {
+  &:not([open]), &[data-closing] {
     > .summary {
       > .chevron {
         transform: rotate(0deg);
       }
-    }
-
-    // Like a native details tag, we want the content out-of the a11y tree
-    // so that the content isn't read until the details is opened
-    //&:not(.animating) {
-    //  > .content {
-    //    display: none;
-    //  }
-    //}
-  }
-
-  &.animating {
-    > .content {
-      // make sure this is only applied when animating, otherwise expand/collapse
-      // controls will not be visible for things such as medias
-      overflow-x: visible;
-      overflow-y: hidden;
     }
   }
 }
