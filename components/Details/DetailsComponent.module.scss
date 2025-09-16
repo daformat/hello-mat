@@ -10,7 +10,7 @@
   > .summary {
     list-style: none;
 
-    &::marker {
+    &::marker, &::-webkit-details-marker {
       display: none;
     }
 
