@@ -169,15 +169,8 @@ function animateOpenClose(
   const distanceToAnimate = Math.abs(prevHeight - nextHeight)
   const contentHeight = detailsExpandedHeight - summaryHeight
   const ratio = distanceToAnimate / contentHeight
-  const theoreticalDuration =
-    getAnimationDuration(prevHeight, nextHeight) * ratio
-  console.log("values", theoreticalDuration, lastAnimationValues.elapsed)
+  const duration = getAnimationDuration(prevHeight, nextHeight) * ratio
 
-  const duration = theoreticalDuration
-  // if (duration <= 0) {
-  //   duration = theoricalDuration
-  // }
-  console.log("duration", duration)
   animateContentVisibility(
     content,
     newOpen,
