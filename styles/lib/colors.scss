@@ -15,6 +15,7 @@
 
   --color-shadow-1: rgba(32, 27, 33, 0.05);
   --color-shadow-2: rgba(32, 27, 33, 0.025);
+
   --color-border-1: #{rgba(#fff, 0.6)};
   --color-border-2: #{rgba(#fff, 0.001)};
 
@@ -23,6 +24,8 @@
 
   --color-bullet: #{palette.$light-ivory-5};
   --color-bullet-focus: #{palette.$light-ivory-3};
+
+  --color-code-background: #{rgba(palette.$light-desert-sky-2, 1)};
 
   // standalone components
 
@@ -46,6 +49,7 @@
 
   --color-shadow-1: rgba(0, 0, 0, 0.08);
   --color-shadow-2: rgba(0, 0, 0, 0.04);
+
   --color-border-1: #{rgba(palette.$dark-desert-sky-4, 0.2)};
   --color-border-2: #{rgba(palette.$dark-desert-sky-3, 0.15)};
 
@@ -54,6 +58,8 @@
 
   --color-bullet: #{palette.$dark-ivory-5};
   --color-bullet-focus: #{palette.$dark-ivory-3};
+
+  --color-code-background: #{rgba(palette.$dark-desert-sky-3, 0.75)};
 
   // standalone components
 

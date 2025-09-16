@@ -47,16 +47,13 @@
       }
     }
 
-    &:hover .chevron {
-      background-color: var(--color-bullet-focus);
+    &:focus-visible {
       outline: none;
     }
 
-    // The rest should be a single inline-block taking full-width
-    > *:not(.chevron) {
-      display: inline-block;
-      margin: 0;
-      width: 100%;
+    &:hover .chevron {
+      background-color: var(--color-bullet-focus);
+      outline: none;
     }
   }
 

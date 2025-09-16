@@ -14,11 +14,11 @@
       1.009 51.3%, 1.012 59.2%, 1.003 81.7%, 1
   );
 
-  bottom: 0;
   clip-path: inset(0 42px 0 0); // mask scroll bar
   color: var(--color-toc-link);
   display: flex;
   font-size: 14px;
+  height: 100dvh;
   left: 0;
   max-width: 50vw;
   overflow-x: hidden;
@@ -147,11 +147,11 @@
   > ul {
     margin: auto 0;
     mask-image: linear-gradient(to right, transparent, transparent calc(var(--toc-distance) / 2), black var(--toc-distance));
-    padding: 1em 0 1em var(--toc-distance);
+    padding: 1em var(--toc-distance);
     position: relative;
     transform: translateX(-100% + var(--max-dash-size));
     transition: width 0.3s ease-in-out;
-    width: calc(var(--max-dash-size) * 2);
+    //width: calc(var(--max-dash-size) * 2);
 
     @include mixins.remove-transition;
 
@@ -174,7 +174,7 @@
     @include mixins.above-medium() {
       &:hover, &:focus-within {
         transform: none;
-        width: 35%;
+        //width: 35%;
 
         li {
           &::before {

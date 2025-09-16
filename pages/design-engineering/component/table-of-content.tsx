@@ -8,6 +8,10 @@ const TableOfContentPage = () => {
     <>
       <Head>
         <title>Design engineering: a table of contents component</title>
+        <meta
+          name="description"
+          content="Building a table of contents component, using React, TypeScript, and SCSS."
+        />
       </Head>
       <TableOfContent.Provider>
         <TableOfContentPageContent />
@@ -29,23 +33,16 @@ const TableOfContentPageContent = () => {
   return (
     <>
       <TableOfContent.Root />
-      <div
-        style={{
-          maxWidth: "min(calc(100% - max(40vw, 10em)), 900px)",
-          margin: "8rem 0",
-        }}
-        ref={contentRef}
-        className="prose"
-      >
+      <div ref={contentRef} className="prose page">
         <h1 id="design-engineering-a-table-of-content-component">
           Design engineering: a table of content component
         </h1>
         <p>
-          This component (shown on the left hand-side) was crafted at{" "}
-          <a href="https://beamapp.co">Beam</a>, a browser with a first-class
-          note taking experience. With beam, you can point and shoot elements
-          from the pages you’re browsing and build rich-media notes out of them,
-          complete with references and back-linking.
+          This component (shown on the left hand-side, play with it!) was
+          crafted at <a href="https://beamapp.co">Beam</a>, a browser with a
+          first-class note taking experience. With beam, you can point and shoot
+          elements from the pages you’re browsing and build rich-media notes out
+          of them, complete with references and back-linking.
         </p>
         <h2 id="the-problem">The problem (requirements)</h2>
         <p>Click requirements to expand them</p>
@@ -75,14 +72,15 @@ const TableOfContentPageContent = () => {
           id="requirements-3"
           summary={
             <>
-              The table of content should support elements with and without ids
+              The table of content should support elements with and without{" "}
+              <code>id</code>
             </>
           }
         >
           <ul style={{ marginLeft: "0.9em" }}>
             <li>
-              Scrolling to the targeted element, no matter if it has an id or
-              not
+              Scrolling to the targeted element, no matter if it has an{" "}
+              <code>id</code> or&nbsp;not
             </li>
           </ul>
         </DetailsComponent>
@@ -118,8 +116,8 @@ const TableOfContentPageContent = () => {
           <ul style={{ marginLeft: "0.9em" }}>
             <li>
               correctly render even in the case where headings are not properly
-              ordered in the document: h1 &gt; h2 &gt; h3 should render the same
-              as h1 &gt; h3 &gt; h5{" "}
+              ordered in the document: <code>h1 &gt; h2 &gt; h3</code> should
+              render the same as <code>h1 &gt; h3 &gt; h5</code>
             </li>
           </ul>
         </DetailsComponent>
@@ -139,6 +137,7 @@ const TableOfContentPageContent = () => {
           <li>The table of content should be accessible to screen readers</li>
           <li>The table of content should be accessible to keyboard users</li>
           <li>The table of content should be accessible to mouse users</li>
+          <li>The table of content should be accessible to touch users</li>
           <li>
             The table of content should be responsive and adapt to the viewport
           </li>
@@ -155,18 +154,18 @@ const TableOfContentPageContent = () => {
         </h3>
         <ul>
           <li>
-            <strong>TableOfContent.Root</strong>: the table of content itself,
-            it’s a simple component that calls a private TocElement component to
-            render each entry in the table of content
+            <code>TableOfContent.Root</code>: the table of content itself, it’s
+            a simple component that calls a private <code>TocElement</code>
+            component to render each entry in the table of content
           </li>
           <li>
-            <strong>TableOfContent.Provider</strong>: a context provider that
-            makes the table of content available to all its children
+            <code>TableOfContent.Provider</code>: a context provider that makes
+            the table of content available to all its children
           </li>
           <li>
-            <strong>TableOfContent.useToc</strong>: a hook that returns the
-            table of content context, containing the rootElement and a setter
-            for the rootElement
+            <code>TableOfContent.useToc</code>: a hook that returns the table of
+            content context, containing the <code>rootElement</code> and a
+            setter for the <code>rootElement</code>
           </li>
         </ul>
         <h3 id="structured-list-of-headings">
@@ -184,14 +183,15 @@ const TableOfContentPageContent = () => {
           targeted element and should support elements with and without ids
         </h3>
         <p>
-          Provided the headings have an id, we get this behavior for free by
-          simply linking to the id of the heading using a hash. Should the
-          headings not have an id, we can still provide a clickable element that
-          scrolls to the targeted element, using element.scrollIntoView(). In
-          this cas we also apply a temporary class to the targeted element so we
-          can trigger a CSS animation highlighting the targeted element. We use
-          this logic to also enable clicking the dashes when the viewport is too
-          small to display the table of content.
+          Provided the headings have an <code>id</code>, we get this behavior
+          for free by simply linking to the id of the heading using a hash.
+          Should the headings not have an <code>id</code>, we can still provide
+          a clickable element that scrolls to the targeted element, using
+          <code>element.scrollIntoView()</code>. In this cas we also apply a
+          temporary class to the targeted element so we can trigger a CSS
+          animation highlighting the targeted element. We use this logic to also
+          enable clicking the dashes when the viewport is too small to display
+          the table of content.
         </p>
         <h3 id="automatic-updates">Update automatically</h3>
         <p>
@@ -199,14 +199,20 @@ const TableOfContentPageContent = () => {
         </p>
         <ul>
           <li>
-            <strong>The rootElement itself changes</strong>: in the component
-            that renders the rootElement, we call th context setter to update
-            it, in case of re-renders that would change the element itself
+            <strong>
+              The <code>rootElement</code> itself changes
+            </strong>
+            : in the component that renders <code>rootElement</code>, we call th
+            context setter to update it, in case of re-renders that would change
+            the element itself
           </li>
           <li>
-            <strong>The content of the rootElement changes</strong>: to account
-            for modifications of the subtree of the root element, we use a
-            mutationObserver that triggers a re-render of the table of content
+            <strong>
+              The content of the rootElement<code>rootElement</code> changes
+            </strong>
+            : to account for modifications of the subtree of the root element,
+            we use a <code>MutationObserver</code> that triggers a re-render of
+            the table of content
           </li>
         </ul>
       </div>
