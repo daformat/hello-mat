@@ -45,12 +45,11 @@ export const getCollapsedAncestor = (node: Element) => {
  */
 const getAnimationDuration = (before: number, after: number) => {
   const frameDuration = 1000 / 60
-  const speed = 15 // pixels / frame
+  const speed = 5 // pixels / frame
   const min = Math.min(before, after)
   const max = Math.max(before, after)
   const duration = ((max - min) / speed) * frameDuration
-  // return duration
-  return Math.min(duration, 350)
+  return Math.max(Math.min(duration, 500), 200)
 }
 
 /**
@@ -154,23 +153,27 @@ function animateOpenClose(
   // resume using the last interrupted animation value if any or measure details
   const prevHeight =
     lastAnimationValues.height ?? details.getBoundingClientRect().height
+  // measure total expanded height
+  const prevOpen = details.open
+  details.open = true
+  const detailsExpandedHeight = details.getBoundingClientRect().height
+  details.open = prevOpen
   // if the details tag is closing, then the final height is the summary height
-  let nextHeight = summaryHeight
   // if opening, then the final height is the fully expanded details height
-  if (newOpen) {
-    const prevOpen = details.open
-    details.open = true
-    nextHeight = details.getBoundingClientRect().height
-    details.open = prevOpen
-  }
+  const nextHeight = newOpen ? detailsExpandedHeight : summaryHeight
   // set the closing attribute to allow proper styling
   if (!newOpen) {
     details.dataset.closing = ""
   }
   // Animate content and details, accounting for previous animation elapsed time
-  const theoricalDuration = getAnimationDuration(prevHeight, nextHeight)
-  console.log("values", theoricalDuration, lastAnimationValues.elapsed)
-  const duration = lastAnimationValues.elapsed || theoricalDuration
+  const distanceToAnimate = Math.abs(prevHeight - nextHeight)
+  const contentHeight = detailsExpandedHeight - summaryHeight
+  const ratio = distanceToAnimate / contentHeight
+  const theoreticalDuration =
+    getAnimationDuration(prevHeight, nextHeight) * ratio
+  console.log("values", theoreticalDuration, lastAnimationValues.elapsed)
+
+  const duration = lastAnimationValues.elapsed || theoreticalDuration
   // if (duration <= 0) {
   //   duration = theoricalDuration
   // }
