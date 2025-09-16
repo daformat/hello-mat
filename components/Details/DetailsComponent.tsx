@@ -173,7 +173,7 @@ function animateOpenClose(
     getAnimationDuration(prevHeight, nextHeight) * ratio
   console.log("values", theoreticalDuration, lastAnimationValues.elapsed)
 
-  const duration = lastAnimationValues.elapsed || theoreticalDuration
+  const duration = theoreticalDuration
   // if (duration <= 0) {
   //   duration = theoricalDuration
   // }
