@@ -362,13 +362,12 @@ export const StencilSvgAnimation = () => {
           </li>
         ))}
       </ul>
-      <Link href={"/design-engineering"}>
-        <a
-          className={styles.controls}
-          style={{ marginTop: -70, paddingLeft: 18, paddingRight: 18 }}
-        >
-          <small>-&gt; &nbsp;&nbsp;Browse design engineering gallery</small>
-        </a>
+      <Link
+        href={"/design-engineering"}
+        className={styles.controls}
+        style={{ marginTop: -70, paddingLeft: 18, paddingRight: 18 }}
+      >
+        <small>-&gt; &nbsp;&nbsp;Browse design engineering gallery</small>
       </Link>
     </>
   )

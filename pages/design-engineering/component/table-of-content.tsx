@@ -1,12 +1,18 @@
 import { TableOfContent } from "../../../components/TableOfContent/TocComponent"
 import { useEffect, useRef } from "react"
 import { DetailsComponent } from "../../../components/Details/DetailsComponent"
+import Head from "next/head"
 
 const TableOfContentPage = () => {
   return (
-    <TableOfContent.Provider>
-      <TableOfContentPageContent />
-    </TableOfContent.Provider>
+    <>
+      <Head>
+        <title>Design engineering: a table of contents component</title>
+      </Head>
+      <TableOfContent.Provider>
+        <TableOfContentPageContent />
+      </TableOfContent.Provider>
+    </>
   )
 }
 

@@ -58,32 +58,31 @@ export const Layout = ({ children }: { children: ReactNode }) => (
 export const Header = () => (
   <div className={styles.header}>
     <Link href={"/"}>
-      <a>
-        <Logo />
-      </a>
+      <Logo />
     </Link>
-    <Link href="https://observablehq.com/@daformat">
-      <a
-        aria-label="Code explorations and how-to's on Observable"
-        target="_blank"
-        rel="noopener"
-      >
-        <LogoObservable />
-      </a>
+    <Link
+      href="https://observablehq.com/@daformat"
+      aria-label="Code explorations and how-to's on Observable"
+      target="_blank"
+      rel="noopener"
+    >
+      <LogoObservable />
     </Link>
-    <Link href="https://twitter.com/daformat">
-      <a aria-label="Updates on twitter" target="_blank" rel="noopener">
-        <LogoTwitter />
-      </a>
+    <Link
+      href="https://twitter.com/daformat"
+      aria-label="Updates on twitter"
+      target="_blank"
+      rel="noopener"
+    >
+      <LogoTwitter />
     </Link>
-    <Link href="https://daformat.medium.com">
-      <a
-        aria-label="Alors et la poésie, ça vaut bien le prix d'un sandwich, il faut écouter un poème"
-        target="_blank"
-        rel="noopener"
-      >
-        <LogoMedium />
-      </a>
+    <Link
+      href="https://daformat.medium.com"
+      aria-label="Alors et la poésie, ça vaut bien le prix d'un sandwich, il faut écouter un poème"
+      target="_blank"
+      rel="noopener"
+    >
+      <LogoMedium />
     </Link>
   </div>
 )
