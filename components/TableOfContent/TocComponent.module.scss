@@ -146,7 +146,7 @@
   // root ul in toc
   > ul {
     margin: auto 0;
-    mask-image: linear-gradient(to right, transparent, transparent calc(var(--toc-distance) / 2), black var(--toc-distance));
+    mask-image: linear-gradient(to right, transparent, transparent calc(var(--toc-distance) / 2), #000 var(--toc-distance));
     padding: 1em var(--toc-distance);
     position: relative;
     transform: translateX(-100% + var(--max-dash-size));
