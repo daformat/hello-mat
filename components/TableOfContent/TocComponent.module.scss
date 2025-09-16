@@ -19,7 +19,7 @@
   color: var(--color-toc-link);
   display: flex;
   font-size: 14px;
-  left: var(--toc-distance);
+  left: 0;
   max-width: 50vw;
   overflow-x: hidden;
   overflow-y: auto;
@@ -92,7 +92,7 @@
         content: "";
         display: inline-block;
         height: 2px;
-        left: 0;
+        left: var(--toc-distance);
         margin-right: 0.5em;
         opacity: 0.4;
         position: absolute;
@@ -146,7 +146,8 @@
   // root ul in toc
   > ul {
     margin: auto 0;
-    padding: 1em 0;
+    mask-image: linear-gradient(to right, transparent, transparent calc(var(--toc-distance) / 2), black var(--toc-distance));
+    padding: 1em 0 1em var(--toc-distance);
     position: relative;
     transform: translateX(-100% + var(--max-dash-size));
     transition: width 0.3s ease-in-out;
