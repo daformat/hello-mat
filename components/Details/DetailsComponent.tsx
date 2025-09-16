@@ -91,14 +91,18 @@ function animateContentVisibility(
     {
       maskImage: "linear-gradient(180deg, black, black 50%, transparent)",
       maskSize: "100% 100%",
+      offset: opening ? 0.75 : 0.25,
+    },
+    {
+      maskImage: "linear-gradient(180deg, black, black 50%, transparent)",
+      maskSize: "100% 100%",
+      offset: opening ? 0 : 1,
     },
   ]
 
   content.animate(opening ? keyframes.reverse() : keyframes, {
-    duration: opening ? duration / 2 : duration / 4,
+    duration: duration,
     easing: "ease-out",
-    fill: "both",
-    delay: opening ? (duration / 4) * 3 : 0,
   })
 }
 
