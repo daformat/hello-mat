@@ -16,7 +16,6 @@ export type DetailsComponentProps = {
   summary: ReactNode
   children: ReactNode
   defaultOpen?: boolean
-  // nodeRef: RefObject<HTMLLIElement>
 }
 
 /**
@@ -26,14 +25,6 @@ type AnimationValues = {
   height: number | null
   opacity: number | null
   elapsed: number
-}
-
-/**
- * Returns the collapsed details ancestor if any
- * @param node
- */
-export const getCollapsedAncestor = (node: Element) => {
-  return node.parentElement?.closest(`.${detailsStyles.collapsed}`)
 }
 
 /**
@@ -88,7 +79,7 @@ function animateContentVisibility(
     duration,
     easing: "ease-in-out",
   }
-  console.log("contentAnimationOptions", contentAnimationOptions.duration)
+  // opacity and height
   content.animate(
     [
       { opacity: startOpacity, height: `${prevHeight}px`, overflow: "hidden" },
@@ -96,7 +87,7 @@ function animateContentVisibility(
     ],
     contentAnimationOptions
   )
-
+  // mask image
   const keyframes: Keyframe[] = [
     {
       maskImage: "linear-gradient(180deg, black, black 50%, transparent)",
@@ -113,12 +104,10 @@ function animateContentVisibility(
       offset: opening ? 0 : 1,
     },
   ]
-
-  console.log("contentAnimationOptions2", duration)
-  content.animate(opening ? keyframes.reverse() : keyframes, {
-    duration: duration,
-    easing: "ease-out",
-  })
+  content.animate(
+    opening ? keyframes.reverse() : keyframes,
+    contentAnimationOptions
+  )
 }
 
 /**
@@ -135,7 +124,6 @@ function animateDetailsHeight(
   nextHeight: number
 ) {
   const animationOptions = { duration, easing: "ease-in-out" }
-  console.log("heightAnimationOptions", animationOptions.duration)
   return details.animate(
     [{ height: `${prevHeight}px` }, { height: `${nextHeight}px` }],
     animationOptions
@@ -184,19 +172,6 @@ function animateOpenClose(
   const ratio = distanceToAnimate / contentHeight
   const normalDuration = getAnimationDuration(0, contentHeight)
   const duration = inverseEaseInOut(ratio) * normalDuration
-  console.log({
-    distanceToAnimate,
-    contentHeight,
-    ratio,
-    normalDuration,
-    duration,
-  })
-  console.log({
-    r: ratio,
-    x: inverseEaseInOut(ratio),
-    dd: inverseEaseInOut(ratio) * normalDuration,
-  })
-
   animateContentVisibility(
     content,
     newOpen,
@@ -325,29 +300,6 @@ export const DetailsComponent = ({
       }
     }
   }, [open, toggleOpen])
-
-  /**
-   * Target custom event handler, specific to the DetailsComponent
-   * (main logic is handled by the bullet)
-   */
-  // useEffect(() => {
-  //   const node = nodeRef.current
-  //   const handleTarget: EventListener = () => {
-  //     // If the details isn't opened, we want to open it,
-  //     // We animate the opening only if it does not have a collapsed ancestor
-  //     if (!open) {
-  //       const collapsedAncestor = getCollapsedAncestor(node)
-  //       toggleOpen(!collapsedAncestor)
-  //     }
-  //   }
-  //   // Register handler
-  //   if (node) {
-  //     node.addEventListener("target", handleTarget)
-  //     return () => {
-  //       node.removeEventListener("target", handleTarget)
-  //     }
-  //   }
-  // }, [nodeRef, open, toggleOpen])
 
   /**
    * Computed values for render
