@@ -37,6 +37,19 @@ export const getCollapsedAncestor = (node: Element) => {
 }
 
 /**
+ * Computes the inverse of the ease-in-out easing function, that is, finds t
+ * for a given eased value
+ * @param easedValue
+ */
+const inverseEaseInOut = (easedValue: number) => {
+  if (easedValue < 0.5) {
+    return Math.sqrt(easedValue / 2)
+  } else {
+    return 1 - Math.sqrt((1 - easedValue) / 2)
+  }
+}
+
+/**
  * Returns the animation duration proportional to the animated distance,
  * (the difference between given `before` and `after` values)
  *
@@ -169,7 +182,20 @@ function animateOpenClose(
   const distanceToAnimate = Math.abs(prevHeight - nextHeight)
   const contentHeight = detailsExpandedHeight - summaryHeight
   const ratio = distanceToAnimate / contentHeight
-  const duration = getAnimationDuration(prevHeight, nextHeight) * ratio
+  const normalDuration = getAnimationDuration(0, contentHeight)
+  const duration = inverseEaseInOut(ratio) * normalDuration
+  console.log({
+    distanceToAnimate,
+    contentHeight,
+    ratio,
+    normalDuration,
+    duration,
+  })
+  console.log({
+    r: ratio,
+    x: inverseEaseInOut(ratio),
+    dd: inverseEaseInOut(ratio) * normalDuration,
+  })
 
   animateContentVisibility(
     content,
@@ -224,7 +250,7 @@ const cancelAnimationsAndGetValues = (
     const effect = animation.effect
     if (effect) {
       if (animation.currentTime && !lastAnimationValues.elapsed) {
-        console.log("elapsed", lastAnimationValues.elapsed)
+        console.log("elapsed", animation.currentTime)
         lastAnimationValues.elapsed = animation.currentTime
       }
       // Get the last height / opacity for relevant animations
