@@ -75,6 +75,7 @@ function animateContentVisibility(
     duration,
     easing: "ease-in-out",
   }
+  console.log("contentAnimationOptions", contentAnimationOptions.duration)
   content.animate(
     [
       { opacity: startOpacity, height: `${prevHeight}px`, overflow: "hidden" },
@@ -100,6 +101,7 @@ function animateContentVisibility(
     },
   ]
 
+  console.log("contentAnimationOptions2", duration)
   content.animate(opening ? keyframes.reverse() : keyframes, {
     duration: duration,
     easing: "ease-out",
@@ -120,6 +122,7 @@ function animateDetailsHeight(
   nextHeight: number
 ) {
   const animationOptions = { duration, easing: "ease-in-out" }
+  console.log("heightAnimationOptions", animationOptions.duration)
   return details.animate(
     [{ height: `${prevHeight}px` }, { height: `${nextHeight}px` }],
     animationOptions
@@ -164,8 +167,13 @@ function animateOpenClose(
     details.dataset.closing = ""
   }
   // Animate content and details, accounting for previous animation elapsed time
-  let duration = getAnimationDuration(prevHeight, nextHeight)
-  duration -= lastAnimationValues.elapsed
+  const theoricalDuration = getAnimationDuration(prevHeight, nextHeight)
+  console.log("values", theoricalDuration, lastAnimationValues.elapsed)
+  const duration = lastAnimationValues.elapsed || theoricalDuration
+  // if (duration <= 0) {
+  //   duration = theoricalDuration
+  // }
+  console.log("duration", duration)
   animateContentVisibility(
     content,
     newOpen,
@@ -218,10 +226,9 @@ const cancelAnimationsAndGetValues = (
     animation.pause()
     const effect = animation.effect
     if (effect) {
-      // Use the first animation timing infos
-      const { activeDuration, progress } = effect.getComputedTiming()
-      if (activeDuration && progress && lastAnimationValues.elapsed) {
-        lastAnimationValues.elapsed = activeDuration - progress * activeDuration
+      if (animation.currentTime && !lastAnimationValues.elapsed) {
+        console.log("elapsed", lastAnimationValues.elapsed)
+        lastAnimationValues.elapsed = animation.currentTime
       }
       // Get the last height / opacity for relevant animations
       if (effect instanceof KeyframeEffect) {
