@@ -27,7 +27,7 @@
       left: calc(-1 * var(--size) + 1.5px);
       padding: 0;
       position: absolute;
-      top: calc((var(--single-line-height) - var(--size)) / 2);
+      top: calc((var(--single-line-height) - var(--size)) / 2 - 1px);
       transform: rotate(90deg);
       transition: mixins.theme-transition(background-color),
       transform 0.15s ease-in-out;
