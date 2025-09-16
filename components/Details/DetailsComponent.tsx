@@ -49,7 +49,8 @@ const getAnimationDuration = (before: number, after: number) => {
   const min = Math.min(before, after)
   const max = Math.max(before, after)
   const duration = ((max - min) / speed) * frameDuration
-  return Math.max(Math.min(duration, 350), 200)
+  // return duration
+  return Math.min(duration, 350)
 }
 
 /**
