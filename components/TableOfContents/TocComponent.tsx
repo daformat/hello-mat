@@ -164,7 +164,7 @@ export const TocRoot = () => {
   )
 }
 
-export const TableOfContent = {
+export const TableOfContents = {
   Root: TocRoot,
   Provider: TocContextProvider,
   useToc: () => useContext(TocContext),

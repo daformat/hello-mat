@@ -1,10 +1,10 @@
-import { TableOfContent } from "../../../components/TableOfContent/TocComponent"
+import { TableOfContents } from "../../../components/TableOfContents/TocComponent"
 import { useEffect, useRef } from "react"
 import { DetailsComponent } from "../../../components/Details/DetailsComponent"
 import Head from "next/head"
 import { VideoPlayer } from "../../../components/VideoPlayer/VideoPlayer"
 
-const TableOfContentPage = () => {
+const TableOfContentsPage = () => {
   return (
     <>
       <Head>
@@ -14,15 +14,15 @@ const TableOfContentPage = () => {
           content="Building a table of contents component, using React, TypeScript, and SCSS."
         />
       </Head>
-      <TableOfContent.Provider>
-        <TableOfContentPageContent />
-      </TableOfContent.Provider>
+      <TableOfContents.Provider>
+        <TableOfContentsPageContent />
+      </TableOfContents.Provider>
     </>
   )
 }
 
-const TableOfContentPageContent = () => {
-  const tocContext = TableOfContent.useToc()
+const TableOfContentsPageContent = () => {
+  const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -33,10 +33,10 @@ const TableOfContentPageContent = () => {
 
   return (
     <>
-      <TableOfContent.Root />
+      <TableOfContents.Root />
       <div ref={contentRef} className="prose page">
         <h1 id="design-engineering-a-table-of-content-component">
-          Design engineering: a table of content component
+          Design engineering: a table of contents component
         </h1>
         <p>
           This component (shown on the left hand-side, play with it!) was
@@ -74,7 +74,7 @@ const TableOfContentPageContent = () => {
           id="requirements-1"
           summary={
             <>
-              The table of content should display a structured list of headings
+              The table of contents should display a structured list of headings
             </>
           }
         >
@@ -95,7 +95,7 @@ const TableOfContentPageContent = () => {
           id="requirements-3"
           summary={
             <>
-              The table of content should support elements with and without{" "}
+              The table of contents should support elements with and without{" "}
               <code>id</code>
             </>
           }
@@ -111,7 +111,7 @@ const TableOfContentPageContent = () => {
           id="requirements-4"
           summary={
             <>
-              The table of content should be responsive and adapt to the
+              The table of contents should be responsive and adapt to the
               viewport
             </>
           }
@@ -125,7 +125,7 @@ const TableOfContentPageContent = () => {
         </DetailsComponent>
         <DetailsComponent
           id="requirements-5"
-          summary={<>The table of content should update automatically</>}
+          summary={<>The table of contents should update automatically</>}
         >
           <ul style={{ marginLeft: "0.9em" }}>
             <li>When the html root element changes,</li>
@@ -134,7 +134,9 @@ const TableOfContentPageContent = () => {
         </DetailsComponent>
         <DetailsComponent
           id="requirements-6"
-          summary={<>The table of content component should be fault-tolerant</>}
+          summary={
+            <>The table of contents component should be fault-tolerant</>
+          }
         >
           <ul style={{ marginLeft: "0.9em" }}>
             <li>
@@ -146,48 +148,48 @@ const TableOfContentPageContent = () => {
         </DetailsComponent>
         <DetailsComponent
           id="requirements-7"
-          summary={<>The table of content should be scrollable</>}
+          summary={<>The table of contents should be scrollable</>}
         >
           <ul style={{ marginLeft: "0.9em" }}>
             <li>
-              if taller than the viewport, the table of content should be
+              if taller than the viewport, the table of contents should be
               scrollable
             </li>
           </ul>
         </DetailsComponent>
         <h3 id="non-functional-requirements">Non-functional requirements</h3>
         <ul>
-          <li>The table of content should be accessible to screen readers</li>
-          <li>The table of content should be accessible to keyboard users</li>
-          <li>The table of content should be accessible to mouse users</li>
-          <li>The table of content should be accessible to touch users</li>
+          <li>The table of contents should be accessible to screen readers</li>
+          <li>The table of contents should be accessible to keyboard users</li>
+          <li>The table of contents should be accessible to mouse users</li>
+          <li>The table of contents should be accessible to touch users</li>
           <li>
-            The table of content should be responsive and adapt to the viewport
+            The table of contents should be responsive and adapt to the viewport
           </li>
         </ul>
         <h2 id="the-solution">The solution</h2>
         <p>
-          The table of content component was built using React, TypeScript, and
+          The table of contents component was built using React, TypeScript, and
           (s)CSS. It was designed to be flexible and adaptable to different
           scenarios. Let’s review some of the requirements and see how we went
           about.
         </p>
         <h3 id="anatomy-of-the-component">
-          Anatomy of the Table of Content component
+          Anatomy of the Table of Contents component
         </h3>
         <ul>
           <li>
-            <code>TableOfContent.Root</code>: the table of content itself, it’s
-            a simple component that calls a private <code>TocElement</code>
+            <code>TableOfContents.Root</code>: the table of contents itself,
+            it’s a simple component that calls a private <code>TocElement</code>
             component to render each entry in the table of content
           </li>
           <li>
-            <code>TableOfContent.Provider</code>: a context provider that makes
-            the table of content available to all its children
+            <code>TableOfContents.Provider</code>: a context provider that makes
+            the table of contents available to all its children
           </li>
           <li>
-            <code>TableOfContent.useToc</code>: a hook that returns the table of
-            content context, containing the <code>rootElement</code> and a
+            <code>TableOfContents.useToc</code>: a hook that returns the table
+            of content context, containing the <code>rootElement</code> and a
             setter for the <code>rootElement</code>
           </li>
         </ul>
@@ -195,14 +197,14 @@ const TableOfContentPageContent = () => {
           Display a structured list of headings
         </h3>
         <p>
-          The table of content has two states: idle and active. When the table
+          The table of contents has two states: idle and active. When the table
           of content is idle, it displays dashes to represent the headings. The
           dashes length depends on the level of heading it represents. When the
-          table of content is active, it displays the heading text (truncated if
-          necessary).
+          table of contents is active, it displays the heading text (truncated
+          if necessary).
         </p>
         <h3 id="clickable-and-scroll-to-the-targeted-element">
-          Table of content entries should be clickable and scroll to the
+          Table of contents entries should be clickable and scroll to the
           targeted element and should support elements with and without ids
         </h3>
         <p>
@@ -243,4 +245,4 @@ const TableOfContentPageContent = () => {
   )
 }
 
-export default TableOfContentPage
+export default TableOfContentsPage

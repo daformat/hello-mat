@@ -1,4 +1,4 @@
-import { TableOfContent } from "components/TableOfContent/TocComponent"
+import { TableOfContents } from "components/TableOfContents/TocComponent"
 import Head from "next/head"
 import { useEffect, useRef } from "react"
 import { DetailsComponent } from "../../../components/Details/DetailsComponent"
@@ -12,14 +12,14 @@ const DetailsDisclosureComponent = () => (
         content="Building a details (disclosure) component, using React, TypeScript, and SCSS."
       />
     </Head>
-    <TableOfContent.Provider>
+    <TableOfContents.Provider>
       <DetailsPageContent />
-    </TableOfContent.Provider>
+    </TableOfContents.Provider>
   </>
 )
 
 const DetailsPageContent = () => {
-  const tocContext = TableOfContent.useToc()
+  const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -30,7 +30,7 @@ const DetailsPageContent = () => {
 
   return (
     <>
-      <TableOfContent.Root />
+      <TableOfContents.Root />
       <div ref={contentRef} className="prose page">
         <h1 id="design-engineering-a-table-of-content-component">
           Design engineering: a details (or disclosure) component
