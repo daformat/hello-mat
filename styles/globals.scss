@@ -73,7 +73,7 @@ a {
 
 @keyframes highlight-animation {
   20% {
-    color: var(--text-primary-hover);
+    color: var(--text-secondary-hover);
   }
 
   100% {
@@ -84,6 +84,25 @@ a {
 .page {
   margin: 8rem 0;
   max-width: min(calc(100% - max(40vw, 10em)), 900px);
+
+  button {
+    align-items: center;
+    background-color: var(--color-toolbar-background);
+    border: 0;
+    border-radius: 8px;
+    box-shadow: 0 1px 12px var(--color-shadow-1), inset 0 0 2px 0.75px var(--color-border-2), inset 0 0 0 0.75px var(--color-border-1);
+    color: var(--text-primary);
+    display: inline-flex;
+    flex-direction: row;
+    gap: 8px;
+    justify-content: center;
+    padding: 7px;
+    transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+
+    &[data-state="active"] {
+      color: var(--text-secondary-hover);
+    }
+  }
 }
 
 code, kbd {
@@ -91,6 +110,7 @@ code, kbd {
   border-radius: 4px;
   box-shadow: inset 0 0 2px 0.75px var(--color-border-2),
   inset 0 0 0 0.75px var(--color-border-1);
+  color: var(--text-secondary);
   font-family: monospace;
   font-size: 0.94em;
   padding: 2px 4px;
@@ -98,13 +118,51 @@ code, kbd {
   box-shadow 0.2s ease-in-out;
 }
 
+.video_player {
+  font-size: 0;
+  max-width: 100%;
+  position: relative;
+
+  video {
+    width: 100%;
+
+    &.video_dark {
+      display: none;
+    }
+
+  }
+
+  &::after {
+    border-radius: 8px;
+    box-shadow: 0 0 2px 0.75px var(--color-border-2),
+    0 0 0 0.75px var(--color-border-3);
+    content: "";
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    video {
+      &.video_light {
+        display: none;
+      }
+
+      &.video_dark {
+        display: block;
+      }
+    }
+  }
+}
+
 .prose {
   * {
     scroll-margin-top: 1em;
   }
 
+
   *:target, .targeted {
-    animation: highlight-animation 2s ease-in-out;
+    animation: highlight-animation 1.5s ease-in-out 0.25s;
   }
 
   a {
@@ -168,7 +226,7 @@ code, kbd {
   }
 
   .card {
-    background-color: var(--color-code-background);
+    background-color: var(--color-card-background);
     border-radius: 8px;
     box-shadow: inset 0 0 2px 0.75px var(--color-border-2),
     inset 0 0 0 0.75px var(--color-border-1);

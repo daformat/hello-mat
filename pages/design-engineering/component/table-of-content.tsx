@@ -2,6 +2,7 @@ import { TableOfContent } from "../../../components/TableOfContent/TocComponent"
 import { useEffect, useRef } from "react"
 import { DetailsComponent } from "../../../components/Details/DetailsComponent"
 import Head from "next/head"
+import { VideoPlayer } from "../../../components/VideoPlayer/VideoPlayer"
 
 const TableOfContentPage = () => {
   return (
@@ -44,6 +45,28 @@ const TableOfContentPageContent = () => {
           elements from the pages you’re browsing and build rich-media notes out
           of them, complete with references and back-linking.
         </p>
+        <VideoPlayer
+          sources={{
+            dark: {
+              src: "/design-engineering/toc/toc-overview-dark.mp4",
+              type: "video/mp4",
+            },
+            light: {
+              src: "/design-engineering/toc/toc-overview-light.mp4",
+              type: "video/mp4",
+            },
+            slow: {
+              dark: {
+                src: "/design-engineering/toc/toc-overview-slow-dark.mp4",
+                type: "video/mp4",
+              },
+              light: {
+                src: "/design-engineering/toc/toc-overview-slow-light.mp4",
+                type: "video/mp4",
+              },
+            },
+          }}
+        />
         <h2 id="the-problem">The problem (requirements)</h2>
         <p>Click requirements to expand them</p>
         <h3 id="functional-requirements">Functional requirements</h3>
@@ -149,7 +172,7 @@ const TableOfContentPageContent = () => {
           scenarios. Let’s review some of the requirements and see how we went
           about.
         </p>
-        <h3 id="anotomy-of-the-component">
+        <h3 id="anatomy-of-the-component">
           Anatomy of the Table of Content component
         </h3>
         <ul>

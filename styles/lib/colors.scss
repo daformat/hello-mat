@@ -18,14 +18,19 @@
 
   --color-border-1: #{rgba(#fff, 0.6)};
   --color-border-2: #{rgba(#fff, 0.001)};
+  --color-border-3: #{rgba(palette.$light-ivory-4, 0.25)};
 
   --text-primary: #{palette.$light-ivory-3};
   --text-primary-hover: #{palette.$light-ivory-2};
+  --text-secondary: #{palette.$light-ivory-2};
+  --text-secondary-hover: #{palette.$light-ivory-1};
+
 
   --color-bullet: #{palette.$light-ivory-5};
   --color-bullet-focus: #{palette.$light-ivory-3};
 
-  --color-code-background: #{rgba(palette.$light-desert-sky-2, 1)};
+  --color-code-background: #{rgba(palette.$light-desert-sky-2, .75)};
+  --color-card-background: #{rgba(palette.$light-desert-sky-2, .75)};
 
   // standalone components
 
@@ -52,14 +57,18 @@
 
   --color-border-1: #{rgba(palette.$dark-desert-sky-4, 0.2)};
   --color-border-2: #{rgba(palette.$dark-desert-sky-3, 0.15)};
+  --color-border-3: #{rgba(palette.$dark-desert-sky-3, 1)};
 
   --text-primary: #{palette.$dark-ivory-3};
   --text-primary-hover: #{palette.$dark-ivory-2};
+  --text-secondary: #{palette.$dark-ivory-2};
+  --text-secondary-hover: #{palette.$dark-ivory-1};
 
   --color-bullet: #{palette.$dark-ivory-5};
   --color-bullet-focus: #{palette.$dark-ivory-3};
 
   --color-code-background: #{rgba(palette.$dark-desert-sky-3, 0.75)};
+  --color-card-background: #{rgba(palette.$dark-desert-sky-3, 0.25)};
 
   // standalone components
 
