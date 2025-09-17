@@ -2,6 +2,7 @@ import { TableOfContents } from "components/TableOfContents/TocComponent"
 import Head from "next/head"
 import { useEffect, useRef } from "react"
 import { DetailsComponent } from "../../../components/Details/DetailsComponent"
+import { VideoPlayer } from "../../../components/VideoPlayer/VideoPlayer"
 
 const DetailsDisclosureComponent = () => (
   <>
@@ -45,6 +46,28 @@ const DetailsPageContent = () => {
           trivial. The reason being, that <code>details</code> does not render
           its content (except for the summary) until it is opened.
         </p>
+        <VideoPlayer
+          sources={{
+            dark: {
+              src: "/design-engineering/details/details-overview-dark.mp4",
+              type: "video/mp4",
+            },
+            light: {
+              src: "/design-engineering/details/details-overview-light.mp4",
+              type: "video/mp4",
+            },
+            slow: {
+              dark: {
+                src: "/design-engineering/details/details-overview-slow-dark.mp4",
+                type: "video/mp4",
+              },
+              light: {
+                src: "/design-engineering/details/details-overview-slow-light.mp4",
+                type: "video/mp4",
+              },
+            },
+          }}
+        />
         <h2 id="common-pitfall">Common pitfall</h2>
         <p>
           For that reason, many implementations avoid using a{" "}
