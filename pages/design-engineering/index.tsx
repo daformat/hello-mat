@@ -12,7 +12,7 @@ const DesignEngineeringIndex = () => (
       }}
     >
       <Link
-        href={"/design-engineering/component/table-of-contents.tsx"}
+        href={"/design-engineering/component/table-of-contents"}
         style={{
           alignItems: "center",
           backgroundColor: "var(--color-toolbar-background)",
