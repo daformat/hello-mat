@@ -13,6 +13,11 @@ import React, {
 import detailsStyles from "./DetailsComponent.module.scss"
 import { useReducedMotion } from "../../hooks/useReducedMotion"
 
+/**
+ * This component is a WORK IN PROGRESS
+ * still needs some polishing and bug fixes
+ */
+
 export type DetailsComponentProps = {
   id?: string
   summary: ReactNode
