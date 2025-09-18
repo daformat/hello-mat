@@ -57,6 +57,14 @@
     }
   }
 
+  > [data-content] {
+    display: flow-root;
+
+    > *:last-child {
+      margin-bottom: 0;
+    }
+  }
+
   // When the details is collapsed (= not `open`)
   &:not([open]), &[data-closing] {
     > .summary {

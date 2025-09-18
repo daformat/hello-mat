@@ -57,6 +57,20 @@ const getAnimationDuration = (before: number, after: number) => {
 }
 
 /**
+ * Returns the remaining time for the given animation
+ * @param animation
+ */
+const getRemainingTime = (animation: Animation) => {
+  if (!animation.effect || !animation.currentTime) {
+    return null
+  }
+  const effect = animation.effect as KeyframeEffect
+  const duration = effect.getTiming().duration as number
+  const currentTime = animation.currentTime as number
+  return Math.max(0, duration - currentTime)
+}
+
+/**
  * Animate details content visibility
  * @param content
  * @param opening
@@ -87,11 +101,14 @@ function animateContentVisibility(
     ],
     contentAnimationOptions
   )
+
+  const remainingRatio = opening ? 1 : startOpacity
+
   // mask image
   const keyframes: Keyframe[] = [
     {
       maskImage: "linear-gradient(180deg, black, black 50%, transparent)",
-      maskSize: "100% 200%",
+      maskSize: `100% ${100 + 100 * remainingRatio}%`,
     },
     {
       maskImage: "linear-gradient(180deg, black, black 50%, transparent)",
@@ -104,6 +121,8 @@ function animateContentVisibility(
       offset: opening ? 0 : 1,
     },
   ]
+
+  // console.log({ keyframes, remainingRatio })
   content.animate(
     opening ? keyframes.reverse() : keyframes,
     contentAnimationOptions
@@ -152,6 +171,24 @@ function animateOpenClose(
     content
   )
   // resume using the last interrupted animation value if any or measure details
+  const innerDeltasElements = details.querySelectorAll("[data-target-size]")
+  const innerDeltas = Array.from(innerDeltasElements).reduce((acc, element) => {
+    if (element instanceof HTMLElement) {
+      const targetSize = parseFloat(element.dataset.targetSize ?? "0")
+      const elementHeight = element.getBoundingClientRect().height
+      const delta = isNaN(targetSize) ? 0 : targetSize - elementHeight
+      // console.log({
+      //   element,
+      //   dataset: { ...element.dataset },
+      //   targetSize,
+      //   elementHeight,
+      //   delta,
+      // })
+      return acc + delta
+    }
+    return 0
+  }, 0)
+  // resume from last value if any, otherwise measure details
   const prevHeight =
     lastAnimationValues.height ?? details.getBoundingClientRect().height
   // measure total expanded height
@@ -161,17 +198,47 @@ function animateOpenClose(
   details.open = prevOpen
   // if the details tag is closing, then the final height is the summary height
   // if opening, then the final height is the fully expanded details height
-  const nextHeight = newOpen ? detailsExpandedHeight : summaryHeight
-  // set the closing attribute to allow proper styling
+  const nextHeight = newOpen
+    ? detailsExpandedHeight + innerDeltas
+    : summaryHeight
+
+  details.dataset.animating = ""
   if (!newOpen) {
     details.dataset.closing = ""
   }
   // Animate content and details, accounting for previous animation elapsed time
-  const distanceToAnimate = Math.abs(prevHeight - nextHeight)
-  const contentHeight = detailsExpandedHeight - summaryHeight
-  const ratio = distanceToAnimate / contentHeight
+  const animatingParent = details.parentElement?.closest("[data-animating]")
+  const parentAnimations = animatingParent?.getAnimations()
+  const parentAnimationsDuration =
+    parentAnimations?.map(getRemainingTime).find((t) => t) ?? 0
+  // console.log({ animatingParent, parentAnimations, parentAnimationsDuration })
+  const delta = nextHeight - prevHeight
+  const distanceToAnimate = Math.abs(delta)
+  const contentHeight = detailsExpandedHeight + innerDeltas - summaryHeight
+  const ratio = Math.min(distanceToAnimate / contentHeight, 1)
   const normalDuration = getAnimationDuration(0, contentHeight)
-  const duration = inverseEaseInOut(ratio) * normalDuration
+  const duration =
+    parentAnimationsDuration || inverseEaseInOut(ratio) * normalDuration
+  // console.log({
+  //   details,
+  //   innerDeltasElements,
+  //   ratio,
+  //   delta,
+  //   distanceToAnimate,
+  //   contentHeight,
+  //   normalDuration,
+  //   animatingParent,
+  //   parentAnimations,
+  //   parentAnimationsDuration,
+  //   inverseEaseInOut: inverseEaseInOut(ratio) * normalDuration,
+  //   duration,
+  //   prevHeight,
+  //   nextHeight,
+  //   detailsExpandedHeight,
+  //   innerDeltas,
+  // })
+  details.dataset.targetSize = nextHeight.toString()
+  details.dataset.targetOpen = newOpen.toString()
   animateContentVisibility(
     content,
     newOpen,
@@ -190,11 +257,15 @@ function animateOpenClose(
   const cancel = () => {
     // Make sure the handler can only be executed once, replace with no-op
     detailsAnimation.oncancel = detailsAnimation.onfinish = () => undefined
+    delete details.dataset.animating
     delete details.dataset.closing
+    delete details.dataset.targetSize
+    delete details.dataset.targetOpen
     setAnimating(false)
   }
   const finish = () => {
     if (!newOpen) {
+      // console.log("finish details", details)
       details.open = false
     }
     cancel()
@@ -225,7 +296,7 @@ const cancelAnimationsAndGetValues = (
     const effect = animation.effect
     if (effect) {
       if (animation.currentTime && !lastAnimationValues.elapsed) {
-        console.log("elapsed", animation.currentTime)
+        // console.log("elapsed", animation.currentTime)
         lastAnimationValues.elapsed = animation.currentTime
       }
       // Get the last height / opacity for relevant animations
@@ -279,6 +350,8 @@ export const DetailsComponent = ({
       setOpen((open) => {
         if (!reduceMotion && details && content && animate) {
           animateOpenClose(details, content, setAnimating, !open)
+          details.dispatchEvent(new Event("details-toggle", { bubbles: true }))
+          delete details.dataset.pressed
         }
         return !open
       })
@@ -292,6 +365,8 @@ export const DetailsComponent = ({
       const handleToggle = () => {
         if (open !== details.open) {
           toggleOpen(false)
+        } else if (details.open) {
+          // details.dispatchEvent(new Event("details-toggle", { bubbles: true }))
         }
       }
       details.addEventListener("toggle", handleToggle)
@@ -301,6 +376,30 @@ export const DetailsComponent = ({
     }
   }, [open, toggleOpen])
 
+  useEffect(() => {
+    const details = detailsRef.current
+    const content = contentRef.current
+    if (details && content) {
+      const handleDetailsToggle: EventListener = (event) => {
+        if (
+          event.target !== event.currentTarget &&
+          details.dataset.animating === "" &&
+          details.dataset.targetOpen
+        ) {
+          animateOpenClose(
+            details,
+            content,
+            setAnimating,
+            details.dataset.targetOpen === "true"
+          )
+        }
+      }
+      details.addEventListener("details-toggle", handleDetailsToggle)
+      return () => {
+        details.removeEventListener("details-toggle", handleDetailsToggle)
+      }
+    }
+  })
   /**
    * Computed values for render
    */
@@ -325,7 +424,15 @@ export const DetailsComponent = ({
       open={detailsOpen}
       className={detailsStyles.details}
     >
-      <summary className={detailsStyles.summary} onClick={chevronClickHandler}>
+      <summary
+        className={detailsStyles.summary}
+        onClick={chevronClickHandler}
+        onPointerDown={() => {
+          if (detailsRef.current) {
+            detailsRef.current.dataset.pressed = ""
+          }
+        }}
+      >
         <span
           ref={chevronRef}
           className={detailsStyles.chevron}
@@ -336,7 +443,12 @@ export const DetailsComponent = ({
         />
         {summary}
       </summary>
-      <div ref={contentRef} className={detailsStyles.content} id={contentId}>
+      <div
+        ref={contentRef}
+        className={detailsStyles.content}
+        id={contentId}
+        data-content={""}
+      >
         {children}
       </div>
     </details>

@@ -103,9 +103,25 @@ const DetailsPageContent = () => {
                 And the nested content that goes with it, you can nest as much
                 details as you need. If you use Chrome, try closing both details
                 and use your browser search feature (<kbd>cmd/ctrl+f</kbd>) and
-                search for <code>banana</code>. Both details will open back with
+                search for <code>baNaNa</code>. Both details will open back with
                 your search result.
               </p>
+              <DetailsComponent
+                summary={
+                  <>
+                    Here is another nested <code>details</code> within the first
+                    nested <code>details</code>
+                  </>
+                }
+              >
+                <p>
+                  And the nested content that goes with it, you can nest as much
+                  details as you need. If you use Chrome, try closing all
+                  details and use your browser search feature (
+                  <kbd>cmd/ctrl+f</kbd>) and search for <code>baNaNa</code>. All
+                  details will open back with your search result.
+                </p>
+              </DetailsComponent>
             </DetailsComponent>
             <DetailsComponent summary={<>Things to try</>} defaultOpen={true}>
               <ul>
