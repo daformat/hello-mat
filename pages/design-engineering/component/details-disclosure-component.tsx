@@ -1,6 +1,6 @@
 import { TableOfContents } from "components/TableOfContents/TocComponent"
 import Head from "next/head"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { DetailsComponent } from "../../../components/Details/DetailsComponent"
 import { VideoPlayer } from "../../../components/VideoPlayer/VideoPlayer"
 
@@ -22,6 +22,7 @@ const DetailsDisclosureComponent = () => (
 const DetailsPageContent = () => {
   const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
+  const [slow, setSlow] = useState(false)
 
   useEffect(() => {
     if (contentRef.current) {
@@ -74,11 +75,17 @@ const DetailsPageContent = () => {
           <code>details</code> tag at all, with the consequence of losing the
           semantic meaning of the element, and browser behavior such as allowing
           the user to search for the content of the details tag and
-          automatically opening it if necessary (chrome, hopefully others soon).
+          automatically opening it if necessary (chromium-based browser,
+          hopefully others soon).
         </p>
-        <h2 id="demo">Demo</h2>
+        <h2 id="demo">Interactive demo</h2>
+        <p>
+          Play around with these details, you can also set the animation speed
+          by using the buttons at the bottom of this card
+        </p>
         <div className="card">
           <DetailsComponent
+            animationSpeed={slow ? 0.1 : 1}
             defaultOpen={true}
             summary={
               <>
@@ -93,6 +100,7 @@ const DetailsPageContent = () => {
               components.
             </p>
             <DetailsComponent
+              animationSpeed={slow ? 0.1 : 1}
               summary={
                 <>
                   For example, here is a nested <code>details</code>
@@ -101,12 +109,14 @@ const DetailsPageContent = () => {
             >
               <p>
                 And the nested content that goes with it, you can nest as much
-                details as you need. If you use Chrome, try closing both details
-                and use your browser search feature (<kbd>cmd/ctrl+f</kbd>) and
-                search for <code>baNaNa</code>. Both details will open back with
-                your search result.
+                details as you need. If you use Chrome, Edge, Brave, or any
+                other chromium-based browser, try closing both details and use
+                your browser search feature (<kbd>cmd/ctrl+f</kbd>) and search
+                for <code>baNaNa</code>. Both details will open back with your
+                search result.
               </p>
               <DetailsComponent
+                animationSpeed={slow ? 0.1 : 1}
                 summary={
                   <>
                     Here is another nested <code>details</code> within the first
@@ -123,7 +133,11 @@ const DetailsPageContent = () => {
                 </p>
               </DetailsComponent>
             </DetailsComponent>
-            <DetailsComponent summary={<>Things to try</>} defaultOpen={true}>
+            <DetailsComponent
+              animationSpeed={slow ? 0.1 : 1}
+              summary={<>Things to try</>}
+              defaultOpen={true}
+            >
               <ul>
                 <li>Try opening/closing the details</li>
                 <li>
@@ -137,6 +151,20 @@ const DetailsPageContent = () => {
               </ul>
             </DetailsComponent>
           </DetailsComponent>
+        </div>
+        <div style={{ textAlign: "right", marginTop: "0.5em" }}>
+          <button
+            onClick={() => setSlow(false)}
+            data-state={!slow ? "active" : undefined}
+          >
+            100%
+          </button>{" "}
+          <button
+            onClick={() => setSlow(true)}
+            data-state={slow ? "active" : undefined}
+          >
+            10%
+          </button>
         </div>
         <h2 id="requirements">Requirements</h2>
         <h3 id="functional-requirements">Functional requirements</h3>

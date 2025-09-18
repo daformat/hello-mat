@@ -1,10 +1,12 @@
 import React, {
+  CSSProperties,
   Dispatch,
   MouseEventHandler,
   ReactNode,
   SetStateAction,
   useCallback,
   useEffect,
+  useId,
   useRef,
   useState,
 } from "react"
@@ -16,6 +18,7 @@ export type DetailsComponentProps = {
   summary: ReactNode
   children: ReactNode
   defaultOpen?: boolean
+  animationSpeed?: number
 }
 
 /**
@@ -25,6 +28,7 @@ type AnimationValues = {
   height: number | null
   opacity: number | null
   elapsed: number
+  maskSize: string | null
 }
 
 /**
@@ -71,6 +75,63 @@ const getRemainingTime = (animation: Animation) => {
 }
 
 /**
+ * Returns the derived mask size for the given opacity and opening state
+ * @param opacity
+ * @param opening
+ */
+const calculateActualMaskSize = (opacity: number, opening: boolean) => {
+  if (opening) {
+    // previous animation was closing: mask changes only in the first 25%
+    if (opacity >= 0.75) {
+      // mask was transitioning: interpolate between 200% and 100%
+      // 0 to 1 over 1 -> 0.75 opacity range
+      const progress = (1.0 - opacity) / 0.25
+      const maskSizeY = 200 - 100 * progress
+      return `100% ${maskSizeY}%`
+    } else {
+      return "100% 100%"
+    }
+  } else {
+    // previous animation was opening: mask changes only in the last 25%
+    if (opacity <= 0.75) {
+      return "100% 100%"
+    } else {
+      // 0 to 1 over 0.75 -> 1 opacity range
+      const progress = (opacity - 0.75) / 0.25
+      const maskSizeY = 100 + 100 * progress
+      return `100% ${maskSizeY}%`
+    }
+  }
+}
+
+/**
+ * Returns the adjusted offset for the mask animation
+ * @param startOpacity
+ * @param endOpacity
+ * @param opening
+ */
+const calculateAdjustedOffset = (
+  startOpacity: number,
+  endOpacity: number,
+  opening: boolean
+) => {
+  if (opening) {
+    // opening: mask should change during the last 25% of the opacity transition
+    const opacityRange = endOpacity - startOpacity // e.g., 0.3 to 1.0 = 0.7 range
+    const maskTransitionStart = Math.max(
+      0,
+      (0.75 - startOpacity) / opacityRange
+    )
+    return Math.min(0.75, maskTransitionStart)
+  } else {
+    // closing: mask should change during the first 25% of the opacity transition
+    const opacityRange = startOpacity - endOpacity // e.g., 0.8 to 0.0 = 0.8 range
+    const maskTransitionEnd = Math.min(1, (startOpacity - 0.75) / opacityRange)
+    return Math.max(0.25, maskTransitionEnd)
+  }
+}
+
+/**
  * Animate details content visibility
  * @param content
  * @param opening
@@ -101,32 +162,26 @@ function animateContentVisibility(
     ],
     contentAnimationOptions
   )
-
-  const remainingRatio = opening ? 1 : startOpacity
-
   // mask image
+  const maskImage = "linear-gradient(180deg, black, black 50%, transparent)"
+  const startMaskSize = calculateActualMaskSize(startOpacity, opening)
+  const endMaskSize = opening ? "100% 200%" : "100% 100%"
   const keyframes: Keyframe[] = [
     {
-      maskImage: "linear-gradient(180deg, black, black 50%, transparent)",
-      maskSize: `100% ${100 + 100 * remainingRatio}%`,
+      maskImage,
+      maskSize: startMaskSize,
     },
     {
-      maskImage: "linear-gradient(180deg, black, black 50%, transparent)",
-      maskSize: "100% 100%",
-      offset: opening ? 0.75 : 0.25,
+      maskImage,
+      maskSize: opening ? startMaskSize : endMaskSize,
+      offset: calculateAdjustedOffset(startOpacity, endOpacity, opening),
     },
     {
-      maskImage: "linear-gradient(180deg, black, black 50%, transparent)",
-      maskSize: "100% 100%",
-      offset: opening ? 0 : 1,
+      maskImage,
+      maskSize: endMaskSize,
     },
   ]
-
-  // console.log({ keyframes, remainingRatio })
-  content.animate(
-    opening ? keyframes.reverse() : keyframes,
-    contentAnimationOptions
-  )
+  content.animate(keyframes, contentAnimationOptions)
 }
 
 /**
@@ -155,12 +210,14 @@ function animateDetailsHeight(
  * @param content
  * @param setAnimating
  * @param newOpen
+ * @param animationSpeed
  */
 function animateOpenClose(
   details: HTMLDetailsElement,
   content: HTMLDivElement,
   setAnimating: Dispatch<SetStateAction<boolean>>,
-  newOpen: boolean
+  newOpen: boolean,
+  animationSpeed: number
 ) {
   const summaryHeight =
     details.querySelector("summary")?.getBoundingClientRect().height ?? 0
@@ -177,13 +234,6 @@ function animateOpenClose(
       const targetSize = parseFloat(element.dataset.targetSize ?? "0")
       const elementHeight = element.getBoundingClientRect().height
       const delta = isNaN(targetSize) ? 0 : targetSize - elementHeight
-      // console.log({
-      //   element,
-      //   dataset: { ...element.dataset },
-      //   targetSize,
-      //   elementHeight,
-      //   delta,
-      // })
       return acc + delta
     }
     return 0
@@ -211,32 +261,14 @@ function animateOpenClose(
   const parentAnimations = animatingParent?.getAnimations()
   const parentAnimationsDuration =
     parentAnimations?.map(getRemainingTime).find((t) => t) ?? 0
-  // console.log({ animatingParent, parentAnimations, parentAnimationsDuration })
   const delta = nextHeight - prevHeight
   const distanceToAnimate = Math.abs(delta)
   const contentHeight = detailsExpandedHeight + innerDeltas - summaryHeight
   const ratio = Math.min(distanceToAnimate / contentHeight, 1)
   const normalDuration = getAnimationDuration(0, contentHeight)
-  const duration =
+  let duration =
     parentAnimationsDuration || inverseEaseInOut(ratio) * normalDuration
-  // console.log({
-  //   details,
-  //   innerDeltasElements,
-  //   ratio,
-  //   delta,
-  //   distanceToAnimate,
-  //   contentHeight,
-  //   normalDuration,
-  //   animatingParent,
-  //   parentAnimations,
-  //   parentAnimationsDuration,
-  //   inverseEaseInOut: inverseEaseInOut(ratio) * normalDuration,
-  //   duration,
-  //   prevHeight,
-  //   nextHeight,
-  //   detailsExpandedHeight,
-  //   innerDeltas,
-  // })
+  duration = duration / animationSpeed
   details.dataset.targetSize = nextHeight.toString()
   details.dataset.targetOpen = newOpen.toString()
   animateContentVisibility(
@@ -265,7 +297,6 @@ function animateOpenClose(
   }
   const finish = () => {
     if (!newOpen) {
-      // console.log("finish details", details)
       details.open = false
     }
     cancel()
@@ -290,16 +321,16 @@ const cancelAnimationsAndGetValues = (
     height: null,
     opacity: null,
     elapsed: 0,
+    maskSize: null,
   }
   for (const animation of animations) {
     animation.pause()
     const effect = animation.effect
     if (effect) {
       if (animation.currentTime && !lastAnimationValues.elapsed) {
-        // console.log("elapsed", animation.currentTime)
         lastAnimationValues.elapsed = animation.currentTime
       }
-      // Get the last height / opacity for relevant animations
+      // get the last height / opacity for relevant animations
       if (effect instanceof KeyframeEffect) {
         if (effect.target === details) {
           lastAnimationValues.height = details.getBoundingClientRect().height
@@ -314,6 +345,12 @@ const cancelAnimationsAndGetValues = (
               lastAnimationValues.opacity = parseFloat(
                 getComputedStyle(content).opacity
               )
+            }
+            const hasMaskSizeKeyframe = keyframes.some(
+              (keyframe) => keyframe.maskSize !== undefined
+            )
+            if (hasMaskSizeKeyframe) {
+              lastAnimationValues.maskSize = getComputedStyle(content).maskSize
             }
           }
         }
@@ -332,6 +369,7 @@ export const DetailsComponent = ({
   summary,
   children,
   defaultOpen,
+  animationSpeed = 1,
 }: DetailsComponentProps) => {
   const reduceMotion = useReducedMotion()
   const [animating, setAnimating] = useState<boolean>(false)
@@ -349,24 +387,33 @@ export const DetailsComponent = ({
       const content = contentRef.current
       setOpen((open) => {
         if (!reduceMotion && details && content && animate) {
-          animateOpenClose(details, content, setAnimating, !open)
+          animateOpenClose(
+            details,
+            content,
+            setAnimating,
+            !open,
+            animationSpeed
+          )
           details.dispatchEvent(new Event("details-toggle", { bubbles: true }))
           delete details.dataset.pressed
         }
         return !open
       })
     },
-    [reduceMotion]
+    [animationSpeed, reduceMotion]
   )
 
+  /**
+   * Listen to the native toggle event in order to open the details when
+   * the content is searched (chromium-only)
+   */
   useEffect(() => {
     const details = detailsRef.current
     if (details) {
       const handleToggle = () => {
+        // state differ only in the case of a search
         if (open !== details.open) {
           toggleOpen(false)
-        } else if (details.open) {
-          // details.dispatchEvent(new Event("details-toggle", { bubbles: true }))
         }
       }
       details.addEventListener("toggle", handleToggle)
@@ -376,6 +423,10 @@ export const DetailsComponent = ({
     }
   }, [open, toggleOpen])
 
+  /**
+   * Listen to our custom event, which we dispatch when the details is toggled
+   * since the native toggle event doesn't bubble
+   */
   useEffect(() => {
     const details = detailsRef.current
     const content = contentRef.current
@@ -390,7 +441,8 @@ export const DetailsComponent = ({
             details,
             content,
             setAnimating,
-            details.dataset.targetOpen === "true"
+            details.dataset.targetOpen === "true",
+            animationSpeed
           )
         }
       }
@@ -399,7 +451,8 @@ export const DetailsComponent = ({
         details.removeEventListener("details-toggle", handleDetailsToggle)
       }
     }
-  })
+  }, [animationSpeed])
+
   /**
    * Computed values for render
    */
@@ -408,7 +461,7 @@ export const DetailsComponent = ({
   const ariaLabel = open ? "collapse details" : "expand details"
 
   // The html id for the details content (used for aria-controls)
-  const contentId = `${id}-content`
+  const contentId = useId()
 
   // Clicking the chevron toggles the collapsed state
   const chevronClickHandler: MouseEventHandler<HTMLElement> = (event) => {
@@ -423,6 +476,7 @@ export const DetailsComponent = ({
       ref={detailsRef}
       open={detailsOpen}
       className={detailsStyles.details}
+      style={{ "--animation-speed": `${animationSpeed}` } as CSSProperties}
     >
       <summary
         className={detailsStyles.summary}

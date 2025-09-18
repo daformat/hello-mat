@@ -30,7 +30,7 @@
       top: calc((var(--single-line-height) - var(--size)) / 2 - 1px);
       transform: rotate(90deg);
       transition: mixins.theme-transition(background-color),
-      transform 0.15s ease-in-out;
+      transform calc(0.15s / var(--animation-speed, 1)) ease-in-out;
       -webkit-user-select: none; // stylelint-disable-line
       width: var(--size);
 
