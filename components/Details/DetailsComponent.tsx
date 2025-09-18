@@ -19,7 +19,6 @@ import { useReducedMotion } from "../../hooks/useReducedMotion"
  */
 
 export type DetailsComponentProps = {
-  id?: string
   summary: ReactNode
   children: ReactNode
   defaultOpen?: boolean
@@ -370,7 +369,6 @@ const cancelAnimationsAndGetValues = (
 }
 
 export const DetailsComponent = ({
-  id,
   summary,
   children,
   defaultOpen,
@@ -381,7 +379,6 @@ export const DetailsComponent = ({
   const [open, setOpen] = useState<boolean>(defaultOpen ?? false)
   const detailsRef = useRef<HTMLDetailsElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
-  const chevronRef = useRef<HTMLButtonElement>(null)
 
   /**
    * Toggle the details open / close, optionally animating the transition
@@ -493,7 +490,6 @@ export const DetailsComponent = ({
         }}
       >
         <span
-          ref={chevronRef}
           className={detailsStyles.chevron}
           aria-label={ariaLabel}
           aria-expanded={open}
