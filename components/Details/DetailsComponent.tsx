@@ -270,11 +270,27 @@ function animateOpenClose(
   const contentHeight = detailsExpandedHeight + innerDeltas - summaryHeight
   const ratio = Math.min(distanceToAnimate / contentHeight, 1)
   const normalDuration = getAnimationDuration(0, contentHeight)
-  let duration =
-    parentAnimationsDuration || inverseEaseInOut(ratio) * normalDuration
-  duration = duration / animationSpeed
+  const duration =
+    parentAnimationsDuration ||
+    (inverseEaseInOut(ratio) * normalDuration) / animationSpeed
   details.dataset.targetSize = nextHeight.toString()
   details.dataset.targetOpen = newOpen.toString()
+
+  console.log({
+    details,
+    newOpen,
+    duration,
+    normalDuration,
+    lastAnimationValues,
+    prevHeight,
+    nextHeight,
+    innerDeltas,
+    detailsExpandedHeight,
+    parentAnimationsDuration,
+    ratio,
+    distanceToAnimate,
+  })
+
   animateContentVisibility(
     content,
     newOpen,
@@ -388,7 +404,9 @@ export const DetailsComponent = ({
       const details = detailsRef.current
       const content = contentRef.current
       setOpen((open) => {
+        console.log("state toggle", open, "->", !open, details)
         if (!reduceMotion && details && content && animate) {
+          console.log("state toggle animates")
           animateOpenClose(
             details,
             content,
@@ -406,15 +424,16 @@ export const DetailsComponent = ({
   )
 
   /**
-   * Listen to the native toggle event in order to open the details when
-   * the content is searched (chromium-only)
+   * Listen to the native toggle event to open the details when the content
+   * is searched using the browser search feature (chromium-only)
    */
   useEffect(() => {
     const details = detailsRef.current
     if (details) {
       const handleToggle = () => {
-        // state differ only in the case of a search
+        // state only differs in the case of a search
         if (open !== details.open) {
+          console.log("native toggle", details)
           toggleOpen(false)
         }
       }
@@ -439,6 +458,7 @@ export const DetailsComponent = ({
           details.dataset.animating === "" &&
           details.dataset.targetOpen
         ) {
+          console.log("custom toggle", details, { ...details.dataset })
           animateOpenClose(
             details,
             content,
@@ -465,11 +485,14 @@ export const DetailsComponent = ({
   // The html id for the details content (used for aria-controls)
   const contentId = useId()
 
-  // Clicking the chevron toggles the collapsed state
-  const chevronClickHandler: MouseEventHandler<HTMLElement> = (event) => {
-    event.preventDefault()
-    toggleOpen()
-  }
+  // Clicking the summary toggles the details open / close
+  const handleSummaryClick = useCallback<MouseEventHandler<HTMLElement>>(
+    (event) => {
+      event.preventDefault()
+      toggleOpen()
+    },
+    [toggleOpen]
+  )
 
   const detailsOpen = open || animating
 
@@ -482,7 +505,7 @@ export const DetailsComponent = ({
     >
       <summary
         className={detailsStyles.summary}
-        onClick={chevronClickHandler}
+        onClick={handleSummaryClick}
         onPointerDown={() => {
           if (detailsRef.current) {
             detailsRef.current.dataset.pressed = ""
