@@ -69,7 +69,11 @@ const getAnimationDuration = (before: number, after: number) => {
  * @param animation
  */
 const getRemainingTime = (animation: Animation) => {
-  if (!animation.effect || !animation.currentTime) {
+  if (!animation.effect || animation.currentTime === null) {
+    console.log("no effect or currentTime", {
+      effect: animation.effect,
+      currentTime: animation.currentTime,
+    })
     return null
   }
   const effect = animation.effect as KeyframeEffect
@@ -209,6 +213,28 @@ function animateDetailsHeight(
 }
 
 /**
+ * type guard to check if a value is not undefined
+ */
+const isDefined = <T,>(value: T | undefined): value is T => {
+  return value !== undefined
+}
+
+/**
+ * type guard to check if a value is not null
+ */
+const isNotNull = <T,>(value: T | null): value is T => {
+  return value !== null
+}
+
+/**
+ * type guard to check if a value is not null and not undefined
+ * @param value
+ */
+const isNonNullbable = <T,>(value: T): value is NonNullable<T> => {
+  return isDefined(value) && isNotNull(value)
+}
+
+/**
  * Animate open and closing the details component
  * @param details
  * @param content
@@ -242,6 +268,26 @@ function animateOpenClose(
     }
     return 0
   }, 0)
+  const innerDeltasAnimations = Array.from(innerDeltasElements).map((element) =>
+    element.getAnimations()
+  )
+  const innerDeltasAnimationsRemainingTime = innerDeltasAnimations.map(
+    (animations) => animations.map(getRemainingTime)
+  )
+  const maxChildAnimationRemainingTime = Math.max(
+    ...innerDeltasAnimationsRemainingTime.flat().filter(isNotNull)
+  )
+  const childAnimationRemainingTime =
+    isFinite(maxChildAnimationRemainingTime) &&
+    !isNaN(maxChildAnimationRemainingTime)
+      ? maxChildAnimationRemainingTime
+      : undefined
+
+  console.log({
+    innerDeltasElements,
+    innerDeltasAnimations,
+    innerDeltasAnimationsRemainingTime,
+  })
   // resume from last value if any, otherwise measure details
   const prevHeight =
     lastAnimationValues.height ?? details.getBoundingClientRect().height
@@ -271,6 +317,7 @@ function animateOpenClose(
   const ratio = Math.min(distanceToAnimate / contentHeight, 1)
   const normalDuration = getAnimationDuration(0, contentHeight)
   const duration =
+    childAnimationRemainingTime ||
     parentAnimationsDuration ||
     (inverseEaseInOut(ratio) * normalDuration) / animationSpeed
   details.dataset.targetSize = nextHeight.toString()
