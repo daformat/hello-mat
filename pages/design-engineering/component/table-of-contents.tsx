@@ -71,7 +71,6 @@ const TableOfContentsPageContent = () => {
         <p>Click requirements to expand them</p>
         <h3 id="functional-requirements">Functional requirements</h3>
         <DetailsComponent
-          id="requirements-1"
           summary={
             <>
               The table of contents should display a structured list of headings
@@ -84,7 +83,6 @@ const TableOfContentsPageContent = () => {
           </ul>
         </DetailsComponent>
         <DetailsComponent
-          id="requirements-2"
           summary={<>Each element in the list should be clickable</>}
         >
           <ul style={{ marginLeft: "0.9em" }}>
@@ -92,7 +90,6 @@ const TableOfContentsPageContent = () => {
           </ul>
         </DetailsComponent>
         <DetailsComponent
-          id="requirements-3"
           summary={
             <>
               The table of contents should support elements with and without{" "}
@@ -108,7 +105,6 @@ const TableOfContentsPageContent = () => {
           </ul>
         </DetailsComponent>
         <DetailsComponent
-          id="requirements-4"
           summary={
             <>
               The table of contents should be responsive and adapt to the
@@ -124,7 +120,6 @@ const TableOfContentsPageContent = () => {
           </ul>
         </DetailsComponent>
         <DetailsComponent
-          id="requirements-5"
           summary={<>The table of contents should update automatically</>}
         >
           <ul style={{ marginLeft: "0.9em" }}>
@@ -133,7 +128,6 @@ const TableOfContentsPageContent = () => {
           </ul>
         </DetailsComponent>
         <DetailsComponent
-          id="requirements-6"
           summary={
             <>The table of contents component should be fault-tolerant</>
           }
@@ -147,7 +141,6 @@ const TableOfContentsPageContent = () => {
           </ul>
         </DetailsComponent>
         <DetailsComponent
-          id="requirements-7"
           summary={<>The table of contents should be scrollable</>}
         >
           <ul style={{ marginLeft: "0.9em" }}>
