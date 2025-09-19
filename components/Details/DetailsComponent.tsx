@@ -317,9 +317,11 @@ function animateOpenClose(
   const ratio = Math.min(distanceToAnimate / contentHeight, 1)
   const normalDuration = getAnimationDuration(0, contentHeight)
   const duration =
-    childAnimationRemainingTime ||
     parentAnimationsDuration ||
-    (inverseEaseInOut(ratio) * normalDuration) / animationSpeed
+    Math.max(
+      (inverseEaseInOut(ratio) * normalDuration) / animationSpeed,
+      childAnimationRemainingTime ?? 0
+    )
   details.dataset.targetSize = nextHeight.toString()
   details.dataset.targetOpen = newOpen.toString()
 
