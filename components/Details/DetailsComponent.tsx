@@ -12,6 +12,7 @@ import React, {
 } from "react"
 import detailsStyles from "./DetailsComponent.module.scss"
 import { useReducedMotion } from "../../hooks/useReducedMotion"
+import { isNotNull } from "../../utlis/nullable"
 
 /**
  * This component is a WORK IN PROGRESS
@@ -70,10 +71,6 @@ const getAnimationDuration = (before: number, after: number) => {
  */
 const getRemainingTime = (animation: Animation) => {
   if (!animation.effect || animation.currentTime === null) {
-    console.log("no effect or currentTime", {
-      effect: animation.effect,
-      currentTime: animation.currentTime,
-    })
     return null
   }
   const effect = animation.effect as KeyframeEffect
@@ -213,28 +210,6 @@ function animateDetailsHeight(
 }
 
 /**
- * type guard to check if a value is not undefined
- */
-const isDefined = <T,>(value: T | undefined): value is T => {
-  return value !== undefined
-}
-
-/**
- * type guard to check if a value is not null
- */
-const isNotNull = <T,>(value: T | null): value is T => {
-  return value !== null
-}
-
-/**
- * type guard to check if a value is not null and not undefined
- * @param value
- */
-const isNonNullbable = <T,>(value: T): value is NonNullable<T> => {
-  return isDefined(value) && isNotNull(value)
-}
-
-/**
  * Animate open and closing the details component
  * @param details
  * @param content
@@ -283,11 +258,6 @@ function animateOpenClose(
       ? maxChildAnimationRemainingTime
       : undefined
 
-  console.log({
-    innerDeltasElements,
-    innerDeltasAnimations,
-    innerDeltasAnimationsRemainingTime,
-  })
   // resume from last value if any, otherwise measure details
   const prevHeight =
     lastAnimationValues.height ?? details.getBoundingClientRect().height
@@ -324,22 +294,6 @@ function animateOpenClose(
     )
   details.dataset.targetSize = nextHeight.toString()
   details.dataset.targetOpen = newOpen.toString()
-
-  console.log({
-    details,
-    newOpen,
-    duration,
-    normalDuration,
-    lastAnimationValues,
-    prevHeight,
-    nextHeight,
-    innerDeltas,
-    detailsExpandedHeight,
-    parentAnimationsDuration,
-    ratio,
-    distanceToAnimate,
-  })
-
   animateContentVisibility(
     content,
     newOpen,
@@ -453,9 +407,7 @@ export const DetailsComponent = ({
       const details = detailsRef.current
       const content = contentRef.current
       setOpen((open) => {
-        console.log("state toggle", open, "->", !open, details)
         if (!reduceMotion && details && content && animate) {
-          console.log("state toggle animates")
           animateOpenClose(
             details,
             content,
@@ -482,7 +434,6 @@ export const DetailsComponent = ({
       const handleToggle = () => {
         // state only differs in the case of a search
         if (open !== details.open) {
-          console.log("native toggle", details)
           toggleOpen(false)
         }
       }
@@ -507,7 +458,6 @@ export const DetailsComponent = ({
           details.dataset.animating === "" &&
           details.dataset.targetOpen
         ) {
-          console.log("custom toggle", details, { ...details.dataset })
           animateOpenClose(
             details,
             content,
