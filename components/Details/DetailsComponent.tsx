@@ -14,11 +14,6 @@ import detailsStyles from "./DetailsComponent.module.scss"
 import { useReducedMotion } from "../../hooks/useReducedMotion"
 import { isNotNull } from "../../utlis/nullable"
 
-/**
- * This component is a WORK IN PROGRESS
- * still needs some polishing and bug fixes
- */
-
 export type DetailsComponentProps = {
   summary: ReactNode
   children: ReactNode
@@ -474,10 +469,6 @@ export const DetailsComponent = ({
     }
   }, [animationSpeed])
 
-  /**
-   * Computed values for render
-   */
-
   // The current aria label based on the collapsed state
   const ariaLabel = open ? "collapse details" : "expand details"
 
@@ -493,6 +484,8 @@ export const DetailsComponent = ({
     [toggleOpen]
   )
 
+  // We need to force-open the details if it's animating since the native
+  // behavior is to not render the content at all when animating
   const detailsOpen = open || animating
 
   return (
