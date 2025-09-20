@@ -13,8 +13,7 @@ export const isNotNull = <T>(value: T | null): value is T => {
 }
 
 /**
- * type guard to check if a value is not null and not undefined
- * @param value
+ * type guard to check if a value is non-nullable (not null and not undefined)
  */
 export const isNonNullable = <T>(value: T): value is NonNullable<T> => {
   return isDefined(value) && isNotNull(value)
