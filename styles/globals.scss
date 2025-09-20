@@ -102,6 +102,12 @@ a {
     &[data-state="active"] {
       color: var(--text-secondary-hover);
     }
+
+    &:hover,
+    &:focus-visible {
+      background-color: var(--color-toolbar-button-background-hover);
+      outline: none;
+    }
   }
 }
 

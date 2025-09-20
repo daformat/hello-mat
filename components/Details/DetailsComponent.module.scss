@@ -51,7 +51,7 @@
       outline: none;
     }
 
-    &:hover .chevron {
+    &:is(:hover, :focus-visible) .chevron {
       background-color: var(--color-bullet-focus);
       outline: none;
     }
