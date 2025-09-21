@@ -1,0 +1,84 @@
+@use "/styles/lib/mixins";
+
+.toggle {
+  --base-transform: translateX(100%);
+  bottom: 0;
+  color: var(--media-controls);
+  display: none;
+  font-size: 0.85714286em;
+  opacity: 0; // Controls are visible when hovering the element
+  padding: 0.1em 0.5em 0.5em 1em;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transform: var(--base-transform);
+  transition: opacity 0.2s ease-in-out;
+  width: 8em;
+
+  @include mixins.remove-transition;
+
+  @include mixins.above-medium {
+    display: initial;
+  }
+
+  .action {
+    --padding: 0.5em;
+    cursor: default;
+    margin: calc(-1 * var(--padding) + 0px) calc(0.5 * var(--padding) + 0px);
+    position: relative;
+    transition: color 0.2s ease-in-out;
+    user-select: none;
+
+    @include mixins.remove-transition;
+
+    &:hover {
+      color: var(--media-controls-hover);
+    }
+
+    &:active {
+      color: var(--media-controls-active);
+    }
+  }
+
+  .icon_expand,
+  .icon_collapse {
+    margin-right: 0.5em;
+    vertical-align: middle;
+  }
+
+  .expand_label,
+  .collapse_label {
+    // the right-hand padding has to be generous to cover the text width of the alternate
+    // control label in order to mitigate a rendering bug specific to beam (not in safari)
+    // where it doesn't fully clear the hidden control box
+    padding: 0.5em 5em 0.5em 0.75em;
+    transition: opacity 0.2s ease-in-out;
+    white-space: nowrap;
+
+    @include mixins.remove-transition;
+  }
+
+  .expand_label {
+    left: 0;
+    opacity: 0;
+    overflow: visible;
+    pointer-events: none;
+    position: absolute;
+    top: calc(50% + 1px);
+    transform: translateY(-50%);
+  }
+}
+
+*:hover > .toggle {
+  opacity: 1;
+}
+
+[data-media-collapsed] {
+  .collapse_label {
+    opacity: 0;
+  }
+
+  .expand_label {
+    opacity: 1;
+  }
+}

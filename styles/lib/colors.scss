@@ -32,11 +32,19 @@
   --color-code-background: #{rgba(palette.$light-desert-sky-2, .75)};
   --color-card-background: #{rgba(palette.$light-desert-sky-2, .75)};
 
+  --color-link: var(--text-primary-hover);
+  --color-link-hover: var(--text-primary-hover);
+  --color-link-underline: var(--text-primary-hover);
+
+  --color-empty: #{rgba(palette.$light-desert-sky-2, .75)};
+
   // standalone components
 
   --color-toc-dash: #{palette.$light-ivory-3};
   --color-toc-link: #{palette.$light-ivory-3};
   --color-toc-link-active: #{palette.$light-ivory-1};
+
+  --media-controls-hover: var(--color-link-hover);
 }
 
 @mixin dark-theme {
@@ -70,11 +78,19 @@
   --color-code-background: #{rgba(palette.$dark-desert-sky-3, 0.75)};
   --color-card-background: #{rgba(palette.$dark-desert-sky-3, 0.25)};
 
+  --color-link: var(--text-primary-hover);
+  --color-link-hover: var(--text-primary-hover);
+  --color-link-underline: var(--text-primary-hover);
+
+  --color-empty: #{rgba(palette.$dark-desert-sky-3, 0.5)};
+
   // standalone components
 
   --color-toc-dash: #{palette.$dark-ivory-3};
   --color-toc-link: #{palette.$dark-ivory-3};
   --color-toc-link-active: #{palette.$dark-ivory-1};
+
+  --media-controls-hover: var(--color-link-hover);
 }
 
 :root {

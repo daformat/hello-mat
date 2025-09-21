@@ -1,0 +1,113 @@
+@use "/styles/lib/mixins";
+
+@mixin link {
+  border-radius: 1px;
+  color: var(--color-link);
+  font-weight: 500;
+  overflow-wrap: break-word;
+  position: relative;
+  text-decoration: underline;
+  text-decoration-color: var(--color-link-underline);
+  text-decoration-skip-ink: auto;
+  text-underline-offset: 0.16em;
+  transition: mixins.theme-transition(text-decoration-color);
+  word-break: break-word;
+
+  @include mixins.remove-transition;
+
+  .icn {
+    vertical-align: middle;
+  }
+
+  &:visited {
+    color: var(--color-link);
+  }
+
+  &:hover,
+  &:focus {
+    background-color: var(--color-link-background-hover);
+    box-shadow: 0 0 0 2px var(--color-link-background-hover);
+    color: var(--color-link-hover);
+    outline: none;
+    text-decoration: underline;
+    text-decoration-color: var(--color-link-underline-hover);
+  }
+}
+
+@mixin link-with-arrow {
+
+  box-shadow: none !important;
+
+  &::after {
+    // arrow icon for external links
+    background-color: var(--color-link-underline); // for the mask image
+    content: " ";
+    display: inline; // keep the pseudo as `inline` so it sticks to the last word instead of wrapping to the next line
+    font-family: monospace;
+    font-size: 1.3em;
+    left: 0.0257142857em;
+    line-height: 0;
+    opacity: 0.5;
+    position: relative;
+    text-decoration: none;
+    top: 0.114285714em;
+    transition: mixins.theme-transition(background-color, opacity),
+      top 0.2s var(--easing-bounce), left 0.2s var(--easing-bounce),
+      transform 0.2s var(--easing-bounce);
+    vertical-align: super;
+    white-space: nowrap;
+
+    @include mixins.remove-transition;
+
+    // the image has a height of 20 because we have to display the arrow as inline so they don't wrap alone on new lines
+    // and this isn't enough on safari which displays also the outer part of the mask (horizontal bars on top and bottom)
+    @include mixins.mask-image(
+      url("data:image/svg+xml,%3Csvg width='10' height='20' viewBox='0 0 10 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M3.00059 4L7.50059 4C7.77673 4 8.00059 4.22386 8.00059 4.5V5V9H7.00059L7.00059 5.70672L2.85355 9.85375L2.14645 9.14664L6.29309 5L3.00059 5V4Z' fill='%23C6C8CC'/%3E%3C/svg%3E%0A")
+    );
+
+    // We need to alter the mask-image mixin
+    // stylelint-disable
+    mask-size: cover;
+    -webkit-mask-size: cover;
+    // stylelint-enable
+  }
+
+  &:hover,
+  &:focus {
+    box-shadow: none !important;
+
+    &::after {
+      background-color: var(--color-link-hover);
+      left: 0.0614285714em;
+      opacity: 1;
+      top: 0.03em;
+    }
+  }
+
+  // TODO - decide whether we still want to display the link itself and just hide the ::after arrow or even
+  //        if we want to prevent the links from rendering altogether in javascript
+  // whenever a link is empty (this can happen), we're not displaying the arrow
+  // Example of markup that can be captured:
+  // <div>
+  //   <a href="http://p.fedsy.xyz/go/33903/63210/aHR0cHMlM0EvL3d3dy5vdmFnYW1lcy5jb20v?cb=4788582638885510" target="_blank" rel="noopener"></a>
+  //   <a href="https://r-roms.github.io/" target="_blank" rel="noopener">Rom Center</a>
+  // </div>
+  &:empty {
+    display: none;
+    // Should we want to only hide the arrow
+    // &::after {
+    //   display: none;
+    // }
+  }
+}
+
+//@mixin secondary-link {
+//  --color-link-underline: transparent;
+//  color: var(--color-link-secondary);
+//
+//  &:hover,
+//  &:focus {
+//    text-decoration: underline;
+//    text-decoration-color: var(--color-link-secondary-underline);
+//  }
+//}

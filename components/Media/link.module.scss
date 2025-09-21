@@ -1,0 +1,10 @@
+@use "/styles/lib/link-mixins";
+
+.link,
+.link_with_arrow {
+  @include link-mixins.link;
+}
+
+.link_with_arrow {
+  @include link-mixins.link-with-arrow;
+}

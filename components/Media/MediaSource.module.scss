@@ -1,0 +1,132 @@
+@use "/styles/lib/mixins";
+
+.source {
+  // Color and associated default values
+  --c1: var(--media-source-background-color);
+  --c1-d1: rgba(250, 250, 250, 0);
+  --c1-d2: rgba(255, 255, 255, 0.5);
+  --c1-d3: rgba(250, 250, 250, 0.8);
+  // Color and associated default values
+  --c2: var(--media-source-background-color);
+  --c2-d1: rgba(125, 125, 125, 0.2);
+  // Color and associated default values
+  --c3: var(--media-source-hover-background-color);
+  --c3-d1: rgba(57, 62, 71, 0.7);
+  --c3-d2: rgba(57, 62, 71, 0);
+  // Color and associated default values
+  --c4: var(--media-source-hover-border-color);
+  --c4-d1: rgba(255, 255, 255, 0.2);
+  // Color and associated default values
+  --c5: var(--media-source-icon-color);
+  --c5-d1: rgba(57, 62, 71, 0.6);
+  // Resolved colors and misc.
+  --background-color: var(--c1, var(--c1-d1));
+  --background-color-gradient-start: var(--c1, var(--c1-d2));
+  --background-color-gradient-end: var(--c1, var(--c1-d3));
+  --border-color: var(--c2, var(--c2-d1));
+  --background-color-2: var(--c3, var(--c3-d1));
+  --background-color-gradient-2-start: var(--c3, var(--c3-d2));
+  --background-color-gradient-2-end: var(--c3, var(--c3-d2));
+  --border-color-2: var(--c4, var(--c4-d1));
+  --color: var(--c5, var(--c5-d1));
+  --size: 1.57142857em;
+
+  backdrop-filter: blur(10px);
+  background-color: var(--background-color);
+  /* -webkit-backdrop-filter: blur(10px); /* safari can't do mix-blend-mode with backdrop filter yet... */
+  border: 0.5px solid var(--border-color);
+  border-radius: 0.25em;
+  color: var(--color);
+  display: none;
+  font-size: 1rem;
+  height: var(--size);
+  inset: initial;
+  mix-blend-mode: luminosity;
+  overflow: hidden;
+  position: absolute;
+  right: 0.71428571em;
+  top: 0.71428571em;
+  transition: mixins.theme-transition(
+      background-color,
+      border-color,
+      color,
+      opacity,
+      transform
+  );
+  width: var(--size);
+
+  @include mixins.remove-transition;
+
+  // We do a safety check for empty href attributes
+  // and only display the source link if a url was given
+  &[href]:not([href=""]) {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+  }
+
+  // Using pseudos to create the soft gradient effect
+  &::before,
+  &::after {
+    --start: var(--background-color-gradient-start);
+    --end: var(--background-color-gradient-end);
+    background-image: radial-gradient(
+        circle at bottom left,
+        var(--start) 25%,
+        var(--end) 100%
+    );
+    border-radius: inherit;
+    content: "";
+    inset: 0;
+    opacity: 1;
+    position: absolute;
+    transition: opacity 0.2s ease-in-out;
+
+    @include mixins.remove-transition;
+  }
+
+  // Second layer for the gradient
+  &::after {
+    --start: var(--background-color-gradient-2-start);
+    --end: var(--background-color-gradient-2-end);
+    opacity: 0;
+    z-index: -1;
+  }
+
+  // Upon hovering the source link
+  &:hover, &:focus-visible {
+    --color: var(--media-source-hover-icon-color, #fff);
+    background-color: var(--background-color-2);
+    border-color: var(--border-color-2);
+    outline: none;
+    transform: scale(1.15);
+
+    &::before {
+      opacity: 0;
+    }
+
+    &::after {
+      opacity: 1;
+    }
+  }
+
+  // On pressing the link
+  &:active {
+    transform: scale(1);
+  }
+
+  // Source link content
+  svg {
+    position: absolute;
+  }
+}
+
+@include mixins.above-medium {
+  .source {
+    opacity: 0;
+  }
+
+  *:hover > .source, .source:focus-visible {
+    opacity: 1;
+  }
+}

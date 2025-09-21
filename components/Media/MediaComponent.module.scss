@@ -1,0 +1,646 @@
+@use "/styles/lib/mixins";
+
+// ---------------
+// Media component
+// ---------------
+//
+// This component is responsible for:
+// - displaying a media: either an external `embed` or an `image`
+// - optionally size the media to the desired `width`
+// - optionally size the media to the desired `height`
+// - collapse / expand the media
+// - display a link to the source of **images**, if any
+
+// ------------------
+// The root container
+// ------------------
+.media_component_root {
+  --custom-ease: cubic-bezier(0.42, 0, 0.25, 1);
+  --expand-collapse-transition-duration-second: 0.3s;
+
+  display: inline-block;
+  position: relative;
+  vertical-align: top;
+  width: 100%;
+
+  @include mixins.reduced-motion {
+    --expand-collapse-transition-duration-second: 0s;
+  }
+}
+
+// ----------------
+// The media itself
+// ----------------
+.media_component {
+  --radius: 6px;
+  display: flex;
+  flex: 0;
+  flex-direction: column;
+  overflow-x: auto;
+  width: 100%;
+
+  // --------------------------
+  // The wrappers for the media
+  // --------------------------
+  // The outer one is responsible for sizing the width when required
+  .media_wrapper {
+    display: inline-block;
+    font-size: 0; // make sure the container doesn't scroll
+    line-height: 0; // make sure the container doesn't scroll
+    overflow-y: hidden;
+    position: relative;
+    vertical-align: top;
+
+    .placeholder {
+      --t: translate(-50%, -50%);
+
+      color: var(--color-placeholder-icon);
+      left: 50%;
+      opacity: 0;
+      position: absolute;
+      top: 50%;
+      transform: var(--t) scale(0);
+      transition: opacity 0.1s 0.1s ease-in-out, transform 0.1s 0.1s ease-in-out,
+      left 0.2s ease-in-out 0.1s, top 0.2s ease-in-out 0.1s;
+      z-index: 1;
+    }
+  }
+
+  // The inner one is responsible for sizing the height, proportional
+  // to the width, when required.
+  // It's also the one we animate when expanding / collapsing the media
+  .media_wrapper_inner {
+    --d: var(--expand-collapse-transition-duration-second);
+    border-radius: var(--radius);
+    display: block;
+    position: relative;
+    transform-origin: top left;
+    transition: opacity var(--d) ease-in-out,
+    background-color 0.3s ease-in-out 0.1s;
+    width: 100%;
+
+    // Slotted iframe
+    iframe {
+      display: inline-block;
+    }
+
+    img,
+    iframe {
+      border-radius: var(--radius);
+      transition: opacity 0.3s ease-in-out, transform 0.2s 0.1s ease-in-out;
+      width: 100%;
+    }
+
+    // The slotted content, no matter what it is
+    > * {
+      border-radius: var(--radius);
+      display: inline-block;
+      margin: 0 !important;
+      max-height: 100%;
+      transition: opacity 0.3s ease-in-out 0.1s, transform 0.2s 0.1s ease-in-out;
+    }
+  }
+
+  // When sizing the media `width`
+  &.size_width {
+    .media_wrapper {
+      --max: var(--max-width, 100%);
+      --min: var(--min-width, 48px);
+      max-height: var(--max-height, auto);
+      max-width: var(--max);
+      min-width: var(--min);
+      position: relative;
+      width: clamp(var(--min), var(--width, 100%), var(--max));
+
+      .media_wrapper_inner {
+        // The slotted content, no matter what it is
+        > * {
+          width: 100%;
+        }
+
+        iframe,
+        img {
+          width: 100% !important;
+        }
+      }
+    }
+  }
+
+  // When sizing the media `height`
+  &.size_height {
+    .media_wrapper_inner {
+      max-height: var(--max-height, auto);
+      min-height: var(--min-height, 48px);
+      padding-top: var(--height, initial);
+
+      // The slotted content, no matter what it is
+      > * {
+        border-radius: 3px; // TODO - make sure of this
+        height: 100%;
+        inset: 0;
+        position: absolute;
+        width: 100%;
+      }
+    }
+  }
+
+  // Special-cases for specific providers
+  .media_wrapper {
+    &[data-provider="reddit"] {
+      .media_wrapper_inner {
+        :global {
+          // stylelint-disable-next-line
+          .embedly-card-hug {
+            margin: 0 !important;
+          }
+        }
+
+        iframe {
+          background-color: #fff;
+          border-radius: var(--radius);
+        }
+      }
+    }
+
+    &[data-provider="twitter"] {
+      --min-height: 5rem;
+      --max-width: 550px !important;
+      --max: var(--max-width, 100%);
+
+      .media_wrapper_inner {
+        width: 100%;
+
+        img,
+        iframe,
+        > * {
+          width: 100%;
+        }
+      }
+    }
+  }
+
+  &:not(.collapsed) {
+    .media_wrapper[data-provider="twitter"] {
+      .media_wrapper_inner {
+        //background-color: red !important;
+        //height: var(--min-height);
+        min-height: var(--min-height);
+        transition: opacity var(--d) ease-in-out,
+        background-color 0.3s ease-in-out 1s;
+      }
+    }
+  }
+
+  // --------------------------------
+  // The source of the media if image
+  // --------------------------------
+
+  .media_wrapper .media_wrapper_inner {
+    .source {
+      // Color and associated default values
+      --c1: var(--media-source-background-color);
+      --c1-d1: rgba(250, 250, 250, 0);
+      --c1-d2: rgba(255, 255, 255, 0.5);
+      --c1-d3: rgba(250, 250, 250, 0.8);
+      // Color and associated default values
+      --c2: var(--media-source-background-color);
+      --c2-d1: rgba(125, 125, 125, 0.2);
+      // Color and associated default values
+      --c3: var(--media-source-hover-background-color);
+      --c3-d1: rgba(57, 62, 71, 0.7);
+      --c3-d2: rgba(57, 62, 71, 0);
+      // Color and associated default values
+      --c4: var(--media-source-hover-border-color);
+      --c4-d1: rgba(255, 255, 255, 0.2);
+      // Color and associated default values
+      --c5: var(--media-source-icon-color);
+      --c5-d1: rgba(57, 62, 71, 0.6);
+      // Resolved colors and misc.
+      --background-color: var(--c1, var(--c1-d1));
+      --background-color-gradient-start: var(--c1, var(--c1-d2));
+      --background-color-gradient-end: var(--c1, var(--c1-d3));
+      --border-color: var(--c2, var(--c2-d1));
+      --background-color-2: var(--c3, var(--c3-d1));
+      --background-color-gradient-2-start: var(--c3, var(--c3-d2));
+      --background-color-gradient-2-end: var(--c3, var(--c3-d2));
+      --border-color-2: var(--c4, var(--c4-d1));
+      --color: var(--c5, var(--c5-d1));
+      --size: 1.57142857em;
+
+      backdrop-filter: blur(10px);
+      background-color: var(--background-color);
+      /* -webkit-backdrop-filter: blur(10px); /* safari can't do mix-blend-mode with backdrop filter yet... */
+      border: 0.5px solid var(--border-color);
+      border-radius: 0.25em;
+      color: var(--color);
+      display: none;
+      font-size: 1rem;
+      height: var(--size);
+      inset: initial;
+      mix-blend-mode: luminosity;
+      overflow: hidden;
+      position: absolute;
+      right: 0.71428571em;
+      top: 0.71428571em;
+      transition: mixins.theme-transition(
+          background-color,
+          border-color,
+          color,
+          opacity,
+          transform
+      );
+      width: var(--size);
+
+      @include mixins.remove-transition;
+
+      // We do a safety check for empty href attributes
+      // and only display the source link if a url was given
+      &[href]:not([href=""]) {
+        align-items: center;
+        display: flex;
+        justify-content: center;
+      }
+
+      // Using pseudos to create the soft gradient effect
+      &::before,
+      &::after {
+        --start: var(--background-color-gradient-start);
+        --end: var(--background-color-gradient-end);
+        background-image: radial-gradient(
+            circle at bottom left,
+            var(--start) 25%,
+            var(--end) 100%
+        );
+        border-radius: inherit;
+        content: "";
+        inset: 0;
+        opacity: 1;
+        position: absolute;
+        transition: opacity 0.2s ease-in-out;
+
+        @include mixins.remove-transition;
+      }
+
+      // Second layer for the gradient
+      &::after {
+        --start: var(--background-color-gradient-2-start);
+        --end: var(--background-color-gradient-2-end);
+        opacity: 0;
+        z-index: -1;
+      }
+
+      // Upon hovering the source link
+      &:hover {
+        --color: var(--media-source-hover-icon-color, #fff);
+        background-color: var(--background-color-2);
+        border-color: var(--border-color-2);
+        transform: scale(1.15);
+
+        &::before {
+          opacity: 0;
+        }
+
+        &::after {
+          opacity: 1;
+        }
+      }
+
+      // On pressing the link
+      &:active {
+        transform: scale(1);
+      }
+
+      // Source link content
+      svg {
+        position: absolute;
+      }
+    }
+
+    @include mixins.above-medium {
+      .source {
+        opacity: 0;
+      }
+
+      &:hover .source {
+        opacity: 1;
+      }
+    }
+  }
+
+  // --------------------------
+  // Expand / collapse controls
+  // --------------------------
+  .controls {
+    --base-transform: translateX(100%);
+    bottom: 0;
+    color: var(--media-controls);
+    display: none;
+    font-size: 0.85714286em;
+    opacity: 0; // Controls are visible when hovering the element
+    padding: 0.1em 0.5em 0.5em 1em;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transform: var(--base-transform);
+    width: 8em;
+
+    @include mixins.above-medium {
+      display: initial;
+    }
+
+    .action {
+      --padding: 0.5em;
+      cursor: default;
+      margin: calc(-1 * var(--padding) + 0px) calc(0.5 * var(--padding) + 0px);
+      position: relative;
+      transition: color 0.2s ease-in-out;
+      user-select: none;
+
+      &:hover {
+        color: var(--media-controls-hover);
+      }
+
+      &:active {
+        color: var(--media-controls-active);
+      }
+    }
+
+    .icon_expand,
+    .icon_collapse {
+      margin-right: 0.5em;
+      vertical-align: middle;
+    }
+
+    .expand_label,
+    .collapse_label {
+      // the right-hand padding has to be generous to cover the text width of the alternate
+      // control label in order to mitigate a rendering bug specific to beam (not in safari)
+      // where it doesn't fully clear the hidden control box
+      padding: 0.5em 5em 0.5em 0.75em;
+      transition: opacity 0.2s ease-in-out;
+      white-space: nowrap;
+    }
+
+    .expand_label {
+      left: 0;
+      opacity: 0;
+      overflow: visible;
+      pointer-events: none;
+      position: absolute;
+      top: calc(50% + 1px);
+      transform: translateY(-50%);
+    }
+  }
+}
+
+// Controls are visible when hovering the element
+.media_component_root:hover .controls {
+  opacity: 1;
+}
+
+// --------------------------------------------------
+// The content we display when the media is collapsed
+// --------------------------------------------------
+.collapsed_content {
+  --d: var(--expand-collapse-transition-duration-second);
+  align-items: flex-start;
+  display: inline-flex;
+  flex-direction: row;
+  gap: 0.5em;
+  //height: 0;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  transition: opacity var(--d) ease-in-out, height var(--d) ease-in-out;
+  z-index: -1;
+
+  .collapsed_icon {
+    --size: 1.2em;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    max-height: var(--size);
+    max-width: var(--size);
+    min-height: var(--size);
+    min-width: var(--size);
+    position: relative;
+    top: 0.2em;
+    transition: transform 0.2s ease-in-out;
+
+    // Apply a slight outline to the icon
+    &.masked {
+      border-radius: 2px;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    // Add larger tap target
+    &::before {
+      background-color: transparent;
+      content: "";
+      inset: -0.75em;
+      position: absolute;
+    }
+  }
+}
+
+// ---------------------------
+// When the media is collapsed
+// ---------------------------
+
+.media_component.collapsed {
+  // Then the collapsed content after should be visible
+  + .collapsed_content {
+    opacity: 1;
+  }
+
+  .media_wrapper {
+    pointer-events: none;
+
+    // We reposition the placeholder to appear where the media icon will be
+    .placeholder {
+      --t: scale(0) translate(calc(-50% + 0.1rem), calc(-50% + 0.3rem));
+      height: 1.4rem;
+      left: 0;
+      top: 0;
+      width: 1.4rem;
+
+      .svg {
+        object-fit: cover;
+      }
+    }
+
+    // The media and its source should not be visible
+    .media_wrapper_inner {
+      opacity: 0;
+    }
+
+    // Toggle controls visibility to reflect current state
+    + .controls {
+      .collapse_label {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .expand_label {
+        opacity: 1;
+        pointer-events: all;
+      }
+    }
+  }
+
+  // Only after the animation (if any) is done
+  &:not(.animating) {
+    .media_wrapper {
+      position: absolute;
+
+      .media_wrapper_inner {
+        height: 0;
+        padding-top: 1px;
+      }
+    }
+
+    + .collapsed_content {
+      pointer-events: all;
+      position: relative;
+      z-index: 1;
+    }
+  }
+}
+
+// Of course, our beloved webkit needs an extra pixel...
+:global(.safari) {
+  .media_component.collapsed {
+    &:not(.animating) {
+      + .collapsed_content {
+        top: 1px;
+      }
+    }
+  }
+}
+
+// --------------
+// Loading styles
+// --------------
+
+.media_component_root.loading {
+  .media_component {
+    .media_wrapper {
+      max-width: var(--max-width);
+      width: var(--width);
+
+      .placeholder {
+        --c1: cubic-bezier(0.01, 0.3, 0.58, 1);
+        --c2: cubic-bezier(0.25, 0.1, 0.25, 1);
+        --animation-bumping-heart-2-transform: scale(1.1);
+        --animation-bumping-heart-transform: scale(1.1);
+        opacity: 0.9;
+        transform: var(--t) scale(0.84);
+
+        .svg {
+          animation: bumping-heart 1.6s var(--c1) infinite backwards,
+          bumping-heart-2 1.6s var(--c2) infinite backwards;
+        }
+      }
+
+      .media_wrapper_inner {
+        background-color: var(--color-empty);
+        min-height: 2rem;
+
+        > div {
+          height: 100%;
+          overflow: hidden;
+          width: 100%;
+        }
+
+        img,
+        iframe {
+          height: auto;
+          opacity: 0;
+          transform: scale(0.5);
+          width: auto;
+        }
+
+        > * {
+          opacity: 0;
+          transform: scale(0.5);
+        }
+      }
+
+      &:not(.size_height) {
+        .media_wrapper_inner {
+          max-height: 5rem;
+        }
+      }
+    }
+
+
+    // When collapsed
+    &.collapsed {
+      .media_wrapper {
+        overflow: visible;
+      }
+
+      // Until we have loaded, we're replacing the icon with the placeholder
+      + .collapsed_content {
+        .collapsed_icon {
+          transform: scale(0);
+        }
+      }
+
+      // Mobile and desktop positioning adjustments
+      .placeholder {
+        --t: scale(0.64) translate(calc(-50% + 0.1rem), calc(-50% + 0.65rem));
+
+        @include mixins.above-medium {
+          --t: scale(0.6) translate(calc(-50% + 0.2rem), calc(-50% + 0.5rem));
+        }
+      }
+    }
+
+    // Default media width when no information is available yet
+    &:not(.size_width) {
+      --width: 18rem;
+
+      .media_wrapper {
+        .media_wrapper_inner {
+          max-width: var(--width);
+        }
+      }
+    }
+
+    // Default media height when no information is available yet
+    &:not(.size_height) {
+      .media_wrapper {
+        .media_wrapper_inner {
+          min-height: 5rem;
+        }
+      }
+    }
+  }
+}
+
+// ---------------------------------
+// MediaComponent specific animations
+// ---------------------------------
+
+@keyframes bumping-heart {
+  0% {
+    transform: none;
+  }
+
+  37.5% {
+    transform: var(--animation-bumping-heart-transform);
+  }
+}
+
+@keyframes bumping-heart-2 {
+  37.5% {
+    transform: var(--animation-bumping-heart-2-transform);
+  }
+
+  100% {
+    transform: none;
+  }
+}
