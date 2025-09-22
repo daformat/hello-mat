@@ -20,6 +20,7 @@ import { MediaToggle } from "./MediaToggle"
 
 export type MediaComponentProps = PropsWithChildren<{
   error?: Error
+  title?: string
   source: string
   minWidth?: number
   minHeight?: number
@@ -32,6 +33,7 @@ export type MediaComponentProps = PropsWithChildren<{
 
 export const Media = ({
   error,
+  title,
   source,
   children,
   keepAspectRatio,
@@ -46,6 +48,7 @@ export const Media = ({
   const [collapsed, setCollapsed] = useState(false)
   const mediaComponentRef = useRef<HTMLDivElement>(null)
   const mediaContentRef = useRef<HTMLDivElement>(null)
+  const collapsedContentRef = useRef<HTMLDivElement>(null)
 
   const handleLoad = useCallback<ReactEventHandler<HTMLDivElement>>((event) => {
     const target = event.target
@@ -94,6 +97,41 @@ export const Media = ({
     }
   }, [source])
 
+  // Measure the collapsed content on resize
+  useEffect(() => {
+    const mediaComponent = mediaComponentRef.current
+    const collapsedContent = collapsedContentRef.current
+    if (mediaComponent && collapsedContent) {
+      const observer = new ResizeObserver(() => {
+        // const width = collapsedContent.offsetWidth
+        const height = collapsedContent.offsetHeight
+        mediaComponent.style.setProperty(
+          "--collapsed-content-height",
+          `${height}px`
+        )
+      })
+      observer.observe(collapsedContent)
+      return () => observer.disconnect()
+    }
+  }, [])
+
+  // Measure the width of the media component
+  useEffect(() => {
+    const mediaComponent = mediaComponentRef.current
+    if (mediaComponent) {
+      const observer = new ResizeObserver(() => {
+        // const width = collapsedContent.offsetWidth
+        const width = mediaComponent.offsetWidth
+        mediaComponent.style.setProperty(
+          "--media-component-width",
+          `${width}px`
+        )
+      })
+      observer.observe(mediaComponent)
+      return () => observer.disconnect()
+    }
+  }, [])
+
   return (
     <div
       ref={mediaComponentRef}
@@ -114,7 +152,11 @@ export const Media = ({
         } as CSSProperties
       }
     >
-      <div className={styles.media_collapsed_content}>Hello</div>
+      <div className={styles.media_collapsed_content} ref={collapsedContentRef}>
+        <a target="_blank" href={source} rel="noreferrer">
+          {title ?? source}
+        </a>
+      </div>
       <div className={styles.media_content_wrapper}>
         <div className={styles.placeholder}>
           {error ? <SvgPlaceholderError /> : placeholder}

@@ -1,14 +1,30 @@
 @use "/styles/lib/mixins";
+@use "/styles/lib/link-mixins";
 
 .media_component {
   --custom-ease: cubic-bezier(0.42, 0, 0.25, 1);
   --radius: 6px;
   --aspect-ratio: 16 / 4;
-  display: grid;
-  grid-template-areas: "content";
+  //display: grid;
+  //grid-template-areas: "content";
+  position: relative;
 
   .media_content_wrapper, .media_collapsed_content {
-    grid-area: content;
+    //grid-area: content;
+  }
+
+  .media_collapsed_content {
+    left: 0;
+    opacity: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transition: opacity 0.3s ease-in-out;
+    word-break: break-word;
+
+    a {
+      @include link-mixins.link-with-arrow
+    }
   }
 
   .media_content_wrapper {
@@ -53,6 +69,8 @@
     //width: var(--media-natural-width);
 
     > div, > img {
+      border-radius: var(--radius);
+      overflow: hidden;
       transform-origin: top left;
       transition: transform 0.3s var(--custom-ease);
     }
@@ -100,9 +118,13 @@
     }
 
     &[data-media-responsive="both"] {
+      .media_content_wrapper {
+        height: calc(var(--media-component-width) / var(--aspect-ratio)); // TODO find a way to set the height
+      }
+
       .media_content {
         > div, iframe, img {
-          height: 100%;
+          height: calc(var(--media-component-width) / var(--aspect-ratio)); // TODO find a way to set the height
           width: 100%;
         }
       }
@@ -142,12 +164,23 @@
   }
 
   &[data-media-collapsed] {
+    .media_collapsed_content {
+      opacity: 1;
+      pointer-events: all;
+    }
+
     .media_content_wrapper {
       aspect-ratio: initial !important;
-      height: 0;
+      height: var(--collapsed-content-height) !important;
       opacity: 0;
-      width: 0;
+      pointer-events: none;
+      //width: 0;
 
+      .media_content {
+        > div, > img {
+          transform: scale(0);
+        }
+      }
       //.media_content {
       //  aspect-ratio: initial !important;
       //
