@@ -55,6 +55,7 @@ export const Media = ({
     >(undefined)
   const [collapsed, setCollapsed] = useState(!open)
   const mediaComponentRef = useRef<HTMLDivElement>(null)
+  const mediaContentWrapperRef = useRef<HTMLDivElement>(null)
   const mediaContentRef = useRef<HTMLDivElement>(null)
   const collapsedContentRef = useRef<HTMLDivElement>(null)
 
@@ -76,13 +77,15 @@ export const Media = ({
   useEffect(() => {
     const mediaComponent = mediaComponentRef.current
     const mediaContent = mediaContentRef.current
-    if (mediaComponent && mediaContent && loading && !sizeInfo) {
+    // console.log({ loading, sizeInfo, source })
+    if (mediaComponent && mediaContent && !sizeInfo) {
       const observer = new ResizeObserver(() => {
         // we use offsetWidth and offsetHeight instead of contentRect to
         // get the non-transformed dimensions
         const width = mediaContent.offsetWidth
         const height = mediaContent.offsetHeight
-        if (width && height) {
+        console.log({ width, height, source, children: mediaContent.children })
+        if (width && height > 10) {
           console.log("Media content resized", source, {
             width,
             height,
@@ -95,7 +98,7 @@ export const Media = ({
       observer.observe(mediaContent)
       return () => observer.disconnect()
     }
-  }, [loading, sizeInfo, source])
+  }, [sizeInfo, source])
 
   // Make sure cached images trigger the load event
   useEffect(() => {
@@ -109,14 +112,17 @@ export const Media = ({
   useEffect(() => {
     const mediaComponent = mediaComponentRef.current
     const collapsedContent = collapsedContentRef.current
-    if (mediaComponent && collapsedContent) {
+    const mediaContentWrapper = mediaContentWrapperRef.current
+    if (mediaComponent && mediaContentWrapper && collapsedContent) {
       const observer = new ResizeObserver(() => {
+        mediaContentWrapper.style.transition = "none"
         // const width = collapsedContent.offsetWidth
         const height = collapsedContent.offsetHeight
         mediaComponent.style.setProperty(
           "--collapsed-content-height",
           `${height}px`
         )
+        setTimeout(() => (mediaContentWrapper.style.transition = ""))
       })
       observer.observe(collapsedContent)
       return () => observer.disconnect()
@@ -165,7 +171,7 @@ export const Media = ({
         ref={collapsedContentRef}
         // @ts-expect-error: inert is a valid attribute, but we're lagging behind
         // on our react version, so we need to disable the ts rule
-        inert={!collapsed}
+        inert={!collapsed ? "" : undefined}
       >
         <button
           className={styles.icon}
@@ -183,10 +189,11 @@ export const Media = ({
         </a>
       </div>
       <div
+        ref={mediaContentWrapperRef}
         className={styles.media_content_wrapper}
         // @ts-expect-error: inert is a valid attribute, but we're lagging behind
         // on our react version, so we need to disable the ts rule
-        inert={collapsed}
+        inert={collapsed ? "" : undefined}
       >
         <div className={styles.placeholder}>
           {error ? <SvgPlaceholderError /> : placeholder}
@@ -221,6 +228,7 @@ export const EmbedComp = ({
   )
   const { hostname } = new URL(source)
   const icon = `https://icons.duckduckgo.com/ip3/${hostname}.ico`
+  const embedRef = useRef<HTMLDivElement>(null)
 
   // fetch the oEmbed when provider and/or source changes
   useEffect(() => {
@@ -243,6 +251,13 @@ export const EmbedComp = ({
     }
   }, [provider, source])
 
+  // Init embeds each time we get a new embed
+  useEffect(() => {
+    if (embedRef.current && !["flickr"].includes(provider?.name ?? "")) {
+      initEmbeds(embedRef.current)
+    }
+  }, [oEmbed?.html, provider?.name])
+
   return (
     <Media
       open={open}
@@ -257,6 +272,7 @@ export const EmbedComp = ({
       }
     >
       <div
+        ref={embedRef}
         dangerouslySetInnerHTML={{
           __html: oEmbed?.html ?? "",
         }}
@@ -286,4 +302,41 @@ export const ImageComp = ({
       <MediaSource source={source} />
     </Media>
   )
+}
+
+/**
+ * Initialise embeds: execute the contained scripts and refresh
+ * instagram embeds
+ * @param embedContent
+ */
+
+function initEmbeds(embedContent: HTMLDivElement | null): void {
+  const scripts = embedContent?.querySelectorAll(
+    "script"
+  ) as NodeListOf<HTMLScriptElement>
+  scripts?.forEach((script) => {
+    const clone = cloneScript(script)
+    // instagram needs to be called manually after the script
+    // was (re)loaded, otherwise the embeds will never be parsed.
+    // Another option would be to `window.instgrm && delete window.instgrm`
+    // to force each script to re-execute embed processing
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    window.instgrm && window.instgrm.Embeds.process()
+    script.replaceWith(clone)
+  })
+}
+
+/**
+ * Clone a script with its content and attributes to make sure it's executed.
+ * Scripts that are added at runtime are not executed
+ * @param node
+ */
+function cloneScript(node: HTMLScriptElement): HTMLScriptElement {
+  const script = document.createElement("script") as HTMLScriptElement
+  script.text = node.innerHTML
+  for (const attr of Array.from(node.attributes)) {
+    script.setAttribute(attr.name, attr.value)
+  }
+  return script
 }
