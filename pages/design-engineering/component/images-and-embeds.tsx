@@ -92,9 +92,6 @@ const ImageAndEmbedsContent = () => {
             <EmbedComp source="https://www.flickr.com/photos/124051802@N04/45745445165/in/pool-best100only/" />
           </li>
           <li>
-            <EmbedComp source="https://x.com/daformat/status/1377323694264029185" />
-          </li>
-          <li>
             <EmbedComp
               open={false}
               source="https://open.spotify.com/track/6S4hDG6meUTOBUemVHelrx?si=31db165395a747e2"
@@ -112,6 +109,9 @@ const ImageAndEmbedsContent = () => {
               title="A colorful chameleon"
               source="https://letsenhance.io/static/8f5e523ee6b2479e26ecc91b9c25261e/bbb97/MainAfter.avif"
             />
+          </li>
+          <li>
+            <EmbedComp source="https://x.com/daformat/status/1377323694264029185" />
           </li>
         </ul>
         <p>
