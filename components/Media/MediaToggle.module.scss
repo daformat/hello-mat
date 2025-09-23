@@ -24,10 +24,15 @@
   .action {
     --padding: 0.5em;
     cursor: default;
+    display: grid;
     margin: calc(-1 * var(--padding) + 0px) calc(0.5 * var(--padding) + 0px);
     position: relative;
     transition: color 0.2s ease-in-out;
     user-select: none;
+
+    > * {
+      grid-area: 1 / 1;
+    }
 
     @include mixins.remove-transition;
 
@@ -63,9 +68,6 @@
     opacity: 0;
     overflow: visible;
     pointer-events: none;
-    position: absolute;
-    top: calc(50% + 1px);
-    transform: translateY(-50%);
   }
 }
 
