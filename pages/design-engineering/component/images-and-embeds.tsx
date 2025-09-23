@@ -4,11 +4,6 @@ import { useEffect, useRef, useState } from "react"
 import { DetailsComponent } from "../../../components/Details/DetailsComponent"
 import { VideoPlayer } from "../../../components/VideoPlayer/VideoPlayer"
 import { EmbedComp, ImageComp } from "../../../components/Media/MediaComponent2"
-import { EmbedComponent } from "../../../components/Media/MediaComponent"
-import {
-  RecognizedContentType,
-  ResizeType,
-} from "../../../components/Media/EmbedResult"
 
 const ImageAndEmbedsPage = () => (
   <>
@@ -44,26 +39,25 @@ const ImageAndEmbedsContent = () => {
           Design engineering: images and embeds
         </h1>
         <ul>
-          <li>
-            <EmbedComponent
-              collapsed
-              result={{
-                type: RecognizedContentType.video,
-                keepAspectRatio: true,
-                responsive: ResizeType.both,
-                minHeight: 200 / 1.7777777778,
-                minWidth: 200,
-                maxHeight: 1200 / 1.7777777778,
-                maxWidth: 1200,
-                html: '<iframe width="560" height="315" src="https://www.youtube.com/embed/KOJkst2Odfs?si=vj-xOKSTUNJG1SSM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>',
-                title: "Lubomyr Melnyk - Barcarolle",
-                url: "https://www.youtube.com/watch?v=KOJkst2Odfs",
-                provider: "YouTube",
-                favicon:
-                  "https://www.youtube.com/s/desktop/2ea5cbbe/img/favicon_144x144.png",
-              }}
-            />
-          </li>
+          {/*<li>*/}
+          {/*  <EmbedComponent*/}
+          {/*    result={{*/}
+          {/*      type: RecognizedContentType.video,*/}
+          {/*      keepAspectRatio: true,*/}
+          {/*      responsive: ResizeType.both,*/}
+          {/*      minHeight: 200 / 1.7777777778,*/}
+          {/*      minWidth: 200,*/}
+          {/*      maxHeight: 1200 / 1.7777777778,*/}
+          {/*      maxWidth: 1200,*/}
+          {/*      html: '<iframe width="560" height="315" src="https://www.youtube.com/embed/KOJkst2Odfs?si=vj-xOKSTUNJG1SSM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>',*/}
+          {/*      title: "Lubomyr Melnyk - Barcarolle",*/}
+          {/*      url: "https://www.youtube.com/watch?v=KOJkst2Odfs",*/}
+          {/*      provider: "YouTube",*/}
+          {/*      favicon:*/}
+          {/*        "https://www.youtube.com/s/desktop/2ea5cbbe/img/favicon_144x144.png",*/}
+          {/*    }}*/}
+          {/*  />*/}
+          {/*</li>*/}
           {/*<li>*/}
           {/*  <EmbedComponent*/}
           {/*    collapsed*/}
@@ -92,10 +86,7 @@ const ImageAndEmbedsContent = () => {
           {/*  />*/}
           {/*</li>*/}
           <li>
-            <EmbedComp
-              open={false}
-              source="https://www.youtube.com/watch?v=KOJkst2Odfs"
-            />
+            <EmbedComp source="https://www.youtube.com/watch?v=KOJkst2Odfs" />
           </li>
           <li>
             <EmbedComp

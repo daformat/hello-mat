@@ -130,11 +130,9 @@
   }
 
   .media_content {
-    //height: var(--media-natural-height);
-    transition: opacity 0.3s ease-in-out, transform 0.2s 0.1s ease-in-out;
+    transition: opacity 0.3s 0.2s var(--ease-out-cubic), transform 0.3s 0.2s var(--ease-out-cubic);
 
     @include mixins.remove-transition;
-    //width: var(--media-natural-width);
 
     > div, > img {
       border-radius: var(--radius);
@@ -191,12 +189,12 @@
 
     &[data-media-responsive="both"] {
       .media_content_wrapper {
-        height: calc(var(--media-component-width) / var(--aspect-ratio)); // TODO find a way to set the height
+        height: calc(var(--media-component-width) / var(--aspect-ratio));
       }
 
       .media_content {
         > div, iframe, img {
-          height: calc(var(--media-component-width) / var(--aspect-ratio)); // TODO find a way to set the height
+          height: calc(var(--media-component-width) / var(--aspect-ratio));
           width: 100%;
         }
       }
