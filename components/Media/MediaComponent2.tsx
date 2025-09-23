@@ -264,6 +264,7 @@ export const EmbedComp = ({
       icon={icon}
       error={error}
       source={source}
+      title={oEmbed?.title}
       variant={MediaType.embed}
       keepAspectRatio={provider?.keepAspectRatio}
       responsive={provider?.responsive}
@@ -283,15 +284,18 @@ export const EmbedComp = ({
 
 export const ImageComp = ({
   source,
+  title,
   open = true,
 }: {
   source: string
+  title?: string
   open?: boolean
 }) => {
   return (
     <Media
       open={open}
       icon={source}
+      title={title}
       source={source}
       variant={MediaType.image}
       keepAspectRatio={true}
