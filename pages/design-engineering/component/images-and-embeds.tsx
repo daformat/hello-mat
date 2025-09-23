@@ -46,6 +46,7 @@ const ImageAndEmbedsContent = () => {
         <ul>
           <li>
             <EmbedComponent
+              collapsed
               result={{
                 type: RecognizedContentType.video,
                 keepAspectRatio: true,
@@ -91,16 +92,28 @@ const ImageAndEmbedsContent = () => {
           {/*  />*/}
           {/*</li>*/}
           <li>
-            <EmbedComp source="https://www.youtube.com/watch?v=KOJkst2Odfs" />
+            <EmbedComp
+              open={false}
+              source="https://www.youtube.com/watch?v=KOJkst2Odfs"
+            />
           </li>
           <li>
-            <EmbedComp source="https://open.spotify.com/track/6S4hDG6meUTOBUemVHelrx?si=31db165395a747e2" />
+            <EmbedComp
+              open={false}
+              source="https://open.spotify.com/track/6S4hDG6meUTOBUemVHelrx?si=31db165395a747e2"
+            />
           </li>
           <li>
-            <EmbedComp source="https://open.spotify.com/album/7ox0VtOfJBl7Oz3BRGOg1G" />
+            <EmbedComp
+              open={false}
+              source="https://open.spotify.com/album/7ox0VtOfJBl7Oz3BRGOg1G"
+            />
           </li>
           <li>
-            <ImageComp source="https://letsenhance.io/static/8f5e523ee6b2479e26ecc91b9c25261e/bbb97/MainAfter.avif" />
+            <ImageComp
+              open={false}
+              source="https://letsenhance.io/static/8f5e523ee6b2479e26ecc91b9c25261e/bbb97/MainAfter.avif"
+            />
           </li>
         </ul>
         <p>

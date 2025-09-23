@@ -17,9 +17,14 @@ import SvgPlaceholderDefault from "./Placeholder/SvgPlaceholderDefault"
 import { MediaSource } from "./MediaSource"
 import SvgPlaceholderError from "./Placeholder/SvgError"
 import { MediaToggle } from "./MediaToggle"
+import SvgPlaceholderImage from "./Placeholder/SvgPlaceholderImage"
+import { MediaType } from "./MediaComponent"
 
 export type MediaComponentProps = PropsWithChildren<{
   error?: Error
+  icon: string
+  open?: boolean
+  variant: MediaType
   title?: string
   source: string
   minWidth?: number
@@ -33,6 +38,9 @@ export type MediaComponentProps = PropsWithChildren<{
 
 export const Media = ({
   error,
+  icon,
+  open = true,
+  variant,
   title,
   source,
   children,
@@ -45,7 +53,7 @@ export const Media = ({
     useState<
       MaybeUndefined<{ width: number; height: number; aspectRatio: number }>
     >(undefined)
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(!open)
   const mediaComponentRef = useRef<HTMLDivElement>(null)
   const mediaContentRef = useRef<HTMLDivElement>(null)
   const collapsedContentRef = useRef<HTMLDivElement>(null)
@@ -152,12 +160,34 @@ export const Media = ({
         } as CSSProperties
       }
     >
-      <div className={styles.media_collapsed_content} ref={collapsedContentRef}>
+      <div
+        className={styles.media_collapsed_content}
+        ref={collapsedContentRef}
+        // @ts-expect-error: inert is a valid attribute, but we're lagging behind
+        // on our react version, so we need to disable the ts rule
+        inert={!collapsed}
+      >
+        <button
+          className={styles.icon}
+          onClick={() => setCollapsed((prevCollapsed) => !prevCollapsed)}
+        >
+          <span className={styles.placeholder}>{placeholder}</span>
+          <span
+            className={styles.img}
+            data-variant={variant}
+            style={{ backgroundImage: `url("${icon}")` }}
+          />
+        </button>
         <a target="_blank" href={source} rel="noreferrer">
           {title ?? source}
         </a>
       </div>
-      <div className={styles.media_content_wrapper}>
+      <div
+        className={styles.media_content_wrapper}
+        // @ts-expect-error: inert is a valid attribute, but we're lagging behind
+        // on our react version, so we need to disable the ts rule
+        inert={collapsed}
+      >
         <div className={styles.placeholder}>
           {error ? <SvgPlaceholderError /> : placeholder}
         </div>
@@ -176,13 +206,21 @@ export const Media = ({
   )
 }
 
-export const EmbedComp = ({ source }: { source: string }) => {
+export const EmbedComp = ({
+  source,
+  open = true,
+}: {
+  source: string
+  open?: boolean
+}) => {
   const [oEmbed, setOEmbed] = useState<MaybeUndefined<OEmbed>>(undefined)
   const [error, setError] = useState<MaybeUndefined<Error>>(undefined)
   const provider = useMemo(
     () => EMBED_PROVIDERS.find((provider) => provider.regexp.test(source)),
     [source]
   )
+  const { hostname } = new URL(source)
+  const icon = `https://icons.duckduckgo.com/ip3/${hostname}.ico`
 
   // fetch the oEmbed when provider and/or source changes
   useEffect(() => {
@@ -207,10 +245,16 @@ export const EmbedComp = ({ source }: { source: string }) => {
 
   return (
     <Media
-      source={source}
+      open={open}
+      icon={icon}
       error={error}
+      source={source}
+      variant={MediaType.embed}
       keepAspectRatio={provider?.keepAspectRatio}
       responsive={provider?.responsive}
+      placeholder={
+        provider ? <provider.Placeholder /> : <SvgPlaceholderDefault />
+      }
     >
       <div
         dangerouslySetInnerHTML={{
@@ -221,9 +265,23 @@ export const EmbedComp = ({ source }: { source: string }) => {
   )
 }
 
-export const ImageComp = ({ source }: { source: string }) => {
+export const ImageComp = ({
+  source,
+  open = true,
+}: {
+  source: string
+  open?: boolean
+}) => {
   return (
-    <Media source={source} keepAspectRatio={true} responsive={ResizeType.both}>
+    <Media
+      open={open}
+      icon={source}
+      source={source}
+      variant={MediaType.image}
+      keepAspectRatio={true}
+      responsive={ResizeType.both}
+      placeholder={<SvgPlaceholderImage />}
+    >
       <img src={source} alt="" />
       <MediaSource source={source} />
     </Media>

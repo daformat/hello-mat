@@ -5,15 +5,27 @@
   --custom-ease: cubic-bezier(0.42, 0, 0.25, 1);
   --radius: 6px;
   --aspect-ratio: 16 / 4;
-  //display: grid;
-  //grid-template-areas: "content";
   position: relative;
 
-  .media_content_wrapper, .media_collapsed_content {
-    //grid-area: content;
+  .placeholder {
+    --c1: cubic-bezier(0.01, 0.3, 0.58, 1);
+    --c2: cubic-bezier(0.25, 0.1, 0.25, 1);
+    --animation-bumping-heart-2-transform: scale(1.1);
+    --animation-bumping-heart-transform: scale(1.1);
+
+    > * {
+      animation: bumping-heart 1.6s var(--c1) infinite backwards,
+      bumping-heart-2 1.6s var(--c2) infinite backwards;
+
+      @include mixins.reduced-motion {
+        animation: none;
+      }
+    }
   }
 
   .media_collapsed_content {
+    display: flex;
+    gap: 8px;
     left: 0;
     opacity: 0;
     position: absolute;
@@ -21,6 +33,62 @@
     top: 0;
     transition: opacity 0.3s ease-in-out;
     word-break: break-word;
+
+    .icon {
+      --size: 1.25em;
+
+      align-items: initial;
+      background-color: transparent;
+      border-radius: 0;
+      box-shadow: none;
+      display: grid;
+      font-size: inherit;
+      height: var(--size);
+      place-content: center;
+      position: relative;
+      top: calc(var(--single-line-height) * 0.5 - var(--size) * 0.5);
+      width: var(--size);
+
+      > * {
+        grid-area: 1 / 1;
+        height: var(--size);
+        object-fit: cover;
+        width: var(--size);
+      }
+
+      .img {
+        background-size: cover;
+        display: inline-block;
+        height: var(--size);
+        opacity: 0;
+        transform: scale(0);
+        transition: transform 0.2s ease-in-out;
+        width: var(--size);
+
+        &[data-variant="image"] {
+          border-radius: 2px;
+          box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.2);
+          overflow: hidden;
+        }
+      }
+
+      .placeholder {
+        transition: opacity 0.1s 0.1s ease-in-out, transform 0.1s 0.1s;
+
+        svg {
+          height: var(--size);
+          width: var(--size);
+        }
+      }
+
+      // Add larger tap target
+      &::before {
+        background-color: transparent;
+        content: "";
+        inset: -0.75em;
+        position: absolute;
+      }
+    }
 
     a {
       @include link-mixins.link-with-arrow
@@ -79,34 +147,38 @@
   &[data-media-loading] {
     .media_content_wrapper {
       background-color: var(--color-empty);
+
+      .placeholder {
+        opacity: 0.5;
+        transform: var(--t) scale(0.75);
+      }
     }
 
     .media_content {
       opacity: 0;
       transform: scale(0);
     }
+  }
 
-    .placeholder {
-      --c1: cubic-bezier(0.01, 0.3, 0.58, 1);
-      --c2: cubic-bezier(0.25, 0.1, 0.25, 1);
-      --animation-bumping-heart-2-transform: scale(1.1);
-      --animation-bumping-heart-transform: scale(1.1);
+  //---------------------------
+  // When the media was loaded
+  //---------------------------
 
-      opacity: 0.5;
-      transform: var(--t) scale(0.75);
+  &:not([data-media-loading]) {
+    .media_collapsed_content {
+      .icon {
+        .img {
+          opacity: 1;
+          transform: scale(1);
+        }
 
-      > * {
-        animation: bumping-heart 1.6s var(--c1) infinite backwards,
-        bumping-heart-2 1.6s var(--c2) infinite backwards;
-
-        @include mixins.reduced-motion {
-          animation: none;
+        .placeholder {
+          opacity: 1;
+          transform: scale(0);
         }
       }
     }
-  }
 
-  &:not([data-media-loading]) {
     .media_content, .media_content_wrapper {
       height: 100%;
       width: 100%;
@@ -163,6 +235,10 @@
     }
   }
 
+  //-----------------
+  // When collapsed
+  //-----------------
+
   &[data-media-collapsed] {
     .media_collapsed_content {
       opacity: 1;
@@ -174,27 +250,15 @@
       height: var(--collapsed-content-height) !important;
       opacity: 0;
       pointer-events: none;
-      //width: 0;
 
       .media_content {
         > div, > img {
           transform: scale(0);
         }
       }
-      //.media_content {
-      //  aspect-ratio: initial !important;
-      //
-      //  > div, iframe, img {
-      //    aspect-ratio: initial !important;
-      //  }
-      //
-      //  > div, > img {
-      //    transform: scale(0);
-      //  }
-      //}
-
     }
   }
+
   // ---------------------------------
   // MediaComponent specific animations
   // ---------------------------------

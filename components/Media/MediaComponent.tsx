@@ -281,7 +281,7 @@ const Media = ({
   const contentRef = useRef<HTMLDivElement>(null)
   const provider =
     source && EMBED_PROVIDERS.find((provider) => provider.regexp.exec(source))
-  let Placeholder: ComponentType<{ className: string }> = SvgPlaceholderDefault
+  let Placeholder: ComponentType<{ className?: string }> = SvgPlaceholderDefault
   if (provider) {
     Placeholder = provider.Placeholder
   }

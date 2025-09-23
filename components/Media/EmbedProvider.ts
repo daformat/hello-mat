@@ -6,7 +6,7 @@ import { ResizeType } from "./EmbedResult"
 export type EmbedProvider = {
   name: string
   regexp: RegExp
-  Placeholder: ComponentType<{ className: string }>
+  Placeholder: ComponentType<{ className?: string }>
   getOEmbedUrl: (url: string) => string
   responsive?: ResizeType
   keepAspectRatio?: boolean
