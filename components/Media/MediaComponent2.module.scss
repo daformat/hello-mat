@@ -5,6 +5,7 @@
   --custom-ease: cubic-bezier(0.42, 0, 0.25, 1);
   --radius: 6px;
   --aspect-ratio: 16 / 4;
+  min-height: var(--collapsed-content-height);
   position: relative;
 
   .placeholder {
@@ -144,7 +145,7 @@
 
     @include mixins.remove-transition;
 
-    > div, > img {
+    > div iframe, img {
       border-radius: var(--radius);
       overflow: hidden;
       transform-origin: top left;
@@ -256,20 +257,20 @@
   // When collapsed
   //-----------------
 
-  &[data-media-collapsed] {
+  &[data-media-collapsed]:is([data-media-responsive], :not([data-media-responsive])) {
     .media_collapsed_content {
       opacity: 1;
       pointer-events: all;
     }
 
     .media_content_wrapper {
-      aspect-ratio: initial !important;
-      height: var(--collapsed-content-height) !important;
+      aspect-ratio: initial;
+      height: 0;
       opacity: 0;
       pointer-events: none;
 
       .media_content {
-        > div, > img {
+        > div iframe, img {
           transform: scale(0);
         }
       }
