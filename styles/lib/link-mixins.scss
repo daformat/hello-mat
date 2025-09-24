@@ -10,7 +10,7 @@
   text-decoration-color: var(--color-link-underline);
   text-decoration-skip-ink: auto;
   text-underline-offset: 0.16em;
-  transition: mixins.theme-transition(text-decoration-color);
+  transition: mixins.theme-transition(text-decoration-color, color);
   word-break: break-word;
 
   @include mixins.remove-transition;
@@ -35,6 +35,8 @@
 }
 
 @mixin link-with-arrow {
+
+  @include link;
 
   box-shadow: none !important;
 
@@ -73,8 +75,10 @@
   }
 
   &:hover,
-  &:focus {
+  &:focus-visible {
     box-shadow: none !important;
+    color: var(--color-link-hover);
+    outline: none;
 
     &::after {
       background-color: var(--color-link-hover);

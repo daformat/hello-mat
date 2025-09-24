@@ -50,6 +50,7 @@
       place-content: center;
       position: relative;
       top: calc(var(--single-line-height) * 0.5 - var(--size) * 0.5);
+      transition: transform 0.2s var(--ease-in-out-cubic);
       width: var(--size);
 
       > * {
@@ -90,6 +91,10 @@
         content: "";
         inset: -0.75em;
         position: absolute;
+      }
+
+      &:focus-visible {
+        transform: scale(1.2);
       }
     }
 

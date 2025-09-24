@@ -23,9 +23,12 @@
 
   .action {
     --padding: 0.5em;
+    background-color: transparent;
+    box-shadow: none;
     cursor: default;
     display: grid;
     margin: calc(-1 * var(--padding) + 0px) calc(0.5 * var(--padding) + 0px);
+    padding: 0;
     position: relative;
     transition: color 0.2s ease-in-out;
     user-select: none;
@@ -36,7 +39,8 @@
 
     @include mixins.remove-transition;
 
-    &:hover {
+    &:hover, &:focus-visible {
+      background-color: transparent;
       color: var(--media-controls-hover);
     }
 
@@ -71,7 +75,7 @@
   }
 }
 
-*:hover > .toggle {
+*:hover > .toggle, .toggle:has(button:focus-visible) {
   opacity: 1;
 }
 

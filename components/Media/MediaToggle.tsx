@@ -7,7 +7,7 @@ export type MediaControlsProps = {
 export const MediaToggle = ({ onClick }: MediaControlsProps) => {
   return (
     <div className={styles.toggle} role="button">
-      <span className={styles.action} onClick={onClick}>
+      <button className={styles.action} onClick={onClick}>
         <span className={styles.expand_label}>
           <svg
             className={styles.icon_expand}
@@ -60,7 +60,7 @@ export const MediaToggle = ({ onClick }: MediaControlsProps) => {
           </svg>
           <span>collapse</span>
         </span>
-      </span>
+      </button>
     </div>
   )
 }
