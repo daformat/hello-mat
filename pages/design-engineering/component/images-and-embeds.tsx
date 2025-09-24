@@ -42,16 +42,19 @@ const ImageAndEmbedsContent = () => {
           {/*<li>*/}
           {/*  <EmbedComponent*/}
           {/*    result={{*/}
-          {/*      type: RecognizedContentType.video,*/}
-          {/*      keepAspectRatio: true,*/}
-          {/*      responsive: ResizeType.both,*/}
-          {/*      minHeight: 200 / 1.7777777778,*/}
-          {/*      minWidth: 200,*/}
-          {/*      maxHeight: 1200 / 1.7777777778,*/}
-          {/*      maxWidth: 1200,*/}
-          {/*      html: '<iframe width="560" height="315" src="https://www.youtube.com/embed/KOJkst2Odfs?si=vj-xOKSTUNJG1SSM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>',*/}
-          {/*      title: "Lubomyr Melnyk - Barcarolle",*/}
-          {/*      url: "https://www.youtube.com/watch?v=KOJkst2Odfs",*/}
+          {/*      type: RecognizedContentType.rich,*/}
+          {/*      keepAspectRatio: false,*/}
+          {/*      responsive: ResizeType.horizontal,*/}
+          {/*      version: "1.0",*/}
+          {/*      author_name: "Mathieu Jouhet",*/}
+          {/*      author_url: "https://twitter.com/daformat",*/}
+          {/*      provider_name: "Twitter",*/}
+          {/*      provider_url: "https://twitter.com",*/}
+          {/*      cache_age: "3153600000",*/}
+          {/*      html: '<blockquote class="twitter-tweet"><p lang="en" dir="ltr">Learn how to round polygon corners with svg + js on <a href="https://twitter.com/observablehq?ref_src=twsrc%5Etfw">@observablehq</a> <br><br>I was curious to find out how to do this, so I did :)<br>On the way you&#39;ll learn about vectors, drawing svg arcs and circles using cubic bézier, and some geometric thinking, enjoy!<a href="https://t.co/SrkHNQt4dx">https://t.co/SrkHNQt4dx</a> <a href="https://t.co/NL8qNMpbjl">pic.twitter.com/NL8qNMpbjl</a></p>&mdash; Mathieu Jouhet (@daformat) <a href="https://twitter.com/daformat/status/1377323694264029185?ref_src=twsrc%5Etfw">March 31, 2021</a></blockquote>\n<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>\n\n',*/}
+          {/*      width: 550,*/}
+          {/*      height: null,*/}
+          {/*      url: "https://twitter.com/daformat/status/1377323694264029185",*/}
           {/*      provider: "YouTube",*/}
           {/*      favicon:*/}
           {/*        "https://www.youtube.com/s/desktop/2ea5cbbe/img/favicon_144x144.png",*/}

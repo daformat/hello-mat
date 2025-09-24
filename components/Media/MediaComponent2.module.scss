@@ -5,7 +5,9 @@
   --custom-ease: cubic-bezier(0.42, 0, 0.25, 1);
   --radius: 6px;
   --aspect-ratio: 16 / 4;
+  max-width: var(--media-max-width);
   min-height: var(--collapsed-content-height);
+  min-width: var(--media-min-width);
   position: relative;
 
   .placeholder {
@@ -100,6 +102,10 @@
     aspect-ratio: var(--aspect-ratio);
     border-radius: var(--radius);
     height: 4em;
+    max-height: var(--media-max-height);
+    max-width: var(--media-max-width);
+    min-height: var(--media-min-height);
+    min-width: var(--media-min-width);
     overflow: hidden;
     position: relative;
     transform-origin: top left;
@@ -219,6 +225,8 @@
       }
 
       .media_content {
+        height: initial;
+
         > div, iframe, img {
           width: 100%;
         }

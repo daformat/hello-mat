@@ -20,6 +20,15 @@ import { MediaToggle } from "./MediaToggle"
 import SvgPlaceholderImage from "./Placeholder/SvgPlaceholderImage"
 import { MediaType } from "./MediaComponent"
 
+export type SizeInfo = {
+  width?: number
+  height?: number
+  minWidth?: number
+  minHeight?: number
+  maxWidth?: number
+  maxHeight?: number
+}
+
 export type MediaComponentProps = PropsWithChildren<{
   error?: Error
   icon: string
@@ -34,6 +43,7 @@ export type MediaComponentProps = PropsWithChildren<{
   keepAspectRatio?: boolean
   responsive?: ResizeType
   placeholder?: ReactNode
+  sizeInfo?: SizeInfo
 }>
 
 export const Media = ({
@@ -47,9 +57,10 @@ export const Media = ({
   keepAspectRatio,
   responsive,
   placeholder = <SvgPlaceholderDefault />,
+  sizeInfo,
 }: MediaComponentProps) => {
   const [loading, setLoading] = useState(true)
-  const [sizeInfo, setSizeInfo] =
+  const [size, setSize] =
     useState<
       MaybeUndefined<{ width: number; height: number; aspectRatio: number }>
     >(undefined)
@@ -76,29 +87,73 @@ export const Media = ({
   // Listen to resize events for the media content
   useEffect(() => {
     const mediaComponent = mediaComponentRef.current
+    const mediaContentWrapper = mediaContentWrapperRef.current
     const mediaContent = mediaContentRef.current
     // console.log({ loading, sizeInfo, source })
-    if (mediaComponent && mediaContent && !sizeInfo) {
+    const provider = EMBED_PROVIDERS.find((provider) =>
+      provider.regexp.test(source)
+    )
+    const isTwitter = provider?.name === "twitter/x"
+    if (
+      mediaComponent &&
+      mediaContentWrapper &&
+      mediaContent &&
+      (!size || isTwitter)
+    ) {
       const observer = new ResizeObserver(() => {
+        console.log("resize", source)
         // we use offsetWidth and offsetHeight instead of contentRect to
         // get the non-transformed dimensions
         const width = mediaContent.offsetWidth
         const height = mediaContent.offsetHeight
         console.log({ width, height, source, children: mediaContent.children })
-        if (width && height > 10) {
+        if (
+          width &&
+          height > 20 &&
+          size?.width !== width &&
+          size?.height !== height
+        ) {
+          const aspectRatio = width / height
           console.log("Media content resized", source, {
             width,
             height,
-            aspectRatio: width / height,
+            aspectRatio,
           })
-          setSizeInfo({ width, height, aspectRatio: width / height })
-          observer.disconnect()
+          setSize({ width, height, aspectRatio })
+          if (!provider || !isTwitter) {
+            console.log("stop observing", provider?.name)
+            observer.disconnect()
+          } else {
+            if (
+              size &&
+              isTwitter &&
+              size.width !== width &&
+              size.height !== height
+            ) {
+              // re-resizing twitter, should be instant
+              mediaContentWrapper.style.transition = "none"
+              mediaComponent.style.setProperty(
+                "--media-natural-width",
+                `${width}px`
+              )
+              mediaComponent.style.setProperty(
+                "--media-natural-height",
+                `${height}px`
+              )
+              mediaComponent.style.setProperty(
+                "--media-natural-aspect-ratio",
+                `${aspectRatio}`
+              )
+              setTimeout(() => (mediaContentWrapper.style.transition = ""))
+            }
+            console.log("twitter, keep observing")
+          }
         }
       })
       observer.observe(mediaContent)
       return () => observer.disconnect()
     }
-  }, [sizeInfo, source])
+  }, [size, source])
 
   // Make sure cached images trigger the load event
   useEffect(() => {
@@ -146,23 +201,37 @@ export const Media = ({
     }
   }, [])
 
+  const sizeProps = getSizeProps(sizeInfo ?? {})
+
   return (
     <div
       ref={mediaComponentRef}
       className={styles.media_component}
       data-media-responsive={responsive}
-      data-media-loading={loading ? "" : undefined}
+      data-media-loading={loading || !size ? "" : undefined}
       data-media-keep-aspect-ratio={keepAspectRatio ? "" : undefined}
-      data-media-sized={sizeInfo ? "" : undefined}
+      data-media-sized={size ? "" : undefined}
       data-media-collapsed={collapsed ? "" : undefined}
       style={
         {
           "--media-natural-width":
-            sizeInfo && !loading ? `${sizeInfo.width}px` : undefined,
+            size && !loading ? `${size.width}px` : undefined,
           "--media-natural-height":
-            sizeInfo && !loading ? `${sizeInfo.height}px` : undefined,
+            size && !loading ? `${size.height}px` : undefined,
           "--media-natural-aspect-ratio":
-            sizeInfo && !loading ? `${sizeInfo.aspectRatio}` : undefined,
+            size && !loading ? `${size.aspectRatio}` : undefined,
+          "--media-min-width": sizeProps?.minWidth
+            ? `${sizeProps.minWidth}px`
+            : undefined,
+          "--media-max-width": sizeProps?.maxWidth
+            ? `${sizeProps.maxWidth}px`
+            : undefined,
+          "--media-min-height": sizeProps?.minHeight
+            ? `${sizeProps.minHeight}px`
+            : undefined,
+          "--media-max-height": sizeProps?.maxHeight
+            ? `${sizeProps.maxHeight}px`
+            : undefined,
         } as CSSProperties
       }
     >
@@ -271,6 +340,7 @@ export const EmbedComp = ({
       placeholder={
         provider ? <provider.Placeholder /> : <SvgPlaceholderDefault />
       }
+      sizeInfo={provider?.sizeInfo}
     >
       <div
         ref={embedRef}
@@ -314,7 +384,7 @@ export const ImageComp = ({
  * @param embedContent
  */
 
-function initEmbeds(embedContent: HTMLDivElement | null): void {
+const initEmbeds = (embedContent: HTMLDivElement | null) => {
   const scripts = embedContent?.querySelectorAll(
     "script"
   ) as NodeListOf<HTMLScriptElement>
@@ -336,11 +406,20 @@ function initEmbeds(embedContent: HTMLDivElement | null): void {
  * Scripts that are added at runtime are not executed
  * @param node
  */
-function cloneScript(node: HTMLScriptElement): HTMLScriptElement {
+const cloneScript = (node: HTMLScriptElement) => {
   const script = document.createElement("script") as HTMLScriptElement
   script.text = node.innerHTML
   for (const attr of Array.from(node.attributes)) {
     script.setAttribute(attr.name, attr.value)
   }
   return script
+}
+
+const getSizeProps = (sizeInfo: SizeInfo) => {
+  const minWidth = sizeInfo.width || sizeInfo.minWidth
+  const maxWidth = sizeInfo.width || sizeInfo.maxWidth
+  const minHeight = sizeInfo.height || sizeInfo.minHeight
+  const maxHeight = sizeInfo.height || sizeInfo.maxHeight
+
+  return { minWidth, maxWidth, minHeight, maxHeight }
 }
