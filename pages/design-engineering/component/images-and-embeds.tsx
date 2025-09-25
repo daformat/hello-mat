@@ -50,20 +50,20 @@ const ImageAndEmbedsContent = () => {
               source="https://www.youtube.com/watch?v=KOJkst2Odfs"
             />
           </li>
-          <li>
-            <EmbedComp
-              open={false}
-              title="Antlers in the Mist"
-              source="https://www.flickr.com/photos/124051802@N04/45745445165/in/pool-best100only/"
-            />
-          </li>
-          <li>
-            <EmbedComp
-              open={false}
-              title="Volta - Boogie Belgique"
-              source="https://open.spotify.com/track/6S4hDG6meUTOBUemVHelrx?si=31db165395a747e2"
-            />
-          </li>
+          {/*<li>*/}
+          {/*  <EmbedComp*/}
+          {/*    open={false}*/}
+          {/*    title="Antlers in the Mist"*/}
+          {/*    source="https://www.flickr.com/photos/124051802@N04/45745445165/in/pool-best100only/"*/}
+          {/*  />*/}
+          {/*</li>*/}
+          {/*<li>*/}
+          {/*  <EmbedComp*/}
+          {/*    open={false}*/}
+          {/*    title="Volta - Boogie Belgique"*/}
+          {/*    source="https://open.spotify.com/track/6S4hDG6meUTOBUemVHelrx?si=31db165395a747e2"*/}
+          {/*  />*/}
+          {/*</li>*/}
           <li>
             <EmbedComp
               open={false}
