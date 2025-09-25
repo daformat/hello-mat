@@ -7,6 +7,7 @@ import {
   ReactNode,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -77,7 +78,7 @@ export const Media = ({
       if (["iframe", "img"].includes(tag)) {
         // we want to make sure a resize can happen before loading is set to false
         setTimeout(() => {
-          console.log("loaded", tag, target)
+          // console.log("loaded", tag, target)
           setLoading(false)
         })
       }
@@ -101,36 +102,37 @@ export const Media = ({
       (!size || isTwitter)
     ) {
       const observer = new ResizeObserver(() => {
-        console.log("resize", source)
+        // console.log("resize", source)
         // we use offsetWidth and offsetHeight instead of contentRect to
         // get the non-transformed dimensions
         const width = mediaContent.offsetWidth
         const height = mediaContent.offsetHeight
-        console.log({ width, height, source, children: mediaContent.children })
+        // console.log({ width, height, source, children: mediaContent.children })
         if (
           width &&
           height > 20 &&
-          size?.width !== width &&
-          size?.height !== height
+          (size?.width !== width || size?.height !== height)
         ) {
           const aspectRatio = width / height
-          console.log("Media content resized", source, {
-            width,
-            height,
-            aspectRatio,
-          })
+          // console.log("Media content resized", source, {
+          //   width,
+          //   height,
+          //   aspectRatio,
+          // })
           setSize({ width, height, aspectRatio })
           if (!provider || !isTwitter) {
-            console.log("stop observing", provider?.name)
+            // console.log("stop observing", provider?.name)
             observer.disconnect()
           } else {
+            const transitions = mediaContentWrapper.getAnimations()
             if (
               size &&
               isTwitter &&
-              size.width !== width &&
-              size.height !== height
+              transitions.length === 0 &&
+              (size.width !== width || size.height !== height)
             ) {
               // re-resizing twitter, should be instant
+              // console.log("instant resize")
               mediaContentWrapper.style.transition = "none"
               mediaComponent.style.setProperty(
                 "--media-natural-width",
@@ -146,7 +148,6 @@ export const Media = ({
               )
               setTimeout(() => (mediaContentWrapper.style.transition = ""))
             }
-            console.log("twitter, keep observing")
           }
         }
       })
@@ -164,21 +165,22 @@ export const Media = ({
   }, [source])
 
   // Measure the collapsed content on resize
-  useEffect(() => {
+  useLayoutEffect(() => {
     const mediaComponent = mediaComponentRef.current
     const collapsedContent = collapsedContentRef.current
     const mediaContentWrapper = mediaContentWrapperRef.current
     if (mediaComponent && mediaContentWrapper && collapsedContent) {
-      const observer = new ResizeObserver(() => {
+      const handleResize = () => {
         mediaContentWrapper.style.transition = "none"
-        // const width = collapsedContent.offsetWidth
         const height = collapsedContent.offsetHeight
         mediaComponent.style.setProperty(
           "--collapsed-content-height",
           `${height}px`
         )
+        mediaComponent.dataset.collapsedContentMeasured = ""
         setTimeout(() => (mediaContentWrapper.style.transition = ""))
-      })
+      }
+      const observer = new ResizeObserver(handleResize)
       observer.observe(collapsedContent)
       return () => observer.disconnect()
     }
@@ -284,11 +286,14 @@ export const Media = ({
 
 export const EmbedComp = ({
   source,
+  title,
   open = true,
 }: {
   source: string
+  title?: string
   open?: boolean
 }) => {
+  const [loading, setLoading] = useState(true)
   const [oEmbed, setOEmbed] = useState<MaybeUndefined<OEmbed>>(undefined)
   const [error, setError] = useState<MaybeUndefined<Error>>(undefined)
   const provider = useMemo(
@@ -298,11 +303,13 @@ export const EmbedComp = ({
   const { hostname } = new URL(source)
   const icon = `https://icons.duckduckgo.com/ip3/${hostname}.ico`
   const embedRef = useRef<HTMLDivElement>(null)
+  const embedRef2 = useRef<HTMLDivElement>(null)
 
   // fetch the oEmbed when provider and/or source changes
   useEffect(() => {
     if (provider) {
       setError(undefined)
+      setLoading(true)
       fetch(provider.getOEmbedUrl(source))
         .then(async (response) => {
           if (response.ok) {
@@ -315,6 +322,7 @@ export const EmbedComp = ({
         .catch((reason) => {
           setError(new Error("Failed to fetch oEmbed data", { cause: reason }))
         })
+        .finally(() => setLoading(false))
     } else {
       setError(new Error("No provider found for this source"))
     }
@@ -325,30 +333,36 @@ export const EmbedComp = ({
     if (embedRef.current && !["flickr"].includes(provider?.name ?? "")) {
       initEmbeds(embedRef.current)
     }
+    if (embedRef2.current && !["flickr"].includes(provider?.name ?? "")) {
+      initEmbeds(embedRef2.current)
+    }
   }, [oEmbed?.html, provider?.name])
 
   return (
-    <Media
-      open={open}
-      icon={icon}
-      error={error}
-      source={source}
-      title={oEmbed?.title}
-      variant={MediaType.embed}
-      keepAspectRatio={provider?.keepAspectRatio}
-      responsive={provider?.responsive}
-      placeholder={
-        provider ? <provider.Placeholder /> : <SvgPlaceholderDefault />
-      }
-      sizeInfo={provider?.sizeInfo}
-    >
-      <div
-        ref={embedRef}
-        dangerouslySetInnerHTML={{
-          __html: oEmbed?.html ?? "",
-        }}
-      />
-    </Media>
+    <>
+      <Media
+        open={open}
+        icon={icon}
+        error={error}
+        source={source}
+        title={title ?? (loading ? "Loading..." : oEmbed?.title)}
+        variant={MediaType.embed}
+        keepAspectRatio={provider?.keepAspectRatio}
+        responsive={provider?.responsive}
+        placeholder={
+          provider ? <provider.Placeholder /> : <SvgPlaceholderDefault />
+        }
+        sizeInfo={provider?.sizeInfo}
+      >
+        <div
+          data-provider={provider?.name}
+          ref={embedRef}
+          dangerouslySetInnerHTML={{
+            __html: oEmbed?.html ?? "",
+          }}
+        />
+      </Media>
+    </>
   )
 }
 
@@ -383,7 +397,6 @@ export const ImageComp = ({
  * instagram embeds
  * @param embedContent
  */
-
 const initEmbeds = (embedContent: HTMLDivElement | null) => {
   const scripts = embedContent?.querySelectorAll(
     "script"
@@ -415,6 +428,11 @@ const cloneScript = (node: HTMLScriptElement) => {
   return script
 }
 
+/**
+ * Returns the size properties to apply to the media component based on the
+ * given SizeInfo
+ * @param sizeInfo
+ */
 const getSizeProps = (sizeInfo: SizeInfo) => {
   const minWidth = sizeInfo.width || sizeInfo.minWidth
   const maxWidth = sizeInfo.width || sizeInfo.maxWidth

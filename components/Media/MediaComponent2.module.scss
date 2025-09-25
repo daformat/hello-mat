@@ -5,10 +5,23 @@
   --custom-ease: cubic-bezier(0.42, 0, 0.25, 1);
   --radius: 6px;
   --aspect-ratio: 16 / 4;
-  max-width: var(--media-max-width);
-  min-height: var(--collapsed-content-height);
+  grid-template-areas: "content";
+  //max-width: var(--media-max-width);
+  min-height: var(--collapsed-content-height, var(--single-line-height));
   min-width: var(--media-min-width);
   position: relative;
+
+  &:not([data-collapsed-content-measured]) {
+    display: grid;
+
+    > .media_collapsed_content, .media_content_wrapper {
+      grid-area: content;
+    }
+
+    .media_collapsed_content {
+      position: initial;
+    }
+  }
 
   .placeholder {
     --c1: cubic-bezier(0.01, 0.3, 0.58, 1);
@@ -30,12 +43,15 @@
     display: flex;
     gap: 8px;
     left: 0;
+    min-height: var(--single-line-height);
     opacity: 0;
     position: absolute;
     right: 0;
     top: 0;
     transition: opacity 0.3s ease-in-out;
     word-break: break-word;
+
+    @include mixins.remove-transition;
 
     .icon {
       --size: 1.25em;
@@ -53,6 +69,8 @@
       transition: transform 0.2s var(--ease-in-out-cubic);
       width: var(--size);
 
+      @include mixins.remove-transition;
+
       > * {
         grid-area: 1 / 1;
         height: var(--size);
@@ -69,6 +87,8 @@
         transition: transform 0.2s ease-in-out;
         width: var(--size);
 
+        @include mixins.remove-transition;
+
         &[data-variant="image"] {
           border-radius: 2px;
           box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.2);
@@ -78,6 +98,8 @@
 
       .placeholder {
         transition: opacity 0.1s 0.1s ease-in-out, transform 0.1s 0.1s;
+
+        @include mixins.remove-transition;
 
         svg {
           height: var(--size);
@@ -108,7 +130,7 @@
     border-radius: var(--radius);
     height: 4em;
     max-height: var(--media-max-height);
-    max-width: var(--media-max-width);
+    //max-width: var(--media-max-width);
     min-height: var(--media-min-height);
     min-width: var(--media-min-width);
     overflow: hidden;
@@ -143,10 +165,14 @@
     img {
       max-width: initial;
     }
+  }
 
-    > div {
+  &:not([data-media-keep-aspect-ratio]) {
+    .media_content {
+      width: var(--media-component-width);
+
       > div {
-        margin-block: 0 !important; // this is for twitter which insists on setting margins
+        width: var(--media-component-width);
       }
     }
   }
@@ -161,6 +187,8 @@
       overflow: hidden;
       transform-origin: top left;
       transition: transform 0.3s var(--custom-ease);
+
+      @include mixins.remove-transition;
     }
   }
 
@@ -285,6 +313,24 @@
       .media_content {
         > div iframe, img {
           transform: scale(0);
+        }
+      }
+    }
+
+    // -------------------------------
+    // Provider related special-cases
+    // -------------------------------
+  }
+
+  &:has([data-provider="twitter/x"]) {
+    &:not([data-loading]) {
+      .media_content_wrapper {
+        .media_content {
+          > div {
+            > div {
+              margin-block: 0 !important; // this is for twitter which insists on setting margins
+            }
+          }
         }
       }
     }
