@@ -43,13 +43,13 @@ const ImageAndEmbedsContent = () => {
           note taking experience, and support for images and embeds.
         </p>
         <ul>
-          {/*<li>*/}
-          {/*  <EmbedComp*/}
-          {/*    open={false}*/}
-          {/*    title="Lubomyr Melnyk - Barcarolle"*/}
-          {/*    source="https://www.youtube.com/watch?v=KOJkst2Odfs"*/}
-          {/*  />*/}
-          {/*</li>*/}
+          <li>
+            <EmbedComp
+              open={false}
+              title="Lubomyr Melnyk - Barcarolle"
+              source="https://www.youtube.com/watch?v=KOJkst2Odfs"
+            />
+          </li>
           {/*<li>*/}
           {/*  <EmbedComp*/}
           {/*    open={false}*/}
