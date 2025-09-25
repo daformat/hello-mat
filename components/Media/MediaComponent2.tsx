@@ -328,6 +328,10 @@ export const EmbedComp = ({
     }
   }, [provider, source])
 
+  if (error) {
+    console.error(error)
+  }
+
   // Init embeds each time we get a new embed
   useEffect(() => {
     if (embedRef.current && !["flickr"].includes(provider?.name ?? "")) {
