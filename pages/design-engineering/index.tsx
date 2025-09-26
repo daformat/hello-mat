@@ -26,7 +26,7 @@ const DesignEngineeringIndex = () => (
           justifyContent: "center",
           padding: "7px",
           transition: `color 0.2s ease-in-out, background-color 0.2s ease-in-out",
-            boxShadow 0.2s ease-in-out;`,
+            boxShadow 0.2s ease-in-out`,
         }}
       >
         A Table of content component
@@ -46,7 +46,7 @@ const DesignEngineeringIndex = () => (
           justifyContent: "center",
           padding: "7px",
           transition: `color 0.2s ease-in-out, background-color 0.2s ease-in-out",
-            boxShadow 0.2s ease-in-out;`,
+            boxShadow 0.2s ease-in-out`,
         }}
       >
         A details (or disclosure) component
@@ -66,7 +66,7 @@ const DesignEngineeringIndex = () => (
           justifyContent: "center",
           padding: "7px",
           transition: `color 0.2s ease-in-out, background-color 0.2s ease-in-out",
-            boxShadow 0.2s ease-in-out;`,
+            boxShadow 0.2s ease-in-out`,
         }}
       >
         Images and embeds

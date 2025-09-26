@@ -7,7 +7,6 @@ import {
   ReactNode,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -63,6 +62,7 @@ export const Media = ({
   speed = 1,
 }: MediaComponentProps) => {
   const [loading, setLoading] = useState(true)
+  const [loadingError, setLoadingError] = useState(false)
   const [size, setSize] =
     useState<
       MaybeUndefined<{ width: number; height: number; aspectRatio: number }>
@@ -85,7 +85,7 @@ export const Media = ({
           // we want to make sure a resize can happen before loading is set to false
           setTimeout(
             () => {
-              // console.log("loaded", tag, target)
+              console.log("loaded", tag, target)
               setLoading(false)
             },
             speed <= 1 ? loadingTime / speed : 0
@@ -181,7 +181,7 @@ export const Media = ({
   }, [source])
 
   // Measure the collapsed content on resize
-  useLayoutEffect(() => {
+  useEffect(() => {
     const mediaComponent = mediaComponentRef.current
     const collapsedContent = collapsedContentRef.current
     const mediaContentWrapper = mediaContentWrapperRef.current
@@ -243,6 +243,38 @@ export const Media = ({
       }
     }
   }, [])
+
+  // hack around Safari not firing load event for some iframes (ex: Spotify)
+  useEffect(() => {
+    const content = mediaContentRef.current
+    const iframe = content?.querySelector("iframe")
+    let timeout: MaybeUndefined<ReturnType<typeof setTimeout>>
+    if (iframe) {
+      let pollCount = 0
+      const maxPolls = 50
+      const checkLoaded = () => {
+        try {
+          if (iframe.contentWindow?.document && pollCount < maxPolls) {
+            // give some time for the iframe to actually load
+            setTimeout(() => iframe.dispatchEvent(new Event("load")), 3000)
+            return
+          }
+        } catch (e) {
+          // cross-origin access denied, but iframe might still be loaded
+          if (pollCount > 10) {
+            setLoadingError(true)
+            return
+          }
+        }
+        pollCount++
+        if (pollCount < maxPolls) {
+          timeout = setTimeout(checkLoaded, 100)
+        }
+      }
+      timeout = setTimeout(checkLoaded, 100)
+      return () => clearTimeout(timeout)
+    }
+  })
 
   const sizeProps = getSizeProps(sizeInfo ?? {})
 
@@ -309,12 +341,11 @@ export const Media = ({
         inert={collapsed ? "" : undefined}
       >
         <div className={styles.placeholder}>
-          {error ? <SvgPlaceholderError /> : placeholder}
+          {error || loadingError ? <SvgPlaceholderError /> : placeholder}
         </div>
         <div
           ref={mediaContentRef}
           onLoadCapture={handleLoad}
-          onLoadStartCapture={(event) => console.log("load start", event)}
           className={styles.media_content}
         >
           {children}
