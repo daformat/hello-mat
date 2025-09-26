@@ -46,13 +46,9 @@
   position: absolute;
   right: 0.71428571em;
   top: 0.71428571em;
-  transition: mixins.theme-transition(
-      background-color,
-      border-color,
-      color,
-      opacity,
-      transform
-  );
+  transition-duration: calc(0.2s / var(--speed));
+  transition-property: background-color, border-color, color, opacity, transform;
+  transition-timing-function: ease-in-out;
   width: var(--size);
 
   @include mixins.remove-transition;
@@ -71,9 +67,9 @@
     --start: var(--background-color-gradient-start);
     --end: var(--background-color-gradient-end);
     background-image: radial-gradient(
-        circle at bottom left,
-        var(--start) 25%,
-        var(--end) 100%
+      circle at bottom left,
+      var(--start) 25%,
+      var(--end) 100%
     );
     border-radius: inherit;
     content: "";
@@ -94,7 +90,8 @@
   }
 
   // Upon hovering the source link
-  &:hover, &:focus-visible {
+  &:hover,
+  &:focus-visible {
     --color: var(--media-source-hover-icon-color, #fff);
     background-color: var(--background-color-2);
     border-color: var(--border-color-2);
@@ -126,7 +123,8 @@
     opacity: 0;
   }
 
-  *:hover > .source, .source:focus-visible {
+  *:hover:not([data-animating]) > .source,
+  .source:focus-visible {
     opacity: 1;
   }
 }

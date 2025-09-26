@@ -12,7 +12,7 @@
   right: 0;
   top: 0;
   transform: var(--base-transform);
-  transition: opacity 0.2s ease-in-out;
+  transition: opacity calc(0.2s / var(--speed)) ease-in-out;
   width: 8em;
 
   @include mixins.remove-transition;
@@ -32,7 +32,7 @@
     padding: 0;
     position: relative;
     top: 0.28em;
-    transition: color 0.2s ease-in-out;
+    transition: color calc(0.2s / var(--speed)) ease-in-out;
     user-select: none;
 
     > * {
@@ -41,7 +41,8 @@
 
     @include mixins.remove-transition;
 
-    &:hover, &:focus-visible {
+    &:hover,
+    &:focus-visible {
       background-color: transparent;
       color: var(--media-controls-hover);
     }
@@ -63,7 +64,7 @@
     // control label in order to mitigate a rendering bug specific to beam (not in safari)
     // where it doesn't fully clear the hidden control box
     padding: 0.5em 5em 0.5em 0.75em;
-    transition: opacity 0.2s ease-in-out;
+    transition: opacity calc(0.2s / var(--speed)) ease-in-out;
     white-space: nowrap;
 
     @include mixins.remove-transition;
@@ -77,7 +78,8 @@
   }
 }
 
-*:hover > .toggle, .toggle:has(button:focus-visible) {
+*:hover > .toggle,
+.toggle:has(button:focus-visible) {
   opacity: 1;
 }
 

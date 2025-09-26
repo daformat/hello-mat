@@ -1,6 +1,6 @@
 import { TableOfContents } from "components/TableOfContents/TocComponent"
 import Head from "next/head"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { EmbedComp, ImageComp } from "../../../components/Media/MediaComponent2"
 
 const ImageAndEmbedsPage = () => (
@@ -21,6 +21,7 @@ const ImageAndEmbedsPage = () => (
 const ImageAndEmbedsContent = () => {
   const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
+  const [render, setRender] = useState(0)
   const [slow, setSlow] = useState(false)
 
   useEffect(() => {
@@ -28,6 +29,24 @@ const ImageAndEmbedsContent = () => {
       tocContext.setRootElement(contentRef.current)
     }
   })
+
+  useLayoutEffect(() => {
+    const buttons = contentRef.current?.querySelectorAll("button")
+    if (buttons) {
+      buttons.forEach((button) => {
+        const oldWidth = button.style.getPropertyValue("--button-width")
+        button.style.width = "auto"
+        const width = button.offsetWidth
+        if (oldWidth) {
+          button.style.width = "var(--button-width, auto)"
+          button.style.setProperty("--button-width", oldWidth)
+        }
+        setTimeout(() =>
+          button.style.setProperty("--button-width", `${width}px`)
+        )
+      })
+    }
+  }, [slow])
 
   return (
     <>
@@ -42,12 +61,13 @@ const ImageAndEmbedsContent = () => {
           <a href="https://beamapp.co">Beam</a>, a browser with a first-class
           note taking experience, and support for images and embeds.
         </p>
-        <ul>
+        <ul key={render}>
           <li>
             <EmbedComp
               open={false}
               title="Lubomyr Melnyk - Barcarolle"
               source="https://www.youtube.com/watch?v=KOJkst2Odfs"
+              speed={slow ? 0.1 : 1}
             />
           </li>
           {/*<li>*/}
@@ -55,6 +75,7 @@ const ImageAndEmbedsContent = () => {
           {/*    open={false}*/}
           {/*    title="Antlers in the Mist"*/}
           {/*    source="https://www.flickr.com/photos/124051802@N04/45745445165/in/pool-best100only/"*/}
+          {/*    speed={slow ? 0.1 : 1}*/}
           {/*  />*/}
           {/*</li>*/}
           {/*<li>*/}
@@ -62,6 +83,7 @@ const ImageAndEmbedsContent = () => {
           {/*    open={false}*/}
           {/*    title="Volta - Boogie Belgique"*/}
           {/*    source="https://open.spotify.com/track/6S4hDG6meUTOBUemVHelrx?si=31db165395a747e2"*/}
+          {/*    speed={slow ? 0.1 : 1}*/}
           {/*  />*/}
           {/*</li>*/}
           <li>
@@ -69,21 +91,51 @@ const ImageAndEmbedsContent = () => {
               open={false}
               title="Magnifique - Ratatat"
               source="https://open.spotify.com/album/7ox0VtOfJBl7Oz3BRGOg1G"
+              speed={slow ? 0.1 : 1}
             />
           </li>
-          <li>
-            <EmbedComp
-              open={false}
-              source="https://x.com/daformat/status/1377323694264029185"
-            />
-          </li>
+          {/*<li>*/}
+          {/*  <EmbedComp*/}
+          {/*    open={false}*/}
+          {/*    source="https://x.com/daformat/status/1377323694264029185"*/}
+          {/*    speed={slow ? 0.1 : 1}*/}
+          {/*  />*/}
+          {/*</li>*/}
           <li>
             <ImageComp
               title="A colorful chameleon"
               source="https://letsenhance.io/static/8f5e523ee6b2479e26ecc91b9c25261e/bbb97/MainAfter.avif"
+              speed={slow ? 0.1 : 1}
             />
           </li>
         </ul>
+        <div style={{ textAlign: "right", marginTop: "0.5em" }}>
+          <button onClick={() => setRender((render) => render + 1)}>
+            Reload
+            {slow ? (
+              <small> (10% network slowdown)</small>
+            ) : (
+              <small> (normal network)</small>
+            )}
+          </button>
+          <br className="small_screen_only" />
+          <button
+            onClick={() => setSlow(false)}
+            data-state={!slow ? "active" : undefined}
+            aria-pressed={!slow ? "true" : "false"}
+            title="Set normal animation speed"
+          >
+            100%
+          </button>{" "}
+          <button
+            onClick={() => setSlow(true)}
+            data-state={slow ? "active" : undefined}
+            aria-pressed={slow ? "true" : "false"}
+            title="Set slow animation speed"
+          >
+            10%
+          </button>
+        </div>
         <h2>Functional requirements</h2>
         <ul>
           <li>The component should support images and embeds</li>

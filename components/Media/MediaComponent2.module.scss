@@ -5,6 +5,7 @@
   --custom-ease: cubic-bezier(0.42, 0, 0.25, 1);
   --radius: 6px;
   --aspect-ratio: 16 / 4;
+  --speed: var(--media-animation-speed, 1);
   grid-template-areas: "content";
   //max-width: var(--media-max-width);
   min-height: var(--collapsed-content-height, var(--single-line-height));
@@ -14,7 +15,8 @@
   &:not([data-collapsed-content-measured]) {
     display: grid;
 
-    > .media_collapsed_content, .media_content_wrapper {
+    > .media_collapsed_content,
+    .media_content_wrapper {
       grid-area: content;
     }
 
@@ -31,7 +33,7 @@
 
     > * {
       animation: bumping-heart 1.6s var(--c1) infinite backwards,
-      bumping-heart-2 1.6s var(--c2) infinite backwards;
+        bumping-heart-2 1.6s var(--c2) infinite backwards;
 
       @include mixins.reduced-motion {
         animation: none;
@@ -48,7 +50,7 @@
     position: absolute;
     right: 0;
     top: 0;
-    transition: opacity 0.3s ease-in-out;
+    transition: opacity calc(0.3s / var(--speed)) ease-in-out;
     word-break: break-word;
 
     @include mixins.remove-transition;
@@ -66,7 +68,7 @@
       place-content: center;
       position: relative;
       top: calc(var(--single-line-height) * 0.5 - var(--size) * 0.5);
-      transition: transform 0.2s var(--ease-in-out-cubic);
+      transition: transform calc(0.2s / var(--speed)) var(--ease-out-cubic);
       width: var(--size);
 
       @include mixins.remove-transition;
@@ -84,7 +86,7 @@
         height: var(--size);
         opacity: 0;
         transform: scale(0);
-        transition: transform 0.2s ease-in-out;
+        transition: transform calc(0.2s / var(--speed)) ease-in-out;
         width: var(--size);
 
         @include mixins.remove-transition;
@@ -97,7 +99,9 @@
       }
 
       .placeholder {
-        transition: opacity 0.1s 0.1s ease-in-out, transform 0.1s 0.1s;
+        transition: opacity calc(0.1s / var(--speed)) calc(0.1s / var(--speed))
+            ease-in-out,
+          transform calc(0.1s / var(--speed)) calc(0.1s / var(--speed));
 
         @include mixins.remove-transition;
 
@@ -121,7 +125,7 @@
     }
 
     a {
-      @include link-mixins.link-with-arrow
+      @include link-mixins.link-with-arrow;
     }
   }
 
@@ -136,7 +140,13 @@
     overflow: hidden;
     position: relative;
     transform-origin: top left;
-    transition: height 0.3s var(--custom-ease), width 0.3s var(--custom-ease), aspect-ratio 0.3s var(--custom-ease), transform 0.3s var(--custom-ease), opacity 0.3s ease-in-out, background-color 0.3s ease-in-out 0.6s;
+    transition: height calc(0.3s / var(--speed)) var(--custom-ease),
+      width calc(0.3s / var(--speed)) var(--custom-ease),
+      aspect-ratio calc(0.3s / var(--speed)) var(--custom-ease),
+      transform calc(0.3s / var(--speed)) var(--custom-ease),
+      opacity calc(0.3s / var(--speed)) ease-in-out,
+      background-color calc(0.3s / var(--speed)) ease-in-out
+        calc(0.6s / var(--speed));
     width: 16em;
 
     @include mixins.remove-transition;
@@ -150,8 +160,12 @@
       position: absolute;
       top: 50%;
       transform: var(--t) scale(0);
-      transition: opacity 0.1s 0.1s ease-in-out, transform 0.1s 0.1s ease-in-out,
-      left 0.2s ease-in-out 0.1s, top 0.2s ease-in-out 0.1s;
+      transition: opacity calc(0.1s / var(--speed)) calc(0.1s / var(--speed))
+          ease-in-out,
+        transform calc(0.1s / var(--speed)) calc(0.1s / var(--speed))
+          ease-in-out,
+        left calc(0.2s / var(--speed)) ease-in-out calc(0.1s / var(--speed)),
+        top calc(0.2s / var(--speed)) ease-in-out calc(0.1s / var(--speed));
       z-index: 1;
 
       @include mixins.remove-transition;
@@ -178,15 +192,19 @@
   }
 
   .media_content {
-    transition: opacity 0.3s 0.2s var(--ease-out-cubic), transform 0.3s 0.2s var(--ease-out-cubic);
+    transition: opacity calc(0.3s / var(--speed)) calc(0.2s / var(--speed))
+        var(--ease-out-cubic),
+      transform calc(0.3s / var(--speed)) calc(0.2s / var(--speed))
+        var(--ease-out-cubic);
 
     @include mixins.remove-transition;
 
-    > div iframe, img {
+    > div iframe,
+    img {
       border-radius: var(--radius);
       overflow: hidden;
       transform-origin: top left;
-      transition: transform 0.3s var(--custom-ease);
+      transition: transform calc(0.3s / var(--speed)) var(--custom-ease);
 
       @include mixins.remove-transition;
     }
@@ -228,7 +246,8 @@
     }
 
     &:is([data-media-responsive]) {
-      .media_content, .media_content_wrapper {
+      .media_content,
+      .media_content_wrapper {
         height: 100%;
         width: 100%;
       }
@@ -245,7 +264,9 @@
       }
 
       .media_content {
-        > div, iframe, img {
+        > div,
+        iframe,
+        img {
           height: calc(var(--media-component-width) / var(--aspect-ratio));
           width: 100%;
         }
@@ -260,7 +281,9 @@
       .media_content {
         height: initial;
 
-        > div, iframe, img {
+        > div,
+        iframe,
+        img {
           width: 100%;
         }
       }
@@ -268,7 +291,9 @@
 
     &[data-responsive="vertical"] {
       .media_content {
-        > div, iframe, img {
+        > div,
+        iframe,
+        img {
           height: 100%;
         }
       }
@@ -284,10 +309,13 @@
     &[data-media-keep-aspect-ratio] {
       --aspect-ratio: var(--media-natural-aspect-ratio);
 
-      .media_content, .media_content_wrapper {
+      .media_content,
+      .media_content_wrapper {
         aspect-ratio: var(--aspect-ratio);
 
-        > div, iframe, img {
+        > div,
+        iframe,
+        img {
           aspect-ratio: var(--aspect-ratio);
         }
       }
@@ -298,7 +326,10 @@
   // When collapsed
   //-----------------
 
-  &[data-media-collapsed]:is([data-media-responsive], :not([data-media-responsive])) {
+  &[data-media-collapsed]:is(
+      [data-media-responsive],
+      :not([data-media-responsive])
+    ) {
     .media_collapsed_content {
       opacity: 1;
       pointer-events: all;
@@ -311,7 +342,8 @@
       pointer-events: none;
 
       .media_content {
-        > div iframe, img {
+        > div iframe,
+        img {
           transform: scale(0);
         }
       }
@@ -359,5 +391,4 @@
       transform: none;
     }
   }
-
 }

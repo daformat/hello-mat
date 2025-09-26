@@ -45,6 +45,7 @@ export type MediaComponentProps = PropsWithChildren<{
   responsive?: ResizeType
   placeholder?: ReactNode
   sizeInfo?: SizeInfo
+  speed?: number
 }>
 
 export const Media = ({
@@ -59,6 +60,7 @@ export const Media = ({
   responsive,
   placeholder = <SvgPlaceholderDefault />,
   sizeInfo,
+  speed = 1,
 }: MediaComponentProps) => {
   const [loading, setLoading] = useState(true)
   const [size, setSize] =
@@ -70,20 +72,34 @@ export const Media = ({
   const mediaContentWrapperRef = useRef<HTMLDivElement>(null)
   const mediaContentRef = useRef<HTMLDivElement>(null)
   const collapsedContentRef = useRef<HTMLDivElement>(null)
+  const startTimeRef = useRef<number>(Date.now())
 
-  const handleLoad = useCallback<ReactEventHandler<HTMLDivElement>>((event) => {
-    const target = event.target
-    if (target instanceof HTMLElement) {
-      const tag = target.tagName.toLowerCase()
-      if (["iframe", "img"].includes(tag)) {
-        // we want to make sure a resize can happen before loading is set to false
-        setTimeout(() => {
-          // console.log("loaded", tag, target)
-          setLoading(false)
-        })
+  const handleLoad = useCallback<ReactEventHandler<HTMLDivElement>>(
+    (event) => {
+      const target = event.target
+      if (target instanceof HTMLElement) {
+        const tag = target.tagName.toLowerCase()
+        if (["iframe", "img"].includes(tag)) {
+          // handle speed slowdown
+          const loadingTime = Date.now() - startTimeRef.current
+          // we want to make sure a resize can happen before loading is set to false
+          setTimeout(
+            () => {
+              // console.log("loaded", tag, target)
+              setLoading(false)
+            },
+            speed <= 1 ? loadingTime / speed : 0
+          )
+        }
       }
-    }
-  }, [])
+    },
+    [speed]
+  )
+
+  // Reset timer when source changes
+  useEffect(() => {
+    startTimeRef.current = Date.now()
+  }, [source])
 
   // Listen to resize events for the media content
   useEffect(() => {
@@ -203,6 +219,31 @@ export const Media = ({
     }
   }, [])
 
+  // toggle data-animating on content
+  useEffect(() => {
+    const content = mediaContentRef.current
+    const img = content?.querySelector("img")
+    if (content && img) {
+      const handleTransitionEnd = (event: TransitionEvent) => {
+        if (event.target === img) {
+          delete content.dataset.animating
+        }
+      }
+      const handleTransitionStart = (event: TransitionEvent) => {
+        if (event.target === img) {
+          content.dataset.animating = ""
+        }
+      }
+      content.addEventListener("transitionstart", handleTransitionStart)
+      content.addEventListener("transitionend", handleTransitionEnd)
+
+      return () => {
+        content.removeEventListener("transitionstart", handleTransitionStart)
+        content.removeEventListener("transitionend", handleTransitionEnd)
+      }
+    }
+  }, [])
+
   const sizeProps = getSizeProps(sizeInfo ?? {})
 
   return (
@@ -216,6 +257,7 @@ export const Media = ({
       data-media-collapsed={collapsed ? "" : undefined}
       style={
         {
+          "--media-animation-speed": `${speed}`,
           "--media-natural-width":
             size && !loading ? `${size.width}px` : undefined,
           "--media-natural-height":
@@ -272,6 +314,7 @@ export const Media = ({
         <div
           ref={mediaContentRef}
           onLoadCapture={handleLoad}
+          onLoadStartCapture={(event) => console.log("load start", event)}
           className={styles.media_content}
         >
           {children}
@@ -288,10 +331,12 @@ export const EmbedComp = ({
   source,
   title,
   open = true,
+  speed,
 }: {
   source: string
   title?: string
   open?: boolean
+  speed?: number
 }) => {
   const [loading, setLoading] = useState(true)
   const [oEmbed, setOEmbed] = useState<MaybeUndefined<OEmbed>>(undefined)
@@ -348,6 +393,7 @@ export const EmbedComp = ({
         open={open}
         icon={icon}
         error={error}
+        speed={speed}
         source={source}
         title={title ?? (loading ? "Loading..." : oEmbed?.title)}
         variant={MediaType.embed}
@@ -374,16 +420,19 @@ export const ImageComp = ({
   source,
   title,
   open = true,
+  speed,
 }: {
   source: string
   title?: string
   open?: boolean
+  speed?: number
 }) => {
   return (
     <Media
       open={open}
       icon={source}
       title={title}
+      speed={speed}
       source={source}
       variant={MediaType.image}
       keepAspectRatio={true}

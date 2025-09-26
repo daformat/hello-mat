@@ -12,14 +12,19 @@
   --bullet-size: 1.48em;
 
   font-family: "Inter", -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
-  Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+    Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
 }
 
 * {
   --single-line-height: calc(var(--font-size) * var(--line-height));
 
   box-sizing: border-box;
+}
 
+.small_screen_only {
+  @include mixins.above-medium {
+    display: none;
+  }
 }
 
 html,
@@ -57,7 +62,6 @@ h2 {
   font-size: var(--font-size-h2);
 }
 
-
 a {
   color: inherit;
   text-decoration: none;
@@ -90,14 +94,20 @@ a {
     background-color: var(--color-toolbar-background);
     border: 0;
     border-radius: 8px;
-    box-shadow: 0 1px 12px var(--color-shadow-1), inset 0 0 2px 0.75px var(--color-border-2), inset 0 0 0 0.75px var(--color-border-1);
+    box-shadow: 0 1px 12px var(--color-shadow-1),
+      inset 0 0 2px 0.75px var(--color-border-2),
+      inset 0 0 0 0.75px var(--color-border-1);
     color: var(--text-primary);
     display: inline-flex;
     flex-direction: row;
     gap: 8px;
     justify-content: center;
+    overflow: hidden;
     padding: 7px;
-    transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out,
+      box-shadow 0.2s ease-in-out, width 0.2s var(--ease-out-cubic);
+    white-space: nowrap;
+    width: var(--button-width, auto);
 
     &[data-state="active"] {
       color: var(--text-secondary-hover);
@@ -111,17 +121,18 @@ a {
   }
 }
 
-code, kbd {
+code,
+kbd {
   background-color: var(--color-code-background);
   border-radius: 4px;
   box-shadow: inset 0 0 2px 0.75px var(--color-border-2),
-  inset 0 0 0 0.75px var(--color-border-1);
+    inset 0 0 0 0.75px var(--color-border-1);
   color: var(--text-secondary);
   font-family: monospace;
   font-size: 0.94em;
   padding: 2px 4px;
   transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out,
-  box-shadow 0.2s ease-in-out;
+    box-shadow 0.2s ease-in-out;
 }
 
 .video_player {
@@ -135,13 +146,12 @@ code, kbd {
     &.video_dark {
       display: none;
     }
-
   }
 
   &::after {
     border-radius: 8px;
     box-shadow: 0 0 2px 0.75px var(--color-border-2),
-    0 0 0 0.75px var(--color-border-3);
+      0 0 0 0.75px var(--color-border-3);
     content: "";
     inset: 0;
     pointer-events: none;
@@ -166,8 +176,8 @@ code, kbd {
     scroll-margin-top: 1em;
   }
 
-
-  *:target, .targeted {
+  *:target,
+  .targeted {
     animation: highlight-animation 1.5s ease-in-out 0.25s;
   }
 
@@ -185,7 +195,8 @@ code, kbd {
     margin-block: 0.75em;
   }
 
-  p, li {
+  p,
+  li {
     text-wrap: pretty;
   }
 
@@ -229,7 +240,7 @@ code, kbd {
 
         @include mixins.remove-transition;
         @include mixins.mask-image(
-            url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='10' cy='10' r='2' fill='%234D4D4D'/%3E%3C/svg%3E%0A")
+          url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='10' cy='10' r='2' fill='%234D4D4D'/%3E%3C/svg%3E%0A")
         );
       }
     }
@@ -239,11 +250,11 @@ code, kbd {
     background-color: var(--color-card-background);
     border-radius: 8px;
     box-shadow: inset 0 0 2px 0.75px var(--color-border-2),
-    inset 0 0 0 0.75px var(--color-border-1);
+      inset 0 0 0 0.75px var(--color-border-1);
     font-size: 0.94em;
     padding: 16px 8px;
     transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out,
-    box-shadow 0.2s ease-in-out;
+      box-shadow 0.2s ease-in-out;
 
     > details {
       margin-left: 1.5em;
