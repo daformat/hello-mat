@@ -88,6 +88,7 @@ const ImageAndEmbedsContent = () => {
           {/*</li>*/}
           <li>
             <EmbedComp
+              open={false}
               title="Magnifique - Ratatat"
               source="https://open.spotify.com/album/7ox0VtOfJBl7Oz3BRGOg1G"
               speed={slow ? 0.1 : 1}
