@@ -31,7 +31,9 @@ const ImageAndEmbedsContent = () => {
   })
 
   useLayoutEffect(() => {
-    const buttons = contentRef.current?.querySelectorAll("button")
+    const buttons = contentRef.current?.querySelectorAll(
+      "button.auto_resize"
+    ) as NodeListOf<HTMLButtonElement>
     if (buttons) {
       buttons.forEach((button) => {
         const oldWidth = button.style.getPropertyValue("--button-width")
@@ -110,7 +112,10 @@ const ImageAndEmbedsContent = () => {
           </li>
         </ul>
         <div style={{ textAlign: "right", marginTop: "0.5em" }}>
-          <button onClick={() => setRender((render) => render + 1)}>
+          <button
+            onClick={() => setRender((render) => render + 1)}
+            className="auto_resize"
+          >
             Reload
             {slow ? (
               <small> (10% network slowdown)</small>
