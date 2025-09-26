@@ -32,6 +32,27 @@ function HelloMat({ Component, pageProps }: AppProps) {
     }
   }, [])
 
+  useEffect(() => {
+    if (window.visualViewport) {
+      const handleViewportChange = () => {
+        const height = window.visualViewport.height
+        document.documentElement.style.setProperty(
+          "--viewport-height",
+          `${height}px`
+        )
+      }
+
+      handleViewportChange()
+      window.visualViewport.addEventListener("resize", handleViewportChange)
+      return () => {
+        window.visualViewport.removeEventListener(
+          "resize",
+          handleViewportChange
+        )
+      }
+    }
+  }, [])
+
   return (
     <Layout>
       <Component {...pageProps} />
