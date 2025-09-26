@@ -49,8 +49,8 @@
   -webkit-user-select: none; // stylelint-disable-line
   width: 100%;
 
-  :global(.orientation_landscape_primary) & {
-    left: env(safe-area-inset-right, 0);
+  :global(.orientation_landscape_secondary) & {
+    left: 0;
   }
 
   @include mixins.remove-transition;

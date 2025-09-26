@@ -27,12 +27,12 @@
   flex-direction: column;
   justify-content: center;
   position: absolute;
-  right: env(safe-are-inset-right, clamp(22px, 8vw, 44px));
+  right: clamp(22px, 8vw, 44px);
   top: calc(env(safe-area-inset-top) + 44px);
   z-index: 1;
 
-  :global(.orientation_landscape_primary) & {
-    right: env(safe-area-inset-left, 0);
+  :global(.orientation_landscape_secondary) & {
+    right: env(safe-area-inset-right, clamp(22px, 8vw, 44px));
   }
 
   a {

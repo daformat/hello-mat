@@ -9,7 +9,9 @@ function HelloMat({ Component, pageProps }: AppProps) {
       const body = document.body
       body.classList.remove(
         "orientation_landscape_primary",
-        "orientation_landscape_secondary"
+        "orientation_landscape_secondary",
+        "orientation_portrait_primary",
+        "orientation_portrait_secondary"
       )
       if (screen.orientation) {
         body.classList.add(
