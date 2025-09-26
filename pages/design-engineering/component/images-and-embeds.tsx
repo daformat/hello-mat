@@ -1,7 +1,7 @@
 import { TableOfContents } from "components/TableOfContents/TocComponent"
 import Head from "next/head"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
-import { EmbedComp, ImageComp } from "../../../components/Media/MediaComponent2"
+import { EmbedComp, ImageComp } from "../../../components/Media/MediaComponent"
 
 const ImageAndEmbedsPage = () => (
   <>

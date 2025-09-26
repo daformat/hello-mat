@@ -12,7 +12,7 @@ import {
   useState,
 } from "react"
 import { MaybeUndefined } from "./utils/maybe"
-import styles from "./MediaComponent2.module.scss"
+import styles from "./MediaComponent.module.scss"
 import SvgPlaceholderDefault from "./Placeholder/SvgPlaceholderDefault"
 import { MediaSource } from "./MediaSource"
 import SvgPlaceholderError from "./Placeholder/SvgError"

@@ -4,7 +4,7 @@ import SvgPlaceholderSpotify from "./Placeholder/SvgPlaceholderSpotify"
 import { ResizeType } from "./EmbedResult"
 import SvgPlaceholderFlickr from "./Placeholder/SvgPlaceholderFlickr"
 import SvgPlaceholderTwitter from "./Placeholder/SvgPlaceholderTwitter"
-import { SizeInfo } from "./MediaComponent2"
+import { SizeInfo } from "./MediaComponent"
 
 export type EmbedProvider = {
   name: string
