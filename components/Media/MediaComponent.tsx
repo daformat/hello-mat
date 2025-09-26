@@ -245,7 +245,7 @@ export const Media = ({
     }
   }, [])
 
-  // hack around Safari not firing load event for some iframes (ex: Spotify)
+  // HACK around Safari not firing load event for some iframes (ex: Spotify)
   useEffect(() => {
     const content = mediaContentRef.current
     const iframe = content?.querySelector("iframe")
