@@ -18,7 +18,8 @@ import { MediaSource } from "./MediaSource"
 import SvgPlaceholderError from "./Placeholder/SvgError"
 import { MediaToggle } from "./MediaToggle"
 import SvgPlaceholderImage from "./Placeholder/SvgPlaceholderImage"
-import { MediaType } from "./MediaComponent"
+
+import { MediaType } from "./MediaType"
 
 export type SizeInfo = {
   width?: number
