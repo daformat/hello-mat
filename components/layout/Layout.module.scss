@@ -31,6 +31,10 @@
   top: calc(env(safe-area-inset-top) + 44px);
   z-index: 1;
 
+  :global(.orientation_landscape_primary) & {
+    right: env(safe-area-inset-left, 0);
+  }
+
   a {
     color: var(--color-logo);
     transition: color 0.2s ease-in-out;
