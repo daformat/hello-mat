@@ -4,6 +4,7 @@ import { Layout } from "../components/layout/Layout"
 import { useEffect } from "react"
 
 function HelloMat({ Component, pageProps }: AppProps) {
+  // Listen to screen orientation changes
   useEffect(() => {
     const updateOrientation = () => {
       const body = document.body
@@ -32,6 +33,7 @@ function HelloMat({ Component, pageProps }: AppProps) {
     }
   }, [])
 
+  // Listen to visual viewport changes
   useEffect(() => {
     if (window.visualViewport) {
       const handleViewportChange = () => {
@@ -41,7 +43,6 @@ function HelloMat({ Component, pageProps }: AppProps) {
           `${height}px`
         )
       }
-
       handleViewportChange()
       window.visualViewport.addEventListener("resize", handleViewportChange)
       return () => {
