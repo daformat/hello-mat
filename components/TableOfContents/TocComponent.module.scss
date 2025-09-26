@@ -9,9 +9,26 @@
   --dash-active-added-size: 4px;
   --max-dash-size: 26px;
   --spring-easing: linear(
-      0, 0.006, 0.024, 0.054 3.8%, 0.098 5.3%, 0.193 8.1%, 0.533 16.9%, 0.634,
-      0.718, 0.79, 0.85 28.7%, 0.898, 0.937, 0.966 38.6%, 0.987 42.3%, 1.001 46.5%,
-      1.009 51.3%, 1.012 59.2%, 1.003 81.7%, 1
+    0,
+    0.006,
+    0.024,
+    0.054 3.8%,
+    0.098 5.3%,
+    0.193 8.1%,
+    0.533 16.9%,
+    0.634,
+    0.718,
+    0.79,
+    0.85 28.7%,
+    0.898,
+    0.937,
+    0.966 38.6%,
+    0.987 42.3%,
+    1.001 46.5%,
+    1.009 51.3%,
+    1.012 59.2%,
+    1.003 81.7%,
+    1
   );
 
   clip-path: inset(0 42px 0 0); // mask scroll bar
@@ -19,7 +36,7 @@
   display: flex;
   font-size: 14px;
   height: 100dvh;
-  left: 0;
+  left: env(safe-area-inset-left, 0);
   max-width: 50vw;
   overflow-x: hidden;
   overflow-y: auto;
@@ -64,7 +81,7 @@
         text-overflow: ellipsis;
         transform: translateX(-200%);
         transition: opacity 0.5s var(--spring-easing) 0.05s,
-        color 0.5s var(--spring-easing), transform 0.5s var(--spring-easing);
+          color 0.5s var(--spring-easing), transform 0.5s var(--spring-easing);
         white-space: nowrap; // remove if you want to allow multiple lines
         width: 100%;
 
@@ -99,7 +116,7 @@
         transform: translate(0, var(--t));
         transform-origin: 0 50%;
         transition: mixins.theme-transition(background-color, opacity),
-        transform 0.3s ease-in-out;
+          transform 0.3s ease-in-out;
         vertical-align: middle;
         width: var(--dash-size);
 
@@ -117,7 +134,6 @@
       }
     }
 
-
     li:is(:hover, :focus-within, .active) {
       > a:is(:hover, :focus) {
         color: var(--color-toc-link-active);
@@ -127,8 +143,8 @@
       &::before {
         opacity: 1;
         transition: mixins.theme-transition(background-color),
-        transform 0.3s ease-in-out 0.1s, opacity 0.1s ease-in-out,
-        width 0.1s ease-in-out;
+          transform 0.3s ease-in-out 0.1s, opacity 0.1s ease-in-out,
+          width 0.1s ease-in-out;
         width: calc(var(--dash-size) + var(--dash-active-added-size));
 
         @include mixins.remove-transition;
@@ -140,13 +156,17 @@
         color: var(--color-toc-link-active);
       }
     }
-
   }
 
   // root ul in toc
   > ul {
     margin: auto 0;
-    mask-image: linear-gradient(to right, transparent, transparent calc(var(--toc-distance) / 2), #000 var(--toc-distance));
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      transparent calc(var(--toc-distance) / 2),
+      #000 var(--toc-distance)
+    );
     padding: 1em var(--toc-distance);
     position: relative;
     transform: translateX(-100% + var(--max-dash-size));
@@ -172,7 +192,8 @@
     }
 
     @include mixins.above-medium() {
-      &:hover, &:focus-within {
+      &:hover,
+      &:focus-within {
         transform: none;
         //width: 35%;
 
