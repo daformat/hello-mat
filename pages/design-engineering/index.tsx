@@ -1,76 +1,82 @@
 import Link from "next/link"
+import { VideoPlayer } from "../../components/VideoPlayer/VideoPlayer"
+
+import styles from "/styles/DesignEngineeringGallery.module.scss"
 
 const DesignEngineeringIndex = () => (
   <>
-    <div
-      className="page"
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "16px",
-        width: "min(calc(100vw - 200px), 900px)",
-      }}
-    >
-      <Link
-        href={"/design-engineering/component/table-of-contents"}
-        style={{
-          alignItems: "center",
-          backgroundColor: "var(--color-toolbar-background)",
-          borderRadius: "14px",
-          boxShadow: `0 1px 12px var(--color-shadow-1),
-          inset 0 0 2px 0.75px var(--color-border-2),
-          inset 0 0 0 0.75px var(--color-border-1)`,
-          display: "flex",
-          flexDirection: "row",
-          gap: "8px",
-          justifyContent: "center",
-          padding: "7px",
-          transition: `color 0.2s ease-in-out, background-color 0.2s ease-in-out",
-            boxShadow 0.2s ease-in-out`,
-        }}
-      >
-        A Table of content component
-      </Link>
-      <Link
-        href={"/design-engineering/component/details-disclosure-component"}
-        style={{
-          alignItems: "center",
-          backgroundColor: "var(--color-toolbar-background)",
-          borderRadius: "14px",
-          boxShadow: `0 1px 12px var(--color-shadow-1),
-          inset 0 0 2px 0.75px var(--color-border-2),
-          inset 0 0 0 0.75px var(--color-border-1)`,
-          display: "flex",
-          flexDirection: "row",
-          gap: "8px",
-          justifyContent: "center",
-          padding: "7px",
-          transition: `color 0.2s ease-in-out, background-color 0.2s ease-in-out",
-            boxShadow 0.2s ease-in-out`,
-        }}
-      >
-        A details (or disclosure) component
-      </Link>
-      <Link
-        href={"/design-engineering/component/images-and-embeds"}
-        style={{
-          alignItems: "center",
-          backgroundColor: "var(--color-toolbar-background)",
-          borderRadius: "14px",
-          boxShadow: `0 1px 12px var(--color-shadow-1),
-          inset 0 0 2px 0.75px var(--color-border-2),
-          inset 0 0 0 0.75px var(--color-border-1)`,
-          display: "flex",
-          flexDirection: "row",
-          gap: "8px",
-          justifyContent: "center",
-          padding: "7px",
-          transition: `color 0.2s ease-in-out, background-color 0.2s ease-in-out",
-            boxShadow 0.2s ease-in-out`,
-        }}
-      >
-        Images and embeds
-      </Link>
+    <div className="page">
+      <div className="prose">
+        <h1 id="design-engineering">Design engineering portfolio</h1>
+        <p>
+          These are either real components, used in production, or it can also
+          be explorations. This list is a constant work in progress and is far
+          from exhaustive. Each component is designed with performance,
+          accessibility, and best practices in mind. Attention to details is a
+          recurring theme and you can play accompanying videos at 10% speed, or
+          use the slow down controls when present to slow the live component
+          itself.
+        </p>
+      </div>
+      <div className={styles.card_list}>
+        <Link
+          href={"/design-engineering/component/table-of-contents"}
+          className={styles.card}
+        >
+          <VideoPlayer
+            style={{ aspectRatio: "990/500" }}
+            sources={{
+              dark: {
+                src: "/design-engineering/toc/toc-overview-dark.mp4",
+                type: "video/mp4",
+              },
+              light: {
+                src: "/design-engineering/toc/toc-overview-light.mp4",
+                type: "video/mp4",
+              },
+            }}
+          />
+          A Table of content component
+        </Link>
+        <Link
+          href={"/design-engineering/component/details-disclosure-component"}
+          className={styles.card}
+        >
+          <VideoPlayer
+            style={{ aspectRatio: "990/500" }}
+            sources={{
+              dark: {
+                src: "/design-engineering/details/details-overview-dark.mp4",
+                type: "video/mp4",
+              },
+              light: {
+                src: "/design-engineering/details/details-overview-light.mp4",
+                type: "video/mp4",
+              },
+            }}
+          />
+          A details (or disclosure) component
+        </Link>
+        <Link
+          href={"/design-engineering/component/images-and-embeds"}
+          className={styles.card}
+        >
+          <VideoPlayer
+            style={{ aspectRatio: "990/500" }}
+            sources={{
+              dark: {
+                src: "/design-engineering/images-and-embeds/images-and-embeds-overview-dark.mp4",
+                type: "video/mp4",
+              },
+              light: {
+                src: "/design-engineering/images-and-embeds/images-and-embeds-overview-light.mp4",
+                type: "video/mp4",
+              },
+            }}
+          />
+          Images and embeds
+        </Link>
+      </div>
     </div>
   </>
 )

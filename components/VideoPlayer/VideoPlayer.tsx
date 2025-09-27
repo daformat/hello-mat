@@ -44,6 +44,7 @@ export const VideoPlayer = ({
             autoPlay
             loop
             muted
+            playsInline
             {...rest}
           >
             <source src={sources.dark.src} type={sources.dark.type} />
@@ -53,6 +54,7 @@ export const VideoPlayer = ({
             autoPlay
             loop
             muted
+            playsInline
             {...rest}
           >
             <source src={sources.light.src} type={sources.light.type} />
@@ -65,6 +67,7 @@ export const VideoPlayer = ({
               autoPlay
               loop
               muted
+              playsInline
               {...rest}
             >
               <source
@@ -77,6 +80,7 @@ export const VideoPlayer = ({
               autoPlay
               loop
               muted
+              playsInline
               {...rest}
             >
               <source

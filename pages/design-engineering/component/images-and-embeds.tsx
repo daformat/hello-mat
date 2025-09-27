@@ -2,6 +2,7 @@ import { TableOfContents } from "components/TableOfContents/TocComponent"
 import Head from "next/head"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { EmbedComp, ImageComp } from "../../../components/Media/MediaComponent"
+import { VideoPlayer } from "../../../components/VideoPlayer/VideoPlayer"
 
 const ImageAndEmbedsPage = () => (
   <>
@@ -178,6 +179,30 @@ const ImageAndEmbedsContent = () => {
           <li>The component should honor prefers-reduced-motion</li>
           <li>Animations should be interruptible</li>
         </ul>
+        <h2>Video overview</h2>
+        <VideoPlayer
+          style={{ aspectRatio: "990/500" }}
+          sources={{
+            dark: {
+              src: "/design-engineering/images-and-embeds/images-and-embeds-overview-dark.mp4",
+              type: "video/mp4",
+            },
+            light: {
+              src: "/design-engineering/images-and-embeds/images-and-embeds-overview-light.mp4",
+              type: "video/mp4",
+            },
+            slow: {
+              dark: {
+                src: "/design-engineering/images-and-embeds/images-and-embeds-overview-slow-dark.mp4",
+                type: "video/mp4",
+              },
+              light: {
+                src: "/design-engineering/images-and-embeds/images-and-embeds-overview-slow-light.mp4",
+                type: "video/mp4",
+              },
+            },
+          }}
+        />
       </div>
     </>
   )

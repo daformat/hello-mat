@@ -136,11 +136,15 @@ kbd {
 }
 
 .video_player {
+  --radius: 8px;
+  border-radius: var(--radius);
   font-size: 0;
   max-width: 100%;
   position: relative;
 
   video {
+    border-radius: var(--radius);
+    overflow: hidden;
     width: 100%;
 
     &.video_dark {
@@ -149,7 +153,7 @@ kbd {
   }
 
   &::after {
-    border-radius: 8px;
+    border-radius: var(--radius);
     box-shadow: 0 0 2px 0.75px var(--color-border-2),
       0 0 0 0.75px var(--color-border-3);
     content: "";

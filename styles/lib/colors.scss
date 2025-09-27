@@ -25,18 +25,17 @@
   --text-secondary: #{palette.$light-ivory-2};
   --text-secondary-hover: #{palette.$light-ivory-1};
 
-
   --color-bullet: #{palette.$light-ivory-5};
   --color-bullet-focus: #{palette.$light-ivory-3};
 
-  --color-code-background: #{rgba(palette.$light-desert-sky-2, .75)};
-  --color-card-background: #{rgba(palette.$light-desert-sky-2, .75)};
+  --color-code-background: #{rgba(palette.$light-desert-sky-2, 0.75)};
+  --color-card-background: #{rgba(palette.$light-desert-sky-2, 0.75)};
 
   --color-link: var(--text-primary-hover);
   --color-link-hover: var(--text-secondary-hover);
   --color-link-underline: var(--text-primary-hover);
 
-  --color-empty: #{rgba(palette.$light-desert-sky-2, .75)};
+  --color-empty: #{rgba(palette.$light-ivory-5, 0.25)};
 
   // standalone components
 
