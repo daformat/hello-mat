@@ -18,7 +18,7 @@ import { Toolbar } from "../../../components/Toolbar/Toolbar"
 import { ToolbarButton } from "components/Toolbar/ToolbarButton"
 import Head from "next/head"
 import { TableOfContents } from "components/TableOfContents/TocComponent"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 
 const CollapsibleToolbarPage = () => {
   return (
@@ -40,6 +40,7 @@ const CollapsibleToolbarPage = () => {
 const CollapsibleToolbarPageContent = () => {
   const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
+  const [slow, setSlow] = useState(false)
 
   useEffect(() => {
     if (contentRef.current) {
@@ -79,6 +80,7 @@ const CollapsibleToolbarPageContent = () => {
             <ButtonGroup
               collapsible
               buttons={buttons}
+              speed={slow ? 0.1 : 1}
               dropdownTrigger={
                 <ToolbarButton>
                   <FaAnglesRight />
@@ -86,6 +88,22 @@ const CollapsibleToolbarPageContent = () => {
               }
             />
           </Toolbar>
+        </div>
+        <div style={{ textAlign: "right", marginTop: "0.5em" }}>
+          <button
+            className="button"
+            onClick={() => setSlow(false)}
+            data-state={!slow ? "active" : undefined}
+          >
+            100%
+          </button>{" "}
+          <button
+            className="button"
+            onClick={() => setSlow(true)}
+            data-state={slow ? "active" : undefined}
+          >
+            10%
+          </button>
         </div>
       </div>
     </>

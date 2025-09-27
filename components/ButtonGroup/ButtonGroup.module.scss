@@ -1,3 +1,5 @@
+@use "/styles/lib/mixins.scss";
+
 .button_group {
   display: flex;
   flex-direction: row;
@@ -19,7 +21,10 @@
     align-items: center;
     display: flex;
     justify-content: center;
-    transition: transform 0.15s ease-in-out, opacity 0.15s ease-in-out;
+    transition: transform calc(0.15s / var(--speed, 1)) ease-in-out,
+      opacity calc(0.15s / var(--speed, 1)) ease-in-out;
+
+    @include mixins.remove-transition;
   }
 
   .dropdown {
@@ -36,8 +41,13 @@
     }
 
     &[data-state="visible"] {
-      animation: fadeIn 0.25s ease-in-out, scaleIn 0.25s ease-in-out,
-        translateIn 0.25s ease-in-out;
+      :global {
+        animation: fade-in calc(0.25s / var(--speed, 1)) ease-in-out,
+          scale-in calc(0.25s / var(--speed, 1)) ease-in-out,
+          translate-in calc(0.25s / var(--speed, 1)) ease-in-out;
+      }
+
+      @include mixins.remove-animations;
     }
 
     &[data-state="hidden"] {

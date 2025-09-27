@@ -1,4 +1,10 @@
-import React, { Fragment, useEffect, useRef, useState } from "react"
+import React, {
+  CSSProperties,
+  Fragment,
+  useEffect,
+  useRef,
+  useState,
+} from "react"
 import { Dropdown } from "./Dropdown/Dropdown"
 import {
   IterableRefsMapKey,
@@ -19,13 +25,17 @@ export type CollapsibleButtonGroupButton = NotCollapsibleButtonGroupButton & {
 export type NotCollapsibleButtonGroupProps = {
   buttons: NotCollapsibleButtonGroupButton[]
   collapsible?: never | false
+  // must forward ref
   dropdownTrigger?: never
+  speed?: never
 }
 
 export type CollapsibleButtonGroupProps = {
   buttons: CollapsibleButtonGroupButton[]
   collapsible: true
+  // must forward ref
   dropdownTrigger: React.ReactNode
+  speed?: number
 }
 
 export type ButtonGroupProps =
@@ -36,6 +46,7 @@ export const ButtonGroup = ({
   buttons,
   collapsible,
   dropdownTrigger,
+  speed,
 }: ButtonGroupProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const { refs: itemsRefs, getRef } = useIterableRefs<HTMLDivElement>()
@@ -129,11 +140,6 @@ export const ButtonGroup = ({
       container.style.minWidth = `${dropdownElement.offsetWidth}px`
     }
   }, [])
-  // const dropdownTrigger = (
-  //   <ItemButton>
-  //     <FaAnglesRight />
-  //   </ItemButton>
-  // )
 
   const dropdownItems = overflows
     ? buttons
@@ -146,7 +152,11 @@ export const ButtonGroup = ({
     : null
 
   return (
-    <div className={styles.button_group} ref={containerRef}>
+    <div
+      ref={containerRef}
+      className={styles.button_group}
+      style={{ "--speed": `${speed ?? 1}` } as CSSProperties}
+    >
       {buttons.map(({ id, button }) => (
         <div className={styles.button} key={id} ref={getRef(id)}>
           {button}
