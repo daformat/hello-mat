@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { ComponentProps, useState } from "react"
 
 type BaseVideoSources = {
   light: {
@@ -23,7 +23,15 @@ type VideoSources =
   | VideoSourcesWithSlowVersions
   | VideoSourcesWithoutSlowVersions
 
-export const VideoPlayer = ({ sources }: { sources: VideoSources }) => {
+export type VideoPlayerProps = {
+  sources: VideoSources
+} & ComponentProps<"video">
+
+export const VideoPlayer = ({
+  sources,
+  className,
+  ...rest
+}: VideoPlayerProps) => {
   const [showSlow, setShowSlow] = useState(false)
   const renderNormal = !showSlow || !sources.slow
 
@@ -31,22 +39,46 @@ export const VideoPlayer = ({ sources }: { sources: VideoSources }) => {
     <section>
       <div className="video_player">
         <div style={{ display: renderNormal ? undefined : "none" }}>
-          <video className="video_dark" autoPlay loop muted>
+          <video
+            className={["video_dark", className].filter(Boolean).join(" ")}
+            autoPlay
+            loop
+            muted
+            {...rest}
+          >
             <source src={sources.dark.src} type={sources.dark.type} />
           </video>
-          <video className="video_light" autoPlay loop muted>
+          <video
+            className={["video_light", className].filter(Boolean).join(" ")}
+            autoPlay
+            loop
+            muted
+            {...rest}
+          >
             <source src={sources.light.src} type={sources.light.type} />
           </video>
         </div>
         {sources.slow ? (
           <div style={{ display: !renderNormal ? undefined : "none" }}>
-            <video className="video_dark" autoPlay loop muted>
+            <video
+              className={["video_dark", className].filter(Boolean).join(" ")}
+              autoPlay
+              loop
+              muted
+              {...rest}
+            >
               <source
                 src={sources.slow.dark.src}
                 type={sources.slow.dark.type}
               />
             </video>
-            <video className="video_light" autoPlay loop muted>
+            <video
+              className={["video_light", className].filter(Boolean).join(" ")}
+              autoPlay
+              loop
+              muted
+              {...rest}
+            >
               <source
                 src={sources.slow.light.src}
                 type={sources.slow.light.type}
