@@ -24,10 +24,10 @@ const CollapsibleToolbarPage = () => {
   return (
     <>
       <Head>
-        <title>Design engineering: images and embeds</title>
+        <title>Design engineering: a collapsible toolbar</title>
         <meta
           name="description"
-          content="Building a MediaComponent supporting images and embeds using React, TypeScript, and SCSS."
+          content="Building a collapsible / resizable toolbar using React, TypeScript, and SCSS."
         />
       </Head>
       <TableOfContents.Provider>
