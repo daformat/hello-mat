@@ -77,6 +77,26 @@ const DesignEngineeringIndex = () => (
           />
           Images and embeds
         </Link>
+
+        <Link
+          href={"/design-engineering/component/collapsible-toolbar"}
+          className={styles.card}
+        >
+          {/*<VideoPlayer*/}
+          {/*  style={{ aspectRatio: "990/500" }}*/}
+          {/*  sources={{*/}
+          {/*    dark: {*/}
+          {/*      src: "/design-engineering/images-and-embeds/images-and-embeds-overview-dark.mp4",*/}
+          {/*      type: "video/mp4",*/}
+          {/*    },*/}
+          {/*    light: {*/}
+          {/*      src: "/design-engineering/images-and-embeds/images-and-embeds-overview-light.mp4",*/}
+          {/*      type: "video/mp4",*/}
+          {/*    },*/}
+          {/*  }}*/}
+          {/*/>*/}
+          A collapsible toolbar
+        </Link>
       </div>
     </div>
   </>
