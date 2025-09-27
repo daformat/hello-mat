@@ -12,10 +12,11 @@ const DesignEngineeringIndex = () => (
           These are either real components, used in production, or it can also
           be explorations. This list is a constant work in progress and is far
           from exhaustive. Each component is designed with performance,
-          accessibility, and best practices in mind. Attention to details is a
-          recurring theme and you can play accompanying videos at 10% speed, or
-          use the slow down controls when present to slow the live component
-          itself.
+          accessibility, and best practices in mind. Attention to details is
+          paramount and you can play accompanying videos at 10% speed, or use
+          the slow down controls when present to slow the live component itself.
+          This will also slow down network requests if any so that loading
+          states are shown longer
         </p>
       </div>
       <div className={styles.card_list}>
