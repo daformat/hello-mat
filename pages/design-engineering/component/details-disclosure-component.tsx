@@ -48,8 +48,7 @@ const DetailsPageContent = () => {
           its content (except for the summary) until it is opened.
         </p>
         <VideoPlayer
-          width={990}
-          height={500}
+          style={{ aspectRatio: "990/500" }}
           sources={{
             dark: {
               src: "/design-engineering/details/details-overview-dark.mp4",

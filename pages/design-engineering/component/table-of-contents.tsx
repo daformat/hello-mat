@@ -46,8 +46,7 @@ const TableOfContentsPageContent = () => {
           of them, complete with references and back-linking.
         </p>
         <VideoPlayer
-          width={990}
-          height={500}
+          style={{ aspectRatio: "990/500" }}
           sources={{
             dark: {
               src: "/design-engineering/toc/toc-overview-dark.mp4",
