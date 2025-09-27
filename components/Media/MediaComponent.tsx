@@ -83,13 +83,16 @@ export const Media = ({
         if (["iframe", "img"].includes(tag)) {
           // handle speed slowdown
           const loadingTime = Date.now() - startTimeRef.current
+          const timeout = Math.max(
+            loadingTime / (loadingTime < 5_000 ? speed : 1),
+            3_000
+          )
           // we want to make sure a resize can happen before loading is set to false
           setTimeout(
             () => {
-              console.log("loaded", tag, target)
               setLoading(false)
             },
-            speed <= 1 ? loadingTime / speed : 0
+            speed <= 1 ? timeout : 0
           )
         }
       }
@@ -107,49 +110,39 @@ export const Media = ({
     const mediaComponent = mediaComponentRef.current
     const mediaContentWrapper = mediaContentWrapperRef.current
     const mediaContent = mediaContentRef.current
-    // console.log({ loading, sizeInfo, source })
     const provider = EMBED_PROVIDERS.find((provider) =>
       provider.regexp.test(source)
     )
-    const isTwitter = provider?.name === "twitter/x"
+    const isResizingDynamically = provider?.isResizingDynamically
     if (
       mediaComponent &&
       mediaContentWrapper &&
       mediaContent &&
-      (!size || isTwitter)
+      (!size || isResizingDynamically)
     ) {
       const observer = new ResizeObserver(() => {
-        // console.log("resize", source)
         // we use offsetWidth and offsetHeight instead of contentRect to
         // get the non-transformed dimensions
         const width = mediaContent.offsetWidth
         const height = mediaContent.offsetHeight
-        // console.log({ width, height, source, children: mediaContent.children })
         if (
           width &&
           height > 20 &&
           (size?.width !== width || size?.height !== height)
         ) {
           const aspectRatio = width / height
-          // console.log("Media content resized", source, {
-          //   width,
-          //   height,
-          //   aspectRatio,
-          // })
           setSize({ width, height, aspectRatio })
-          if (!provider || !isTwitter) {
-            // console.log("stop observing", provider?.name)
+          if (!provider || !isResizingDynamically) {
             observer.disconnect()
           } else {
             const transitions = mediaContentWrapper.getAnimations()
             if (
               size &&
-              isTwitter &&
+              isResizingDynamically &&
               transitions.length === 0 &&
               (size.width !== width || size.height !== height)
             ) {
-              // re-resizing twitter, should be instant
-              // console.log("instant resize")
+              // re-resizing should be instant in the case of dynamic resizing
               mediaContentWrapper.style.transition = "none"
               mediaComponent.style.setProperty(
                 "--media-natural-width",
@@ -261,7 +254,7 @@ export const Media = ({
             return
           }
         } catch (e) {
-          // cross-origin access denied, but iframe might still be loaded
+          // cross-origin access denied
           if (pollCount > 10) {
             setLoadingError(true)
             return
@@ -270,6 +263,8 @@ export const Media = ({
         pollCount++
         if (pollCount < maxPolls) {
           timeout = setTimeout(checkLoaded, 100)
+        } else {
+          setLoadingError(true)
         }
       }
       timeout = setTimeout(checkLoaded, 100)

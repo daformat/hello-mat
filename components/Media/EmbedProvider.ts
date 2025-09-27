@@ -14,6 +14,7 @@ export type EmbedProvider = {
   responsive?: ResizeType
   keepAspectRatio?: boolean
   sizeInfo?: SizeInfo
+  isResizingDynamically?: boolean
 }
 
 export const EMBED_PROVIDERS: EmbedProvider[] = [
@@ -54,5 +55,6 @@ export const EMBED_PROVIDERS: EmbedProvider[] = [
       maxWidth: 550,
       minWidth: 250,
     },
+    isResizingDynamically: true,
   },
 ]
