@@ -1,0 +1,12 @@
+@use "/styles/lib/mixins";
+
+.separator {
+  align-self: stretch;
+  background-color: var(--color-quinary);
+  border-radius: 2px;
+  height: 1px;
+  margin: 4px 0;
+  transition: mixins.theme-transition(background-color);
+
+  @include mixins.remove-transition;
+}

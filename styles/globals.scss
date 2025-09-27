@@ -1,5 +1,6 @@
 @use "./lib/colors.scss";
 @use "./lib/variables.scss";
+@use "./lib/animations.scss";
 @use "./standalone.scss";
 @use "./lib/mixins.scss";
 
@@ -89,7 +90,7 @@ a {
   margin: 8rem 0;
   max-width: min(calc(100% - max(40vw, 10em)), 900px);
 
-  button {
+  .button {
     align-items: center;
     background-color: var(--color-toolbar-background);
     border: 0;

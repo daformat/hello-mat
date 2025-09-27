@@ -115,7 +115,7 @@ const ImageAndEmbedsContent = () => {
         <div style={{ textAlign: "right", marginTop: "0.5em" }}>
           <button
             onClick={() => setRender((render) => render + 1)}
-            className="auto_resize"
+            className="button auto_resize"
           >
             Reload
             {slow ? (
@@ -126,6 +126,7 @@ const ImageAndEmbedsContent = () => {
           </button>
           <br className="small_screen_only" />
           <button
+            className="button"
             onClick={() => setSlow(false)}
             data-state={!slow ? "active" : undefined}
             aria-pressed={!slow ? "true" : "false"}
@@ -134,6 +135,7 @@ const ImageAndEmbedsContent = () => {
             100%
           </button>{" "}
           <button
+            className="button"
             onClick={() => setSlow(true)}
             data-state={slow ? "active" : undefined}
             aria-pressed={slow ? "true" : "false"}

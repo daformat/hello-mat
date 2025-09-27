@@ -155,12 +155,14 @@ const DetailsPageContent = () => {
         </div>
         <div style={{ textAlign: "right", marginTop: "0.5em" }}>
           <button
+            className="button"
             onClick={() => setSlow(false)}
             data-state={!slow ? "active" : undefined}
           >
             100%
           </button>{" "}
           <button
+            className="button"
             onClick={() => setSlow(true)}
             data-state={slow ? "active" : undefined}
           >

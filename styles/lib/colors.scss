@@ -8,6 +8,7 @@
   --color-toolbar-background: #{rgba(palette.$light-desert-sky-2, 1)};
   --color-toolbar-button-background: transparent;
   --color-toolbar-button-color: #{palette.$light-ivory-5};
+  --color-toolbar-button-color-alt: #{palette.$light-ivory-4};
   --color-toolbar-button-background-hover: #{palette.$light-desert-sky-4};
   --color-toolbar-button-color-hover: #{palette.$light-ivory-3};
   --color-toolbar-button-background-active: #{palette.$light-desert-sky-3};
@@ -44,6 +45,12 @@
   --color-toc-link-active: #{palette.$light-ivory-1};
 
   --media-controls-hover: var(--color-link-hover);
+
+  --color-dropdown-background: var(--color-toolbar-background);
+  --color-dropdown-hover: #{rgba(palette.$light-ivory-2, 0.05)};
+  --color-dropdown-active: #{rgba(palette.$light-ivory-2, 0.1)};
+  --color-shadow-10: #{rgba(palette.$light-shadow, 0.05)};
+  --color-shadow-20: #{rgba(palette.$light-shadow, 0.1)};
 }
 
 @mixin dark-theme {
@@ -54,6 +61,7 @@
   --color-toolbar-background: #{palette.$dark-desert-sky-2};
   --color-toolbar-button-background: transparent;
   --color-toolbar-button-color: #{palette.$dark-ivory-5};
+  --color-toolbar-button-color-alt: #{palette.$dark-ivory-4};
   --color-toolbar-button-background-hover: #{palette.$dark-desert-sky-3};
   --color-toolbar-button-color-hover: #{palette.$dark-ivory-3};
   --color-toolbar-button-background-active: #{palette.$dark-desert-sky-4};
@@ -62,7 +70,7 @@
   --color-shadow-1: rgba(0, 0, 0, 0.08);
   --color-shadow-2: rgba(0, 0, 0, 0.04);
 
-  --color-border-1: #{rgba(palette.$dark-desert-sky-4, 0.2)};
+  --color-border-1: #{rgba(palette.$dark-desert-sky-4, 0.75)};
   --color-border-2: #{rgba(palette.$dark-desert-sky-3, 0.15)};
   --color-border-3: #{rgba(palette.$dark-desert-sky-3, 1)};
 
@@ -90,6 +98,12 @@
   --color-toc-link-active: #{palette.$dark-ivory-1};
 
   --media-controls-hover: var(--color-link-hover);
+
+  --color-dropdown-background: var(--color-toolbar-background);
+  --color-dropdown-hover: #{palette.$dark-ivory-3};
+  --color-dropdown-active: #{palette.$dark-ivory-5};
+  --color-shadow-10: #{rgba(palette.$dark-shadow, 0.25)};
+  --color-shadow-20: #{rgba(palette.$dark-shadow, 0.5)};
 }
 
 :root {

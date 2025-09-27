@@ -1,0 +1,76 @@
+@use "/styles/lib/mixins.scss";
+
+.menu_item {
+  align-items: center;
+  align-self: stretch;
+  border-radius: 5px;
+  display: flex;
+  gap: 5px;
+  outline: none;
+  padding: 4px 6px;
+
+  &[data-highlighted],
+  &[data-current] {
+    background-color: var(--color-dropdown-hover);
+  }
+
+  &:active {
+    background-color: var(--color-dropdown-active);
+  }
+
+  &:not([data-highlighted]) {
+    .enter {
+      margin-left: 0;
+      opacity: 0;
+      transform: translateX(100%);
+      width: 0;
+    }
+  }
+
+  .enter {
+    align-items: center;
+    //background-color: var(--shadow-shade-10);
+    border-radius: 3px;
+    display: flex;
+    height: 15px;
+    justify-content: center;
+    margin-left: 5px;
+    transition: all 0.1s ease-in-out;
+    width: 20px;
+
+    @include mixins.remove-transition;
+
+    &::after {
+      content: "↩︎";
+      font-size: 10px;
+      margin-top: 3px;
+    }
+  }
+
+  .label {
+    align-items: center;
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    .text_label {
+      align-items: center;
+      display: flex;
+      font-size: 0.875em;
+      overflow: hidden;
+
+      > :only-child {
+        flex-shrink: 1;
+        max-width: 100%;
+      }
+    }
+  }
+
+  .prefix,
+  .suffix {
+    align-items: center;
+    display: flex;
+  }
+}

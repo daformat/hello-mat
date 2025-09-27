@@ -94,12 +94,14 @@ export const VideoPlayer = ({
       {sources.slow && (
         <div style={{ textAlign: "right", marginTop: "0.5em" }}>
           <button
+            className="button"
             onClick={() => setShowSlow(false)}
             data-state={renderNormal ? "active" : undefined}
           >
             100%
           </button>{" "}
           <button
+            className="button"
             onClick={() => setShowSlow(true)}
             data-state={!renderNormal ? "active" : undefined}
           >

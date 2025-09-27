@@ -1,0 +1,47 @@
+.button_group {
+  display: flex;
+  flex-direction: row;
+  flex-shrink: 1;
+  gap: 2px;
+  min-width: 33px;
+  overflow: hidden;
+  position: relative;
+
+  button {
+    background-color: transparent;
+
+    &:focus-visible {
+      outline: none;
+    }
+  }
+
+  .button {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    transition: transform 0.15s ease-in-out, opacity 0.15s ease-in-out;
+  }
+
+  .dropdown {
+    --animation-start-translate: 200%;
+    align-items: center;
+    bottom: 0;
+    display: flex;
+    position: absolute;
+    right: 0;
+    top: 0;
+
+    > button {
+      height: 100%;
+    }
+
+    &[data-state="visible"] {
+      animation: fadeIn 0.25s ease-in-out, scaleIn 0.25s ease-in-out,
+        translateIn 0.25s ease-in-out;
+    }
+
+    &[data-state="hidden"] {
+      visibility: hidden;
+    }
+  }
+}

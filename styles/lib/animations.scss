@@ -1,0 +1,79 @@
+@keyframes fade-in {
+  from {
+    opacity: var(--animation-start-opacity, 0);
+  }
+
+  to {
+    opacity: var(--animation-end-opacity, 1);
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: var(--animation-start-opacity, 1);
+  }
+
+  to {
+    opacity: var(--animation-end-opacity, 0);
+  }
+}
+
+@keyframes rotate-in {
+  0% {
+    rotate: var(--animation-start-rotate, 0deg);
+  }
+
+  100% {
+    rotate: var(--animation-end-rotate, 360deg);
+  }
+}
+
+@keyframes rotate-out {
+  0% {
+    rotate: var(--animation-start-rotate, 0deg);
+  }
+
+  100% {
+    rotate: var(--animation-end-rotate, -360deg);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    scale: var(--animation-start-scale, 0);
+  }
+
+  to {
+    scale: var(--animation-end-scale, 1);
+  }
+}
+
+@keyframes scale-out {
+  from {
+    scale: var(--animation-start-scale, 1);
+  }
+
+  to {
+    scale: var(--animation-end-scale, 0);
+  }
+}
+
+@keyframes slide-in {
+  from {
+    translate: var(--animation-start-translate, -100% 0);
+  }
+
+  to {
+    translate: var(--animation-end-translate, 0);
+  }
+}
+
+@keyframes slide-out {
+  from {
+    translate: var(--animation-start-translate, 0);
+  }
+
+  to {
+    translate: var(--animation-end-translate, -100% 0);
+  }
+}
