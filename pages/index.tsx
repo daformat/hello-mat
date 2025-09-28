@@ -2,6 +2,9 @@ import Head from "next/head"
 import { StencilSvgAnimation } from "../components/StencilSvg/StencilSvg"
 
 const Homepage = () => {
+  console.log(
+    "Learn how to make this stencil effect with svg and javascript: https://observablehq.com/@daformat/distributing-circles-around-a-shape"
+  )
   return (
     <>
       <Head>
