@@ -12,6 +12,10 @@
   min-width: var(--media-min-width);
   position: relative;
 
+  button {
+    border: 0;
+  }
+
   &:not([data-collapsed-content-measured]) {
     display: grid;
 
