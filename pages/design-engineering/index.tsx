@@ -15,7 +15,7 @@ const DesignEngineeringIndex = () => (
           accessibility, and best practices in mind. Attention to details is
           paramount and you can play accompanying videos at 10% speed, or use
           the slow down controls when present to slow the live component itself.
-          This will also slow down network requests if any so that loading
+          This will also slow down network requests, if any, so that loading
           states are shown longer
         </p>
       </div>
