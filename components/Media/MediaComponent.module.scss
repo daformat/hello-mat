@@ -13,7 +13,8 @@
   position: relative;
 
   button {
-    border: 0;
+    border-color: transparent;
+    border-width: 0;
   }
 
   &:not([data-collapsed-content-measured]) {
