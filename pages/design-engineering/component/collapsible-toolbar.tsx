@@ -97,6 +97,8 @@ const CollapsibleToolbarPageContent = () => {
             className="button"
             onClick={() => setSlow(false)}
             data-state={!slow ? "active" : undefined}
+            aria-pressed={!slow ? "true" : "false"}
+            title="Set normal animation speed"
           >
             100%
           </button>{" "}
@@ -104,6 +106,8 @@ const CollapsibleToolbarPageContent = () => {
             className="button"
             onClick={() => setSlow(true)}
             data-state={slow ? "active" : undefined}
+            aria-pressed={slow ? "true" : "false"}
+            title="Set slow animation speed"
           >
             10%
           </button>
