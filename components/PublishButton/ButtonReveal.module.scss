@@ -1,0 +1,72 @@
+.button {
+  align-items: center;
+  background-color: var(--color-toolbar-background);
+  border: 0;
+  border-radius: 6px;
+  box-shadow: 0 1px 12px var(--color-shadow-1),
+    inset 0 0 2px 0.75px var(--color-border-2),
+    inset 0 0 0 0.75px var(--color-border-1);
+  color: var(--text-primary);
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: inherit;
+  padding: 0.5em 1em;
+
+  &:hover,
+  &:focus,
+  &[data-state="open"] {
+    background-color: var(--color-toolbar-button-background-hover);
+    box-shadow: 0 0 24px var(--color-shadow-2),
+      inset 0 0 2px 0 var(--color-border-2),
+      inset 0 0 0 0.5px var(--color-border-1);
+    color: var(--color-toolbar-button-color-hover);
+    outline: 0;
+  }
+
+  &:active {
+    background-color: var(--color-toolbar-button-background-active);
+    color: var(--color-toolbar-button-color-active) !important;
+  }
+}
+
+.button_reveal {
+  .icon {
+    align-items: center;
+    display: inline-flex;
+
+    > svg {
+      height: 1em;
+      width: 1em;
+    }
+  }
+
+  .label_wrapper {
+    align-items: center;
+    display: inline-flex;
+    overflow: hidden;
+    transition: width 0.18s var(--ease-out-cubic),
+      opacity 0.18s var(--ease-out-cubic);
+    vertical-align: middle;
+    width: 0;
+
+    .label {
+      align-items: center;
+      display: inline-flex;
+      white-space: nowrap;
+
+      // add some spacing between the icon and the label
+      &::before {
+        content: "";
+        display: inline-block;
+        width: 0.5em;
+      }
+    }
+  }
+
+  &:hover,
+  &:focus-visible {
+    .label_wrapper {
+      width: var(--width, 0);
+    }
+  }
+}

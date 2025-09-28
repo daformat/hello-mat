@@ -77,3 +77,25 @@
     translate: var(--animation-end-translate, -100% 0);
   }
 }
+
+// -----------------------
+// special animations
+// -----------------------
+
+@keyframes draw-check {
+  0% {
+    opacity: 0.05;
+    stroke-dashoffset: 130%;
+    stroke-width: 0;
+  }
+
+  50% {
+    opacity: 0.4;
+    stroke-dashoffset: 95%;
+  }
+
+  100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
