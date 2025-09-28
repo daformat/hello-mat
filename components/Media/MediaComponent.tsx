@@ -325,7 +325,7 @@ export const Media = ({
             style={{ backgroundImage: `url("${icon}")` }}
           />
         </button>
-        <a target="_blank" href={source} rel="noreferrer">
+        <a target="_blank" href={source} rel="noopener">
           {title ?? source}
         </a>
       </div>

@@ -6,7 +6,7 @@ export const MediaSource = ({ source }: { source: string }) => {
       className={styles.source}
       href={source}
       target="_blank"
-      rel="noreferrer"
+      rel="noopener"
       aria-label="Open source in new tab"
     >
       <svg
