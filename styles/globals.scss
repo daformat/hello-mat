@@ -3,6 +3,7 @@
 @use "./lib/animations.scss";
 @use "./standalone.scss";
 @use "./lib/mixins.scss";
+@use "./lib/link-mixins.scss";
 
 :root {
   --font-size: 16px;
@@ -190,6 +191,10 @@ kbd {
     color: var(--text-primary-hover);
     text-decoration: underline;
     text-underline-offset: 0.2em;
+
+    &[target="_blank"] {
+      @include link-mixins.link-with-arrow;
+    }
   }
 
   img {

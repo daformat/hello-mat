@@ -57,8 +57,11 @@ const CollapsibleToolbarPageContent = () => {
           Within many applications, we need toolbars. The problem is that they
           can only fit as many tools as their size allows. What happens we we
           resize the UI and the tools that fit previously don’t fit anymore?
-          This component, made at <a href="https://kosmik.app">Kosmik</a>,
-          solves this problem by turning the items that don’t fit into a
+          This component, made at{" "}
+          <a target="_blank" rel="noopener" href="https://kosmik.app">
+            Kosmik
+          </a>
+          , solves this problem by turning the items that don’t fit into a
           dropdown, so that all actions are always available.
         </p>
         <p>
