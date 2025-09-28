@@ -40,10 +40,14 @@ const TableOfContentsPageContent = () => {
         </h1>
         <p>
           This component (shown on the left hand-side, play with it!) was
-          crafted at <a href="https://beamapp.co">Beam</a>, a browser with a
-          first-class note taking experience. With beam, you can point and shoot
-          elements from the pages you’re browsing and build rich-media notes out
-          of them, complete with references and back-linking.
+          crafted at{" "}
+          <a href="https://beamapp.co" target="_blank" rel="noopener">
+            Beam
+          </a>
+          , a browser with a first-class note taking experience. With beam, you
+          can point and shoot elements from the pages you’re browsing and build
+          rich-media notes out of them, complete with references and
+          back-linking.
         </p>
         <VideoPlayer
           style={{ aspectRatio: "990/500" }}

@@ -61,8 +61,11 @@ const ImageAndEmbedsContent = () => {
         <p>
           More often than not, web pages contain images and embeds. What should
           these components do? These ones were designed at{" "}
-          <a href="https://beamapp.co">Beam</a>, a browser with a first-class
-          note taking experience, and support for images and embeds.
+          <a href="https://beamapp.co" target="_blank" rel="noopener">
+            Beam
+          </a>
+          , a browser with a first-class note taking experience, and support for
+          images and embeds.
         </p>
         <ul key={render}>
           <li>

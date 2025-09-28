@@ -192,9 +192,9 @@ kbd {
     text-decoration: underline;
     text-underline-offset: 0.2em;
 
-    //&[target="_blank"] {
-    //  @include link-mixins.link-with-arrow;
-    //}
+    &[target="_blank"]:not([class]) {
+      @include link-mixins.link-with-arrow;
+    }
   }
 
   img {
