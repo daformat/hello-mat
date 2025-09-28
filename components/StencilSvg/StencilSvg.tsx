@@ -373,7 +373,7 @@ export const StencilSvgAnimation = () => {
         href={"/design-engineering"}
         className={styles.controls}
         style={{
-          marginTop: -70,
+          marginTop: "calc(clamp(42px, 10vh, 84px) * -1 + 8px)",
           paddingLeft: 18,
           paddingRight: 18,
           borderRadius: 8,
