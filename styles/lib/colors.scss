@@ -100,7 +100,7 @@
   --media-controls-hover: var(--color-link-hover);
 
   --color-dropdown-background: var(--color-toolbar-background);
-  --color-dropdown-hover: #{palette.$dark-ivory-3};
+  --color-dropdown-hover: #{rgba(palette.$dark-ivory-4, 0.15)};
   --color-dropdown-active: #{palette.$dark-ivory-5};
   --color-shadow-10: #{rgba(palette.$dark-shadow, 0.25)};
   --color-shadow-20: #{rgba(palette.$dark-shadow, 0.5)};
