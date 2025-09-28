@@ -45,6 +45,7 @@
   --color-toc-link-active: #{palette.$light-ivory-1};
 
   --media-controls-hover: var(--color-link-hover);
+  --color-placeholder-icon: #{palette.$light-ivory-3};
 
   --color-dropdown-background: var(--color-toolbar-background);
   --color-dropdown-hover: #{rgba(palette.$light-ivory-2, 0.05)};
@@ -98,6 +99,7 @@
   --color-toc-link-active: #{palette.$dark-ivory-1};
 
   --media-controls-hover: var(--color-link-hover);
+  --color-placeholder-icon: #{palette.$dark-ivory-3};
 
   --color-dropdown-background: var(--color-toolbar-background);
   --color-dropdown-hover: #{rgba(palette.$dark-ivory-4, 0.15)};
