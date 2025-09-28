@@ -1,15 +1,16 @@
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react"
 import styles from "./StencilSvg.module.scss"
 import {
-  translate,
-  Position,
   plotCircle,
+  Position,
+  translate,
   vec,
   Vector,
 } from "../../utlis/geometry"
 import { usePointer } from "../../hooks/usePointer"
 import { globalWindowValue } from "../../hooks/useEventListener"
 import Link from "next/link"
+import { isNonNullable } from "../../utlis/nullable"
 
 const paths = [
   {
@@ -85,6 +86,9 @@ type StencilSvgProps = {
   path: { paths: StencilSvgPath[]; name: string }
 }
 
+/**
+ * This component is hacky and could definitely be improved.
+ */
 export const StencilSvg = ({
   enter,
   display,
@@ -97,21 +101,26 @@ export const StencilSvg = ({
   const { x, y } = pointer
   const dX = globalWindowValue && x ? x - window.innerWidth / 2 : 1
   const dY = globalWindowValue && y ? y - window.innerHeight / 2 : 1
-  const dist = Math.hypot(dX, dY)
+  let dist = Math.hypot(dX, dY)
   const max = globalWindowValue
     ? Math.hypot(window.innerWidth / 2, window.innerHeight / 2) * 0.35
     : 1
+  // remove distance effect when hovering controls
+  if (isNonNullable(x) && isNonNullable(y)) {
+    const element = document.elementFromPoint(x, y)
+    if (element?.closest("[data-controls]")) {
+      dist = max
+    }
+  }
   const ratio = Math.min(1, dist / max) ** 2
   const t = 1 - ratio
 
   const [points, setPoints] = useState<JSX.Element[]>([])
-  // const [prevPoints, setPrevPoints] = useState<JSX.Element[]>([])
   const svgRef = useRef<SVGSVGElement>(null)
   const boxWidth = width
   const boxHeight = height
   const xmlns = "http://www.w3.org/2000/svg"
   const pathName = useRef<string>()
-  // const pointer = usePointer()
 
   useEffect(() => {
     let raf:
@@ -169,7 +178,6 @@ export const StencilSvg = ({
             },
           ]
           const index = parseInt(node.dataset.index ?? "0")
-          console.time("Stencil" + path.name)
           const stencilPoints = settings.flatMap((s, i) => {
             return distribute(
               `${path.name}-node-${node.dataset.index}-distribution-${i}`,
@@ -181,7 +189,6 @@ export const StencilSvg = ({
               s.getRelativeDistance
             )
           })
-          console.timeEnd("Stencil" + path.name)
           setPoints((points) => {
             const newPoints = [
               ...(pathName.current && pathName.current === path.name
@@ -331,7 +338,7 @@ export const StencilSvgAnimation = () => {
           ))}
         </div>
       </div>
-      <ul className={styles.controls}>
+      <ul className={styles.controls} data-controls="">
         {paths.map((path, i) => (
           <li key={path.name}>
             <button
@@ -371,6 +378,7 @@ export const StencilSvgAnimation = () => {
           paddingRight: 18,
           borderRadius: 8,
         }}
+        data-controls=""
       >
         <small>-&gt; &nbsp;&nbsp;Browse design engineering gallery</small>
       </Link>
