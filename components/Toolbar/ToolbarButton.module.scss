@@ -16,7 +16,7 @@
   @include mixins.remove-transition;
 
   &:hover,
-  &:focus,
+  &:focus-visible,
   &[data-state="open"] {
     background-color: var(--color-toolbar-button-background-hover);
     box-shadow: 0 0 24px var(--color-shadow-2),
