@@ -6,6 +6,7 @@ import { IoChevronDownOutline } from "react-icons/io5"
 import {
   ComponentProps,
   createContext,
+  CSSProperties,
   Dispatch,
   ReactNode,
   SetStateAction,
@@ -26,32 +27,37 @@ const PublishContext = createContext<{
   setPublished: Dispatch<SetStateAction<boolean>>
 }>({ published: false, setPublished: () => undefined })
 
-export const PublishSplitButton = () => {
+export const PublishSplitButton = ({ speed }: { speed?: number }) => {
   const [published, setPublished] = useState(false)
 
   return (
-    <div className="page prose">
-      <h1>Design engineering: a publish button</h1>
-      <PublishContext.Provider value={{ published, setPublished }}>
-        <div
-          style={{
+    <PublishContext.Provider value={{ published, setPublished }}>
+      <div
+        style={
+          {
+            "--speed": speed,
+            "--transition-duration": "calc(0.18s / var(--speed, 1))",
             display: "flex",
             // fontSize: 24,
             gap: published ? "0.2em" : 0,
-            transition: "gap 0.18s var(--ease-out-cubic)",
+            transition: "gap var(--transition-duration) var(--ease-out-cubic)",
             justifyContent: "flex-end",
             width: "100%",
-          }}
-        >
-          <PublishButton />
-          <PublishDropdown />
-        </div>
-      </PublishContext.Provider>
-    </div>
+          } as CSSProperties
+        }
+      >
+        <PublishButton speed={speed} />
+        <PublishDropdown speed={speed} />
+      </div>
+    </PublishContext.Provider>
   )
 }
 
-const PublishDropdown = ({ className, ...props }: ComponentProps<"button">) => {
+const PublishDropdown = ({
+  className,
+  speed,
+  ...props
+}: ComponentProps<"button"> & { speed?: number }) => {
   const wrapperRef = useRef<HTMLSpanElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const { published } = useContext(PublishContext)
@@ -60,7 +66,7 @@ const PublishDropdown = ({ className, ...props }: ComponentProps<"button">) => {
     const wrapper = wrapperRef.current
     const button = buttonRef.current
     if (wrapper && button) {
-      wrapper.style.setProperty("--width", `${button.offsetWidth}px`)
+      wrapper.style.setProperty("--width", `${button.offsetWidth + 1}px`)
     }
   }, [])
 
@@ -68,11 +74,14 @@ const PublishDropdown = ({ className, ...props }: ComponentProps<"button">) => {
     <button
       ref={buttonRef}
       className={[styles.button, className].filter(Boolean).join(" ")}
-      style={{
-        transition: "border-radius 0.18s var(--ease-out-cubic)",
-        borderRadius: published ? "0 6px 6px 0" : "6px",
-        paddingInline: "0.6em",
-      }}
+      style={
+        {
+          transition:
+            "border-radius var(--transition-duration) var(--ease-out-cubic)",
+          borderRadius: published ? "0 6px 6px 0" : "6px",
+          paddingInline: "0.6em",
+        } as CSSProperties
+      }
       {...props}
     >
       <IoChevronDownOutline />
@@ -82,16 +91,20 @@ const PublishDropdown = ({ className, ...props }: ComponentProps<"button">) => {
   return (
     <span
       ref={wrapperRef}
-      style={{
-        display: "flex",
-        width: published ? "var(--width, 0)" : 0,
-        opacity: published ? 1 : 0,
-        overflow: "hidden",
-        transition:
-          "width 0.18s var(--ease-out-cubic), opacity 0.18s var(--ease-out-cubic)",
-        flexShrink: 0,
-        boxShadow: "0 1px 12px var(--color-shadow-1)",
-      }}
+      style={
+        {
+          "--speed": speed,
+          "--transition-duration": "calc(0.18s / var(--speed, 1))",
+          display: "flex",
+          width: published ? "var(--width, 0)" : 0,
+          opacity: published ? 1 : 0,
+          overflow: "hidden",
+          transition:
+            "width var(--transition-duration) var(--ease-out-cubic), opacity var(--transition-duration) var(--ease-out-cubic)",
+          flexShrink: 0,
+          boxShadow: "0 1px 12px var(--color-shadow-1)",
+        } as CSSProperties
+      }
       // @ts-expect-error: inert is a valid attribute, but we're lagging behind
       // on our react version, so we need to disable the ts rule
       inert={!published ? "" : undefined}
@@ -111,7 +124,13 @@ const PublishDropdown = ({ className, ...props }: ComponentProps<"button">) => {
   )
 }
 
-const PublishButton = ({ className }: { className?: string }) => {
+const PublishButton = ({
+  className,
+  speed,
+}: {
+  className?: string
+  speed?: number
+}) => {
   const { published, setPublished } = useContext(PublishContext)
   const [buttonContent, setButtonContent] = useState<{
     icon: ReactNode
@@ -178,6 +197,7 @@ const PublishButton = ({ className }: { className?: string }) => {
 
   return (
     <ButtonReveal
+      speed={speed}
       icon={buttonContent.icon}
       label={buttonContent.message}
       onClick={handleTogglePublish}

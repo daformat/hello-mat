@@ -1,4 +1,17 @@
 .button {
+  --ease-collapse: linear(0 0%, 0.79 1.81%, 0.92 9.04%, 0.99 20.96%, 1 100%);
+  --ease-expand: linear(
+    0 0%,
+    0.01 50.21%,
+    0.12 63.75%,
+    0.28 70%,
+    0.8 74.31%,
+    0.99 87.23%,
+    1 100%
+  );
+  --mask-transition-duration: calc(0.18s / var(--speed, 1));
+  --transition-duration: calc(0.18s / var(--speed, 1));
+
   align-items: center;
   background-color: var(--color-toolbar-background);
   border: 0;
@@ -44,18 +57,9 @@
     align-items: center;
     display: inline-flex;
     overflow: hidden;
-    transition: width 0.18s var(--ease-out-cubic),
-      opacity 0.18s var(--ease-out-cubic),
-      mask-position 0.18s
-        linear(
-          0 0%,
-          0.01 50.21%,
-          0.12 63.75%,
-          0.28 70%,
-          0.8 74.31%,
-          0.99 87.23%,
-          1 100%
-        );
+    transition: width var(--transition-duration) var(--ease-out-cubic),
+      opacity var(--transition-duration) var(--ease-out-cubic),
+      mask-position var(--mask-transition-duration) var(--ease-expand);
     //linear(0 0%, 0.79 1.81%, 0.92 9.04%, 0.99 20.96%, 1 100%);
     vertical-align: middle;
     width: 0;
@@ -95,11 +99,16 @@
   &:not(:hover, :focus-visible) {
     .label_wrapper {
       mask-position: -1em 0;
-      transition: width 0.18s var(--ease-out-cubic),
-        opacity 0.18s var(--ease-out-cubic),
-        mask-position 0.18s
-          linear(0 0%, 0.79 1.81%, 0.92 9.04%, 0.99 20.96%, 1 100%);
+      transition: width var(--transition-duration) var(--ease-out-cubic),
+        opacity var(--transition-duration) var(--ease-out-cubic),
+        mask-position var(--mask-transition-duration) var(--ease-collapse);
     }
     //linear(0 0%, 0.79 1.81%, 0.92 9.04%, 0.99 20.96%, 1 100%);
+  }
+
+  &[data-animating="collapse"] {
+    .label_wrapper {
+      mask-image: none;
+    }
   }
 }
