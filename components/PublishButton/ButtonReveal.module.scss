@@ -13,7 +13,7 @@
   padding: 0.5em 1em;
 
   &:hover,
-  &:focus,
+  &:focus-visible,
   &[data-state="open"] {
     background-color: var(--color-toolbar-button-background-hover);
     box-shadow: 0 0 24px var(--color-shadow-2),
@@ -45,7 +45,10 @@
     display: inline-flex;
     overflow: hidden;
     transition: width 0.18s var(--ease-out-cubic),
-      opacity 0.18s var(--ease-out-cubic);
+      opacity 0.18s var(--ease-out-cubic),
+      mask-position 0.18s
+        linear(0 0%, 0 57%, 0.1 65%, 0.28 70%, 0.8 75%, 1 95%, 1 100%);
+    //linear(0 0%, 0.79 1.81%, 0.92 9.04%, 0.99 20.96%, 1 100%);
     vertical-align: middle;
     width: 0;
 
@@ -68,5 +71,27 @@
     .label_wrapper {
       width: var(--width, 0);
     }
+  }
+
+  .label_wrapper {
+    mask-image: linear-gradient(
+      to right,
+      #000,
+      #000 calc(100% - 1em),
+      transparent
+    );
+    mask-position: 0 0;
+    mask-size: calc(100% + 1em) 100%;
+  }
+
+  &:not(:hover, :focus-visible) {
+    .label_wrapper {
+      mask-position: -1em 0;
+      transition: width 0.18s var(--ease-out-cubic),
+        opacity 0.18s var(--ease-out-cubic),
+        mask-position 0.18s
+          linear(0 0%, 0.79 1.81%, 0.92 9.04%, 0.99 20.96%, 1 100%);
+    }
+    //linear(0 0%, 0.79 1.81%, 0.92 9.04%, 0.99 20.96%, 1 100%);
   }
 }
