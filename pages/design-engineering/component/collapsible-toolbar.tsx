@@ -71,7 +71,7 @@ const CollapsibleToolbarPageContent = () => {
         <div
           className="card"
           style={{
-            backgroundColor: "transparent",
+            backgroundColor: "var(--color-card-background-secondary)",
             resize: "horizontal",
             overflow: "hidden",
             padding: "2em",
