@@ -112,6 +112,26 @@ const DesignEngineeringIndex = () => (
           />
           A collapsible toolbar
         </Link>
+
+        <Link
+          href={"/design-engineering/component/publish-button"}
+          className={styles.card}
+        >
+          <VideoPlayer
+            style={{ aspectRatio: "990/500" }}
+            sources={{
+              dark: {
+                src: "/design-engineering/publish-button/publish-button-overview-dark.mp4",
+                type: "video/mp4",
+              },
+              light: {
+                src: "/design-engineering/publish-button/publish-button-overview-light.mp4",
+                type: "video/mp4",
+              },
+            }}
+          />
+          A publish button
+        </Link>
       </div>
     </div>
   </>

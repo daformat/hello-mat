@@ -54,6 +54,11 @@ const PublishButtonPageContent = () => {
           in the case of successful / unsuccessful publishing or unpublishing.
         </p>
         <h2>Interactive demo</h2>
+        <p>
+          Network calls are simulated and can fail with a 25% probability, click
+          a few times and the outcome <strong>might be different</strong>, you
+          can also use the buttons below the card to slow down animations.
+        </p>
         <div style={{ marginTop: "1em" }}>
           <div
             className="card"
@@ -68,7 +73,7 @@ const PublishButtonPageContent = () => {
               paddingInline: 14,
             }}
           >
-            <span style={{ opacity: 0.35 }}>
+            <span style={{ opacity: 0.5 }}>
               <span className="above_medium">Hover and click this</span> -&gt;
             </span>
             <PublishSplitButton speed={slow ? 0.1 : 1} />
