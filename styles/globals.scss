@@ -269,8 +269,7 @@ kbd {
       inset 0 0 0 0.75px var(--color-border-1);
     font-size: 0.94em;
     padding: 16px 8px;
-    transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out,
-      box-shadow 0.2s ease-in-out;
+    transition: mixins.theme-transition(color, background-color, box-shadow);
 
     > details {
       margin-left: 1.5em;
