@@ -14,7 +14,7 @@
 }
 
 @mixin up-to-medium() {
-  @media (max-width: 858px) {
+  @media (max-width: 758px) {
     @content;
   }
 }

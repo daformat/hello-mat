@@ -31,6 +31,7 @@
 
   --color-code-background: #{rgba(palette.$light-desert-sky-2, 0.75)};
   --color-card-background: #{rgba(palette.$light-desert-sky-2, 0.75)};
+  --color-card-background-secondary: #{rgba(palette.$light-desert-sky-2, 0.5)};
 
   --color-link: var(--text-primary-hover);
   --color-link-hover: var(--text-secondary-hover);
@@ -85,6 +86,7 @@
 
   --color-code-background: #{rgba(palette.$dark-desert-sky-3, 0.75)};
   --color-card-background: #{rgba(palette.$dark-desert-sky-3, 0.25)};
+  --color-card-background-secondary: #{rgba(palette.$dark-desert-sky-3, 0.1)};
 
   --color-link: var(--text-primary-hover);
   --color-link-hover: var(--text-secondary-hover);

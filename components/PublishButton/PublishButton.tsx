@@ -41,8 +41,6 @@ export const PublishSplitButton = ({ speed }: { speed?: number }) => {
             // fontSize: 24,
             gap: published ? "0.2em" : 0,
             transition: "gap var(--transition-duration) var(--ease-out-cubic)",
-            justifyContent: "flex-end",
-            width: "100%",
           } as CSSProperties
         }
       >
@@ -174,8 +172,8 @@ const PublishButton = ({
             )
             return published
           })
-        }, 1_500)
-      }, Math.random() * 2_000 + 1_000)
+        }, 2_000)
+      }, Math.random() * 2_000 + 1_500)
     }
   }, [published, setPublished])
 

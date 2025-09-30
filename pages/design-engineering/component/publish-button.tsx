@@ -36,7 +36,24 @@ const PublishButtonPageContent = () => {
       <TableOfContents.Root />
       <div ref={contentRef} className="prose page">
         <h1>Design engineering: a publish button</h1>
-        <PublishSplitButton speed={slow ? 0.1 : 1} />
+        <div
+          className="card"
+          style={{
+            backgroundColor: "var(--color-card-background-secondary)",
+            alignItems: "center",
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "0.5em",
+            width: "100%",
+            overflow: "hidden",
+            paddingInline: 14,
+          }}
+        >
+          <span style={{ opacity: 0.25 }}>
+            <span className="above_medium">Click this</span> -&gt;
+          </span>
+          <PublishSplitButton speed={slow ? 0.1 : 1} />
+        </div>
         <div style={{ textAlign: "right", marginTop: "0.5em" }}>
           <button
             className="button"

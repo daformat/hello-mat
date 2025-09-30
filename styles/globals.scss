@@ -29,6 +29,12 @@
   }
 }
 
+.above_medium {
+  @include mixins.up-to-medium {
+    display: none;
+  }
+}
+
 html,
 body {
   color: var(--text-primary);

@@ -1,3 +1,5 @@
+@use "/styles/lib/mixins.scss";
+
 .button {
   --ease-collapse: linear(0 0%, 0.79 1.81%, 0.92 9.04%, 0.99 20.96%, 1 100%);
   --ease-expand: linear(
@@ -24,6 +26,7 @@
   flex-shrink: 0;
   font-size: inherit;
   padding: 0.5em 1em;
+  transition: mixins.theme-transition(color, background-color, box-shadow);
 
   &:hover,
   &:focus-visible,
