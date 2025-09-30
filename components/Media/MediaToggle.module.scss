@@ -46,6 +46,7 @@
     &:focus-visible {
       background-color: transparent;
       color: var(--media-controls-hover);
+      outline: none;
     }
 
     &:active {
