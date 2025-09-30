@@ -278,6 +278,7 @@ export const Media = ({
     <div
       ref={mediaComponentRef}
       className={styles.media_component}
+      data-media={""}
       data-media-responsive={responsive}
       data-media-loading={loading || !size ? "" : undefined}
       data-media-keep-aspect-ratio={keepAspectRatio ? "" : undefined}

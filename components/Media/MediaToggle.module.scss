@@ -25,6 +25,7 @@
     --padding: 0.5em;
     background-color: transparent;
     box-shadow: none;
+    color: inherit;
     cursor: default;
     display: grid;
     justify-items: flex-start;
@@ -78,7 +79,7 @@
   }
 }
 
-*:hover > .toggle,
+[data-media]:hover .toggle,
 .toggle:has(button:focus-visible) {
   opacity: 1;
 }
