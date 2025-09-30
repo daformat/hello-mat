@@ -15,6 +15,7 @@
   button {
     border-color: transparent;
     border-width: 0;
+    outline: none;
   }
 
   &:not([data-collapsed-content-measured]) {
