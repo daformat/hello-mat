@@ -42,7 +42,7 @@ const TableOfContentsPageContent = () => {
           This component (shown on the left hand-side, play with it!) was
           crafted at{" "}
           <a href="https://beamapp.co" target="_blank" rel="noopener">
-            Beam
+            beam
           </a>
           , a browser with a first-class note taking experience. With beam, you
           can point and shoot elements from the pages you’re browsing and build

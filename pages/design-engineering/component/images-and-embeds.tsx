@@ -62,7 +62,7 @@ const ImageAndEmbedsContent = () => {
           More often than not, web pages contain images and embeds. What should
           these components do? These ones were designed at{" "}
           <a href="https://beamapp.co" target="_blank" rel="noopener">
-            Beam
+            beam
           </a>
           , a browser with a first-class note taking experience, and support for
           images and embeds.
