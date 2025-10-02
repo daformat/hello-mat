@@ -30,21 +30,29 @@ export type VideoPlayerProps = {
 export const VideoPlayer = ({
   sources,
   className,
+  style,
   ...rest
 }: VideoPlayerProps) => {
   const [showSlow, setShowSlow] = useState(false)
   const renderNormal = !showSlow || !sources.slow
 
   return (
-    <section>
-      <div className="video_player">
-        <div style={{ display: renderNormal ? undefined : "none" }}>
+    <section style={{ width: "100%", ...style }}>
+      <div className="video_player" style={{ width: "100%", ...style }}>
+        <div
+          style={{
+            width: "100%",
+            ...style,
+            display: renderNormal ? style?.display : "none",
+          }}
+        >
           <video
             className={["video_dark", className].filter(Boolean).join(" ")}
             autoPlay
             loop
             muted
             playsInline
+            style={style}
             {...rest}
           >
             <source src={sources.dark.src} type={sources.dark.type} />
@@ -55,19 +63,27 @@ export const VideoPlayer = ({
             loop
             muted
             playsInline
+            style={style}
             {...rest}
           >
             <source src={sources.light.src} type={sources.light.type} />
           </video>
         </div>
         {sources.slow ? (
-          <div style={{ display: !renderNormal ? undefined : "none" }}>
+          <div
+            style={{
+              width: "100%",
+              ...style,
+              display: !renderNormal ? style?.display : "none",
+            }}
+          >
             <video
               className={["video_dark", className].filter(Boolean).join(" ")}
               autoPlay
               loop
               muted
               playsInline
+              style={style}
               {...rest}
             >
               <source
@@ -81,6 +97,7 @@ export const VideoPlayer = ({
               loop
               muted
               playsInline
+              style={style}
               {...rest}
             >
               <source
