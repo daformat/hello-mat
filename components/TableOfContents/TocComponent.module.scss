@@ -196,7 +196,7 @@
       width: var(--width);
     }
 
-    @include mixins.above-medium() {
+    @include mixins.device-with-precise-input() {
       &:hover,
       &:focus-within {
         transform: none;
