@@ -2,6 +2,7 @@ import { PublishSplitButton } from "../../../components/PublishButton/PublishBut
 import Head from "next/head"
 import { TableOfContents } from "../../../components/TableOfContents/TocComponent"
 import { useEffect, useRef, useState } from "react"
+import { NextCard } from "../../../components/Navigation/NextCard"
 
 const PublishButtonPage = () => {
   return (
@@ -99,6 +100,9 @@ const PublishButtonPageContent = () => {
             </button>
           </div>
         </div>
+        <NextCard href={"/design-engineering/component/table-of-contents"}>
+          Table of contents
+        </NextCard>
       </div>
     </>
   )

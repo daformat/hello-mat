@@ -138,7 +138,9 @@ export const TocRoot = () => {
   }
 
   const headings = Array.from(
-    context.rootElement?.querySelectorAll("h1,h2,h3,h4,h5,h6") ?? []
+    context.rootElement?.querySelectorAll(
+      "*:is(h1,h2,h3,h4,h5,h6):not([data-no-toc])"
+    ) ?? []
   ) as HTMLHeadingElement[]
 
   const topographicalMap = buildTopographicalMap(headings)

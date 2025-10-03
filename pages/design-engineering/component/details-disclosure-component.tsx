@@ -3,6 +3,7 @@ import Head from "next/head"
 import { useEffect, useRef, useState } from "react"
 import { DetailsComponent } from "../../../components/Details/DetailsComponent"
 import { VideoPlayer } from "../../../components/VideoPlayer/VideoPlayer"
+import { NextCard } from "../../../components/Navigation/NextCard"
 
 const DetailsDisclosureComponent = () => (
   <>
@@ -201,6 +202,9 @@ const DetailsPageContent = () => {
           <li>The component should be accessible to mouse users</li>
           <li>The component should be accessible to touch users</li>
         </ul>
+        <NextCard href={"/design-engineering/component/images-and-embeds"}>
+          Images and embeds
+        </NextCard>
       </div>
     </>
   )

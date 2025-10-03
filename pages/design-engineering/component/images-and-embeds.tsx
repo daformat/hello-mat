@@ -3,6 +3,7 @@ import Head from "next/head"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { EmbedComp, ImageComp } from "../../../components/Media/MediaComponent"
 import { VideoPlayer } from "../../../components/VideoPlayer/VideoPlayer"
+import { NextCard } from "../../../components/Navigation/NextCard"
 
 const ImageAndEmbedsPage = () => (
   <>
@@ -208,6 +209,9 @@ const ImageAndEmbedsContent = () => {
             },
           }}
         />
+        <NextCard href={"/design-engineering/component/collapsible-toolbar"}>
+          Collapsible toolbar
+        </NextCard>
       </div>
     </>
   )

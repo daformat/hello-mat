@@ -19,6 +19,7 @@ import { ToolbarButton } from "components/Toolbar/ToolbarButton"
 import Head from "next/head"
 import { TableOfContents } from "components/TableOfContents/TocComponent"
 import { useEffect, useRef, useState } from "react"
+import { NextCard } from "../../../components/Navigation/NextCard"
 
 const CollapsibleToolbarPage = () => {
   return (
@@ -112,6 +113,9 @@ const CollapsibleToolbarPageContent = () => {
             10%
           </button>
         </div>
+        <NextCard href={"/design-engineering/component/publish-button"}>
+          Publish button
+        </NextCard>
       </div>
     </>
   )

@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react"
 import { DetailsComponent } from "../../../components/Details/DetailsComponent"
 import Head from "next/head"
 import { VideoPlayer } from "../../../components/VideoPlayer/VideoPlayer"
+import { NextCard } from "../../../components/Navigation/NextCard"
 
 const TableOfContentsPage = () => {
   return (
@@ -238,6 +239,11 @@ const TableOfContentsPageContent = () => {
             the table of content
           </li>
         </ul>
+        <NextCard
+          href={"/design-engineering/component/details-disclosure-component"}
+        >
+          Details / disclosure component
+        </NextCard>
       </div>
     </>
   )
