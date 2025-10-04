@@ -20,6 +20,7 @@ import Head from "next/head"
 import { TableOfContents } from "components/TableOfContents/TocComponent"
 import { useEffect, useRef, useState } from "react"
 import { NextCard } from "../../../components/Navigation/NextCard"
+import Link from "next/link"
 
 const CollapsibleToolbarPage = () => {
   return (
@@ -53,6 +54,9 @@ const CollapsibleToolbarPageContent = () => {
     <>
       <TableOfContents.Root />
       <div ref={contentRef} className="page prose">
+        <Link href="/design-engineering" className="back_link">
+          Back to gallery
+        </Link>
         <h1>Design engineering: a collapsible resizable toolbar</h1>
         <p>
           Within many applications, we need toolbars. The problem is that they

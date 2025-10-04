@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { DetailsComponent } from "../../../components/Details/DetailsComponent"
 import { VideoPlayer } from "../../../components/VideoPlayer/VideoPlayer"
 import { NextCard } from "../../../components/Navigation/NextCard"
+import Link from "next/link"
 
 const DetailsDisclosureComponent = () => (
   <>
@@ -35,6 +36,9 @@ const DetailsPageContent = () => {
     <>
       <TableOfContents.Root />
       <div ref={contentRef} className="prose page">
+        <Link href="/design-engineering" className="back_link">
+          Back to gallery
+        </Link>
         <h1 id="design-engineering-a-table-of-content-component">
           Design engineering: a details (or disclosure) component
         </h1>

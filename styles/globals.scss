@@ -64,6 +64,7 @@ h6 {
 
 h1 {
   font-size: var(--font-size-h1);
+  margin-top: 0;
 }
 
 h2 {
@@ -125,6 +126,22 @@ a {
     &:focus-visible {
       background-color: var(--color-toolbar-button-background-hover);
       outline: none;
+    }
+  }
+
+  a.back_link {
+    align-items: center;
+    color: inherit;
+    display: flex;
+    text-decoration: none;
+
+    &::before {
+      content: "<- ";
+    }
+
+    &:hover {
+      color: var(--text-primary-hover);
+      text-decoration: underline;
     }
   }
 }

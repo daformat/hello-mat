@@ -1,3 +1,5 @@
+@use "/styles/lib/mixins.scss";
+
 .card_list {
   display: flex;
   flex-direction: row;
@@ -21,9 +23,13 @@
   text-align: center;
   transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out,
     box-shadow 0.2s ease-in-out;
-  width: calc(50% - 8px);
+  width: 100%;
 
   video {
     max-width: 425px;
+  }
+
+  @include mixins.above-medium {
+    width: calc(50% - 8px);
   }
 }

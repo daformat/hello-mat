@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { EmbedComp, ImageComp } from "../../../components/Media/MediaComponent"
 import { VideoPlayer } from "../../../components/VideoPlayer/VideoPlayer"
 import { NextCard } from "../../../components/Navigation/NextCard"
+import Link from "next/link"
 
 const ImageAndEmbedsPage = () => (
   <>
@@ -56,6 +57,9 @@ const ImageAndEmbedsContent = () => {
     <>
       <TableOfContents.Root />
       <div ref={contentRef} className="prose page">
+        <Link href="/design-engineering" className="back_link">
+          Back to gallery
+        </Link>
         <h1 id="design-engineering-a-table-of-content-component">
           Design engineering: images and embeds
         </h1>

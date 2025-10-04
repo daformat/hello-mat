@@ -4,6 +4,7 @@ import { DetailsComponent } from "../../../components/Details/DetailsComponent"
 import Head from "next/head"
 import { VideoPlayer } from "../../../components/VideoPlayer/VideoPlayer"
 import { NextCard } from "../../../components/Navigation/NextCard"
+import Link from "next/link"
 
 const TableOfContentsPage = () => {
   return (
@@ -36,6 +37,9 @@ const TableOfContentsPageContent = () => {
     <>
       <TableOfContents.Root />
       <div ref={contentRef} className="prose page">
+        <Link href="/design-engineering" className="back_link">
+          Back to gallery
+        </Link>
         <h1 id="design-engineering-a-table-of-content-component">
           Design engineering: a table of contents component
         </h1>

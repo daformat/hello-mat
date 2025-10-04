@@ -3,6 +3,7 @@ import Head from "next/head"
 import { TableOfContents } from "../../../components/TableOfContents/TocComponent"
 import { useEffect, useRef, useState } from "react"
 import { NextCard } from "../../../components/Navigation/NextCard"
+import Link from "next/link"
 
 const PublishButtonPage = () => {
   return (
@@ -36,6 +37,9 @@ const PublishButtonPageContent = () => {
     <>
       <TableOfContents.Root />
       <div ref={contentRef} className="prose page">
+        <Link href="/design-engineering" className="back_link">
+          Back to gallery
+        </Link>
         <h1>Design engineering: a publish button</h1>
         <p>
           Whenever something is publishable, you need an action for that. And
