@@ -132,6 +132,26 @@ const DesignEngineeringIndex = () => (
           />
           A publish button
         </Link>
+
+        <Link
+          href={"/design-engineering/component/dock-component"}
+          className={styles.card}
+        >
+          <VideoPlayer
+            style={{ aspectRatio: "990/500" }}
+            sources={{
+              dark: {
+                src: "/design-engineering/dock/dock-overview-dark.mp4",
+                type: "video/mp4",
+              },
+              light: {
+                src: "/design-engineering/dock/dock-overview-light.mp4",
+                type: "video/mp4",
+              },
+            }}
+          />
+          A macOS inspired dock
+        </Link>
       </div>
     </div>
   </>

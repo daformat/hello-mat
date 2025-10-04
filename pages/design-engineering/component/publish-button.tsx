@@ -104,8 +104,8 @@ const PublishButtonPageContent = () => {
             </button>
           </div>
         </div>
-        <NextCard href={"/design-engineering/component/table-of-contents"}>
-          Table of contents
+        <NextCard href={"/design-engineering/component/dock-component"}>
+          A dock component
         </NextCard>
       </div>
     </>

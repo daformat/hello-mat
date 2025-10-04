@@ -1,0 +1,45 @@
+@use "/styles/lib/mixins.scss";
+
+.dock {
+  align-items: flex-end;
+  background-color: var(--color-toolbar-background);
+  border-radius: calc(var(--dock-height, 81.5px) / 81.5 * 24 * 1px);
+  box-shadow: 0 1px 12px var(--color-shadow-1),
+    inset 0 0 2px 0.75px var(--color-border-2),
+    inset 0 0 0 0.75px var(--color-border-1);
+  display: flex;
+  flex-direction: row;
+  gap: 2px;
+  justify-content: flex-start;
+  max-height: calc(var(--dock-height, 81.5) * 1px);
+  max-width: fit-content;
+  padding: 7px;
+  transition: mixins.theme-transition(color, background-color, box-shadow);
+  width: 100%;
+
+  @include mixins.remove-transition;
+
+  .dock_item {
+    --size: 64px;
+    --min-size: 24px;
+    background-color: transparent;
+    border: 0;
+    display: flex;
+    height: var(--item-width);
+    min-height: var(--min-size);
+    min-width: var(--min-size);
+    outline: none;
+    padding: 0;
+    width: var(--size);
+
+    > :is(img, svg) {
+      height: 100%;
+      width: 100%;
+    }
+
+    &:hover,
+    &:focus-visible {
+      --size: 128px;
+    }
+  }
+}
