@@ -380,7 +380,7 @@ export const StencilSvgAnimation = () => {
         }}
         data-controls=""
       >
-        <small>-&gt; &nbsp;&nbsp;Browse design engineering gallery</small>
+        <small>-&gt; &nbsp;&nbsp;Browse design engineering portfolio</small>
       </Link>
     </>
   )
