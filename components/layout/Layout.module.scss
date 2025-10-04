@@ -42,8 +42,8 @@
     transition: color 0.2s ease-in-out;
   }
 
-  .logo {
-    margin-bottom: 1em;
+  a:has(.logo) {
+    margin-bottom: 8px;
   }
 
   .test {
