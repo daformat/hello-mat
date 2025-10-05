@@ -2,6 +2,8 @@ import { PropsWithChildren, ReactNode, useEffect, useRef } from "react"
 
 import styles from "./Dock.module.scss"
 
+let focusGuard = false
+
 export const Dock = ({ children }: PropsWithChildren) => {
   const ref = useRef<HTMLDivElement>(null)
 
@@ -58,6 +60,7 @@ export const Dock = ({ children }: PropsWithChildren) => {
           icon.style.setProperty("--size", `${targetSize}px`)
           icon.style.setProperty("--target-size", `${targetSize}px`)
         })
+        focusGuard = false
       }
 
       const handlePointerLeave = () => {
@@ -70,6 +73,10 @@ export const Dock = ({ children }: PropsWithChildren) => {
           icon.style.transition =
             "width 0.2s var(--ease-out-cubic), height 0.2s var(--ease-out-cubic)"
         })
+        const focusedIcon = dock.querySelector("[data-dock-item]:focus")
+        if (focusedIcon instanceof HTMLElement) {
+          focusedIcon.blur()
+        }
       }
 
       const easeOut = (t: number) => {
@@ -122,13 +129,42 @@ export const Dock = ({ children }: PropsWithChildren) => {
         update()
       }
 
+      const handleFocus = (event: FocusEvent) => {
+        const target = event.target
+        if (target instanceof HTMLElement) {
+          // trigger pointer move event on dock
+          // const isHovered = dock.matches(":hover,:has(*:hover)")
+          // console.log(isHovered)
+          // if (!isHovered) {
+          const { x, y, width, height } = target.getBoundingClientRect()
+          focusGuard = true
+          dock.dispatchEvent(
+            new PointerEvent("pointermove", {
+              clientX: x + width / 2,
+              clientY: y + height / 2,
+            })
+          )
+          // }
+        }
+      }
+
+      const handleBlur = () => {
+        const isFocused = dock.matches(":focus-within")
+        if (!isFocused) {
+          dock.dispatchEvent(new PointerEvent("pointerleave"))
+        }
+      }
+
       dock.addEventListener("pointermove", handlePointerMove)
       dock.addEventListener("pointerleave", handlePointerLeave)
       dock.addEventListener("pointerenter", handlePointerEnter)
+      dock.addEventListener("focus", handleFocus, { capture: true })
+      dock.addEventListener("blur", handleBlur, { capture: true })
       return () => {
         dock.removeEventListener("pointermove", handlePointerMove)
         dock.removeEventListener("pointerleave", handlePointerLeave)
         dock.removeEventListener("pointerenter", handlePointerEnter)
+        dock.removeEventListener("blur", handleBlur, { capture: true })
       }
     }
   }, [])
@@ -146,29 +182,37 @@ export const DockItem = ({
   icon: string | ReactNode
   name: string
 }) => {
-  const ref = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    const item = ref.current
-    if (item) {
-      const observer = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          const { width, height } = entry.contentRect
-          item.style.setProperty("--item-width", `${width}px`)
-          item.style.setProperty("--item-height", `${height}px`)
-        }
-      })
-      observer.observe(item)
-      return () => observer.disconnect()
-    }
-  }, [])
+  // const ref = useRef<HTMLButtonElement>(null)
+  //
+  // useEffect(() => {
+  //   const item = ref.current
+  //   if (item) {
+  //     const observer = new ResizeObserver((entries) => {
+  //       for (const entry of entries) {
+  //         const { width, height } = entry.contentRect
+  //         item.style.setProperty("--item-width", `${width}px`)
+  //         item.style.setProperty("--item-height", `${height}px`)
+  //       }
+  //     })
+  //     observer.observe(item)
+  //     return () => observer.disconnect()
+  //   }
+  // }, [])
 
   const finalIcon =
     typeof icon === "string" ? <img src={icon} alt={name} /> : icon
   return (
-    <button className={styles.dock_item} data-dock-item>
+    <button
+      className={styles.dock_item}
+      onPointerEnter={(event) => {
+        if (!focusGuard) {
+          event.currentTarget.focus()
+        }
+      }}
+      data-dock-item
+    >
       {finalIcon}
-      <span>{name}</span>
+      <span className={styles.label}>{name}</span>
     </button>
   )
 }

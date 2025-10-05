@@ -4,7 +4,12 @@ import { useEffect, useRef } from "react"
 import { NextCard } from "../../../components/Navigation/NextCard"
 import Link from "next/link"
 import { Dock, DockItem } from "../../../components/Dock/Dock"
-import { BeamIcon, BeamIconBeta, BeamIconDev, BeamIconNightly, } from "../../../components/Dock/BeamIcon"
+import {
+  BeamIcon,
+  BeamIconBeta,
+  BeamIconDev,
+  BeamIconNightly,
+} from "../../../components/Dock/BeamIcon"
 
 const DockComponentPage = () => (
   <>
@@ -60,12 +65,12 @@ const DockComponentPageContent = () => {
           }}
         >
           <Dock>
-            <DockItem icon={<BeamIcon />} name="" />
-            <DockItem icon={<BeamIconBeta />} name="" />
-            <DockItem icon={<BeamIconDev />} name="" />
-            <DockItem icon={<BeamIconNightly />} name="" />
-            <DockItem icon={<BeamIcon />} name="" />
-            <DockItem icon={<BeamIconBeta />} name="" />
+            <DockItem icon={<BeamIcon />} name="beam" />
+            <DockItem icon={<BeamIconBeta />} name="beam beta" />
+            <DockItem icon={<BeamIconDev />} name="beam dev" />
+            <DockItem icon={<BeamIconNightly />} name="beam nightly" />
+            <DockItem icon={<BeamIcon />} name="beam" />
+            <DockItem icon={<BeamIconBeta />} name="beam beta" />
           </Dock>
         </div>
         <NextCard href={"/design-engineering/component/table-of-contents"}>

@@ -24,12 +24,14 @@
     --min-size: 24px;
     background-color: transparent;
     border: 0;
+    color: inherit;
     display: flex;
     height: var(--item-width);
     min-height: var(--min-size);
     min-width: var(--min-size);
     outline: none;
     padding: 0;
+    position: relative;
     width: var(--size);
 
     > :is(img, svg) {
@@ -37,8 +39,42 @@
       width: 100%;
     }
 
-    &:hover {
-      --size: 128px;
+    .label {
+      --label-background: var(--color-toolbar-background);
+      background-color: var(--label-background);
+      border-radius: 0.4em;
+      box-shadow: 0 1px 12px var(--color-shadow-1),
+        inset 0 0 0 0.75px var(--color-border-1);
+      font-size: 1em;
+      left: 50%;
+      opacity: 0;
+      padding: 0.4em 1.25em;
+      pointer-events: none;
+      position: absolute;
+      top: -0.5em;
+      transform: translate3d(-50%, -100%, 0);
+      white-space: nowrap;
+
+      &::after {
+        --size: 0.75em;
+        background-color: var(--label-background);
+        bottom: calc(-0.375em + 0.5px);
+        box-shadow: 0 1px 12px var(--color-shadow-1),
+          inset 0 0 0 0.75px var(--color-border-1);
+        clip-path: polygon(0 0, 100% 0, 100% 100%);
+        content: "";
+        height: var(--size);
+        left: 50%;
+        position: absolute;
+        transform: translateX(-50%) rotate(135deg);
+        width: var(--size);
+      }
+    }
+
+    &:focus-visible {
+      .label {
+        opacity: 1;
+      }
     }
   }
 }
