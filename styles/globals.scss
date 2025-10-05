@@ -132,15 +132,17 @@ a {
   a.back_link {
     align-items: center;
     color: inherit;
-    display: flex;
+    display: inline-flex;
     text-decoration: none;
 
     &::before {
       content: "<- ";
     }
 
-    &:hover {
+    &:hover,
+    &:focus-visible {
       color: var(--text-primary-hover);
+      outline: none;
       text-decoration: underline;
     }
   }
