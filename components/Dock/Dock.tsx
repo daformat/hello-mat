@@ -9,7 +9,7 @@ export const Dock = ({ children }: PropsWithChildren) => {
     const dock = ref.current
     if (dock) {
       const observer = new ResizeObserver(() => {
-        const hovered = dock.matches(":hover,:has(*:hover)")
+        const hovered = dock.matches(":hover,:has(*:hover),:focus-within")
         const animations = dock.getAnimations({ subtree: true })
         if (!hovered && animations.length === 0) {
           dock.style.maxHeight = "initial"
