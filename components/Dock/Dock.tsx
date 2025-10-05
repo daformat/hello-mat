@@ -51,7 +51,8 @@ export const Dock = ({ children }: PropsWithChildren) => {
         if (animating.length > 0) {
           return
         }
-        ;[...icons, ...icons].forEach((icon) => {
+        const guardIndex = icons.findIndex((icon) => icon === focusGuard)
+        ;[...icons, ...icons].forEach((icon, index) => {
           const box = icon.getBoundingClientRect()
           let distance = 0
           const offset = 0.25
@@ -66,7 +67,15 @@ export const Dock = ({ children }: PropsWithChildren) => {
           const iconMaxSize = iconMinSize * 2 // min size * max grow factor
           const distanceMax = ((iconMaxSize + iconMinSize) / 2) * spread
           const scaleFactor =
-            distance < distanceMax ? 1 - distance / distanceMax : 0
+            guardIndex > -1
+              ? Math.max(
+                  (spread - Math.abs(guardIndex - (index % icons.length))) /
+                    2.5,
+                  0
+                )
+              : distance < distanceMax
+              ? 1 - distance / distanceMax
+              : 0
           const targetSize =
             iconMinSize + (iconMaxSize - iconMinSize) * scaleFactor
           icon.style.setProperty("--size", `${targetSize}px`)
