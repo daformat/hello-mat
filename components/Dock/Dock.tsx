@@ -122,7 +122,6 @@ export const Dock = ({ children }: PropsWithChildren) => {
           const elapsedTime = currentTime - startTime
           const progress = Math.min(elapsedTime / duration, 1)
           const easedProgress = easeOut(progress)
-          console.log(easedProgress)
 
           const icons = Array.from(
             dock.querySelectorAll("[data-dock-item]")
@@ -155,12 +154,8 @@ export const Dock = ({ children }: PropsWithChildren) => {
 
       const handleFocus = (event: FocusEvent) => {
         const target = event.target
-        console.log("focus", focusSource)
         if (target instanceof HTMLElement && focusSource == "keyboard") {
           // trigger pointer move event on dock
-          // const isHovered = dock.matches(":hover,:has(*:hover)")
-          // console.log(isHovered)
-          // if (!isHovered) {
           const { x, y, width, height } = target.getBoundingClientRect()
           focusGuard = target
           target.dispatchEvent(
@@ -169,7 +164,6 @@ export const Dock = ({ children }: PropsWithChildren) => {
               clientY: y + height / 2,
             })
           )
-          // }
         }
       }
 
@@ -217,7 +211,6 @@ export const Dock = ({ children }: PropsWithChildren) => {
       }
 
       const handleKeydown = (event: KeyboardEvent) => {
-        console.log("keydown", event.key)
         if (event.key === "Tab") {
           focusSource = "keyboard"
           handlePointerEnter()
@@ -286,9 +279,7 @@ export const DockItem = ({
     <button
       className={styles.dock_item}
       onPointerEnter={(event) => {
-        console.log("enter", event.currentTarget)
         if (!focusGuard) {
-          console.log("focus (no guard)")
           focusSource = "pointer"
           event.currentTarget.focus()
         }
