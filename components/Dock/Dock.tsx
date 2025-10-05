@@ -4,6 +4,8 @@ import styles from "./Dock.module.scss"
 import { MaybeUndefined } from "../Media/utils/maybe"
 
 let focusGuard: MaybeUndefined<HTMLElement> = undefined
+let focusSource: MaybeUndefined<"keyboard" | "pointer"> = undefined
+const pointer = { x: 0, y: 0 }
 
 export const Dock = ({ children }: PropsWithChildren) => {
   const ref = useRef<HTMLDivElement>(null)
@@ -33,7 +35,11 @@ export const Dock = ({ children }: PropsWithChildren) => {
     if (dock) {
       const handlePointerMove = (event: PointerEvent) => {
         const { clientX: x, target } = event
-        if (focusGuard && !focusGuard.contains(target as Node)) {
+        if (
+          focusSource === "keyboard" &&
+          focusGuard &&
+          !focusGuard.contains(target as Node)
+        ) {
           return
         }
         // cancelAnimationFrame(raf)
@@ -68,7 +74,7 @@ export const Dock = ({ children }: PropsWithChildren) => {
         if (focusGuard) {
           setTimeout(() => {
             focusGuard = undefined
-          })
+          }, 150)
         }
       }
 
@@ -85,6 +91,9 @@ export const Dock = ({ children }: PropsWithChildren) => {
         const focusedIcon = dock.querySelector("[data-dock-item]:focus")
         if (focusedIcon instanceof HTMLElement) {
           focusedIcon.blur()
+        }
+        if (focusSource !== "keyboard") {
+          focusSource = undefined
         }
       }
 
@@ -146,7 +155,8 @@ export const Dock = ({ children }: PropsWithChildren) => {
 
       const handleFocus = (event: FocusEvent) => {
         const target = event.target
-        if (target instanceof HTMLElement) {
+        console.log("focus", focusSource)
+        if (target instanceof HTMLElement && focusSource == "keyboard") {
           // trigger pointer move event on dock
           // const isHovered = dock.matches(":hover,:has(*:hover)")
           // console.log(isHovered)
@@ -167,13 +177,56 @@ export const Dock = ({ children }: PropsWithChildren) => {
         const isFocused = dock.matches(":focus-within")
         if (!isFocused) {
           dock.dispatchEvent(new PointerEvent("pointerleave"))
+          const element = document.elementFromPoint(pointer.x, pointer.y)
+          if (element instanceof Element && dock.contains(element)) {
+            const icons = Array.from(
+              dock.querySelectorAll("[data-dock-item]")
+            ) as HTMLButtonElement[]
+            icons.forEach((icon) => {
+              icon.style.transition = ""
+            })
+            // const item = element.closest("[data-dock-item]")
+            // if (item instanceof HTMLElement) {
+            //   focusSource = "keyboard"
+            //   focusGuard = item
+            //   item.focus()
+            // }
+            // dock.dispatchEvent(
+            //   new PointerEvent("pointerenter", {
+            //     clientX: pointer.x,
+            //     clientY: pointer.y,
+            //   })
+            // )
+            // dock.dispatchEvent(
+            //   new PointerEvent("pointermove", {
+            //     clientX: pointer.x,
+            //     clientY: pointer.y,
+            //   })
+            // )
+            // element.dispatchEvent(
+            //   new PointerEvent("pointerenter", {
+            //     clientX: pointer.x,
+            //     clientY: pointer.y,
+            //   })
+            // )
+            focusSource = undefined
+          } else {
+            focusSource = undefined
+          }
         }
       }
 
       const handleKeydown = (event: KeyboardEvent) => {
+        console.log("keydown", event.key)
         if (event.key === "Tab") {
+          focusSource = "keyboard"
           handlePointerEnter()
         }
+      }
+
+      const handleGlobalPointerMove = (event: PointerEvent) => {
+        pointer.x = event.clientX
+        pointer.y = event.clientY
       }
 
       dock.addEventListener("pointermove", handlePointerMove, { capture: true })
@@ -181,7 +234,8 @@ export const Dock = ({ children }: PropsWithChildren) => {
       dock.addEventListener("pointerenter", handlePointerEnter)
       dock.addEventListener("focus", handleFocus, { capture: true })
       dock.addEventListener("blur", handleBlur, { capture: true })
-      dock.addEventListener("keydown", handleKeydown)
+      document.addEventListener("keydown", handleKeydown)
+      document.addEventListener("pointermove", handleGlobalPointerMove)
       return () => {
         dock.removeEventListener("pointermove", handlePointerMove, {
           capture: true,
@@ -190,7 +244,8 @@ export const Dock = ({ children }: PropsWithChildren) => {
         dock.removeEventListener("pointerenter", handlePointerEnter)
         dock.removeEventListener("focus", handleFocus, { capture: true })
         dock.removeEventListener("blur", handleBlur, { capture: true })
-        dock.removeEventListener("keydown", handleKeydown)
+        document.removeEventListener("keydown", handleKeydown)
+        document.removeEventListener("pointermove", handleGlobalPointerMove)
       }
     }
   }, [])
@@ -231,7 +286,10 @@ export const DockItem = ({
     <button
       className={styles.dock_item}
       onPointerEnter={(event) => {
+        console.log("enter", event.currentTarget)
         if (!focusGuard) {
+          console.log("focus (no guard)")
+          focusSource = "pointer"
           event.currentTarget.focus()
         }
       }}
