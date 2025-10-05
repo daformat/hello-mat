@@ -66,16 +66,16 @@ export const Dock = ({ children }: PropsWithChildren) => {
           const iconMinSize = dock.offsetHeight - 14
           const iconMaxSize = iconMinSize * 2 // min size * max grow factor
           const distanceMax = ((iconMaxSize + iconMinSize) / 2) * spread
+          // when using keyboard, we want the focused icon to be centered
+          const focusScaleFactor = Math.max(
+            (spread - Math.abs(guardIndex - (index % icons.length))) / 2.5,
+            0
+          )
+          // when using pointer, the scale factor is based on the distance from the pointer
+          const pointerScaleFactor =
+            distance < distanceMax ? 1 - distance / distanceMax : 0
           const scaleFactor =
-            guardIndex > -1
-              ? Math.max(
-                  (spread - Math.abs(guardIndex - (index % icons.length))) /
-                    2.5,
-                  0
-                )
-              : distance < distanceMax
-              ? 1 - distance / distanceMax
-              : 0
+            guardIndex > -1 ? focusScaleFactor : pointerScaleFactor
           const targetSize =
             iconMinSize + (iconMaxSize - iconMinSize) * scaleFactor
           icon.style.setProperty("--size", `${targetSize}px`)
