@@ -22,11 +22,11 @@
   .dock_item {
     --size: 64px;
     --min-size: 24px;
+    aspect-ratio: 1;
     background-color: transparent;
     border: 0;
     color: inherit;
     display: flex;
-    height: var(--item-width);
     min-height: var(--min-size);
     min-width: var(--min-size);
     outline: none;
