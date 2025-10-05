@@ -1,8 +1,9 @@
 import { PropsWithChildren, ReactNode, useEffect, useRef } from "react"
 
 import styles from "./Dock.module.scss"
+import { MaybeUndefined } from "../Media/utils/maybe"
 
-let focusGuard = false
+let focusGuard: MaybeUndefined<HTMLElement> = undefined
 
 export const Dock = ({ children }: PropsWithChildren) => {
   const ref = useRef<HTMLDivElement>(null)
@@ -31,7 +32,11 @@ export const Dock = ({ children }: PropsWithChildren) => {
     let raf: ReturnType<typeof requestAnimationFrame>
     if (dock) {
       const handlePointerMove = (event: PointerEvent) => {
-        const { clientX: x } = event
+        const { clientX: x, target } = event
+        if (focusGuard && !focusGuard.contains(target as Node)) {
+          return
+        }
+        // cancelAnimationFrame(raf)
         const icons = Array.from(
           dock.querySelectorAll("[data-dock-item]")
         ) as HTMLButtonElement[]
@@ -60,7 +65,11 @@ export const Dock = ({ children }: PropsWithChildren) => {
           icon.style.setProperty("--size", `${targetSize}px`)
           icon.style.setProperty("--target-size", `${targetSize}px`)
         })
-        focusGuard = false
+        if (focusGuard) {
+          setTimeout(() => {
+            focusGuard = undefined
+          })
+        }
       }
 
       const handlePointerLeave = () => {
@@ -84,6 +93,7 @@ export const Dock = ({ children }: PropsWithChildren) => {
       }
 
       const handlePointerEnter = () => {
+        focusGuard = undefined
         const icons = Array.from(
           dock.querySelectorAll("[data-dock-item]")
         ) as HTMLButtonElement[]
@@ -94,11 +104,16 @@ export const Dock = ({ children }: PropsWithChildren) => {
         const startTime = Date.now()
         const duration = 150
 
+        if (raf) {
+          cancelAnimationFrame(raf)
+        }
+
         const update = () => {
           const currentTime = Date.now()
           const elapsedTime = currentTime - startTime
           const progress = Math.min(elapsedTime / duration, 1)
           const easedProgress = easeOut(progress)
+          console.log(easedProgress)
 
           const icons = Array.from(
             dock.querySelectorAll("[data-dock-item]")
@@ -137,8 +152,8 @@ export const Dock = ({ children }: PropsWithChildren) => {
           // console.log(isHovered)
           // if (!isHovered) {
           const { x, y, width, height } = target.getBoundingClientRect()
-          focusGuard = true
-          dock.dispatchEvent(
+          focusGuard = target
+          target.dispatchEvent(
             new PointerEvent("pointermove", {
               clientX: x + width / 2,
               clientY: y + height / 2,
@@ -155,16 +170,27 @@ export const Dock = ({ children }: PropsWithChildren) => {
         }
       }
 
-      dock.addEventListener("pointermove", handlePointerMove)
+      const handleKeydown = (event: KeyboardEvent) => {
+        if (event.key === "Tab") {
+          handlePointerEnter()
+        }
+      }
+
+      dock.addEventListener("pointermove", handlePointerMove, { capture: true })
       dock.addEventListener("pointerleave", handlePointerLeave)
       dock.addEventListener("pointerenter", handlePointerEnter)
       dock.addEventListener("focus", handleFocus, { capture: true })
       dock.addEventListener("blur", handleBlur, { capture: true })
+      dock.addEventListener("keydown", handleKeydown)
       return () => {
-        dock.removeEventListener("pointermove", handlePointerMove)
+        dock.removeEventListener("pointermove", handlePointerMove, {
+          capture: true,
+        })
         dock.removeEventListener("pointerleave", handlePointerLeave)
         dock.removeEventListener("pointerenter", handlePointerEnter)
+        dock.removeEventListener("focus", handleFocus, { capture: true })
         dock.removeEventListener("blur", handleBlur, { capture: true })
+        dock.removeEventListener("keydown", handleKeydown)
       }
     }
   }, [])
