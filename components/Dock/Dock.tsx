@@ -79,12 +79,15 @@ export const Dock = ({ children }: PropsWithChildren) => {
       }
 
       const handlePointerLeave = () => {
+        console.log("pointerleave")
         const icons = Array.from(
           dock.querySelectorAll("[data-dock-item]")
         ) as HTMLButtonElement[]
         cancelAnimationFrame(raf)
         icons.forEach((icon) => {
           icon.style.removeProperty("--size")
+          icon.style.removeProperty("--target-size")
+          icon.style.removeProperty("--initial-size")
           icon.style.transition =
             "width 0.2s var(--ease-out-cubic), height 0.2s var(--ease-out-cubic)"
         })
@@ -172,37 +175,47 @@ export const Dock = ({ children }: PropsWithChildren) => {
         if (!isFocused) {
           dock.dispatchEvent(new PointerEvent("pointerleave"))
           const element = document.elementFromPoint(pointer.x, pointer.y)
-          if (element instanceof Element && dock.contains(element)) {
+          // const rect = element?.getBoundingClientRect()
+          // console.log({
+          //   element,
+          //   pointer: { ...pointer },
+          //   elementRect: element?.getBoundingClientRect(),
+          // })
+          if (
+            element instanceof Element &&
+            element !== dock &&
+            dock.contains(element)
+          ) {
             const icons = Array.from(
               dock.querySelectorAll("[data-dock-item]")
             ) as HTMLButtonElement[]
             icons.forEach((icon) => {
               icon.style.transition = ""
             })
-            // const item = element.closest("[data-dock-item]")
-            // if (item instanceof HTMLElement) {
-            //   focusSource = "keyboard"
-            //   focusGuard = item
-            //   item.focus()
-            // }
-            // dock.dispatchEvent(
-            //   new PointerEvent("pointerenter", {
-            //     clientX: pointer.x,
-            //     clientY: pointer.y,
-            //   })
-            // )
-            // dock.dispatchEvent(
-            //   new PointerEvent("pointermove", {
-            //     clientX: pointer.x,
-            //     clientY: pointer.y,
-            //   })
-            // )
-            // element.dispatchEvent(
-            //   new PointerEvent("pointerenter", {
-            //     clientX: pointer.x,
-            //     clientY: pointer.y,
-            //   })
-            // )
+            const item = element.closest("[data-dock-item]")
+            if (item instanceof HTMLElement) {
+              focusSource = "keyboard"
+              focusGuard = item
+              item.focus()
+            }
+            dock.dispatchEvent(
+              new PointerEvent("pointerenter", {
+                clientX: pointer.x,
+                clientY: pointer.y,
+              })
+            )
+            dock.dispatchEvent(
+              new PointerEvent("pointermove", {
+                clientX: pointer.x,
+                clientY: pointer.y,
+              })
+            )
+            element.dispatchEvent(
+              new PointerEvent("pointerenter", {
+                clientX: pointer.x,
+                clientY: pointer.y,
+              })
+            )
             focusSource = undefined
           } else {
             focusSource = undefined
@@ -278,7 +291,7 @@ export const DockItem = ({
   return (
     <button
       className={styles.dock_item}
-      onPointerEnter={(event) => {
+      onPointerMove={(event) => {
         if (!focusGuard) {
           focusSource = "pointer"
           event.currentTarget.focus()
