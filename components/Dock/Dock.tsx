@@ -80,7 +80,6 @@ export const Dock = ({ children }: PropsWithChildren) => {
       }
 
       const handlePointerLeave = () => {
-        console.log("pointerleave")
         leaving = true
         const icons = Array.from(
           dock.querySelectorAll("[data-dock-item]")
@@ -177,12 +176,6 @@ export const Dock = ({ children }: PropsWithChildren) => {
         if (!isFocused && !leaving) {
           dock.dispatchEvent(new PointerEvent("pointerleave"))
           const element = document.elementFromPoint(pointer.x, pointer.y)
-          // const rect = element?.getBoundingClientRect()
-          // console.log({
-          //   element,
-          //   pointer: { ...pointer },
-          //   elementRect: element?.getBoundingClientRect(),
-          // })
           if (
             element instanceof Element &&
             element !== dock &&
