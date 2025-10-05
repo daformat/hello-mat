@@ -39,7 +39,10 @@
     transition: transform 0.2s var(--ease-out-cubic);
   }
 
-  &:hover {
+  &:hover,
+  &:focus-visible {
+    outline: none;
+
     .text {
       span {
         //opacity: 0.9;
