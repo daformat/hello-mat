@@ -5,6 +5,7 @@ import { MaybeUndefined } from "../Media/utils/maybe"
 
 let focusGuard: MaybeUndefined<HTMLElement> = undefined
 let focusSource: MaybeUndefined<"keyboard" | "pointer"> = undefined
+let leaving = false
 const pointer = { x: 0, y: 0 }
 
 export const Dock = ({ children }: PropsWithChildren) => {
@@ -80,6 +81,7 @@ export const Dock = ({ children }: PropsWithChildren) => {
 
       const handlePointerLeave = () => {
         console.log("pointerleave")
+        leaving = true
         const icons = Array.from(
           dock.querySelectorAll("[data-dock-item]")
         ) as HTMLButtonElement[]
@@ -172,7 +174,7 @@ export const Dock = ({ children }: PropsWithChildren) => {
 
       const handleBlur = () => {
         const isFocused = dock.matches(":focus-within")
-        if (!isFocused) {
+        if (!isFocused && !leaving) {
           dock.dispatchEvent(new PointerEvent("pointerleave"))
           const element = document.elementFromPoint(pointer.x, pointer.y)
           // const rect = element?.getBoundingClientRect()
@@ -221,6 +223,7 @@ export const Dock = ({ children }: PropsWithChildren) => {
             focusSource = undefined
           }
         }
+        leaving = false
       }
 
       const handleKeydown = (event: KeyboardEvent) => {
