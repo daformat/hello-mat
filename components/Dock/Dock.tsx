@@ -81,10 +81,17 @@ export const Dock = ({ children }: PropsWithChildren) => {
           icon.style.setProperty("--size", `${targetSize}px`)
           icon.style.setProperty("--target-size", `${targetSize}px`)
         })
+
         if (focusGuard) {
-          setTimeout(() => {
-            focusGuard = undefined
-          }, 150)
+          // setTimeout(() => {
+          focusGuard = undefined
+          // }, 150)
+        } else {
+          const element = document.elementFromPoint(pointer.x, pointer.y)
+          const dockItem = element?.closest("[data-dock-item]")
+          if (dockItem instanceof HTMLElement) {
+            dockItem.focus()
+          }
         }
       }
 
@@ -146,7 +153,7 @@ export const Dock = ({ children }: PropsWithChildren) => {
               computedStyle.getPropertyValue("--initial-size") || "0"
             )
             const targetSize = parseFloat(
-              computedStyle.getPropertyValue("--target-size") || "0"
+              computedStyle.getPropertyValue("--target-size") || `${size}px`
             )
             const delta = targetSize - size
             icon.style.setProperty(
@@ -180,15 +187,18 @@ export const Dock = ({ children }: PropsWithChildren) => {
         }
       }
 
-      const handleBlur = () => {
+      const handleBlur = (event: FocusEvent) => {
+        const target = event.target
         const isFocused = dock.matches(":focus-within")
         if (!isFocused && !leaving) {
           dock.dispatchEvent(new PointerEvent("pointerleave"))
           const element = document.elementFromPoint(pointer.x, pointer.y)
+          const dockItem = element?.closest("[data-dock-item]")
           if (
-            element instanceof Element &&
             element !== dock &&
-            dock.contains(element)
+            element instanceof Element &&
+            dock.contains(element) &&
+            dockItem !== target
           ) {
             const icons = Array.from(
               dock.querySelectorAll("[data-dock-item]")
@@ -196,31 +206,30 @@ export const Dock = ({ children }: PropsWithChildren) => {
             icons.forEach((icon) => {
               icon.style.transition = ""
             })
-            const item = element.closest("[data-dock-item]")
-            if (item instanceof HTMLElement) {
+            if (dockItem instanceof HTMLElement) {
               focusSource = "keyboard"
-              focusGuard = item
-              item.focus()
+              focusGuard = dockItem
+              dockItem.focus()
+              dock.dispatchEvent(
+                new PointerEvent("pointerenter", {
+                  clientX: pointer.x,
+                  clientY: pointer.y,
+                })
+              )
+              dock.dispatchEvent(
+                new PointerEvent("pointermove", {
+                  clientX: pointer.x,
+                  clientY: pointer.y,
+                })
+              )
+              dockItem.dispatchEvent(
+                new PointerEvent("pointerenter", {
+                  clientX: pointer.x,
+                  clientY: pointer.y,
+                })
+              )
+              focusSource = undefined
             }
-            dock.dispatchEvent(
-              new PointerEvent("pointerenter", {
-                clientX: pointer.x,
-                clientY: pointer.y,
-              })
-            )
-            dock.dispatchEvent(
-              new PointerEvent("pointermove", {
-                clientX: pointer.x,
-                clientY: pointer.y,
-              })
-            )
-            element.dispatchEvent(
-              new PointerEvent("pointerenter", {
-                clientX: pointer.x,
-                clientY: pointer.y,
-              })
-            )
-            focusSource = undefined
           } else {
             focusSource = undefined
           }
