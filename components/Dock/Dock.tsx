@@ -3,8 +3,10 @@ import { PropsWithChildren, ReactNode, useEffect, useRef } from "react"
 import styles from "./Dock.module.scss"
 import { MaybeUndefined } from "../Media/utils/maybe"
 
+// of course in a real app these shouldn't be global variables, but this is a demo
 let focusGuard: MaybeUndefined<HTMLElement> = undefined
 let focusSource: MaybeUndefined<"keyboard" | "pointer"> = undefined
+let lastFocusSource: MaybeUndefined<"keyboard" | "pointer"> = undefined
 let leaving = false
 const pointer = { x: 0, y: 0 }
 
@@ -36,6 +38,8 @@ export const Dock = ({ children }: PropsWithChildren) => {
     if (dock) {
       const handlePointerMove = (event: PointerEvent) => {
         const { clientX: x, target } = event
+        // prevent triggering pointermove when moving on non-focused elements
+        // when using keyboard
         if (
           focusSource === "keyboard" &&
           focusGuard &&
@@ -43,16 +47,24 @@ export const Dock = ({ children }: PropsWithChildren) => {
         ) {
           return
         }
-        // cancelAnimationFrame(raf)
+
         const icons = Array.from(
           dock.querySelectorAll("[data-dock-item]")
         ) as HTMLButtonElement[]
-        const animating = dock.getAnimations({ subtree: true })
-        if (animating.length > 0) {
-          return
+
+        // const animating = dock.getAnimations({ subtree: true })
+        // if (animating.length > 0) {
+        //   return
+        // }
+
+        // animate when going back from keyboard to pointer
+        if (focusSource === "pointer" && focusSource !== lastFocusSource) {
+          handlePointerEnter()
         }
+
+        lastFocusSource = focusSource
         const guardIndex = icons.findIndex((icon) => icon === focusGuard)
-        ;[...icons, ...icons].forEach((icon, index) => {
+        icons.forEach((icon, index) => {
           const box = icon.getBoundingClientRect()
           let distance = 0
           const offset = 0.25
@@ -85,6 +97,7 @@ export const Dock = ({ children }: PropsWithChildren) => {
         if (focusGuard) {
           // setTimeout(() => {
           focusGuard = undefined
+          focusSource = "pointer"
           // }, 150)
         } else {
           const element = document.elementFromPoint(pointer.x, pointer.y)
