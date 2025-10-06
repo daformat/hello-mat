@@ -64,7 +64,7 @@ export const Dock = ({ children }: PropsWithChildren) => {
 
         lastFocusSource = focusSource
         const guardIndex = icons.findIndex((icon) => icon === focusGuard)
-        icons.forEach((icon, index) => {
+        ;[...icons, ...icons].forEach((icon, index) => {
           const box = icon.getBoundingClientRect()
           let distance = 0
           const offset = 0.25
