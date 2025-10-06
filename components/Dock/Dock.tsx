@@ -64,8 +64,8 @@ export const Dock = ({ children }: PropsWithChildren) => {
 
         lastFocusSource = focusSource
         const guardIndex = icons.findIndex((icon) => icon === focusGuard)
-        // We loop twice to make sure we size the icons correctly
-        ;[...icons, ...icons].forEach((icon, index) => {
+
+        icons.forEach((icon, index) => {
           const box = icon.getBoundingClientRect()
           let distance = 0
           const offset = 0.25
@@ -96,10 +96,8 @@ export const Dock = ({ children }: PropsWithChildren) => {
         })
 
         if (focusGuard) {
-          // setTimeout(() => {
           focusGuard = undefined
-          focusSource = "pointer"
-          // }, 150)
+          setTimeout(() => (focusSource = "pointer"))
         } else {
           const element = document.elementFromPoint(pointer.x, pointer.y)
           const dockItem = element?.closest("[data-dock-item]")
