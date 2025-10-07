@@ -130,7 +130,7 @@ export const Dock = ({ children }: PropsWithChildren) => {
       }
 
       const easeOut = (t: number) => {
-        return 1 - Math.pow(1 - t, 5)
+        return 1 - Math.pow(1 - t, 3)
       }
 
       const handlePointerEnter = () => {
