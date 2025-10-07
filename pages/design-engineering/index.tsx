@@ -34,7 +34,7 @@ const DesignEngineeringIndex = () => (
           states are shown longer
         </p>
       </div>
-      <div className={styles.card_list}>
+      <div className={styles.card_list} style={{ marginTop: "1.5em" }}>
         <Link
           href={"/design-engineering/component/table-of-contents"}
           className={styles.card}
