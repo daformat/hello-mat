@@ -2,6 +2,7 @@ import "../styles/globals.scss"
 import type { AppProps } from "next/app"
 import { Layout } from "../components/layout/Layout"
 import { useEffect } from "react"
+import Head from "next/head"
 
 function HelloMat({ Component, pageProps }: AppProps) {
   // Listen to screen orientation changes
@@ -56,6 +57,12 @@ function HelloMat({ Component, pageProps }: AppProps) {
 
   return (
     <Layout>
+      <Head>
+        <meta
+          name="og:site_name"
+          content="Hello Mat - Mathieu Jouhet - Design engineering portfolio"
+        />
+      </Head>
       <Component {...pageProps} />
     </Layout>
   )

@@ -14,6 +14,24 @@ const PublishButtonPage = () => {
           name="description"
           content="Building a details (disclosure) component, using React, TypeScript, and SCSS."
         />
+        <meta
+          name="og:video"
+          content="https://hello-mat.com/design-engineering/publish-button/publish-button-overview-light.mp4"
+        />
+        <meta property="og:video:type" content="video/mp4" />
+        <meta property="og:video:width" content="990" />
+        <meta property="og:video:height" content="500" />
+        <meta name="twitter:card" content="player" />
+        <meta
+          name="twitter:player"
+          content="https://hello-mat.com/design-engineering/publish-button/publish-button-overview-light.mp4"
+        />
+        <meta name="twitter:player:width" content="990" />
+        <meta name="twitter:player:height" content="500" />
+        <meta
+          name="twitter:player:stream"
+          content="https://hello-mat.com/design-engineering/publish-button/publish-button-overview-light.mp4"
+        />
       </Head>
       <TableOfContents.Provider>
         <PublishButtonPageContent />
