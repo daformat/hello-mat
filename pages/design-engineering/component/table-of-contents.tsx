@@ -16,22 +16,41 @@ const TableOfContentsPage = () => {
           content="Building a table of contents component, using React, TypeScript, and SCSS."
         />
         <meta
+          name="og:title"
+          content="Design engineering: a table of contents"
+        />
+        <meta
+          name="og:description"
+          content="Building a table of contents component, using React, TypeScript, and SCSS."
+        />
+        <meta
+          name="og:image"
+          content="https://hello-mat.com/design-engineering/toc/toc-light.png"
+        />
+        <meta
+          name="og:url"
+          content="https://hello-mat.com/design-engineering/component/table-of-contents"
+        />
+        <meta
           name="og:video"
           content="https://hello-mat.com/design-engineering/toc/toc-overview-light.mp4"
         />
         <meta property="og:video:type" content="video/mp4" />
         <meta property="og:video:width" content="990" />
         <meta property="og:video:height" content="500" />
+        {/*twitter*/}
         <meta name="twitter:card" content="player" />
         <meta
-          name="twitter:player"
-          content="https://hello-mat.com/design-engineering/toc/toc-overview-light.mp4"
+          name="twitter:title"
+          content="Design engineering: a table of contents"
         />
-        <meta name="twitter:player:width" content="990" />
-        <meta name="twitter:player:height" content="500" />
         <meta
-          name="twitter:player:stream"
-          content="https://hello-mat.com/design-engineering/toc/toc-overview-light.mp4"
+          name="twitter:description"
+          content="Building a table of contents component, using React, TypeScript, and SCSS."
+        />
+        <meta
+          name="twitter:image"
+          content="https://hello-mat.com/design-engineering/toc/toc-light.png"
         />
       </Head>
       <TableOfContents.Provider>
