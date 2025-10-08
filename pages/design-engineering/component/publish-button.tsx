@@ -1,38 +1,23 @@
 import { PublishSplitButton } from "../../../components/PublishButton/PublishButton"
-import Head from "next/head"
 import { TableOfContents } from "../../../components/TableOfContents/TocComponent"
 import { useEffect, useRef, useState } from "react"
 import { NextCard } from "../../../components/Navigation/NextCard"
 import Link from "next/link"
+import { PageMetas } from "../../../components/PageMetas/PageMetas"
 
 const PublishButtonPage = () => {
   return (
     <>
-      <Head>
-        <title>Design engineering: a details (or disclosure) component</title>
-        <meta
-          name="description"
-          content="Building a details (disclosure) component, using React, TypeScript, and SCSS."
-        />
-        <meta
-          name="og:video"
-          content="https://hello-mat.com/design-engineering/publish-button/publish-button-overview-light.mp4"
-        />
-        <meta property="og:video:type" content="video/mp4" />
-        <meta property="og:video:width" content="990" />
-        <meta property="og:video:height" content="500" />
-        <meta name="twitter:card" content="player" />
-        <meta
-          name="twitter:player"
-          content="https://hello-mat.com/design-engineering/publish-button/publish-button-overview-light.mp4"
-        />
-        <meta name="twitter:player:width" content="990" />
-        <meta name="twitter:player:height" content="500" />
-        <meta
-          name="twitter:player:stream"
-          content="https://hello-mat.com/design-engineering/publish-button/publish-button-overview-light.mp4"
-        />
-      </Head>
+      <PageMetas
+        title="Design engineering: a publish button"
+        description="Building a publish button component with feedback, using React, TypeScript, and SCSS."
+        url="https://hello-mat.com/design-engineering/component/publish-button"
+        image="https://hello-mat.com/design-engineering/publish-button/publish-button.png"
+        video="https://hello-mat.com/design-engineering/publish-button/publish-button-overview-light.mp4"
+        videoType="video/mp4"
+        videoWidth="990"
+        videoHeight="500"
+      />
       <TableOfContents.Provider>
         <PublishButtonPageContent />
       </TableOfContents.Provider>
