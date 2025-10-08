@@ -1,5 +1,4 @@
 import { TableOfContents } from "components/TableOfContents/TocComponent"
-import Head from "next/head"
 import { useEffect, useRef } from "react"
 import { NextCard } from "../../../components/Navigation/NextCard"
 import Link from "next/link"
@@ -10,34 +9,20 @@ import {
   BeamIconDev,
   BeamIconNightly,
 } from "../../../components/Dock/BeamIcon"
+import { PageMetas } from "../../../components/PageMetas/PageMetas"
 
 const DockComponentPage = () => (
   <>
-    <Head>
-      <title>Design engineering: a dock component</title>
-      <meta
-        name="description"
-        content="Building a macOS-like dock component, using React, TypeScript, and SCSS."
-      />
-      <meta
-        name="og:video"
-        content="https://hello-mat.com/design-engineering/dock/dock-overview-light.mp4"
-      />
-      <meta property="og:video:type" content="video/mp4" />
-      <meta property="og:video:width" content="990" />
-      <meta property="og:video:height" content="500" />
-      <meta name="twitter:card" content="player" />
-      <meta
-        name="twitter:player"
-        content="https://hello-mat.com/design-engineering/dock/dock-overview-light.mp4"
-      />
-      <meta name="twitter:player:width" content="990" />
-      <meta name="twitter:player:height" content="500" />
-      <meta
-        name="twitter:player:stream"
-        content="https://hello-mat.com/design-engineering/dock/dock-overview-light.mp4"
-      />
-    </Head>
+    <PageMetas
+      title="Design engineering: a dock component"
+      description="Building a macOS-like dock component, using React, TypeScript, and SCSS."
+      url="https://hello-mat.com/design-engineering/component/dock-component"
+      image="https://hello-mat.com/design-engineering/dock/dock-light.png"
+      video="https://hello-mat.com/design-engineering/dock/dock-overview-light.mp4"
+      videoType="video/mp4"
+      videoWidth="990"
+      videoHeight="500"
+    />
     <TableOfContents.Provider>
       <DockComponentPageContent />
     </TableOfContents.Provider>
