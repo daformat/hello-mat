@@ -1,4 +1,3 @@
-import Head from "next/head"
 import { StencilSvgAnimation } from "../components/StencilSvg/StencilSvg"
 import { PageMetas } from "../components/PageMetas/PageMetas"
 
@@ -14,10 +13,6 @@ const Homepage = () => {
         url="https://hello-mat.com"
         image="https://hello-mat.com/home-light.png"
       />
-      <Head>
-        <title></title>
-        <meta name="description" content="Crafting the web" />
-      </Head>
 
       <StencilSvgAnimation />
 
