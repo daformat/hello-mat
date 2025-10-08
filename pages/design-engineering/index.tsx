@@ -10,7 +10,7 @@ const DesignEngineeringIndex = () => (
       title="Hello Mat - Design engineering portfolio"
       description="Design engineering portfolio of Mathieu Jouhet, explore real components, explorations, and more"
       url="https://hello-mat.com/design-engineering"
-      image="https://hello-mat.com/home-light"
+      image="https://hello-mat.com/home-light.png"
     />
     <div className="page">
       <div className="prose">

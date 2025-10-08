@@ -12,7 +12,7 @@ const Homepage = () => {
         title="Hello Mat - Design engineering"
         description="Crafting the web. Portfolio of Mathieu Jouhet, design engineer."
         url="https://hello-mat.com"
-        image="https://hello-mat.com/home-light"
+        image="https://hello-mat.com/home-light.png"
       />
       <Head>
         <title></title>
