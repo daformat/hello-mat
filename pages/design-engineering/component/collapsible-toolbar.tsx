@@ -32,22 +32,41 @@ const CollapsibleToolbarPage = () => {
           content="Building a collapsible / resizable toolbar using React, TypeScript, and SCSS."
         />
         <meta
+          name="og:title"
+          content="Design engineering: a collapsible toolbar"
+        />
+        <meta
+          name="og:description"
+          content="Building a collapsible / resizable toolbar using React, TypeScript, and SCSS."
+        />
+        <meta
+          name="og:image"
+          content="https://hello-mat.com/design-engineering/collapsible-toolbar/collapsible-toolbar-light.png"
+        />
+        <meta
+          name="og:url"
+          content="https://hello-mat.com/design-engineering/component/collapsible-toolbar"
+        />
+        <meta
           name="og:video"
           content="https://hello-mat.com/design-engineering/collapsible-toolbar/collapsible-toolbar-overview-light.mp4"
         />
         <meta property="og:video:type" content="video/mp4" />
         <meta property="og:video:width" content="990" />
         <meta property="og:video:height" content="500" />
+        {/*twitter*/}
         <meta name="twitter:card" content="player" />
         <meta
-          name="twitter:player"
-          content="https://hello-mat.com/design-engineering/collapsible-toolbar/collapsible-toolbar-overview-light.mp4"
+          name="twitter:title"
+          content="Design engineering: a collapsible toolbar"
         />
-        <meta name="twitter:player:width" content="990" />
-        <meta name="twitter:player:height" content="500" />
         <meta
-          name="twitter:player:stream"
-          content="https://hello-mat.com/design-engineering/collapsible-toolbar/collapsible-toolbar-overview-light.mp4"
+          name="twitter:description"
+          content="Building a collapsible / resizable toolbar using React, TypeScript, and SCSS."
+        />
+        <meta
+          name="twitter:image"
+          content="https://hello-mat.com/design-engineering/collapsible-toolbar/collapsible-toolbar-light.png"
         />
       </Head>
       <TableOfContents.Provider>

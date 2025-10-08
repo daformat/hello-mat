@@ -62,6 +62,7 @@ function HelloMat({ Component, pageProps }: AppProps) {
           name="og:site_name"
           content="Hello Mat - Mathieu Jouhet - Design engineering portfolio"
         />
+        <meta name="og:type" content="website" />
       </Head>
       <Component {...pageProps} />
     </Layout>
