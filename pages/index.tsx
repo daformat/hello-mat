@@ -1,5 +1,6 @@
 import Head from "next/head"
 import { StencilSvgAnimation } from "../components/StencilSvg/StencilSvg"
+import { PageMetas } from "../components/PageMetas/PageMetas"
 
 const Homepage = () => {
   console.log(
@@ -7,8 +8,14 @@ const Homepage = () => {
   )
   return (
     <>
+      <PageMetas
+        title="Hello Mat - Design engineering"
+        description="Crafting the web. Portfolio of Mathieu Jouhet, design engineer."
+        url="https://hello-mat.com"
+        image="https://hello-mat.com/home-light"
+      />
       <Head>
-        <title>Hello Mat</title>
+        <title></title>
         <meta name="description" content="Crafting the web" />
       </Head>
 

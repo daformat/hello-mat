@@ -2,17 +2,16 @@ import Link from "next/link"
 import { VideoPlayer } from "../../components/VideoPlayer/VideoPlayer"
 
 import styles from "/styles/DesignEngineeringGallery.module.scss"
-import Head from "next/head"
+import { PageMetas } from "../../components/PageMetas/PageMetas"
 
 const DesignEngineeringIndex = () => (
   <>
-    <Head>
-      <title>Design engineering portfolio</title>
-      <meta
-        name="description"
-        content="Design engineering portfolio of Mathieu Jouhet, explore real components, explorations, and more"
-      />
-    </Head>
+    <PageMetas
+      title="Hello Mat - Design engineering portfolio"
+      description="Design engineering portfolio of Mathieu Jouhet, explore real components, explorations, and more"
+      url="https://hello-mat.com/design-engineering"
+      image="https://hello-mat.com/home-light"
+    />
     <div className="page">
       <div className="prose">
         <h1 id="design-engineering">Design engineering portfolio</h1>
