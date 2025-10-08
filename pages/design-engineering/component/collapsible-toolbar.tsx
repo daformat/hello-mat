@@ -16,59 +16,25 @@ import {
 import { DropdownItem } from "../../../components/ButtonGroup/Dropdown/DropdownItem"
 import { Toolbar } from "../../../components/Toolbar/Toolbar"
 import { ToolbarButton } from "components/Toolbar/ToolbarButton"
-import Head from "next/head"
 import { TableOfContents } from "components/TableOfContents/TocComponent"
 import { useEffect, useRef, useState } from "react"
 import { NextCard } from "../../../components/Navigation/NextCard"
 import Link from "next/link"
+import { PageMetas } from "../../../components/PageMetas/PageMetas"
 
 const CollapsibleToolbarPage = () => {
   return (
     <>
-      <Head>
-        <title>Design engineering: a collapsible toolbar</title>
-        <meta
-          name="description"
-          content="Building a collapsible / resizable toolbar using React, TypeScript, and SCSS."
-        />
-        <meta
-          name="og:title"
-          content="Design engineering: a collapsible toolbar"
-        />
-        <meta
-          name="og:description"
-          content="Building a collapsible / resizable toolbar using React, TypeScript, and SCSS."
-        />
-        <meta
-          name="og:image"
-          content="https://hello-mat.com/design-engineering/collapsible-toolbar/collapsible-toolbar-light.png"
-        />
-        <meta
-          name="og:url"
-          content="https://hello-mat.com/design-engineering/component/collapsible-toolbar"
-        />
-        <meta
-          name="og:video"
-          content="https://hello-mat.com/design-engineering/collapsible-toolbar/collapsible-toolbar-overview-light.mp4"
-        />
-        <meta property="og:video:type" content="video/mp4" />
-        <meta property="og:video:width" content="990" />
-        <meta property="og:video:height" content="500" />
-        {/*twitter*/}
-        <meta name="twitter:card" content="player" />
-        <meta
-          name="twitter:title"
-          content="Design engineering: a collapsible toolbar"
-        />
-        <meta
-          name="twitter:description"
-          content="Building a collapsible / resizable toolbar using React, TypeScript, and SCSS."
-        />
-        <meta
-          name="twitter:image"
-          content="https://hello-mat.com/design-engineering/collapsible-toolbar/collapsible-toolbar-light.png"
-        />
-      </Head>
+      <PageMetas
+        title="Design engineering: a collapsible toolbar"
+        description="Building a collapsible / resizable toolbar using React, TypeScript, and SCSS."
+        url="https://hello-mat.com/design-engineering/component/collapsible-toolbar"
+        image="https://hello-mat.com/design-engineering/collapsible-toolbar/collapsible-toolbar-light.png"
+        video="https://hello-mat.com/design-engineering/collapsible-toolbar/collapsible-toolbar-overview-light.mp4"
+        videoType="video/mp4"
+        videoWidth="990"
+        videoHeight="500"
+      />
       <TableOfContents.Provider>
         <CollapsibleToolbarPageContent />
       </TableOfContents.Provider>

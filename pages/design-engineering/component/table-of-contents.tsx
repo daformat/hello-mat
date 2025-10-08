@@ -1,58 +1,24 @@
 import { TableOfContents } from "../../../components/TableOfContents/TocComponent"
 import { useEffect, useRef } from "react"
 import { DetailsComponent } from "../../../components/Details/DetailsComponent"
-import Head from "next/head"
 import { VideoPlayer } from "../../../components/VideoPlayer/VideoPlayer"
 import { NextCard } from "../../../components/Navigation/NextCard"
 import Link from "next/link"
+import { PageMetas } from "../../../components/PageMetas/PageMetas"
 
 const TableOfContentsPage = () => {
   return (
     <>
-      <Head>
-        <title>Design engineering: a table of contents component</title>
-        <meta
-          name="description"
-          content="Building a table of contents component, using React, TypeScript, and SCSS."
-        />
-        <meta
-          name="og:title"
-          content="Design engineering: a table of contents"
-        />
-        <meta
-          name="og:description"
-          content="Building a table of contents component, using React, TypeScript, and SCSS."
-        />
-        <meta
-          name="og:image"
-          content="https://hello-mat.com/design-engineering/toc/toc-light.png"
-        />
-        <meta
-          name="og:url"
-          content="https://hello-mat.com/design-engineering/component/table-of-contents"
-        />
-        <meta
-          name="og:video"
-          content="https://hello-mat.com/design-engineering/toc/toc-overview-light.mp4"
-        />
-        <meta property="og:video:type" content="video/mp4" />
-        <meta property="og:video:width" content="990" />
-        <meta property="og:video:height" content="500" />
-        {/*twitter*/}
-        <meta name="twitter:card" content="player" />
-        <meta
-          name="twitter:title"
-          content="Design engineering: a table of contents"
-        />
-        <meta
-          name="twitter:description"
-          content="Building a table of contents component, using React, TypeScript, and SCSS."
-        />
-        <meta
-          name="twitter:image"
-          content="https://hello-mat.com/design-engineering/toc/toc-light.png"
-        />
-      </Head>
+      <PageMetas
+        title="Design engineering: a table of contents component"
+        description="Building a table of contents component, using React, TypeScript, and SCSS."
+        url="https://hello-mat.com/design-engineering/component/table-of-contents"
+        image="https://hello-mat.com/design-engineering/toc/toc-light.png"
+        video="https://hello-mat.com/design-engineering/toc/toc-overview-light.mp4"
+        videoType="video/mp4"
+        videoWidth="990"
+        videoHeight="500"
+      />
       <TableOfContents.Provider>
         <TableOfContentsPageContent />
       </TableOfContents.Provider>
