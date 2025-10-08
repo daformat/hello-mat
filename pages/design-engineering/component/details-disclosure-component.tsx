@@ -1,38 +1,23 @@
 import { TableOfContents } from "components/TableOfContents/TocComponent"
-import Head from "next/head"
 import { useEffect, useRef, useState } from "react"
 import { DetailsComponent } from "../../../components/Details/DetailsComponent"
 import { VideoPlayer } from "../../../components/VideoPlayer/VideoPlayer"
 import { NextCard } from "../../../components/Navigation/NextCard"
 import Link from "next/link"
+import { PageMetas } from "../../../components/PageMetas/PageMetas"
 
 const DetailsDisclosureComponent = () => (
   <>
-    <Head>
-      <title>Design engineering: a details (or disclosure) component</title>
-      <meta
-        name="description"
-        content="Building a details (disclosure) component, using React, TypeScript, and SCSS."
-      />
-      <meta
-        name="og:video"
-        content="https://hello-mat.com/design-engineering/details/details-overview-light.mp4"
-      />
-      <meta property="og:video:type" content="video/mp4" />
-      <meta property="og:video:width" content="990" />
-      <meta property="og:video:height" content="500" />
-      <meta name="twitter:card" content="player" />
-      <meta
-        name="twitter:player"
-        content="https://hello-mat.com/design-engineering/details/details-overview-light.mp4"
-      />
-      <meta name="twitter:player:width" content="990" />
-      <meta name="twitter:player:height" content="500" />
-      <meta
-        name="twitter:player:stream"
-        content="https://hello-mat.com/design-engineering/details/details-overview-light.mp4"
-      />
-    </Head>
+    <PageMetas
+      title="Design engineering: a details (or disclosure) component"
+      description="Building a details (disclosure) component, using React, TypeScript, and SCSS."
+      url="https://hello-mat.com/design-engineering/component/details-disclosure-component"
+      image="https://hello-mat.com/design-engineering/details/details-light.png"
+      video="https://hello-mat.com/design-engineering/details/details-overview-light.mp4"
+      videoType="video/mp4"
+      videoWidth="990"
+      videoHeight="500"
+    />
     <TableOfContents.Provider>
       <DetailsPageContent />
     </TableOfContents.Provider>
