@@ -12,7 +12,7 @@ const DesignEngineeringIndex = () => (
       url="https://hello-mat.com/design-engineering"
       image="https://hello-mat.com/media/home-light.png"
       imageWidth="1200"
-      imageHeight="640"
+      imageHeight="630"
     />
     <div className="page">
       <div className="prose">

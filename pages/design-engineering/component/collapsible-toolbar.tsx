@@ -31,7 +31,7 @@ const CollapsibleToolbarPage = () => {
         url="https://hello-mat.com/design-engineering/component/collapsible-toolbar"
         image="https://hello-mat.com/media/design-engineering/collapsible-toolbar/collapsible-toolbar-light.png"
         imageWidth="1200"
-        imageHeight="640"
+        imageHeight="630"
         video="https://hello-mat.com/design-engineering/collapsible-toolbar/collapsible-toolbar-overview-light.mp4"
         videoType="video/mp4"
         videoWidth="990"

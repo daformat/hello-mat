@@ -15,7 +15,7 @@ const TableOfContentsPage = () => {
         url="https://hello-mat.com/design-engineering/component/table-of-contents"
         image="https://hello-mat.com/media/design-engineering/toc/toc-light.png"
         imageWidth="1200"
-        imageHeight="640"
+        imageHeight="630"
         video="https://hello-mat.com/design-engineering/toc/toc-overview-light.mp4"
         videoType="video/mp4"
         videoWidth="990"
