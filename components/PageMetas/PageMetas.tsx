@@ -62,7 +62,7 @@ export const PageMetas = ({
       <meta property="og:url" content={url} />
       {image ? (
         <>
-          <meta name="image" property="og:image" content={image} />
+          <meta property="og:image" content={image} />
           {/*{imageWidth ? (*/}
           {/*  <meta property="og:image:width" content={imageWidth} />*/}
           {/*) : null}*/}
