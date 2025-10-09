@@ -59,24 +59,40 @@ export const PageMetas = ({
       <meta name="description" content={description} />
       {image ? (
         <>
-          <meta property="og:image" content={image} />
+          <meta property="og:image" content={image} key="og:image" />
           {/*{imageWidth ? (*/}
-          {/*  <meta property="og:image:width" content={imageWidth} />*/}
+          {/*  <meta property="og:image:width" content={imageWidth} key="og:image:width" />*/}
           {/*) : null}*/}
           {/*{imageHeight ? (*/}
-          {/*  <meta property="og:image:height" content={imageHeight} />*/}
+          {/*  <meta property="og:image:height" content={imageHeight} key="og:image:height"/>*/}
           {/*) : null}*/}
         </>
       ) : null}
-      <meta property="og:title" content={title} />
-      <meta property="og:description" content={description} />
-      <meta property="og:url" content={url} />
+      <meta property="og:title" content={title} key="og:title" />
+      <meta
+        property="og:description"
+        content={description}
+        key="og:description"
+      />
+      <meta property="og:url" content={url} key="og:url" />
       {video ? (
         <>
-          <meta property="og:video" content={video} />
-          <meta property="og:video:type" content={videoType} />
-          <meta property="og:video:width" content={videoWidth} />
-          <meta property="og:video:height" content={videoHeight} />
+          <meta property="og:video" content={video} key="og:video" />
+          <meta
+            property="og:video:type"
+            content={videoType}
+            key="og:video:type"
+          />
+          <meta
+            property="og:video:width"
+            content={videoWidth}
+            key="og:video:width"
+          />
+          <meta
+            property="og:video:height"
+            content={videoHeight}
+            key="og:video:height"
+          />
         </>
       ) : null}
       {image ? (
