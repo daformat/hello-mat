@@ -46,14 +46,14 @@ export const PageMetas = ({
     <Head>
       <title>{title}</title>
       <meta name="description" content={description} />
-      <meta name="og:title" content={title} />
-      <meta name="og:description" content={description} />
-      <meta name="og:url" content={url} />
-      {image ? <meta name="og:image" content={image} /> : null}
+      <meta property="og:title" content={title} />
+      <meta property="og:description" content={description} />
+      <meta property="og:url" content={url} />
+      {image ? <meta property="og:image" content={image} /> : null}
       {video ? (
         <>
           <meta
-            name="og:video"
+            property="og:video"
             content="https://hello-mat.com/design-engineering/toc/toc-overview-light.mp4"
           />
           <meta property="og:video:type" content={videoType} />
