@@ -53,7 +53,7 @@ export const PageMetas = ({
     url,
     title,
     description,
-    images: [{ url: image, height: imageHeight, width: imageWidth }],
+    images: [{ url: image, height: imageHeight, width: imageWidth, secureUrl: image }],
   }
   if (video) {
     openGraph.videos = [
