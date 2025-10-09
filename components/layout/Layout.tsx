@@ -2,7 +2,6 @@ import Head from "next/head"
 import Link from "next/link"
 import { ReactNode } from "react"
 import styles from "./Layout.module.scss"
-import { StartupImages } from "./StartupImages"
 
 export const Layout = ({ children }: { children: ReactNode }) => (
   <>
@@ -47,7 +46,7 @@ export const Layout = ({ children }: { children: ReactNode }) => (
         content="viewport-fit=cover, user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1"
       />
     </Head>
-    <StartupImages />
+    {/*<StartupImages />*/}
     <div className={styles.layout}>
       <Header />
       {children}
