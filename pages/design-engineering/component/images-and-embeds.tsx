@@ -12,7 +12,7 @@ const ImageAndEmbedsPage = () => (
       title="Design engineering: images and embeds"
       description="Building a Media component supporting images and embeds using React, TypeScript, and SCSS."
       url="https://hello-mat.com/design-engineering/component/images-and-embeds"
-      image="https://hello-mat.com/design-engineering/images-and-embeds/media-light.png"
+      image="https://hello-mat.com/media/design-engineering/images-and-embeds/media-light.png"
       imageWidth="1200"
       imageHeight="640"
       video="https://hello-mat.com/design-engineering/images-and-embeds/images-and-embeds-overview-light.mp4"
@@ -199,20 +199,20 @@ const ImageAndEmbedsContent = () => {
           style={{ aspectRatio: "990/500" }}
           sources={{
             dark: {
-              src: "/design-engineering/images-and-embeds/images-and-embeds-overview-dark.mp4",
+              src: "/media/design-engineering/images-and-embeds/images-and-embeds-overview-dark.mp4",
               type: "video/mp4",
             },
             light: {
-              src: "/design-engineering/images-and-embeds/images-and-embeds-overview-light.mp4",
+              src: "/media/design-engineering/images-and-embeds/images-and-embeds-overview-light.mp4",
               type: "video/mp4",
             },
             slow: {
               dark: {
-                src: "/design-engineering/images-and-embeds/images-and-embeds-overview-slow-dark.mp4",
+                src: "/media/design-engineering/images-and-embeds/images-and-embeds-overview-slow-dark.mp4",
                 type: "video/mp4",
               },
               light: {
-                src: "/design-engineering/images-and-embeds/images-and-embeds-overview-slow-light.mp4",
+                src: "/media/design-engineering/images-and-embeds/images-and-embeds-overview-slow-light.mp4",
                 type: "video/mp4",
               },
             },

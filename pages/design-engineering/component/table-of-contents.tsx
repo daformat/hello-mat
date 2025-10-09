@@ -13,7 +13,7 @@ const TableOfContentsPage = () => {
         title="Design engineering: a table of contents component"
         description="Building a table of contents component, using React, TypeScript, and SCSS."
         url="https://hello-mat.com/design-engineering/component/table-of-contents"
-        image="https://hello-mat.com/design-engineering/toc/toc-light.png"
+        image="https://hello-mat.com/media/design-engineering/toc/toc-light.png"
         imageWidth="1200"
         imageHeight="640"
         video="https://hello-mat.com/design-engineering/toc/toc-overview-light.mp4"
@@ -63,20 +63,20 @@ const TableOfContentsPageContent = () => {
           style={{ aspectRatio: "990/500" }}
           sources={{
             dark: {
-              src: "/design-engineering/toc/toc-overview-dark.mp4",
+              src: "/media/design-engineering/toc/toc-overview-dark.mp4",
               type: "video/mp4",
             },
             light: {
-              src: "/design-engineering/toc/toc-overview-light.mp4",
+              src: "/media/design-engineering/toc/toc-overview-light.mp4",
               type: "video/mp4",
             },
             slow: {
               dark: {
-                src: "/design-engineering/toc/toc-overview-slow-dark.mp4",
+                src: "/media/design-engineering/toc/toc-overview-slow-dark.mp4",
                 type: "video/mp4",
               },
               light: {
-                src: "/design-engineering/toc/toc-overview-slow-light.mp4",
+                src: "/media/design-engineering/toc/toc-overview-slow-light.mp4",
                 type: "video/mp4",
               },
             },

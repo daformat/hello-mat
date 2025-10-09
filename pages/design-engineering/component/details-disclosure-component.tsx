@@ -12,7 +12,7 @@ const DetailsDisclosureComponent = () => (
       title="Design engineering: a details (or disclosure) component"
       description="Building a details (disclosure) component, using React, TypeScript, and SCSS."
       url="https://hello-mat.com/design-engineering/component/details-disclosure-component"
-      image="https://hello-mat.com/design-engineering/details/details-light.png"
+      image="https://hello-mat.com/media/design-engineering/details/details-light.png"
       imageWidth="1200"
       imageHeight="640"
       video="https://hello-mat.com/design-engineering/details/details-overview-light.mp4"
@@ -61,20 +61,20 @@ const DetailsPageContent = () => {
           style={{ aspectRatio: "990/500" }}
           sources={{
             dark: {
-              src: "/design-engineering/details/details-overview-dark.mp4",
+              src: "/media/design-engineering/details/details-overview-dark.mp4",
               type: "video/mp4",
             },
             light: {
-              src: "/design-engineering/details/details-overview-light.mp4",
+              src: "/media/design-engineering/details/details-overview-light.mp4",
               type: "video/mp4",
             },
             slow: {
               dark: {
-                src: "/design-engineering/details/details-overview-slow-dark.mp4",
+                src: "/media/design-engineering/details/details-overview-slow-dark.mp4",
                 type: "video/mp4",
               },
               light: {
-                src: "/design-engineering/details/details-overview-slow-light.mp4",
+                src: "/media/design-engineering/details/details-overview-slow-light.mp4",
                 type: "video/mp4",
               },
             },

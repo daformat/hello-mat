@@ -10,7 +10,7 @@ const DesignEngineeringIndex = () => (
       title="Hello Mat - Design engineering portfolio"
       description="Design engineering portfolio of Mathieu Jouhet, explore real components, explorations, and more"
       url="https://hello-mat.com/design-engineering"
-      image="https://hello-mat.com/home-light.png"
+      image="https://hello-mat.com/media/home-light.png"
       imageWidth="1200"
       imageHeight="640"
     />
@@ -44,11 +44,11 @@ const DesignEngineeringIndex = () => (
             style={{ aspectRatio: "990/500" }}
             sources={{
               dark: {
-                src: "/design-engineering/toc/toc-overview-dark.mp4",
+                src: "/media/design-engineering/toc/toc-overview-dark.mp4",
                 type: "video/mp4",
               },
               light: {
-                src: "/design-engineering/toc/toc-overview-light.mp4",
+                src: "/media/design-engineering/toc/toc-overview-light.mp4",
                 type: "video/mp4",
               },
             }}
@@ -63,11 +63,11 @@ const DesignEngineeringIndex = () => (
             style={{ aspectRatio: "990/500" }}
             sources={{
               dark: {
-                src: "/design-engineering/details/details-overview-dark.mp4",
+                src: "/media/design-engineering/details/details-overview-dark.mp4",
                 type: "video/mp4",
               },
               light: {
-                src: "/design-engineering/details/details-overview-light.mp4",
+                src: "/media/design-engineering/details/details-overview-light.mp4",
                 type: "video/mp4",
               },
             }}
@@ -82,11 +82,11 @@ const DesignEngineeringIndex = () => (
             style={{ aspectRatio: "990/500" }}
             sources={{
               dark: {
-                src: "/design-engineering/images-and-embeds/images-and-embeds-overview-slow-dark.mp4",
+                src: "/media/design-engineering/images-and-embeds/images-and-embeds-overview-slow-dark.mp4",
                 type: "video/mp4",
               },
               light: {
-                src: "/design-engineering/images-and-embeds/images-and-embeds-overview-slow-light.mp4",
+                src: "/media/design-engineering/images-and-embeds/images-and-embeds-overview-slow-light.mp4",
                 type: "video/mp4",
               },
             }}
@@ -102,11 +102,11 @@ const DesignEngineeringIndex = () => (
             style={{ aspectRatio: "990/500" }}
             sources={{
               dark: {
-                src: "/design-engineering/collapsible-toolbar/collapsible-toolbar-overview-dark.mp4",
+                src: "/media/design-engineering/collapsible-toolbar/collapsible-toolbar-overview-dark.mp4",
                 type: "video/mp4",
               },
               light: {
-                src: "/design-engineering/collapsible-toolbar/collapsible-toolbar-overview-light.mp4",
+                src: "/media/design-engineering/collapsible-toolbar/collapsible-toolbar-overview-light.mp4",
                 type: "video/mp4",
               },
             }}
@@ -122,11 +122,11 @@ const DesignEngineeringIndex = () => (
             style={{ aspectRatio: "990/500" }}
             sources={{
               dark: {
-                src: "/design-engineering/publish-button/publish-button-overview-dark.mp4",
+                src: "/media/design-engineering/publish-button/publish-button-overview-dark.mp4",
                 type: "video/mp4",
               },
               light: {
-                src: "/design-engineering/publish-button/publish-button-overview-light.mp4",
+                src: "/media/design-engineering/publish-button/publish-button-overview-light.mp4",
                 type: "video/mp4",
               },
             }}
@@ -142,11 +142,11 @@ const DesignEngineeringIndex = () => (
             style={{ aspectRatio: "990/500" }}
             sources={{
               dark: {
-                src: "/design-engineering/dock/dock-overview-dark.mp4",
+                src: "/media/design-engineering/dock/dock-overview-dark.mp4",
                 type: "video/mp4",
               },
               light: {
-                src: "/design-engineering/dock/dock-overview-light.mp4",
+                src: "/media/design-engineering/dock/dock-overview-light.mp4",
                 type: "video/mp4",
               },
             }}
