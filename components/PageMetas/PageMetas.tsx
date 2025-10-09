@@ -73,10 +73,7 @@ export const PageMetas = ({
       ) : null}
       {video ? (
         <>
-          <meta
-            property="og:video"
-            content="https://hello-mat.com/design-engineering/toc/toc-overview-light.mp4"
-          />
+          <meta property="og:video" content={video} />
           <meta property="og:video:type" content={videoType} />
           <meta property="og:video:width" content={videoWidth} />
           <meta property="og:video:height" content={videoHeight} />
