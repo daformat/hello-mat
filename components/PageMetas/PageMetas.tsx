@@ -9,8 +9,13 @@ export type PageMetasBaseProps = {
 export type PageMetasImageProps =
   | {
       image: string
-      imageWidth?: string
-      imageHeight?: string
+      imageWidth: string
+      imageHeight: string
+    }
+  | {
+      image: string
+      imageWidth?: never
+      imageHeight?: never
     }
   | {
       image?: never
