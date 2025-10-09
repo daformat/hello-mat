@@ -9,9 +9,13 @@ export type PageMetasBaseProps = {
 export type PageMetasImageProps =
   | {
       image: string
+      imageWidth?: string
+      imageHeight?: string
     }
   | {
       image?: never
+      imageWidth?: never
+      imageHeight?: never
     }
 
 export type PageMetasVideoProps =
@@ -37,6 +41,8 @@ export const PageMetas = ({
   description,
   url,
   image,
+  imageHeight,
+  imageWidth,
   video,
   videoType,
   videoWidth,
@@ -49,7 +55,17 @@ export const PageMetas = ({
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:url" content={url} />
-      {image ? <meta property="og:image" content={image} /> : null}
+      {image ? (
+        <>
+          <meta property="og:image" content={image} />
+          {imageWidth ? (
+            <meta property="og:image:width" content={imageWidth} />
+          ) : null}
+          {imageHeight ? (
+            <meta property="og:image:height" content={imageHeight} />
+          ) : null}
+        </>
+      ) : null}
       {video ? (
         <>
           <meta

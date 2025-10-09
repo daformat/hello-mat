@@ -13,6 +13,8 @@ const ImageAndEmbedsPage = () => (
       description="Building a Media component supporting images and embeds using React, TypeScript, and SCSS."
       url="https://hello-mat.com/design-engineering/component/images-and-embeds"
       image="https://hello-mat.com/design-engineering/images-and-embeds/media-light.png"
+      imageWidth="1200"
+      imageHeight="640"
       video="https://hello-mat.com/design-engineering/images-and-embeds/images-and-embeds-overview-light.mp4"
       videoType="video/mp4"
       videoWidth="990"

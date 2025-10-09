@@ -12,6 +12,8 @@ const Homepage = () => {
         description="Crafting the web. Portfolio of Mathieu Jouhet, design engineer."
         url="https://hello-mat.com"
         image="https://hello-mat.com/home-light.png"
+        imageWidth="1200"
+        imageHeight="640"
       />
 
       <StencilSvgAnimation />

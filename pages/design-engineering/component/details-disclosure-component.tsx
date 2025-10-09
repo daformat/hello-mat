@@ -13,6 +13,8 @@ const DetailsDisclosureComponent = () => (
       description="Building a details (disclosure) component, using React, TypeScript, and SCSS."
       url="https://hello-mat.com/design-engineering/component/details-disclosure-component"
       image="https://hello-mat.com/design-engineering/details/details-light.png"
+      imageWidth="1200"
+      imageHeight="640"
       video="https://hello-mat.com/design-engineering/details/details-overview-light.mp4"
       videoType="video/mp4"
       videoWidth="990"

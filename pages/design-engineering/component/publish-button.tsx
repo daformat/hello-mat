@@ -13,6 +13,8 @@ const PublishButtonPage = () => {
         description="Building a publish button component with feedback, using React, TypeScript, and SCSS."
         url="https://hello-mat.com/design-engineering/component/publish-button"
         image="https://hello-mat.com/design-engineering/publish-button/publish-button.png"
+        imageWidth="1200"
+        imageHeight="640"
         video="https://hello-mat.com/design-engineering/publish-button/publish-button-overview-light.mp4"
         videoType="video/mp4"
         videoWidth="990"
