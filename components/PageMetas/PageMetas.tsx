@@ -63,12 +63,12 @@ export const PageMetas = ({
       {image ? (
         <>
           <meta property="og:image" content={image} />
-          {imageWidth ? (
-            <meta property="og:image:width" content={imageWidth} />
-          ) : null}
-          {imageHeight ? (
-            <meta property="og:image:height" content={imageHeight} />
-          ) : null}
+          {/*{imageWidth ? (*/}
+          {/*  <meta property="og:image:width" content={imageWidth} />*/}
+          {/*) : null}*/}
+          {/*{imageHeight ? (*/}
+          {/*  <meta property="og:image:height" content={imageHeight} />*/}
+          {/*) : null}*/}
         </>
       ) : null}
       {video ? (

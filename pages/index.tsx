@@ -13,7 +13,7 @@ const Homepage = () => {
         url="https://hello-mat.com"
         image="https://hello-mat.com/media/home-light.png"
         imageWidth="1200"
-        imageHeight="640"
+        imageHeight="630"
       />
 
       <StencilSvgAnimation />
