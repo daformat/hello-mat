@@ -255,7 +255,7 @@ export default function Document() {
   //   rel="stylesheet"
   // />
   return (
-    <Html lang="en">
+    <Html lang="en" prefix="og: https://ogp.me/ns#">
       <Head>
         <style dangerouslySetInnerHTML={{ __html: inter }} />
       </Head>
