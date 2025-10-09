@@ -57,9 +57,6 @@ export const PageMetas = ({
     <Head>
       <title>{title}</title>
       <meta name="description" content={description} />
-      <meta property="og:title" content={title} />
-      <meta property="og:description" content={description} />
-      <meta property="og:url" content={url} />
       {image ? (
         <>
           <meta property="og:image" content={image} />
@@ -71,6 +68,9 @@ export const PageMetas = ({
           {/*) : null}*/}
         </>
       ) : null}
+      <meta property="og:title" content={title} />
+      <meta property="og:description" content={description} />
+      <meta property="og:url" content={url} />
       {video ? (
         <>
           <meta property="og:video" content={video} />
