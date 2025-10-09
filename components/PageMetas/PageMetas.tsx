@@ -46,8 +46,6 @@ export const PageMetas = ({
   description,
   url,
   image,
-  // imageHeight,
-  // imageWidth,
   video,
   videoType,
   videoWidth,
@@ -57,50 +55,49 @@ export const PageMetas = ({
     <Head>
       <title>{title}</title>
       <meta name="description" content={description} />
-      {image ? (
+
+      {image && (
         <>
-          <meta property="og:image" content={image} key="og:image" />
-          {/*{imageWidth ? (*/}
-          {/*  <meta property="og:image:width" content={imageWidth} key="og:image:width" />*/}
-          {/*) : null}*/}
-          {/*{imageHeight ? (*/}
-          {/*  <meta property="og:image:height" content={imageHeight} key="og:image:height"/>*/}
-          {/*) : null}*/}
+          <meta {...{ property: "og:image" }} content={image} key="ogimage" />
         </>
-      ) : null}
-      <meta property="og:title" content={title} key="og:title" />
+      )}
+
+      <meta {...{ property: "og:title" }} content={title} key="ogtitle" />
       <meta
-        property="og:description"
+        {...{ property: "og:description" }}
         content={description}
-        key="og:description"
+        key="ogdesc"
       />
-      <meta property="og:url" content={url} key="og:url" />
+      <meta {...{ property: "og:url" }} content={url} key="ogurl" />
+      <meta {...{ property: "og:type" }} content="website" key="ogtype" />
+
       {video ? (
         <>
-          <meta property="og:video" content={video} key="og:video" />
+          <meta {...{ property: "og:video" }} content={video} key="og:video" />
           <meta
-            property="og:video:type"
+            {...{ property: "og:video:type" }}
             content={videoType}
             key="og:video:type"
           />
           <meta
-            property="og:video:width"
+            {...{ property: "og:video:width" }}
             content={videoWidth}
             key="og:video:width"
           />
           <meta
-            property="og:video:height"
+            {...{ property: "og:video:height" }}
             content={videoHeight}
             key="og:video:height"
           />
         </>
       ) : null}
-      {image ? (
+
+      {image && (
         <>
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:image" content={image} />
         </>
-      ) : null}
+      )}
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
     </Head>
