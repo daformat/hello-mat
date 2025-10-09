@@ -2,7 +2,7 @@ import "../styles/globals.scss"
 import type { AppProps } from "next/app"
 import { Layout } from "../components/layout/Layout"
 import { useEffect } from "react"
-import Head from "next/head"
+import { DefaultSeo } from "next-seo"
 
 function HelloMat({ Component, pageProps }: AppProps) {
   // Listen to screen orientation changes
@@ -57,14 +57,17 @@ function HelloMat({ Component, pageProps }: AppProps) {
 
   return (
     <Layout>
-      <Head>
-        <meta
-          property="og:site_name"
-          content="Hello Mat - Mathieu Jouhet - Design engineering portfolio"
-          key="go:site_name"
-        />
-        <meta property="og:type" content="website" key="og:type" />
-      </Head>
+      <DefaultSeo
+        openGraph={{
+          type: "website",
+          url: "https://hello-mat.com",
+          siteName: "Hello Mat - Mathieu Jouhet - Design engineering portfolio",
+        }}
+        twitter={{
+          handle: "@daformat",
+          cardType: "summary_large_image",
+        }}
+      />
       <Component {...pageProps} />
     </Layout>
   )

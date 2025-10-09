@@ -250,10 +250,6 @@ const inter = `
 `.replace(/\n/g, "")
 
 export default function Document() {
-  // <link
-  //   href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
-  //   rel="stylesheet"
-  // />
   return (
     <Html lang="en" prefix="og: https://ogp.me/ns#">
       <Head>

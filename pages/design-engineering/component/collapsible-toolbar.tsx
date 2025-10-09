@@ -30,12 +30,12 @@ const CollapsibleToolbarPage = () => {
         description="Building a collapsible / resizable toolbar using React, TypeScript, and SCSS."
         url="https://hello-mat.com/design-engineering/component/collapsible-toolbar"
         image="https://hello-mat.com/media/design-engineering/collapsible-toolbar/collapsible-toolbar-light.png"
-        imageWidth="1200"
-        imageHeight="630"
+        imageWidth={1200}
+        imageHeight={630}
         video="https://hello-mat.com/design-engineering/collapsible-toolbar/collapsible-toolbar-overview-light.mp4"
         videoType="video/mp4"
-        videoWidth="990"
-        videoHeight="500"
+        videoWidth={990}
+        videoHeight={500}
       />
       <TableOfContents.Provider>
         <CollapsibleToolbarPageContent />

@@ -1,7 +1,7 @@
 /**
  * type guard to check if a value is not undefined
  */
-const isDefined = <T>(value: T | undefined): value is T => {
+export const isDefined = <T>(value: T | undefined): value is T => {
   return value !== undefined
 }
 
