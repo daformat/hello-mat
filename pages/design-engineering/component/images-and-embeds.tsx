@@ -15,10 +15,6 @@ const ImageAndEmbedsPage = () => (
       image="https://hello-mat.com/media/design-engineering/images-and-embeds/media-light.png"
       imageWidth={1200}
       imageHeight={630}
-      video="https://hello-mat.com/design-engineering/images-and-embeds/images-and-embeds-overview-light.mp4"
-      videoType="video/mp4"
-      videoWidth={990}
-      videoHeight={500}
     />
     <TableOfContents.Provider>
       <ImageAndEmbedsContent />
