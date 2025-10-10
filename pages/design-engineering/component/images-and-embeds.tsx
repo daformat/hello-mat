@@ -12,7 +12,7 @@ const ImageAndEmbedsPage = () => (
       title="Design engineering: images and embeds"
       description="Building a Media component supporting images and embeds using React, TypeScript, and SCSS."
       url="https://hello-mat.com/design-engineering/component/images-and-embeds"
-      image="https://hello-mat.com/media/design-engineering/images-and-embeds/media-light.png"
+      image="https://hello-mat.com/media/design-engineering/images-and-embeds/og-media-light.png"
       imageWidth={1200}
       imageHeight={630}
     />

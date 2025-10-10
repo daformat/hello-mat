@@ -12,7 +12,7 @@ const PublishButtonPage = () => {
         title="Design engineering: a publish button"
         description="Building a publish button component with feedback, using React, TypeScript, and SCSS."
         url="https://hello-mat.com/design-engineering/component/publish-button"
-        image="https://hello-mat.com/media/design-engineering/publish-button/publish-button.png"
+        image="https://hello-mat.com/media/design-engineering/publish-button/og-publish-button.png"
         imageWidth={1200}
         imageHeight={630}
       />

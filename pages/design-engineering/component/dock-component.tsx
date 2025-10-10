@@ -17,7 +17,7 @@ const DockComponentPage = () => (
       title="Design engineering: a dock component"
       description="Building a macOS-like dock component, using React, TypeScript, and SCSS."
       url="https://hello-mat.com/design-engineering/component/dock-component"
-      image="https://hello-mat.com/media/design-engineering/dock/dock-light.png"
+      image="https://hello-mat.com/media/design-engineering/dock/og-dock-light.png"
       imageWidth={1200}
       imageHeight={630}
     />

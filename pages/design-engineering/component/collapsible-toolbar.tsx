@@ -29,7 +29,7 @@ const CollapsibleToolbarPage = () => {
         title="Design engineering: a collapsible toolbar"
         description="Building a collapsible / resizable toolbar using React, TypeScript, and SCSS."
         url="https://hello-mat.com/design-engineering/component/collapsible-toolbar"
-        image="https://hello-mat.com/media/design-engineering/collapsible-toolbar/collapsible-toolbar-light.png"
+        image="https://hello-mat.com/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png"
         imageWidth={1200}
         imageHeight={630}
       />
