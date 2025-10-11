@@ -16,12 +16,33 @@ import { MaybeNull, MaybeUndefined } from "@/components/Media/utils/maybe"
 const CarouselContext = createContext<{
   ref?: MaybeNull<RefObject<HTMLElement>>
   setRef: (ref: MaybeNull<RefObject<HTMLElement>>) => void
-}>({ setRef: () => {} })
+  scrollsBackwards: boolean
+  scrollsForwards: boolean
+  setScrollsBackwards: (scrollsBackwards: boolean) => void
+  setScrollsForwards: (scrollsForwards: boolean) => void
+}>({
+  setRef: () => {},
+  setScrollsBackwards: () => {},
+  setScrollsForwards: () => {},
+  scrollsBackwards: false,
+  scrollsForwards: false,
+})
 
 const CarouselRoot = ({ children }: PropsWithChildren) => {
   const [ref, setRef] = useState<MaybeNull<RefObject<HTMLElement>>>(null)
+  const [scrollsBackwards, setScrollsBackwards] = useState(false)
+  const [scrollsForwards, setScrollsForwards] = useState(false)
   return (
-    <CarouselContext.Provider value={{ ref, setRef }}>
+    <CarouselContext.Provider
+      value={{
+        ref,
+        setRef,
+        scrollsBackwards,
+        scrollsForwards,
+        setScrollsBackwards,
+        setScrollsForwards,
+      }}
+    >
       <div className={styles.carousel}>{children}</div>
     </CarouselContext.Provider>
   )
@@ -31,7 +52,8 @@ const CarouselViewport = ({
   snapsOnDrag,
   children,
 }: PropsWithChildren<{ snapsOnDrag?: boolean }>) => {
-  const { setRef } = useContext(CarouselContext)
+  const { setRef, setScrollsBackwards, setScrollsForwards } =
+    useContext(CarouselContext)
   const containerRef = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => setRef(containerRef))
 
@@ -44,6 +66,47 @@ const CarouselViewport = ({
     velocityX: 0,
     animationId: null as number | null,
   })
+
+  const updateScrollState = useCallback(() => {
+    const container = containerRef.current
+    if (!container || container.scrollWidth <= container.offsetWidth) {
+      setScrollsBackwards(false)
+      setScrollsForwards(false)
+    } else if (container.scrollLeft <= 0) {
+      setScrollsBackwards(false)
+      setScrollsForwards(true)
+    } else if (
+      Math.ceil(container.scrollLeft) <
+      container.scrollWidth - container.offsetWidth
+    ) {
+      setScrollsBackwards(true)
+      setScrollsForwards(true)
+    } else {
+      setScrollsBackwards(true)
+      setScrollsForwards(false)
+    }
+  }, [setScrollsBackwards, setScrollsForwards])
+
+  useLayoutEffect(() => {
+    const container = containerRef.current
+    if (container) {
+      const resizeObserver = new ResizeObserver(updateScrollState)
+      const mutationObserver = new MutationObserver(updateScrollState)
+      resizeObserver.observe(container)
+      mutationObserver.observe(container, {
+        attributes: true,
+        childList: true,
+        subtree: true,
+      })
+      container.addEventListener("scroll", updateScrollState)
+      updateScrollState()
+      return () => {
+        resizeObserver.disconnect()
+        mutationObserver.disconnect()
+        container.removeEventListener("scroll", updateScrollState)
+      }
+    }
+  }, [updateScrollState])
 
   const handlePointerDown = (event: React.PointerEvent) => {
     if (event.pointerType !== "mouse") {
@@ -141,7 +204,7 @@ const CarouselViewport = ({
       }
       container.style.scrollSnapType = ""
     }
-  }, [])
+  }, [snapsOnDrag])
 
   const startMomentumAnimation = useCallback(() => {
     const state = scrollStateRef.current
@@ -224,7 +287,7 @@ const CarouselItem = ({ children }: PropsWithChildren) => {
 }
 
 const CarouselNextPage = ({ children }: PropsWithChildren) => {
-  const { ref: containerRef } = useContext(CarouselContext)
+  const { ref: containerRef, scrollsForwards } = useContext(CarouselContext)
 
   // Scrolls the container to next slide until hitting max
   const handleScrollToNext = () => {
@@ -257,11 +320,15 @@ const CarouselNextPage = ({ children }: PropsWithChildren) => {
     }
   }
 
-  return <button onClick={handleScrollToNext}>{children}</button>
+  return (
+    <button onClick={handleScrollToNext} disabled={!scrollsForwards}>
+      {children}
+    </button>
+  )
 }
 
 const CarouselPrevPage = ({ children }: PropsWithChildren) => {
-  const { ref: containerRef } = useContext(CarouselContext)
+  const { ref: containerRef, scrollsBackwards } = useContext(CarouselContext)
 
   // Scrolls the container to previous slide until hitting 0
   const handleScrollToPrev = () => {
@@ -293,7 +360,11 @@ const CarouselPrevPage = ({ children }: PropsWithChildren) => {
     }
   }
 
-  return <button onClick={handleScrollToPrev}>{children}</button>
+  return (
+    <button onClick={handleScrollToPrev} disabled={!scrollsBackwards}>
+      {children}
+    </button>
+  )
 }
 
 const isIOSSafari = (): boolean => {
