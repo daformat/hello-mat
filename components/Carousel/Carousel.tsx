@@ -99,7 +99,7 @@ const CarouselViewport = ({
       setScrollsForwards(true)
     } else if (
       Math.ceil(containerScrollLeft) <
-      containerScrollWidth - containerOffsetWidth
+      containerScrollWidth - containerOffsetWidth - 1
     ) {
       setScrollsBackwards(true)
       setScrollsForwards(true)
@@ -345,34 +345,33 @@ const CarouselNextPage = ({ children }: PropsWithChildren) => {
     const container = containerRef?.current
     if (container && container.scrollLeft < container.scrollWidth) {
       container.style.scrollSnapType = ""
-      if (isIOSSafari()) {
-        // iOS Safari doesn't respect snapping when using scrollBy, so we have
-        // to manually scroll to the next item
-        const items = Array.from(
-          container.querySelectorAll("[data-carousel-item]")
-        ) as HTMLElement[]
-        const currentScroll = container.scrollLeft
-        const containerOffsetLeft = container.offsetLeft
-        const containerOffsetWidth = container.offsetWidth
-        const nextItem =
-          items.find(
-            (child) =>
-              child.offsetLeft + child.offsetWidth >
-              currentScroll + containerOffsetWidth + containerOffsetLeft
-          ) ?? items[items.length - 1]
-        nextItem?.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-          inline: "start",
-        })
-      } else {
-        container.scrollBy({ left: container.offsetWidth, behavior: "smooth" })
-      }
+
+      const items = Array.from(
+        container.querySelectorAll("[data-carousel-item]")
+      ) as HTMLElement[]
+      const currentScroll = container.scrollLeft
+      const containerOffsetLeft = container.offsetLeft
+      const containerOffsetWidth = container.offsetWidth
+      const nextItem =
+        items.find(
+          (child) =>
+            child.offsetLeft + child.offsetWidth >
+            currentScroll + containerOffsetWidth + containerOffsetLeft
+        ) ?? items[items.length - 1]
+      nextItem?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "start",
+      })
     }
   }
 
   return (
-    <button onClick={handleScrollToNext} disabled={!scrollsForwards}>
+    <button
+      className={styles.button}
+      onClick={handleScrollToNext}
+      disabled={!scrollsForwards}
+    >
       {children}
     </button>
   )
@@ -386,43 +385,41 @@ const CarouselPrevPage = ({ children }: PropsWithChildren) => {
     const container = containerRef?.current
     if (container && container.scrollLeft > 0) {
       container.style.scrollSnapType = ""
-      if (isIOSSafari()) {
-        // iOS Safari doesn't respect snapping when using scrollBy, so we have
-        // to manually scroll to the previous item
-        const items = Array.from(
-          container.querySelectorAll("[data-carousel-item]")
-        ) as HTMLElement[]
-        const containerOffsetLeft = container.offsetLeft
-        const containerOffsetWidth = container.offsetWidth
-        const currentScroll = container.scrollLeft
-        const prevItem = items.find(
-          (child) =>
-            currentScroll - containerOffsetWidth + containerOffsetLeft <
-            child.offsetLeft
-        )
-        prevItem?.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-          inline: "start",
-        })
-      } else {
-        container.scrollBy({ left: -container.offsetWidth, behavior: "smooth" })
-      }
+      const items = Array.from(
+        container.querySelectorAll("[data-carousel-item]")
+      ) as HTMLElement[]
+      const containerOffsetLeft = container.offsetLeft
+      const containerOffsetWidth = container.offsetWidth
+      const currentScroll = container.scrollLeft
+      const prevItem = items.find(
+        (child) =>
+          currentScroll - containerOffsetWidth + containerOffsetLeft <
+          child.offsetLeft
+      )
+      prevItem?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "start",
+      })
     }
   }
 
   return (
-    <button onClick={handleScrollToPrev} disabled={!scrollsBackwards}>
+    <button
+      className={styles.button}
+      onClick={handleScrollToPrev}
+      disabled={!scrollsBackwards}
+    >
       {children}
     </button>
   )
 }
 
-const isIOSSafari = (): boolean => {
-  const ua = navigator.userAgent
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream
-}
+// const isIOSSafari = (): boolean => {
+//   const ua = navigator.userAgent
+//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+//   return /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream
+// }
 
 const isDesktopSafari = () => {
   const ua = navigator.userAgent

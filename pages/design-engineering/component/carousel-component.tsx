@@ -4,6 +4,7 @@ import { NextCard } from "@/components/Navigation/NextCard"
 import Link from "next/link"
 import { PageMetas } from "@/components/PageMetas/PageMetas"
 import { Carousel } from "@/components/Carousel/Carousel"
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa6"
 
 const CarouselComponentPage = () => (
   <>
@@ -53,28 +54,67 @@ const CarouselComponentPageContent = () => {
           }}
         >
           <Carousel.Root>
-            <Carousel.PrevPage>&lt;</Carousel.PrevPage>
-            <Carousel.NextPage>&gt;</Carousel.NextPage>
+            <div
+              style={{ display: "flex", gap: 4, justifyContent: "flex-end" }}
+            >
+              <Carousel.PrevPage>
+                <FaChevronLeft size={12} />
+              </Carousel.PrevPage>
+              <Carousel.NextPage>
+                <FaChevronRight size={12} />
+              </Carousel.NextPage>
+            </div>
             <Carousel.Viewport>
               <Carousel.Content>
-                <Carousel.Item>Item djqkskjdkqsdjsq jkdj 1</Carousel.Item>
-                <Carousel.Item>Item djqkskjdkqsdjsq jkdj 2</Carousel.Item>
-                <Carousel.Item>Item djqkskjdkqsdjsq jkdj 3</Carousel.Item>
-                <Carousel.Item>Item djqkskjdkqsdjsq jkdj 4</Carousel.Item>
-                <Carousel.Item>Item djqkskjdkqsdjsq jkdj 5</Carousel.Item>
-                <Carousel.Item>Item djqkskjdkqsdjsq jkdj 6</Carousel.Item>
-                <Carousel.Item>Item djqkskjdkqsdjsq jkdj 7</Carousel.Item>
-                <Carousel.Item>Item djqkskjdkqsdjsq jkdj 8</Carousel.Item>
-                <Carousel.Item>Item 9</Carousel.Item>
-                <Carousel.Item>Item 10</Carousel.Item>
-                <Carousel.Item>Item 11</Carousel.Item>
-                <Carousel.Item>Item 12</Carousel.Item>
-                <Carousel.Item>Item 13</Carousel.Item>
-                <Carousel.Item>Item 14</Carousel.Item>
-                <Carousel.Item>Item 15</Carousel.Item>
-                <Carousel.Item>Item 16</Carousel.Item>
-                <Carousel.Item>Item 17</Carousel.Item>
-                <Carousel.Item>Item 18</Carousel.Item>
+                <Carousel.Item>
+                  <img
+                    src="/media/hello-mat-light.png"
+                    alt=""
+                    style={{ minWidth: "30vw" }}
+                  />
+                </Carousel.Item>
+                <Carousel.Item>
+                  <img
+                    src="/media/design-engineering/toc/og-toc-light.png"
+                    alt=""
+                    style={{ minWidth: "30vw" }}
+                  />
+                </Carousel.Item>
+                <Carousel.Item>
+                  <img
+                    src="/media/design-engineering/details/og-details-light.png"
+                    alt=""
+                    style={{ minWidth: "30vw" }}
+                  />
+                </Carousel.Item>
+                <Carousel.Item>
+                  <img
+                    src="/media/design-engineering/images-and-embeds/og-media-light.png"
+                    alt=""
+                    style={{ minWidth: "30vw" }}
+                  />
+                </Carousel.Item>
+                <Carousel.Item>
+                  <img
+                    src="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png"
+                    alt=""
+                    style={{ minWidth: "30vw" }}
+                  />
+                </Carousel.Item>
+                <Carousel.Item>
+                  <img
+                    src="/media/design-engineering/publish-button/og-publish-button-light.png"
+                    alt=""
+                    style={{ minWidth: "30vw" }}
+                  />
+                </Carousel.Item>
+                <Carousel.Item>
+                  <img
+                    src="/media/design-engineering/dock/og-dock-light.png"
+                    alt=""
+                    style={{ minWidth: "30vw" }}
+                  />
+                </Carousel.Item>
               </Carousel.Content>
             </Carousel.Viewport>
           </Carousel.Root>
