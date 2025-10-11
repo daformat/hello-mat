@@ -1,3 +1,4 @@
+@use "sass:list";
 // Hello fellow developer, these are the scss mixins we use
 // ask questions about the mixins you don't understand
 
@@ -113,7 +114,7 @@
 @function theme-transition($properties...) {
   $transitions: ();
   @each $property in $properties {
-    $transitions: append($transitions, $property 0.2s ease-in-out, comma);
+    $transitions: list.append($transitions, $property 0.2s ease-in-out, comma);
   }
   @return $transitions;
 }

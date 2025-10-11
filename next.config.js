@@ -7,10 +7,6 @@ const nextConfig = {
     defaultLocale: "en",
   },
   reactStrictMode: true,
-  swcMinify: true,
-  experimental: {
-    optimizeCss: true,
-  },
 }
 
 module.exports = nextConfig
