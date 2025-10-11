@@ -11,7 +11,7 @@ import {
 } from "react"
 
 import styles from "./Carousel.module.scss"
-import { MaybeNull } from "@/components/Media/utils/maybe"
+import { MaybeNull, MaybeUndefined } from "@/components/Media/utils/maybe"
 
 const CarouselContext = createContext<{
   ref?: MaybeNull<RefObject<HTMLElement>>
@@ -27,7 +27,10 @@ const CarouselRoot = ({ children }: PropsWithChildren) => {
   )
 }
 
-const CarouselViewport = ({ children }: PropsWithChildren) => {
+const CarouselViewport = ({
+  snapsOnDrag,
+  children,
+}: PropsWithChildren<{ snapsOnDrag?: boolean }>) => {
   const { setRef } = useContext(CarouselContext)
   const containerRef = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => setRef(containerRef))
@@ -43,15 +46,10 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
   })
 
   const handlePointerDown = (event: React.PointerEvent) => {
-    console.log("down")
     if (event.pointerType !== "mouse") {
       return
     }
     event.currentTarget.setPointerCapture(event.pointerId)
-    // stateRef.current.isDown = true
-    // stateRef.current.downPosition = { x: event.clientX, y: event.clientY }
-    // stateRef.current.lastPointer = { x: event.clientX, y: event.clientY }
-    // stateRef.current.timestamp = event.timeStamp
 
     const state = scrollStateRef.current
     if (state.animationId !== null) {
@@ -76,17 +74,15 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
       return
     }
 
-    container.style.scrollSnapType = "initial"
+    container.style.scrollSnapType = "none"
     const currentTime = Date.now()
     const deltaTime = currentTime - state.lastTime
     const deltaX = event.clientX - state.lastX
-
-    // Calculate velocity (pixels per millisecond)
     if (deltaTime > 0) {
-      state.velocityX = deltaX / deltaTime
+      state.velocityX = deltaX / deltaTime // (pixels per millisecond)
     }
 
-    // Update scroll position
+    // update scroll position
     const scrollDelta = state.startX - event.clientX
     container.scrollLeft = state.scrollLeft + scrollDelta
 
@@ -94,9 +90,87 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
     state.lastTime = currentTime
   }
 
+  const handleMomentumEnd = useCallback(() => {
+    const container = containerRef.current
+    if (container && snapsOnDrag) {
+      const scrollLeft = container.scrollLeft
+      if (isDesktopSafari()) {
+        // Oh, safari! (doesn’t properly update scrollLeft upon snapping, so we
+        // have to snap manually)
+        const items = Array.from(
+          container.querySelectorAll("[data-carousel-item]")
+        ) as HTMLElement[]
+        const containerOffsetLeft = container.offsetLeft
+        const prevItems = items.filter(
+          (item) => item.offsetLeft <= scrollLeft + containerOffsetLeft
+        )
+        const nextItems = items.filter(
+          (item) => item.offsetLeft >= scrollLeft + containerOffsetLeft
+        )
+        const prevItem = prevItems[prevItems.length - 1]
+        const nextItem = nextItems[0]
+        let snapItem: MaybeUndefined<HTMLElement>
+        if (prevItem && nextItem) {
+          const prevItemLeftEdge = prevItem.offsetLeft - containerOffsetLeft
+          const nextItemLeftEdge = nextItem.offsetLeft - containerOffsetLeft
+          snapItem =
+            Math.abs(scrollLeft - prevItemLeftEdge) <=
+            Math.abs(nextItemLeftEdge - scrollLeft)
+              ? prevItem
+              : nextItem
+        } else {
+          snapItem = prevItem ?? nextItem
+        }
+        let delta = snapItem
+          ? snapItem.offsetLeft - containerOffsetLeft - scrollLeft
+          : 0
+        container.scrollBy({
+          left: delta,
+          behavior: "smooth",
+        })
+      } else {
+        // Other browsers play nicer
+        container.style.scrollSnapType = ""
+        const targetScrollLeft = container.scrollLeft
+        container.style.scrollSnapType = "none"
+        container.scrollLeft = scrollLeft
+        container.scrollBy({
+          left: targetScrollLeft - scrollLeft,
+          behavior: "smooth",
+        })
+      }
+      container.style.scrollSnapType = ""
+    }
+  }, [])
+
+  const startMomentumAnimation = useCallback(() => {
+    const state = scrollStateRef.current
+    const friction = 0.05
+    const decelerationFactor = 1 - friction
+    const minVelocity = 0.01
+
+    const animate = () => {
+      const container = containerRef.current
+      if (!container) {
+        return
+      }
+      container.style.scrollSnapType = "none"
+      container.scrollLeft -= state.velocityX * 16 // ~16ms frame time
+      state.scrollLeft = container.scrollLeft
+      state.velocityX *= decelerationFactor
+      if (Math.abs(state.velocityX) > minVelocity) {
+        state.animationId = requestAnimationFrame(animate)
+      } else {
+        state.animationId = null
+        handleMomentumEnd()
+      }
+    }
+
+    state.animationId = requestAnimationFrame(animate)
+  }, [handleMomentumEnd])
+
   const handlePointerUp = useCallback(
     (event: React.PointerEvent | PointerEvent) => {
-      console.log("up")
       if (event.pointerType !== "mouse") {
         return
       }
@@ -106,21 +180,12 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
       }
       const state = scrollStateRef.current
       if (!state.isDragging || !container) {
-        console.log("up return")
         return
       }
       state.isDragging = false
-
-      // Start momentum animation if velocity is significant
-      if (Math.abs(state.velocityX) > 0.1) {
-        console.log("momentum", state.velocityX)
-        startMomentumAnimation()
-      } else {
-        console.log("not momentum", state.velocityX)
-        container.style.scrollSnapType = ""
-      }
+      startMomentumAnimation()
     },
-    []
+    [startMomentumAnimation]
   )
 
   useEffect(() => {
@@ -128,47 +193,7 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
     return () => {
       document.removeEventListener("pointerup", handlePointerUp)
     }
-  }, [])
-
-  const startMomentumAnimation = () => {
-    const state = scrollStateRef.current
-    const friction = 0.95 // Deceleration factor (0-1, closer to 1 = longer momentum)
-    const minVelocity = 0.1 // Stop when velocity is very small
-
-    const animate = () => {
-      const container = containerRef.current
-      if (!container) {
-        return
-      }
-      console.log("animating")
-      container.style.scrollSnapType = "initial"
-
-      // Apply velocity to scroll position
-      container.scrollLeft -= state.velocityX * 16 // Multiply by ~16ms frame time
-
-      // Apply friction to slow down
-      state.velocityX *= friction
-
-      // Continue animation if velocity is still significant
-      if (Math.abs(state.velocityX) > minVelocity) {
-        state.animationId = requestAnimationFrame(animate)
-      } else {
-        state.animationId = null
-        const scrollLeft = container.scrollLeft
-        container.style.scrollSnapType = ""
-        const targetScrollLeft = container.scrollLeft
-        container.style.scrollSnapType = "initial"
-        container.scrollLeft = scrollLeft
-        container.scrollBy({
-          left: targetScrollLeft - scrollLeft,
-          behavior: "smooth",
-        })
-        container.style.scrollSnapType = ""
-      }
-    }
-
-    state.animationId = requestAnimationFrame(animate)
-  }
+  }, [handlePointerUp])
 
   return (
     <div
@@ -177,6 +202,9 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onWheel={(event) => {
+        event.currentTarget.style.scrollSnapType = ""
+      }}
     >
       {children}
     </div>
@@ -202,26 +230,21 @@ const CarouselNextPage = ({ children }: PropsWithChildren) => {
   const handleScrollToNext = () => {
     const container = containerRef?.current
     if (container && container.scrollLeft < container.scrollWidth) {
+      container.style.scrollSnapType = ""
       if (isIOSSafari()) {
+        // iOS Safari doesn't respect snapping when using scrollBy, so we have
+        // to manually scroll to the next item
         const items = Array.from(
           container.querySelectorAll("[data-carousel-item]")
         ) as HTMLElement[]
         const currentScroll = container.scrollLeft
-        console.log(
-          items.map((child) => [
-            child,
-            child.offsetLeft,
-            child.offsetWidth,
-            container.offsetLeft,
-          ]),
-          currentScroll,
-          container.offsetWidth
-        )
+        const containerOffsetLeft = container.offsetLeft
+        const containerOffsetWidth = container.offsetWidth
         const nextItem =
           items.find(
             (child) =>
               child.offsetLeft + child.offsetWidth >
-              currentScroll + container.offsetWidth + container.offsetLeft
+              currentScroll + containerOffsetWidth + containerOffsetLeft
           ) ?? items[items.length - 1]
         nextItem?.scrollIntoView({
           behavior: "smooth",
@@ -244,14 +267,19 @@ const CarouselPrevPage = ({ children }: PropsWithChildren) => {
   const handleScrollToPrev = () => {
     const container = containerRef?.current
     if (container && container.scrollLeft > 0) {
+      container.style.scrollSnapType = ""
       if (isIOSSafari()) {
+        // iOS Safari doesn't respect snapping when using scrollBy, so we have
+        // to manually scroll to the previous item
         const items = Array.from(
           container.querySelectorAll("[data-carousel-item]")
         ) as HTMLElement[]
+        const containerOffsetLeft = container.offsetLeft
+        const containerOffsetWidth = container.offsetWidth
         const currentScroll = container.scrollLeft
         const prevItem = items.find(
           (child) =>
-            currentScroll - container.offsetWidth + container.offsetLeft <
+            currentScroll - containerOffsetWidth + containerOffsetLeft <
             child.offsetLeft
         )
         prevItem?.scrollIntoView({
@@ -270,9 +298,15 @@ const CarouselPrevPage = ({ children }: PropsWithChildren) => {
 
 const isIOSSafari = (): boolean => {
   const ua = navigator.userAgent
-  const iOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream
+  return /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream
+}
 
-  return iOS
+const isDesktopSafari = () => {
+  const ua = navigator.userAgent
+  const isSafari = /^((?!chrome|android).)*safari/i.test(ua)
+  const isDesktop = !/iPhone|iPad|iPod|Android/i.test(ua)
+
+  return isSafari && isDesktop
 }
 
 export const Carousel = {

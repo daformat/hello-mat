@@ -57,14 +57,14 @@ const CarouselComponentPageContent = () => {
             <Carousel.NextPage>&gt;</Carousel.NextPage>
             <Carousel.Viewport>
               <Carousel.Content>
-                <Carousel.Item>Item 1</Carousel.Item>
-                <Carousel.Item>Item 2</Carousel.Item>
-                <Carousel.Item>Item 3</Carousel.Item>
-                <Carousel.Item>Item 4</Carousel.Item>
-                <Carousel.Item>Item 5</Carousel.Item>
-                <Carousel.Item>Item 6</Carousel.Item>
-                <Carousel.Item>Item 7</Carousel.Item>
-                <Carousel.Item>Item 8</Carousel.Item>
+                <Carousel.Item>Item djqkskjdkqsdjsq jkdj 1</Carousel.Item>
+                <Carousel.Item>Item djqkskjdkqsdjsq jkdj 2</Carousel.Item>
+                <Carousel.Item>Item djqkskjdkqsdjsq jkdj 3</Carousel.Item>
+                <Carousel.Item>Item djqkskjdkqsdjsq jkdj 4</Carousel.Item>
+                <Carousel.Item>Item djqkskjdkqsdjsq jkdj 5</Carousel.Item>
+                <Carousel.Item>Item djqkskjdkqsdjsq jkdj 6</Carousel.Item>
+                <Carousel.Item>Item djqkskjdkqsdjsq jkdj 7</Carousel.Item>
+                <Carousel.Item>Item djqkskjdkqsdjsq jkdj 8</Carousel.Item>
                 <Carousel.Item>Item 9</Carousel.Item>
                 <Carousel.Item>Item 10</Carousel.Item>
                 <Carousel.Item>Item 11</Carousel.Item>
