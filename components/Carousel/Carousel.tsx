@@ -188,7 +188,11 @@ const CarouselContent = ({ children }: PropsWithChildren) => {
 }
 
 const CarouselItem = ({ children }: PropsWithChildren) => {
-  return <div className={styles.carousel_item}>{children}</div>
+  return (
+    <div data-carousel-item className={styles.carousel_item}>
+      {children}
+    </div>
+  )
 }
 
 const CarouselNextPage = ({ children }: PropsWithChildren) => {
@@ -198,7 +202,35 @@ const CarouselNextPage = ({ children }: PropsWithChildren) => {
   const handleScrollToNext = () => {
     const container = containerRef?.current
     if (container && container.scrollLeft < container.scrollWidth) {
-      container.scrollBy({ left: container.offsetWidth, behavior: "smooth" })
+      if (isIOSSafari()) {
+        const items = Array.from(
+          container.querySelectorAll("[data-carousel-item]")
+        ) as HTMLElement[]
+        const currentScroll = container.scrollLeft
+        console.log(
+          items.map((child) => [
+            child,
+            child.offsetLeft,
+            child.offsetWidth,
+            container.offsetLeft,
+          ]),
+          currentScroll,
+          container.offsetWidth
+        )
+        const nextItem =
+          items.find(
+            (child) =>
+              child.offsetLeft + child.offsetWidth >
+              currentScroll + container.offsetWidth + container.offsetLeft
+          ) ?? items[items.length - 1]
+        nextItem?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "start",
+        })
+      } else {
+        container.scrollBy({ left: container.offsetWidth, behavior: "smooth" })
+      }
     }
   }
 
@@ -212,11 +244,35 @@ const CarouselPrevPage = ({ children }: PropsWithChildren) => {
   const handleScrollToPrev = () => {
     const container = containerRef?.current
     if (container && container.scrollLeft > 0) {
-      container.scrollBy({ left: -container.offsetWidth, behavior: "smooth" })
+      if (isIOSSafari()) {
+        const items = Array.from(
+          container.querySelectorAll("[data-carousel-item]")
+        ) as HTMLElement[]
+        const currentScroll = container.scrollLeft
+        const prevItem = items.find(
+          (child) =>
+            currentScroll - container.offsetWidth + container.offsetLeft <
+            child.offsetLeft
+        )
+        prevItem?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "start",
+        })
+      } else {
+        container.scrollBy({ left: -container.offsetWidth, behavior: "smooth" })
+      }
     }
   }
 
   return <button onClick={handleScrollToPrev}>{children}</button>
+}
+
+const isIOSSafari = (): boolean => {
+  const ua = navigator.userAgent
+  const iOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream
+
+  return iOS
 }
 
 export const Carousel = {
