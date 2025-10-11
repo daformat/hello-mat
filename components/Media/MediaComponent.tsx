@@ -11,15 +11,16 @@ import {
   useRef,
   useState,
 } from "react"
-import { MaybeUndefined } from "./utils/maybe"
-import styles from "./MediaComponent.module.scss"
-import SvgPlaceholderDefault from "./Placeholder/SvgPlaceholderDefault"
-import { MediaSource } from "./MediaSource"
-import SvgPlaceholderError from "./Placeholder/SvgError"
-import { MediaToggle } from "./MediaToggle"
-import SvgPlaceholderImage from "./Placeholder/SvgPlaceholderImage"
 
-import { MediaType } from "./MediaType"
+import { MediaType } from "@/components/Media/MediaType"
+import SvgPlaceholderDefault from "@/components/Media/Placeholder/SvgPlaceholderDefault"
+import { MaybeUndefined } from "@/components/Media/utils/maybe"
+import SvgPlaceholderError from "@/components/Media/Placeholder/SvgError"
+import { MediaToggle } from "@/components/Media/MediaToggle"
+import SvgPlaceholderImage from "@/components/Media/Placeholder/SvgPlaceholderImage"
+import { MediaSource } from "@/components/Media/MediaSource"
+
+import styles from "./MediaComponent.module.scss"
 
 export type SizeInfo = {
   width?: number
@@ -253,7 +254,7 @@ export const Media = ({
             setTimeout(() => iframe.dispatchEvent(new Event("load")), 3000)
             return
           }
-        } catch (e) {
+        } catch {
           // cross-origin access denied
           if (pollCount > 10) {
             setLoadingError(true)
@@ -490,6 +491,7 @@ const initEmbeds = (embedContent: HTMLDivElement | null) => {
     // to force each script to re-execute embed processing
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     window.instgrm && window.instgrm.Embeds.process()
     script.replaceWith(clone)
   })

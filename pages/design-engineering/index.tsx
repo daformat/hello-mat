@@ -1,8 +1,8 @@
 import Link from "next/link"
-import { VideoPlayer } from "../../components/VideoPlayer/VideoPlayer"
+import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer"
+import { PageMetas } from "@/components/PageMetas/PageMetas"
 
 import styles from "/styles/DesignEngineeringGallery.module.scss"
-import { PageMetas } from "../../components/PageMetas/PageMetas"
 
 const DesignEngineeringIndex = () => (
   <>

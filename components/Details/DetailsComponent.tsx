@@ -11,8 +11,8 @@ import React, {
   useState,
 } from "react"
 import detailsStyles from "./DetailsComponent.module.scss"
-import { useReducedMotion } from "../../hooks/useReducedMotion"
-import { isNotNull } from "../../utlis/nullable"
+import { useReducedMotion } from "@/hooks/useReducedMotion"
+import { isNotNull } from "@/utlis/nullable"
 
 export type DetailsComponentProps = {
   summary: ReactNode
@@ -346,7 +346,7 @@ const cancelAnimationsAndGetValues = (
     const effect = animation.effect
     if (effect) {
       if (animation.currentTime && !lastAnimationValues.elapsed) {
-        lastAnimationValues.elapsed = animation.currentTime
+        lastAnimationValues.elapsed = Number(animation.currentTime)
       }
       // get the last height / opacity for relevant animations
       if (effect instanceof KeyframeEffect) {

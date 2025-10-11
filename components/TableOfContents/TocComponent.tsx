@@ -1,4 +1,3 @@
-import styles from "./TocComponent.module.scss"
 import {
   createContext,
   MouseEventHandler,
@@ -7,6 +6,8 @@ import {
   useEffect,
   useState,
 } from "react"
+
+import styles from "./TocComponent.module.scss"
 
 const TocContext = createContext<{
   rootElement: HTMLElement | null

@@ -1,7 +1,7 @@
 import { ComponentProps } from "react"
+import Link from "next/link"
 
 import styles from "./NextCard.module.scss"
-import Link from "next/link"
 
 export const NextCard = ({
   className,

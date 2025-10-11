@@ -1,7 +1,7 @@
 import { PropsWithChildren, ReactNode, useEffect, useRef } from "react"
 
 import styles from "./Dock.module.scss"
-import { MaybeUndefined } from "../Media/utils/maybe"
+import { MaybeUndefined } from "@/components/Media/utils/maybe"
 
 // of course in a real app these shouldn't be global variables, but this is a demo
 let focusGuard: MaybeUndefined<HTMLElement> = undefined

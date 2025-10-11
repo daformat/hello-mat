@@ -1,10 +1,10 @@
 import { TableOfContents } from "components/TableOfContents/TocComponent"
 import { useEffect, useRef, useState } from "react"
-import { DetailsComponent } from "../../../components/Details/DetailsComponent"
-import { VideoPlayer } from "../../../components/VideoPlayer/VideoPlayer"
-import { NextCard } from "../../../components/Navigation/NextCard"
 import Link from "next/link"
-import { PageMetas } from "../../../components/PageMetas/PageMetas"
+import { DetailsComponent } from "@/components/Details/DetailsComponent"
+import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer"
+import { NextCard } from "@/components/Navigation/NextCard"
+import { PageMetas } from "@/components/PageMetas/PageMetas"
 
 const DetailsDisclosureComponent = () => (
   <>

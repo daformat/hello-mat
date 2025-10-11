@@ -1,4 +1,3 @@
-import { ButtonGroup } from "../../../components/ButtonGroup/ButtonGroup"
 import {
   FaAlignCenter,
   FaAlignLeft,
@@ -13,14 +12,15 @@ import {
   FaScissors,
   FaSliders,
 } from "react-icons/fa6"
-import { DropdownItem } from "../../../components/ButtonGroup/Dropdown/DropdownItem"
-import { Toolbar } from "../../../components/Toolbar/Toolbar"
-import { ToolbarButton } from "components/Toolbar/ToolbarButton"
-import { TableOfContents } from "components/TableOfContents/TocComponent"
-import { useEffect, useRef, useState } from "react"
-import { NextCard } from "../../../components/Navigation/NextCard"
 import Link from "next/link"
-import { PageMetas } from "../../../components/PageMetas/PageMetas"
+import { useEffect, useRef, useState } from "react"
+import { ButtonGroup } from "@/components/ButtonGroup/ButtonGroup"
+import { DropdownItem } from "@/components/ButtonGroup/Dropdown/DropdownItem"
+import { Toolbar } from "@/components/Toolbar/Toolbar"
+import { ToolbarButton } from "@/components/Toolbar/ToolbarButton"
+import { TableOfContents } from "@/components/TableOfContents/TocComponent"
+import { NextCard } from "@/components/Navigation/NextCard"
+import { PageMetas } from "@/components/PageMetas/PageMetas"
 
 const CollapsibleToolbarPage = () => {
   return (

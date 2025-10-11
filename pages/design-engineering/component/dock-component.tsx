@@ -1,15 +1,15 @@
 import { TableOfContents } from "components/TableOfContents/TocComponent"
 import { useEffect, useRef } from "react"
-import { NextCard } from "../../../components/Navigation/NextCard"
 import Link from "next/link"
-import { Dock, DockItem } from "../../../components/Dock/Dock"
+import { NextCard } from "@/components/Navigation/NextCard"
+import { Dock, DockItem } from "@/components/Dock/Dock"
 import {
   BeamIcon,
   BeamIconBeta,
   BeamIconDev,
   BeamIconNightly,
-} from "../../../components/Dock/BeamIcon"
-import { PageMetas } from "../../../components/PageMetas/PageMetas"
+} from "@/components/Dock/BeamIcon"
+import { PageMetas } from "@/components/PageMetas/PageMetas"
 
 const DockComponentPage = () => (
   <>

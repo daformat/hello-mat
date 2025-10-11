@@ -16,10 +16,12 @@ import {
   useRef,
   useState,
 } from "react"
-import { MaybeNull } from "../Media/utils/maybe"
-import { Dropdown } from "../ButtonGroup/Dropdown/Dropdown"
-import { DropdownItem } from "../ButtonGroup/Dropdown/DropdownItem"
-import { DropdownSeparator } from "../ButtonGroup/Dropdown/DropdownSeparator"
+
+import { Dropdown } from "@/components/ButtonGroup/Dropdown/Dropdown"
+import { DropdownItem } from "@/components/ButtonGroup/Dropdown/DropdownItem"
+import { DropdownSeparator } from "@/components/ButtonGroup/Dropdown/DropdownSeparator"
+import { MaybeNull } from "@/components/Media/utils/maybe"
+
 import styles from "./ButtonReveal.module.scss"
 
 const PublishContext = createContext<{

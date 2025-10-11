@@ -1,5 +1,5 @@
-import { StencilSvgAnimation } from "../components/StencilSvg/StencilSvg"
-import { PageMetas } from "../components/PageMetas/PageMetas"
+import { StencilSvgAnimation } from "@/components/StencilSvg/StencilSvg"
+import { PageMetas } from "@/components/PageMetas/PageMetas"
 
 const Homepage = () => {
   console.log(

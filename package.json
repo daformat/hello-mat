@@ -10,8 +10,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "pnpm lint:js && pnpm lint:css",
+    "lint": "pnpm lint:js && pnpm lint:ts && pnpm lint:css",
     "lint:fix": "pnpm lint:js:fix; pnpm  lint:css:fix",
+    "lint:ts": "tsc --noEmit",
     "lint:js": "next lint --dir .",
     "lint:js:fix": "next lint --fix --dir .",
     "lint:css": "stylelint \"**/*.{scss,css}\"",
@@ -40,10 +41,10 @@
     "@types/node": "18.7.23",
     "@types/react": "18.0.21",
     "@types/react-dom": "18.0.6",
-    "@typescript-eslint/eslint-plugin": "^5.38.1",
-    "@typescript-eslint/parser": "^5.38.1",
+    "@typescript-eslint/eslint-plugin": "^8.46.0",
+    "@typescript-eslint/parser": "^8.46.0",
     "critters": "^0.0.16",
-    "eslint": "8.24.0",
+    "eslint": "9.37.0",
     "eslint-config-next": "^15.5.4",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-testing-library": "^5.7.0",
@@ -57,7 +58,7 @@
     "stylelint": "^14.13.0",
     "stylelint-config-prettier": "^9.0.3",
     "stylelint-config-sass-guidelines": "^9.0.1",
-    "typescript": "4.7.4"
+    "typescript": "5.9.3"
   },
   "packageManager": "pnpm@10.4.0+sha512.6b849d0787d97f8f4e1f03a9b8ff8f038e79e153d6f11ae539ae7c435ff9e796df6a862c991502695c7f9e8fac8aeafc1ac5a8dab47e36148d183832d886dd52",
   "pnpm": {

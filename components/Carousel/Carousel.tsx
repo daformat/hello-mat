@@ -122,7 +122,12 @@ const CarouselViewport = ({
         `${remainingBackwards}px`
       )
     }
-  }, [setScrollsBackwards, setScrollsForwards])
+  }, [
+    setRemainingBackwards,
+    setRemainingForwards,
+    setScrollsBackwards,
+    setScrollsForwards,
+  ])
 
   useLayoutEffect(() => {
     const container = containerRef.current
@@ -221,7 +226,7 @@ const CarouselViewport = ({
         } else {
           snapItem = prevItem ?? nextItem
         }
-        let delta = snapItem
+        const delta = snapItem
           ? snapItem.offsetLeft - containerOffsetLeft - scrollLeft
           : 0
         container.scrollBy({
@@ -415,6 +420,7 @@ const CarouselPrevPage = ({ children }: PropsWithChildren) => {
 
 const isIOSSafari = (): boolean => {
   const ua = navigator.userAgent
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream
 }
 

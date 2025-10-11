@@ -1,16 +1,10 @@
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react"
 import styles from "./StencilSvg.module.scss"
-import {
-  plotCircle,
-  Position,
-  translate,
-  vec,
-  Vector,
-} from "../../utlis/geometry"
-import { usePointer } from "../../hooks/usePointer"
-import { globalWindowValue } from "../../hooks/useEventListener"
 import Link from "next/link"
-import { isNonNullable } from "../../utlis/nullable"
+import { plotCircle, Position, translate, vec, Vector } from "@/utlis/geometry"
+import { usePointer } from "@/hooks/usePointer"
+import { globalWindowValue } from "@/hooks/useEventListener"
+import { isNonNullable } from "@/utlis/nullable"
 
 const paths = [
   {

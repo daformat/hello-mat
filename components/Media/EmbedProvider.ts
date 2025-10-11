@@ -1,10 +1,10 @@
 import { ComponentType } from "react"
-import SvgPlaceholderYoutube from "./Placeholder/SvgPlaceholderYoutube"
-import SvgPlaceholderSpotify from "./Placeholder/SvgPlaceholderSpotify"
-import { ResizeType } from "./EmbedResult"
-import SvgPlaceholderFlickr from "./Placeholder/SvgPlaceholderFlickr"
-import SvgPlaceholderTwitter from "./Placeholder/SvgPlaceholderTwitter"
-import { SizeInfo } from "./MediaComponent"
+import { ResizeType } from "@/components/Media/EmbedResult"
+import { SizeInfo } from "@/components/Media/MediaComponent"
+import SvgPlaceholderYoutube from "@/components/Media/Placeholder/SvgPlaceholderYoutube"
+import SvgPlaceholderSpotify from "@/components/Media/Placeholder/SvgPlaceholderSpotify"
+import SvgPlaceholderFlickr from "@/components/Media/Placeholder/SvgPlaceholderFlickr"
+import SvgPlaceholderTwitter from "@/components/Media/Placeholder/SvgPlaceholderTwitter"
 
 export type EmbedProvider = {
   name: string

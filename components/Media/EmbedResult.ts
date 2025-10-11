@@ -1,4 +1,4 @@
-import { MaybeNull } from "./utils/maybe"
+import { MaybeNull } from "@/components/Media/utils/maybe"
 
 export enum RecognizedContentType {
   video = "video",

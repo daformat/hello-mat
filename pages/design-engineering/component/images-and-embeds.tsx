@@ -1,10 +1,10 @@
 import { TableOfContents } from "components/TableOfContents/TocComponent"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
-import { EmbedComp, ImageComp } from "../../../components/Media/MediaComponent"
-import { VideoPlayer } from "../../../components/VideoPlayer/VideoPlayer"
-import { NextCard } from "../../../components/Navigation/NextCard"
 import Link from "next/link"
-import { PageMetas } from "../../../components/PageMetas/PageMetas"
+import { EmbedComp, ImageComp } from "@/components/Media/MediaComponent"
+import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer"
+import { NextCard } from "@/components/Navigation/NextCard"
+import { PageMetas } from "@/components/PageMetas/PageMetas"
 
 const ImageAndEmbedsPage = () => (
   <>

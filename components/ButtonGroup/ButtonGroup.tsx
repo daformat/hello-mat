@@ -5,13 +5,10 @@ import React, {
   useRef,
   useState,
 } from "react"
-import { Dropdown } from "./Dropdown/Dropdown"
-import {
-  IterableRefsMapKey,
-  useIterableRefs,
-} from "../../hooks/useIterableRefs"
+import { IterableRefsMapKey, useIterableRefs } from "@/hooks/useIterableRefs"
 
 import styles from "./ButtonGroup.module.scss"
+import { Dropdown } from "@/components/ButtonGroup/Dropdown/Dropdown"
 
 export type NotCollapsibleButtonGroupButton = {
   id: string
@@ -117,7 +114,7 @@ export const ButtonGroup = ({
           checkAndUpdateOverflow(
             id,
             item,
-            containerBbox.width - dropdownElement.offsetWidth ?? 0
+            containerBbox.width - (dropdownElement.offsetWidth ?? 0)
           )
         })
         setOverflows(overflowingItemsSet.size)
@@ -188,36 +185,3 @@ export const ButtonGroup = ({
     </div>
   )
 }
-
-// const StyledButtonGroup = styled.div`
-//   display: flex;
-//   flex-direction: row;
-//   flex-shrink: 1;
-//   gap: 2px;
-//   min-width: 33px;
-//   overflow: hidden;
-//   position: relative;
-// `
-//
-// const ButtonGroupButton = styled.div`
-//   transition: transform 0.15s ease-in-out, opacity 0.15s ease-in-out;
-// `
-//
-// type ButtonGroupDropdownProps = { visible: boolean }
-//
-// const ButtonGroupDropdown = styled.div<ButtonGroupDropdownProps>`
-//   --animation-start-translate: 200%;
-//
-//   ${({ visible }) =>
-//     visible
-//       ? css`
-//           animation: ${fadeIn} 0.25s ease-in-out, ${scaleIn} 0.25s ease-in-out,
-//             ${translateIn} 0.25s ease-in-out;
-//         `
-//       : ""};
-//   bottom: 0;
-//   position: absolute;
-//   right: 0;
-//   top: 0;
-//   visibility: ${({ visible }) => (visible ? "visible" : "hidden")};
-// `

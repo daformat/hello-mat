@@ -1,8 +1,9 @@
 import Head from "next/head"
 import Link from "next/link"
 import { ReactNode } from "react"
+import { StartupImages } from "@/components/layout/StartupImages"
+
 import styles from "./Layout.module.scss"
-import { StartupImages } from "./StartupImages"
 
 export const Layout = ({ children }: { children: ReactNode }) => (
   <>

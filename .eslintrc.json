@@ -9,7 +9,7 @@
   "ignorePatterns": ["coverage/*"],
   "rules": {
     "@next/next/no-img-element": "off",
-    "@typescript-eslint/ban-types": "warn",
+    "@typescript-eslint/no-restricted-types": "warn",
     "@typescript-eslint/no-empty-interface": "off",
     "@typescript-eslint/no-var-requires": "warn",
     "@typescript-eslint/no-this-alias": "off",

@@ -1,9 +1,9 @@
-import { PublishSplitButton } from "../../../components/PublishButton/PublishButton"
-import { TableOfContents } from "../../../components/TableOfContents/TocComponent"
 import { useEffect, useRef, useState } from "react"
-import { NextCard } from "../../../components/Navigation/NextCard"
 import Link from "next/link"
-import { PageMetas } from "../../../components/PageMetas/PageMetas"
+import { PublishSplitButton } from "@/components/PublishButton/PublishButton"
+import { TableOfContents } from "@/components/TableOfContents/TocComponent"
+import { NextCard } from "@/components/Navigation/NextCard"
+import { PageMetas } from "@/components/PageMetas/PageMetas"
 
 const PublishButtonPage = () => {
   return (

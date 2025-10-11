@@ -1,8 +1,8 @@
-import "../styles/globals.scss"
 import type { AppProps } from "next/app"
-import { Layout } from "../components/layout/Layout"
 import { useEffect } from "react"
 import { DefaultSeo } from "next-seo"
+import { Layout } from "@/components/layout/Layout"
+import "../styles/globals.scss"
 
 function HelloMat({ Component, pageProps }: AppProps) {
   // Listen to screen orientation changes
@@ -38,16 +38,18 @@ function HelloMat({ Component, pageProps }: AppProps) {
   useEffect(() => {
     if (window.visualViewport) {
       const handleViewportChange = () => {
-        const height = window.visualViewport.height
-        document.documentElement.style.setProperty(
-          "--viewport-height",
-          `${height}px`
-        )
+        const height = window.visualViewport?.height
+        if (height) {
+          document.documentElement.style.setProperty(
+            "--viewport-height",
+            `${height}px`
+          )
+        }
       }
       handleViewportChange()
       window.visualViewport.addEventListener("resize", handleViewportChange)
       return () => {
-        window.visualViewport.removeEventListener(
+        window.visualViewport?.removeEventListener(
           "resize",
           handleViewportChange
         )
