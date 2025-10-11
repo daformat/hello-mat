@@ -53,27 +53,82 @@ const CarouselComponentPageContent = () => {
           }}
         >
           <Carousel.Root>
-            hello
+            <Carousel.PrevPage>&lt;</Carousel.PrevPage>
+            <Carousel.NextPage>&gt;</Carousel.NextPage>
             <Carousel.Viewport>
               <Carousel.Content>
-                <Carousel.Item>Item</Carousel.Item>
-                <Carousel.Item>Item</Carousel.Item>
-                <Carousel.Item>Item</Carousel.Item>
-                <Carousel.Item>Item</Carousel.Item>
-                <Carousel.Item>Item</Carousel.Item>
-                <Carousel.Item>Item</Carousel.Item>
-                <Carousel.Item>Item</Carousel.Item>
-                <Carousel.Item>Item</Carousel.Item>
-                <Carousel.Item>Item</Carousel.Item>
-                <Carousel.Item>Item</Carousel.Item>
-                <Carousel.Item>Item</Carousel.Item>
-                <Carousel.Item>Item</Carousel.Item>
-                <Carousel.Item>Item</Carousel.Item>
-                <Carousel.Item>Item</Carousel.Item>
-                <Carousel.Item>Item</Carousel.Item>
-                <Carousel.Item>Item</Carousel.Item>
-                <Carousel.Item>Item</Carousel.Item>
-                <Carousel.Item>Item</Carousel.Item>
+                <Carousel.Item>
+                  Item with a long name and some more just to make sure there is
+                  enough scroll 1
+                </Carousel.Item>
+                <Carousel.Item>
+                  Item with a long name and some more just to make sure there is
+                  enough scroll 2
+                </Carousel.Item>
+                <Carousel.Item>
+                  Item with a long name and some more just to make sure there is
+                  enough scroll 3
+                </Carousel.Item>
+                <Carousel.Item>
+                  Item with a long name and some more just to make sure there is
+                  enough scroll 4
+                </Carousel.Item>
+                <Carousel.Item>
+                  Item with a long name and some more just to make sure there is
+                  enough scroll 5
+                </Carousel.Item>
+                <Carousel.Item>
+                  Item with a long name and some more just to make sure there is
+                  enough scroll 6
+                </Carousel.Item>
+                <Carousel.Item>
+                  Item with a long name and some more just to make sure there is
+                  enough scroll 7
+                </Carousel.Item>
+                <Carousel.Item>
+                  Item with a long name and some more just to make sure there is
+                  enough scroll 8
+                </Carousel.Item>
+                <Carousel.Item>
+                  Item with a long name and some more just to make sure there is
+                  enough scroll 9
+                </Carousel.Item>
+                <Carousel.Item>
+                  Item with a long name and some more just to make sure there is
+                  enough scroll 10
+                </Carousel.Item>
+                <Carousel.Item>
+                  Item with a long name and some more just to make sure there is
+                  enough scroll 11
+                </Carousel.Item>
+                <Carousel.Item>
+                  Item with a long name and some more just to make sure there is
+                  enough scroll 12
+                </Carousel.Item>
+                <Carousel.Item>
+                  Item with a long name and some more just to make sure there is
+                  enough scroll 13
+                </Carousel.Item>
+                <Carousel.Item>
+                  Item with a long name and some more just to make sure there is
+                  enough scroll 14
+                </Carousel.Item>
+                <Carousel.Item>
+                  Item with a long name and some more just to make sure there is
+                  enough scroll 15
+                </Carousel.Item>
+                <Carousel.Item>
+                  Item with a long name and some more just to make sure there is
+                  enough scroll 16
+                </Carousel.Item>
+                <Carousel.Item>
+                  Item with a long name and some more just to make sure there is
+                  enough scroll 17
+                </Carousel.Item>
+                <Carousel.Item>
+                  Item with a long name and some more just to make sure there is
+                  enough scroll 18
+                </Carousel.Item>
               </Carousel.Content>
             </Carousel.Viewport>
           </Carousel.Root>

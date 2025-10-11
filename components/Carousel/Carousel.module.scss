@@ -7,6 +7,7 @@
 .carousel_viewport {
   overflow: scroll;
   -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scroll-snap-type: x mandatory;
   scrollbar-color: transparent transparent;
   scrollbar-width: none; /* Firefox, Safari 18.2+, Chromium 121+ */
 
@@ -33,7 +34,10 @@
   gap: 8px;
   justify-content: flex-start;
   padding: 7px;
+  scroll-snap-align: start;
   transition: mixins.theme-transition(color, background-color, box-shadow);
+  user-select: none;
+  white-space: nowrap;
 
   @include mixins.remove-transition;
 }
