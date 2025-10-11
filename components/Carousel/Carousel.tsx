@@ -44,6 +44,9 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
 
   const handlePointerDown = (event: React.PointerEvent) => {
     console.log("down")
+    if (event.pointerType !== "mouse") {
+      return
+    }
     event.currentTarget.setPointerCapture(event.pointerId)
     // stateRef.current.isDown = true
     // stateRef.current.downPosition = { x: event.clientX, y: event.clientY }
@@ -63,12 +66,13 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
     state.scrollLeft = container?.scrollLeft ?? 0
     state.lastTime = Date.now()
     state.velocityX = 0
+    event.preventDefault()
   }
 
   const handlePointerMove = (event: React.PointerEvent) => {
     const container = containerRef.current
     const state = scrollStateRef.current
-    if (!state.isDragging || !container) {
+    if (!state.isDragging || !container || event.pointerType !== "mouse") {
       return
     }
 
@@ -92,17 +96,28 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
 
   const handlePointerUp = useCallback(
     (event: React.PointerEvent | PointerEvent) => {
+      console.log("up")
+      if (event.pointerType !== "mouse") {
+        return
+      }
       const container = containerRef.current
-      container?.releasePointerCapture(event.pointerId)
+      if ("pointerId" in event) {
+        container?.releasePointerCapture(event.pointerId)
+      }
       const state = scrollStateRef.current
       if (!state.isDragging || !container) {
+        console.log("up return")
         return
       }
       state.isDragging = false
 
       // Start momentum animation if velocity is significant
       if (Math.abs(state.velocityX) > 0.1) {
+        console.log("momentum", state.velocityX)
         startMomentumAnimation()
+      } else {
+        console.log("not momentum", state.velocityX)
+        container.style.scrollSnapType = ""
       }
     },
     []
