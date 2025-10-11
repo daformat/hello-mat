@@ -1,19 +1,26 @@
 import { PropsWithChildren } from "react"
 
-import styles from "./carousel.module.scss"
+import styles from "./Carousel.module.scss"
 
-export const Carousel = ({ children }: PropsWithChildren) => {
+const CarouselRoot = ({ children }: PropsWithChildren) => {
   return <div className={styles.carousel}>{children}</div>
 }
 
-export const CarouselViewport = ({ children }: PropsWithChildren) => {
+const CarouselViewport = ({ children }: PropsWithChildren) => {
   return <div className={styles.carousel_viewport}>{children}</div>
 }
 
-export const CarouselContent = ({ children }: PropsWithChildren) => {
+const CarouselContent = ({ children }: PropsWithChildren) => {
   return <div className={styles.carousel_content}>{children}</div>
 }
 
-export const CarouselItem = ({ children }: PropsWithChildren) => {
+const CarouselItem = ({ children }: PropsWithChildren) => {
   return <div className={styles.carousel_item}>{children}</div>
+}
+
+export const Carousel = {
+  Root: CarouselRoot,
+  Viewport: CarouselViewport,
+  Content: CarouselContent,
+  Item: CarouselItem,
 }

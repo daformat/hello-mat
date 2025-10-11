@@ -1,14 +1,9 @@
-import { TableOfContents } from "components/TableOfContents/TocComponent"
+import { TableOfContents } from "@/components/TableOfContents/TocComponent"
 import { useEffect, useRef } from "react"
-import { NextCard } from "../../../components/Navigation/NextCard"
+import { NextCard } from "@/components/Navigation/NextCard"
 import Link from "next/link"
-import { PageMetas } from "../../../components/PageMetas/PageMetas"
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselViewport,
-} from "../../../components/Carousel/Carousel"
+import { PageMetas } from "@/components/PageMetas/PageMetas"
+import { Carousel } from "@/components/Carousel/Carousel"
 
 const CarouselComponentPage = () => (
   <>
@@ -57,30 +52,31 @@ const CarouselComponentPageContent = () => {
             padding: "128px 16px",
           }}
         >
-          <Carousel>
-            <CarouselViewport>
-              <CarouselContent>
-                <CarouselItem>Item</CarouselItem>
-                <CarouselItem>Item</CarouselItem>
-                <CarouselItem>Item</CarouselItem>
-                <CarouselItem>Item</CarouselItem>
-                <CarouselItem>Item</CarouselItem>
-                <CarouselItem>Item</CarouselItem>
-                <CarouselItem>Item</CarouselItem>
-                <CarouselItem>Item</CarouselItem>
-                <CarouselItem>Item</CarouselItem>
-                <CarouselItem>Item</CarouselItem>
-                <CarouselItem>Item</CarouselItem>
-                <CarouselItem>Item</CarouselItem>
-                <CarouselItem>Item</CarouselItem>
-                <CarouselItem>Item</CarouselItem>
-                <CarouselItem>Item</CarouselItem>
-                <CarouselItem>Item</CarouselItem>
-                <CarouselItem>Item</CarouselItem>
-                <CarouselItem>Item</CarouselItem>
-              </CarouselContent>
-            </CarouselViewport>
-          </Carousel>
+          <Carousel.Root>
+            hello
+            <Carousel.Viewport>
+              <Carousel.Content>
+                <Carousel.Item>Item</Carousel.Item>
+                <Carousel.Item>Item</Carousel.Item>
+                <Carousel.Item>Item</Carousel.Item>
+                <Carousel.Item>Item</Carousel.Item>
+                <Carousel.Item>Item</Carousel.Item>
+                <Carousel.Item>Item</Carousel.Item>
+                <Carousel.Item>Item</Carousel.Item>
+                <Carousel.Item>Item</Carousel.Item>
+                <Carousel.Item>Item</Carousel.Item>
+                <Carousel.Item>Item</Carousel.Item>
+                <Carousel.Item>Item</Carousel.Item>
+                <Carousel.Item>Item</Carousel.Item>
+                <Carousel.Item>Item</Carousel.Item>
+                <Carousel.Item>Item</Carousel.Item>
+                <Carousel.Item>Item</Carousel.Item>
+                <Carousel.Item>Item</Carousel.Item>
+                <Carousel.Item>Item</Carousel.Item>
+                <Carousel.Item>Item</Carousel.Item>
+              </Carousel.Content>
+            </Carousel.Viewport>
+          </Carousel.Root>
         </div>
         <NextCard href={"/design-engineering/component/table-of-contents"}>
           Table of contents
