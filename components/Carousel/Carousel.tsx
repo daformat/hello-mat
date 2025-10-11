@@ -20,18 +20,26 @@ const CarouselContext = createContext<{
   scrollsForwards: boolean
   setScrollsBackwards: (scrollsBackwards: boolean) => void
   setScrollsForwards: (scrollsForwards: boolean) => void
+  remainingForwards?: number
+  remainingBackwards?: number
+  setRemainingForwards: (remainingForwards: number) => void
+  setRemainingBackwards: (remainingBackwards: number) => void
 }>({
   setRef: () => {},
   setScrollsBackwards: () => {},
   setScrollsForwards: () => {},
   scrollsBackwards: false,
   scrollsForwards: false,
+  setRemainingForwards: () => {},
+  setRemainingBackwards: () => {},
 })
 
 const CarouselRoot = ({ children }: PropsWithChildren) => {
   const [ref, setRef] = useState<MaybeNull<RefObject<HTMLElement>>>(null)
   const [scrollsBackwards, setScrollsBackwards] = useState(false)
   const [scrollsForwards, setScrollsForwards] = useState(false)
+  const [remainingForwards, setRemainingForwards] = useState(0)
+  const [remainingBackwards, setRemainingBackwards] = useState(0)
   return (
     <CarouselContext.Provider
       value={{
@@ -41,6 +49,10 @@ const CarouselRoot = ({ children }: PropsWithChildren) => {
         scrollsForwards,
         setScrollsBackwards,
         setScrollsForwards,
+        remainingForwards,
+        remainingBackwards,
+        setRemainingForwards,
+        setRemainingBackwards,
       }}
     >
       <div className={styles.carousel}>{children}</div>
@@ -52,8 +64,15 @@ const CarouselViewport = ({
   snapsOnDrag,
   children,
 }: PropsWithChildren<{ snapsOnDrag?: boolean }>) => {
-  const { setRef, setScrollsBackwards, setScrollsForwards } =
-    useContext(CarouselContext)
+  const {
+    setRef,
+    setScrollsBackwards,
+    setScrollsForwards,
+    scrollsForwards,
+    scrollsBackwards,
+    setRemainingForwards,
+    setRemainingBackwards,
+  } = useContext(CarouselContext)
   const containerRef = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => setRef(containerRef))
 
@@ -69,21 +88,39 @@ const CarouselViewport = ({
 
   const updateScrollState = useCallback(() => {
     const container = containerRef.current
-    if (!container || container.scrollWidth <= container.offsetWidth) {
+    const containerScrollWidth = container?.scrollWidth ?? 0
+    const containerOffsetWidth = container?.offsetWidth ?? 0
+    const containerScrollLeft = container?.scrollLeft ?? 0
+    if (!container || containerScrollWidth <= containerOffsetWidth) {
       setScrollsBackwards(false)
       setScrollsForwards(false)
-    } else if (container.scrollLeft <= 0) {
+    } else if (containerScrollLeft <= 0) {
       setScrollsBackwards(false)
       setScrollsForwards(true)
     } else if (
-      Math.ceil(container.scrollLeft) <
-      container.scrollWidth - container.offsetWidth
+      Math.ceil(containerScrollLeft) <
+      containerScrollWidth - containerOffsetWidth
     ) {
       setScrollsBackwards(true)
       setScrollsForwards(true)
     } else {
       setScrollsBackwards(true)
       setScrollsForwards(false)
+    }
+    if (container) {
+      const remainingBackwards = containerScrollLeft
+      const remainingForwards =
+        containerScrollWidth - containerScrollLeft - containerOffsetWidth
+      setRemainingForwards(remainingForwards)
+      setRemainingBackwards(remainingBackwards)
+      container.style.setProperty(
+        "--remaining-forwards",
+        `${remainingForwards}px`
+      )
+      container.style.setProperty(
+        "--remaining-backwards",
+        `${remainingBackwards}px`
+      )
     }
   }, [setScrollsBackwards, setScrollsForwards])
 
@@ -268,6 +305,15 @@ const CarouselViewport = ({
       onWheel={(event) => {
         event.currentTarget.style.scrollSnapType = ""
       }}
+      data-can-scroll={
+        scrollsForwards && scrollsBackwards
+          ? "both"
+          : scrollsForwards
+          ? "forwards"
+          : scrollsBackwards
+          ? "backwards"
+          : "none"
+      }
     >
       {children}
     </div>

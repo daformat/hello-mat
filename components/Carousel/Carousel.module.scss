@@ -5,6 +5,16 @@
 }
 
 .carousel_viewport {
+  --mask-size: 32px;
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 calc(min(var(--remaining-backwards), var(--mask-size))),
+    #000 calc(100% - min(var(--remaining-forwards), var(--mask-size))),
+    transparent 100%
+  );
+  mask-size: 100% 100%;
+
   overflow: scroll;
   -ms-overflow-style: none; /* Internet Explorer 10+ */
   scroll-snap-type: x mandatory;
@@ -20,6 +30,7 @@
   display: flex;
   flex-direction: row;
   gap: 16px;
+  padding: 16px 0;
 }
 
 .carousel_item {
