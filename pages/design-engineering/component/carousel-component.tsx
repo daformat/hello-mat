@@ -67,53 +67,95 @@ const CarouselComponentPageContent = () => {
             <Carousel.Viewport>
               <Carousel.Content>
                 <Carousel.Item>
-                  <img
-                    src="/media/hello-mat-light.png"
-                    alt=""
-                    style={{ minWidth: "30vw" }}
-                  />
+                  <picture style={{ fontSize: 0 }}>
+                    <source
+                      media="(prefers-color-scheme: dark)"
+                      srcSet="/media/hello-mat-dark.png"
+                    />
+                    <img
+                      src="/media/hello-mat-light.png"
+                      alt=""
+                      style={{ minWidth: "min(30vw, 300px)" }}
+                    />
+                  </picture>
                 </Carousel.Item>
                 <Carousel.Item>
-                  <img
-                    src="/media/design-engineering/toc/og-toc-light.png"
-                    alt=""
-                    style={{ minWidth: "30vw" }}
-                  />
+                  <picture style={{ fontSize: 0 }}>
+                    <source
+                      media="(prefers-color-scheme: dark)"
+                      srcSet="/media/design-engineering/toc/og-toc-dark.png"
+                    />
+                    <img
+                      src="/media/design-engineering/toc/og-toc-light.png"
+                      alt=""
+                      style={{ minWidth: "min(30vw, 300px)" }}
+                    />
+                  </picture>
                 </Carousel.Item>
                 <Carousel.Item>
-                  <img
-                    src="/media/design-engineering/details/og-details-light.png"
-                    alt=""
-                    style={{ minWidth: "30vw" }}
-                  />
+                  <picture style={{ fontSize: 0 }}>
+                    <source
+                      media="(prefers-color-scheme: dark)"
+                      srcSet="/media/design-engineering/details/og-details-dark.png"
+                    />
+                    <img
+                      src="/media/design-engineering/details/og-details-light.png"
+                      alt=""
+                      style={{ minWidth: "min(30vw, 300px)" }}
+                    />
+                  </picture>
                 </Carousel.Item>
                 <Carousel.Item>
-                  <img
-                    src="/media/design-engineering/images-and-embeds/og-media-light.png"
-                    alt=""
-                    style={{ minWidth: "30vw" }}
-                  />
+                  <picture style={{ fontSize: 0 }}>
+                    <source
+                      media="(prefers-color-scheme: dark)"
+                      srcSet="/media/design-engineering/images-and-embeds/og-media-dark.png"
+                    />
+                    <img
+                      src="/media/design-engineering/images-and-embeds/og-media-light.png"
+                      alt=""
+                      style={{ minWidth: "min(30vw, 300px)" }}
+                    />
+                  </picture>
                 </Carousel.Item>
                 <Carousel.Item>
-                  <img
-                    src="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png"
-                    alt=""
-                    style={{ minWidth: "30vw" }}
-                  />
+                  <picture style={{ fontSize: 0 }}>
+                    <source
+                      media="(prefers-color-scheme: dark)"
+                      srcSet="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-dark.png"
+                    />
+                    <img
+                      src="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png"
+                      alt=""
+                      style={{ minWidth: "min(30vw, 300px)" }}
+                    />
+                  </picture>
                 </Carousel.Item>
                 <Carousel.Item>
-                  <img
-                    src="/media/design-engineering/publish-button/og-publish-button-light.png"
-                    alt=""
-                    style={{ minWidth: "30vw" }}
-                  />
+                  <picture style={{ fontSize: 0 }}>
+                    <source
+                      media="(prefers-color-scheme: dark)"
+                      srcSet="/media/design-engineering/publish-button/og-publish-button-dark.png"
+                    />
+                    <img
+                      src="/media/design-engineering/publish-button/og-publish-button-light.png"
+                      alt=""
+                      style={{ minWidth: "min(30vw, 300px)" }}
+                    />
+                  </picture>
                 </Carousel.Item>
                 <Carousel.Item>
-                  <img
-                    src="/media/design-engineering/dock/og-dock-light.png"
-                    alt=""
-                    style={{ minWidth: "30vw" }}
-                  />
+                  <picture style={{ fontSize: 0 }}>
+                    <source
+                      media="(prefers-color-scheme: dark)"
+                      srcSet="/media/design-engineering/dock/og-dock-dark.png"
+                    />
+                    <img
+                      src="/media/design-engineering/dock/og-dock-light.png"
+                      alt=""
+                      style={{ minWidth: "min(30vw, 300px)" }}
+                    />
+                  </picture>
                 </Carousel.Item>
               </Carousel.Content>
             </Carousel.Viewport>

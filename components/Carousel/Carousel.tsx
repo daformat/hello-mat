@@ -1,5 +1,6 @@
 import {
   createContext,
+  CSSProperties,
   PropsWithChildren,
   RefObject,
   useCallback,
@@ -352,16 +353,20 @@ const CarouselNextPage = ({ children }: PropsWithChildren) => {
       const currentScroll = container.scrollLeft
       const containerOffsetLeft = container.offsetLeft
       const containerOffsetWidth = container.offsetWidth
-      const nextItem =
-        items.find(
-          (child) =>
-            child.offsetLeft + child.offsetWidth >
-            currentScroll + containerOffsetWidth + containerOffsetLeft
-        ) ?? items[items.length - 1]
+      const isNextItem = (item: HTMLElement) => {
+        return (
+          item.offsetLeft - containerOffsetLeft + item.offsetWidth >
+          Math.ceil(currentScroll + containerOffsetWidth)
+        )
+      }
+      const nextItem = items.find(isNextItem) ?? items[items.length - 1]
+      const [_, inline] = getScrollSnapAlign(getComputedStyle(nextItem))
       nextItem?.scrollIntoView({
         behavior: "smooth",
         block: "nearest",
-        inline: "start",
+        inline: ["start", "center", "end"].includes(inline ?? "")
+          ? (inline as ScrollLogicalPosition)
+          : "start",
       })
     }
   }
@@ -391,21 +396,34 @@ const CarouselPrevPage = ({ children }: PropsWithChildren) => {
       const containerOffsetLeft = container.offsetLeft
       const containerOffsetWidth = container.offsetWidth
       const currentScroll = container.scrollLeft
-      const prevItem = items.find(
-        (child) =>
-          currentScroll - containerOffsetWidth + containerOffsetLeft <
-          child.offsetLeft
-      )
-      prevItem?.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "start",
-      })
+      const isPrevItem = (item: HTMLElement) => {
+        const [, snapAlignInline] = getScrollSnapAlign(getComputedStyle(item))
+        return snapAlignInline === "start"
+          ? item.offsetLeft - containerOffsetLeft - item.offsetWidth <
+              currentScroll - containerOffsetWidth
+          : snapAlignInline === "center"
+          ? currentScroll > item.offsetLeft - containerOffsetLeft
+          : item.offsetLeft - containerOffsetLeft - item.offsetWidth <
+            currentScroll - containerOffsetWidth
+      }
+      const prevItems = items.filter(isPrevItem)
+      const prevItem = prevItems[prevItems.length - 1] ?? items[0]
+      if (prevItem) {
+        const [_, inline] = getScrollSnapAlign(getComputedStyle(prevItem))
+        prevItem?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: ["start", "center", "end"].includes(inline ?? "")
+            ? (inline as ScrollLogicalPosition)
+            : "start",
+        })
+      }
     }
   }
 
   return (
     <button
+      // ref={ref}
       className={styles.button}
       onClick={handleScrollToPrev}
       disabled={!scrollsBackwards}
@@ -427,6 +445,22 @@ const isDesktopSafari = () => {
   const isDesktop = !/iPhone|iPad|iPod|Android/i.test(ua)
 
   return isSafari && isDesktop
+}
+
+const getScrollSnapAlign = (computedStyle: MaybeNull<CSSStyleDeclaration>) => {
+  if (computedStyle) {
+    const scrollSnapAlign = computedStyle
+      .getPropertyValue("scroll-snap-align")
+      .split(" ")
+    console.log(scrollSnapAlign)
+    const [block, inline] = scrollSnapAlign
+    if (block && inline) {
+      return [block, inline] as CSSProperties["scrollSnapAlign"][]
+    } else if (block) {
+      return [block, block] as CSSProperties["scrollSnapAlign"][]
+    }
+  }
+  return [] as CSSProperties["scrollSnapAlign"][]
 }
 
 export const Carousel = {

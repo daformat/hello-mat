@@ -5,7 +5,7 @@
 }
 
 .carousel_viewport {
-  --mask-size: 24px;
+  --mask-size: 64px;
   mask-image: linear-gradient(
     to right,
     transparent,
@@ -45,10 +45,14 @@
   gap: 8px;
   justify-content: flex-start;
   padding: 7px;
-  scroll-snap-align: start;
+  scroll-snap-align: center;
   transition: mixins.theme-transition(color, background-color, box-shadow);
   user-select: none;
   white-space: nowrap;
+
+  img {
+    border-radius: 7px;
+  }
 
   @include mixins.remove-transition;
 }
