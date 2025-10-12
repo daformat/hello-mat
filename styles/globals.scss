@@ -299,3 +299,151 @@ kbd {
     }
   }
 }
+
+input[type="range"] {
+  --slider-track-shadow: 0 1px 12px var(--color-shadow-1),
+    inset 0 0 0 0.5px var(--color-border-1);
+  --slider-track-bg: var(--color-slider-bg);
+  --slider-track-bg-image: linear-gradient(
+    to right,
+    var(--color-slider-value) 0%,
+    var(--color-slider-value) var(--value, 0%),
+    transparent var(--value, 0%),
+    transparent 100%
+  );
+  --slider-track-bg-focus: var(--color-slider-bg);
+  --slider-track-bg-image-focus: linear-gradient(
+    to right,
+    var(--color-slider-value) 0%,
+    var(--color-slider-value) var(--value, 0%),
+    transparent var(--value, 0%),
+    transparent 100%
+  );
+  --slider-track-height: 5px;
+  --slider-track-radius: 25px;
+  --slider-thumb-shadow: 0 1px 12px var(--color-shadow-1),
+    inset 0 0 0 0.5px var(--color-border-1-hover);
+  --slider-thumb-size: 18px;
+  --slider-thumb-radius: 15px;
+  --slider-thumb-bg: var(--color-toolbar-background);
+  --slider-thumb-bg-focus: var(--color-toolbar-background);
+}
+
+input[type="range"] {
+  background-color: transparent;
+  // stylelint-disable-next-line
+  -webkit-appearance: none;
+  //width: 90%;
+  //max-width: 42em;
+  margin: 0;
+}
+
+input[type="range"]:focus {
+  outline: none;
+}
+
+input[type="range"]::-moz-focus-outer {
+  border: 0;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  background-color: var(--slider-track-bg);
+  background-image: var(--slider-track-bg-image);
+  border-radius: var(--slider-track-radius);
+  box-shadow: var(--slider-track-shadow);
+  cursor: pointer;
+  height: var(--slider-track-height);
+  width: 100%;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  background: var(--slider-thumb-bg);
+  border-radius: var(--slider-thumb-radius);
+  box-shadow: var(--slider-thumb-shadow);
+  cursor: pointer;
+  height: var(--slider-thumb-size);
+  margin-top: -6.7px;
+  width: var(--slider-thumb-size);
+  // stylelint-disable-next-line
+  -webkit-appearance: none;
+}
+
+input[type="range"]:focus::-webkit-slider-runnable-track {
+  background-color: var(--slider-track-bg-focus);
+  background-image: var(--slider-track-bg-image-focus);
+}
+
+input[type="range"]:focus::-webkit-slider-thumb {
+  background-color: var(--slider-thumb-bg-focus);
+}
+
+input[type="range"]::-moz-range-track {
+  background-color: var(--slider-track-bg);
+  background-image: var(--slider-track-bg-image);
+  border-radius: var(--slider-track-radius);
+  box-shadow: var(--slider-track-shadow);
+  cursor: pointer;
+  height: var(--slider-track-height);
+  width: 100%;
+}
+
+input[type="range"]::-moz-range-thumb {
+  background: var(--slider-thumb-bg);
+  border: 0;
+  border-radius: var(--slider-thumb-radius);
+  box-shadow: var(--slider-thumb-shadow);
+  cursor: pointer;
+  height: var(--slider-thumb-size);
+  width: var(--slider-thumb-size);
+}
+
+input[type="range"]:focus::-moz-range-track {
+  background-color: var(--slider-track-bg-focus);
+  background-image: var(--slider-track-bg-image-focus);
+}
+
+input[type="range"]:focus::-moz-range-thumb {
+  background: var(--slider-thumb-bg-focus);
+}
+
+input[type="range"]::-ms-track {
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+  cursor: pointer;
+  height: var(--slider-track-height);
+  width: 100%;
+}
+
+input[type="range"]::-ms-fill-lower {
+  background: var(--slider-track-bg);
+  border-radius: var(--slider-track-radius);
+  box-shadow: var(--slider-track-shadow);
+}
+
+input[type="range"]::-ms-fill-upper {
+  background: var(--slider-track-bg);
+  border-radius: var(--slider-track-radius);
+  box-shadow: var(--slider-track-shadow);
+}
+
+input[type="range"]::-ms-thumb {
+  background: var(--slider-thumb-bg);
+  border-radius: var(--slider-thumb-radius);
+  box-shadow: var(--slider-thumb-shadow);
+  cursor: pointer;
+  height: var(--slider-thumb-size);
+  width: var(--slider-thumb-size);
+}
+
+input[type="range"]:focus::-ms-fill-lower {
+  background: var(--slider-track-bg-focus);
+}
+
+input[type="range"]:focus::-ms-fill-upper {
+  background: var(--slider-track-bg-focus);
+}
+
+input[type="range"]:focus::-ms-thumb {
+  background: var(--slider-thumb-bg-focus);
+}

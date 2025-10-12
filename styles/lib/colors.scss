@@ -41,6 +41,8 @@
   --color-empty: #{rgba(palette.$light-ivory-5, 0.25)};
 
   // standalone components
+  --color-slider-bg: #{palette.$light-ivory-5};
+  --color-slider-value: #{palette.$light-desert-sky-4};
 
   --color-toc-dash: #{palette.$light-ivory-3};
   --color-toc-link: #{palette.$light-ivory-3};
@@ -97,6 +99,8 @@
   --color-empty: #{rgba(palette.$dark-desert-sky-3, 0.5)};
 
   // standalone components
+  --color-slider-bg: #{palette.$dark-desert-sky-4};
+  --color-slider-value: #{palette.$dark-ivory-4};
 
   --color-toc-dash: #{palette.$dark-ivory-3};
   --color-toc-link: #{palette.$dark-ivory-3};
