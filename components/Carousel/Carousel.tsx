@@ -75,8 +75,6 @@ const CarouselViewport = ({
     setRemainingBackwards,
   } = useContext(CarouselContext)
   const containerRef = useRef<HTMLDivElement>(null)
-  useLayoutEffect(() => setRef(containerRef))
-
   const scrollStateRef = useRef({
     isDragging: false,
     startX: 0,
@@ -86,6 +84,8 @@ const CarouselViewport = ({
     velocityX: 0,
     animationId: null as number | null,
   })
+
+  useLayoutEffect(() => setRef(containerRef))
 
   const updateScrollState = useCallback(() => {
     const container = containerRef.current
@@ -327,7 +327,11 @@ const CarouselViewport = ({
 }
 
 const CarouselContent = ({ children }: PropsWithChildren) => {
-  return <div className={styles.carousel_content}>{children}</div>
+  return (
+    <div data-carousel-content className={styles.carousel_content}>
+      {children}
+    </div>
+  )
 }
 
 const CarouselItem = ({ children }: PropsWithChildren) => {

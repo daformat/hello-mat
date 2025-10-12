@@ -54,16 +54,6 @@ const CarouselComponentPageContent = () => {
           }}
         >
           <Carousel.Root>
-            <div
-              style={{ display: "flex", gap: 4, justifyContent: "flex-end" }}
-            >
-              <Carousel.PrevPage>
-                <FaChevronLeft size={12} />
-              </Carousel.PrevPage>
-              <Carousel.NextPage>
-                <FaChevronRight size={12} />
-              </Carousel.NextPage>
-            </div>
             <Carousel.Viewport>
               <Carousel.Content>
                 <Carousel.Item>
@@ -159,6 +149,24 @@ const CarouselComponentPageContent = () => {
                 </Carousel.Item>
               </Carousel.Content>
             </Carousel.Viewport>
+            <div
+              style={{
+                display: "flex",
+                gap: 4,
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <strong style={{ margin: 0 }}>Scroll or swipe</strong>
+              <div style={{ display: "flex", gap: 4 }}>
+                <Carousel.PrevPage>
+                  <FaChevronLeft size={12} />
+                </Carousel.PrevPage>
+                <Carousel.NextPage>
+                  <FaChevronRight size={12} />
+                </Carousel.NextPage>
+              </div>
+            </div>
           </Carousel.Root>
         </div>
         <NextCard href={"/design-engineering/component/table-of-contents"}>
