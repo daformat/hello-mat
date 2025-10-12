@@ -452,7 +452,6 @@ const getScrollSnapAlign = (computedStyle: MaybeNull<CSSStyleDeclaration>) => {
     const scrollSnapAlign = computedStyle
       .getPropertyValue("scroll-snap-align")
       .split(" ")
-    console.log(scrollSnapAlign)
     const [block, inline] = scrollSnapAlign
     if (block && inline) {
       return [block, inline] as CSSProperties["scrollSnapAlign"][]
