@@ -48,7 +48,7 @@ const CarouselComponentPageContent = () => {
         <p>A scrollable, and swipeable carousel.</p>
 
         <Carousel.Root>
-          <Carousel.Viewport snapsOnDrag>
+          <Carousel.Viewport>
             <Carousel.Content>
               <Carousel.Item>
                 <picture style={{ fontSize: 0 }} className={styles.card}>
