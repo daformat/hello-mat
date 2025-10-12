@@ -43,132 +43,122 @@ const CarouselComponentPageContent = () => {
           Design engineering: a carousel component
         </h1>
         <p>A scrollable, and swipeable carousel.</p>
-        <div
-          className="card"
-          style={{
-            backgroundColor: "transparent",
-            overflow: "visible",
-            display: "flex",
-            justifyContent: "center",
-            padding: "128px 16px",
-          }}
-        >
-          <Carousel.Root>
-            <Carousel.Viewport>
-              <Carousel.Content>
-                <Carousel.Item>
-                  <picture style={{ fontSize: 0 }}>
-                    <source
-                      media="(prefers-color-scheme: dark)"
-                      srcSet="/media/hello-mat-dark.png"
-                    />
-                    <img
-                      src="/media/hello-mat-light.png"
-                      alt=""
-                      style={{ minWidth: "min(30vw, 300px)" }}
-                    />
-                  </picture>
-                </Carousel.Item>
-                <Carousel.Item>
-                  <picture style={{ fontSize: 0 }}>
-                    <source
-                      media="(prefers-color-scheme: dark)"
-                      srcSet="/media/design-engineering/toc/og-toc-dark.png"
-                    />
-                    <img
-                      src="/media/design-engineering/toc/og-toc-light.png"
-                      alt=""
-                      style={{ minWidth: "min(30vw, 300px)" }}
-                    />
-                  </picture>
-                </Carousel.Item>
-                <Carousel.Item>
-                  <picture style={{ fontSize: 0 }}>
-                    <source
-                      media="(prefers-color-scheme: dark)"
-                      srcSet="/media/design-engineering/details/og-details-dark.png"
-                    />
-                    <img
-                      src="/media/design-engineering/details/og-details-light.png"
-                      alt=""
-                      style={{ minWidth: "min(30vw, 300px)" }}
-                    />
-                  </picture>
-                </Carousel.Item>
-                <Carousel.Item>
-                  <picture style={{ fontSize: 0 }}>
-                    <source
-                      media="(prefers-color-scheme: dark)"
-                      srcSet="/media/design-engineering/images-and-embeds/og-media-dark.png"
-                    />
-                    <img
-                      src="/media/design-engineering/images-and-embeds/og-media-light.png"
-                      alt=""
-                      style={{ minWidth: "min(30vw, 300px)" }}
-                    />
-                  </picture>
-                </Carousel.Item>
-                <Carousel.Item>
-                  <picture style={{ fontSize: 0 }}>
-                    <source
-                      media="(prefers-color-scheme: dark)"
-                      srcSet="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-dark.png"
-                    />
-                    <img
-                      src="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png"
-                      alt=""
-                      style={{ minWidth: "min(30vw, 300px)" }}
-                    />
-                  </picture>
-                </Carousel.Item>
-                <Carousel.Item>
-                  <picture style={{ fontSize: 0 }}>
-                    <source
-                      media="(prefers-color-scheme: dark)"
-                      srcSet="/media/design-engineering/publish-button/og-publish-button-dark.png"
-                    />
-                    <img
-                      src="/media/design-engineering/publish-button/og-publish-button-light.png"
-                      alt=""
-                      style={{ minWidth: "min(30vw, 300px)" }}
-                    />
-                  </picture>
-                </Carousel.Item>
-                <Carousel.Item>
-                  <picture style={{ fontSize: 0 }}>
-                    <source
-                      media="(prefers-color-scheme: dark)"
-                      srcSet="/media/design-engineering/dock/og-dock-dark.png"
-                    />
-                    <img
-                      src="/media/design-engineering/dock/og-dock-light.png"
-                      alt=""
-                      style={{ minWidth: "min(30vw, 300px)" }}
-                    />
-                  </picture>
-                </Carousel.Item>
-              </Carousel.Content>
-            </Carousel.Viewport>
-            <div
-              style={{
-                display: "flex",
-                gap: 4,
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <strong style={{ margin: 0 }}>Scroll or swipe</strong>
-              <div style={{ display: "flex", gap: 4 }}>
-                <Carousel.PrevPage>
-                  <FaChevronLeft size={12} />
-                </Carousel.PrevPage>
-                <Carousel.NextPage>
-                  <FaChevronRight size={12} />
-                </Carousel.NextPage>
-              </div>
+
+        <Carousel.Root>
+          <Carousel.Viewport>
+            <Carousel.Content>
+              <Carousel.Item>
+                <picture style={{ fontSize: 0 }}>
+                  <source
+                    media="(prefers-color-scheme: dark)"
+                    srcSet="/media/hello-mat-dark.png"
+                  />
+                  <img
+                    src="/media/hello-mat-light.png"
+                    alt=""
+                    style={{ minWidth: "min(30vw, 300px)" }}
+                  />
+                </picture>
+              </Carousel.Item>
+              <Carousel.Item>
+                <picture style={{ fontSize: 0 }}>
+                  <source
+                    media="(prefers-color-scheme: dark)"
+                    srcSet="/media/design-engineering/toc/og-toc-dark.png"
+                  />
+                  <img
+                    src="/media/design-engineering/toc/og-toc-light.png"
+                    alt=""
+                    style={{ minWidth: "min(30vw, 300px)" }}
+                  />
+                </picture>
+              </Carousel.Item>
+              <Carousel.Item>
+                <picture style={{ fontSize: 0 }}>
+                  <source
+                    media="(prefers-color-scheme: dark)"
+                    srcSet="/media/design-engineering/details/og-details-dark.png"
+                  />
+                  <img
+                    src="/media/design-engineering/details/og-details-light.png"
+                    alt=""
+                    style={{ minWidth: "min(30vw, 300px)" }}
+                  />
+                </picture>
+              </Carousel.Item>
+              <Carousel.Item>
+                <picture style={{ fontSize: 0 }}>
+                  <source
+                    media="(prefers-color-scheme: dark)"
+                    srcSet="/media/design-engineering/images-and-embeds/og-media-dark.png"
+                  />
+                  <img
+                    src="/media/design-engineering/images-and-embeds/og-media-light.png"
+                    alt=""
+                    style={{ minWidth: "min(30vw, 300px)" }}
+                  />
+                </picture>
+              </Carousel.Item>
+              <Carousel.Item>
+                <picture style={{ fontSize: 0 }}>
+                  <source
+                    media="(prefers-color-scheme: dark)"
+                    srcSet="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-dark.png"
+                  />
+                  <img
+                    src="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png"
+                    alt=""
+                    style={{ minWidth: "min(30vw, 300px)" }}
+                  />
+                </picture>
+              </Carousel.Item>
+              <Carousel.Item>
+                <picture style={{ fontSize: 0 }}>
+                  <source
+                    media="(prefers-color-scheme: dark)"
+                    srcSet="/media/design-engineering/publish-button/og-publish-button-dark.png"
+                  />
+                  <img
+                    src="/media/design-engineering/publish-button/og-publish-button-light.png"
+                    alt=""
+                    style={{ minWidth: "min(30vw, 300px)" }}
+                  />
+                </picture>
+              </Carousel.Item>
+              <Carousel.Item>
+                <picture style={{ fontSize: 0 }}>
+                  <source
+                    media="(prefers-color-scheme: dark)"
+                    srcSet="/media/design-engineering/dock/og-dock-dark.png"
+                  />
+                  <img
+                    src="/media/design-engineering/dock/og-dock-light.png"
+                    alt=""
+                    style={{ minWidth: "min(30vw, 300px)" }}
+                  />
+                </picture>
+              </Carousel.Item>
+            </Carousel.Content>
+          </Carousel.Viewport>
+          <div
+            style={{
+              display: "flex",
+              gap: 4,
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <strong style={{ margin: 0 }}>Scroll or swipe</strong>
+            <div style={{ display: "flex", gap: 4 }}>
+              <Carousel.PrevPage>
+                <FaChevronLeft size={12} />
+              </Carousel.PrevPage>
+              <Carousel.NextPage>
+                <FaChevronRight size={12} />
+              </Carousel.NextPage>
             </div>
-          </Carousel.Root>
-        </div>
+          </div>
+        </Carousel.Root>
         <NextCard href={"/design-engineering/component/table-of-contents"}>
           Table of contents
         </NextCard>

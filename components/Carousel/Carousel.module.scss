@@ -5,7 +5,7 @@
 }
 
 .carousel_viewport {
-  --mask-size: 64px;
+  --mask-size: clamp(16px, 25vw, 64px);
   mask-image: linear-gradient(
     to right,
     transparent,
@@ -34,9 +34,11 @@
 }
 
 .carousel_item {
+  --radius: clamp(6px, 1vw, 14px);
+  --padding: clamp(4px, 1vw, 7px);
   align-items: center;
   background-color: var(--color-toolbar-background);
-  border-radius: 14px;
+  border-radius: var(--radius);
   box-shadow: 0 1px 12px var(--color-shadow-1),
     inset 0 0 2px 0.75px var(--color-border-2),
     inset 0 0 0 0.75px var(--color-border-1);
@@ -44,14 +46,14 @@
   flex-direction: row;
   gap: 8px;
   justify-content: flex-start;
-  padding: 7px;
+  padding: var(--padding);
   scroll-snap-align: center;
   transition: mixins.theme-transition(color, background-color, box-shadow);
   user-select: none;
   white-space: nowrap;
 
   img {
-    border-radius: 7px;
+    border-radius: calc(var(--radius) - var(--padding));
   }
 
   @include mixins.remove-transition;
