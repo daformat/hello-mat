@@ -34,7 +34,7 @@
 }
 
 .carousel_item {
-  --radius: clamp(6px, 1vw, 14px);
+  --radius: clamp(6px, 1vw, 10px);
   --padding: clamp(4px, 1vw, 7px);
   align-items: center;
   background-color: var(--color-toolbar-background);
