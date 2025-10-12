@@ -85,32 +85,35 @@ const CarouselViewport = ({
     animationId: null as number | null,
     initialTarget: null as MaybeNull<EventTarget>,
     initialPointerPosition: null as MaybeNull<{ x: number; y: number }>,
+    initialMouseScrollLeft: 0,
+    mouseDirection: 0,
+    mouseScrollLeft: 0,
   })
 
   useLayoutEffect(() => setRef(containerRef))
 
   const updateScrollState = useCallback(() => {
     const container = containerRef.current
-    const containerScrollWidth = container?.scrollWidth ?? 0
-    const containerOffsetWidth = container?.offsetWidth ?? 0
-    const containerScrollLeft = container?.scrollLeft ?? 0
-    if (!container || containerScrollWidth <= containerOffsetWidth) {
-      setScrollsBackwards(false)
-      setScrollsForwards(false)
-    } else if (containerScrollLeft <= 0) {
-      setScrollsBackwards(false)
-      setScrollsForwards(true)
-    } else if (
-      Math.ceil(containerScrollLeft) <
-      containerScrollWidth - containerOffsetWidth - 1
-    ) {
-      setScrollsBackwards(true)
-      setScrollsForwards(true)
-    } else {
-      setScrollsBackwards(true)
-      setScrollsForwards(false)
-    }
     if (container) {
+      const containerScrollWidth = container.scrollWidth ?? 0
+      const containerOffsetWidth = container.offsetWidth ?? 0
+      const containerScrollLeft = container.scrollLeft ?? 0
+      if (!container || containerScrollWidth <= containerOffsetWidth) {
+        setScrollsBackwards(false)
+        setScrollsForwards(false)
+      } else if (containerScrollLeft <= 0) {
+        setScrollsBackwards(false)
+        setScrollsForwards(true)
+      } else if (
+        Math.ceil(containerScrollLeft) <
+        containerScrollWidth - containerOffsetWidth - 1
+      ) {
+        setScrollsBackwards(true)
+        setScrollsForwards(true)
+      } else {
+        setScrollsBackwards(true)
+        setScrollsForwards(false)
+      }
       const remainingBackwards = containerScrollLeft
       const remainingForwards =
         containerScrollWidth - containerScrollLeft - containerOffsetWidth
@@ -174,6 +177,7 @@ const CarouselViewport = ({
     state.velocityX = 0
     state.initialTarget = event.target
     state.initialPointerPosition = { x: event.clientX, y: event.clientY }
+    state.initialMouseScrollLeft = container?.scrollLeft ?? 0
     event.preventDefault()
   }
 
@@ -194,7 +198,15 @@ const CarouselViewport = ({
 
     // update scroll position
     const scrollDelta = state.startX - event.clientX
+    const direction = Math.sign(
+      state.scrollLeft + scrollDelta - state.mouseScrollLeft
+    )
+    if (direction !== state.mouseDirection) {
+      state.mouseDirection = direction
+      state.initialMouseScrollLeft = state.scrollLeft + scrollDelta
+    }
     container.scrollLeft = state.scrollLeft + scrollDelta
+    state.mouseScrollLeft = state.scrollLeft + scrollDelta
 
     state.lastX = event.clientX
     state.lastTime = currentTime
@@ -254,6 +266,10 @@ const CarouselViewport = ({
   }, [snapsOnDrag])
 
   const startMomentumAnimation = useCallback(() => {
+    const container = containerRef.current
+    if (!container) {
+      return
+    }
     const state = scrollStateRef.current
     const friction = 0.05
     const decelerationFactor = 1 - friction
@@ -268,6 +284,30 @@ const CarouselViewport = ({
       container.scrollLeft -= state.velocityX * 16 // ~16ms frame time
       state.scrollLeft = container.scrollLeft
       state.velocityX *= decelerationFactor
+      const newScrollLeft = container.scrollLeft
+      const scrollWidth = container.scrollWidth
+      const offsetWidth = container.offsetWidth
+      const maxScrollLeft = scrollWidth - offsetWidth
+      const remainingForwards = scrollWidth - offsetWidth - newScrollLeft
+      const remainingBackwards = newScrollLeft
+      const content = container.querySelector("[data-carousel-content]")
+      if (content instanceof HTMLElement) {
+        if (
+          (state.velocityX < 0 &&
+            remainingForwards <= 1 &&
+            state.initialMouseScrollLeft < maxScrollLeft - 1) ||
+          (state.velocityX > 0 &&
+            remainingBackwards < 1 &&
+            state.initialMouseScrollLeft > 1)
+        ) {
+          const theoreticalTranslate = state.velocityX * 50
+          const currentTranslate = parseFloat(content.style.translate || "0")
+          const delta = theoreticalTranslate - currentTranslate
+          content.style.translate = `${delta / 2}px 0`
+          state.velocityX *= decelerationFactor
+        }
+      }
+
       if (Math.abs(state.velocityX) > minVelocity) {
         state.animationId = requestAnimationFrame(animate)
       } else {
