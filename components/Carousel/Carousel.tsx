@@ -14,6 +14,24 @@ import {
 import styles from "./Carousel.module.scss"
 import { MaybeNull, MaybeUndefined } from "@/components/Media/utils/maybe"
 
+type ScrollState = {
+  isDragging: boolean
+  startX: number
+  scrollLeft: number
+  lastX: number
+  lastTime: number
+  velocityX: number
+  animationId: number | null
+  initialTarget: MaybeNull<EventTarget>
+  initialPointerPosition: MaybeNull<{
+    x: number
+    y: number
+  }>
+  initialMouseScrollLeft: number
+  mouseDirection: number
+  mouseScrollLeft: number
+}
+
 const CarouselContext = createContext<{
   ref?: MaybeNull<RefObject<HTMLElement>>
   setRef: (ref: MaybeNull<RefObject<HTMLElement>>) => void
@@ -25,6 +43,8 @@ const CarouselContext = createContext<{
   remainingBackwards?: number
   setRemainingForwards: (remainingForwards: number) => void
   setRemainingBackwards: (remainingBackwards: number) => void
+  scrollStateRef?: MaybeUndefined<RefObject<ScrollState>>
+  setScrollStateRef: (state: RefObject<ScrollState>) => void
 }>({
   setRef: () => {},
   setScrollsBackwards: () => {},
@@ -33,6 +53,7 @@ const CarouselContext = createContext<{
   scrollsForwards: false,
   setRemainingForwards: () => {},
   setRemainingBackwards: () => {},
+  setScrollStateRef: () => {},
 })
 
 const CarouselRoot = ({ children }: PropsWithChildren) => {
@@ -41,6 +62,8 @@ const CarouselRoot = ({ children }: PropsWithChildren) => {
   const [scrollsForwards, setScrollsForwards] = useState(false)
   const [remainingForwards, setRemainingForwards] = useState(0)
   const [remainingBackwards, setRemainingBackwards] = useState(0)
+  const [scrollStateRef, setScrollStateRef] =
+    useState<MaybeUndefined<RefObject<ScrollState>>>(undefined)
   return (
     <CarouselContext.Provider
       value={{
@@ -54,6 +77,8 @@ const CarouselRoot = ({ children }: PropsWithChildren) => {
         remainingBackwards,
         setRemainingForwards,
         setRemainingBackwards,
+        scrollStateRef,
+        setScrollStateRef,
       }}
     >
       <div className={styles.carousel}>{children}</div>
@@ -73,6 +98,7 @@ const CarouselViewport = ({
     scrollsBackwards,
     setRemainingForwards,
     setRemainingBackwards,
+    setScrollStateRef,
   } = useContext(CarouselContext)
   const containerRef = useRef<HTMLDivElement>(null)
   const scrollStateRef = useRef({
@@ -90,7 +116,10 @@ const CarouselViewport = ({
     mouseScrollLeft: 0,
   })
 
-  useLayoutEffect(() => setRef(containerRef))
+  useLayoutEffect(() => {
+    setRef(containerRef)
+    setScrollStateRef(scrollStateRef)
+  }, [setRef, setScrollStateRef])
 
   const updateScrollState = useCallback(() => {
     const container = containerRef.current
@@ -394,10 +423,15 @@ const CarouselItem = ({ children }: PropsWithChildren) => {
 }
 
 const CarouselNextPage = ({ children }: PropsWithChildren) => {
-  const { ref: containerRef, scrollsForwards } = useContext(CarouselContext)
+  const {
+    ref: containerRef,
+    scrollsForwards,
+    scrollStateRef,
+  } = useContext(CarouselContext)
 
   // Scrolls the container to next slide until hitting max
   const handleScrollToNext = () => {
+    cancelAnimationFrame(scrollStateRef?.current?.animationId ?? 0)
     const container = containerRef?.current
     if (container && container.scrollLeft < container.scrollWidth) {
       container.style.scrollSnapType = ""
@@ -437,10 +471,15 @@ const CarouselNextPage = ({ children }: PropsWithChildren) => {
 }
 
 const CarouselPrevPage = ({ children }: PropsWithChildren) => {
-  const { ref: containerRef, scrollsBackwards } = useContext(CarouselContext)
+  const {
+    ref: containerRef,
+    scrollsBackwards,
+    scrollStateRef,
+  } = useContext(CarouselContext)
 
   // Scrolls the container to previous slide until hitting 0
   const handleScrollToPrev = () => {
+    cancelAnimationFrame(scrollStateRef?.current?.animationId ?? 0)
     const container = containerRef?.current
     if (container && container.scrollLeft > 0) {
       container.style.scrollSnapType = ""
