@@ -34,6 +34,7 @@
 
   overflow: scroll;
   -ms-overflow-style: none; /* Internet Explorer 10+ */
+  position: relative;
   scroll-snap-type: x mandatory;
   scrollbar-color: transparent transparent;
   scrollbar-width: none; /* Firefox, Safari 18.2+, Chromium 121+ */
@@ -65,6 +66,7 @@
   gap: 8px;
   justify-content: flex-start;
   padding: var(--padding);
+  scroll-margin-inline: calc(var(--margin-inline) * -1);
   scroll-snap-align: center;
   transition: mixins.theme-transition(color, background-color, box-shadow);
   user-select: none;

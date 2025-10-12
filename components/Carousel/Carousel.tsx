@@ -222,19 +222,14 @@ const CarouselViewport = ({
         const items = Array.from(
           container.querySelectorAll("[data-carousel-item]")
         ) as HTMLElement[]
-        const containerOffsetLeft = container.offsetLeft
-        const prevItems = items.filter(
-          (item) => item.offsetLeft <= scrollLeft + containerOffsetLeft
-        )
-        const nextItems = items.filter(
-          (item) => item.offsetLeft >= scrollLeft + containerOffsetLeft
-        )
+        const prevItems = items.filter((item) => item.offsetLeft <= scrollLeft)
+        const nextItems = items.filter((item) => item.offsetLeft >= scrollLeft)
         const prevItem = prevItems[prevItems.length - 1]
         const nextItem = nextItems[0]
         let snapItem: MaybeUndefined<HTMLElement>
         if (prevItem && nextItem) {
-          const prevItemLeftEdge = prevItem.offsetLeft - containerOffsetLeft
-          const nextItemLeftEdge = nextItem.offsetLeft - containerOffsetLeft
+          const prevItemLeftEdge = prevItem.offsetLeft
+          const nextItemLeftEdge = nextItem.offsetLeft
           snapItem =
             Math.abs(scrollLeft - prevItemLeftEdge) <=
             Math.abs(nextItemLeftEdge - scrollLeft)
@@ -243,9 +238,7 @@ const CarouselViewport = ({
         } else {
           snapItem = prevItem ?? nextItem
         }
-        const delta = snapItem
-          ? snapItem.offsetLeft - containerOffsetLeft - scrollLeft
-          : 0
+        const delta = snapItem ? snapItem.offsetLeft - scrollLeft : 0
         container.scrollBy({
           left: delta,
           behavior: "smooth",
@@ -413,11 +406,10 @@ const CarouselNextPage = ({ children }: PropsWithChildren) => {
         container.querySelectorAll("[data-carousel-item]")
       ) as HTMLElement[]
       const currentScroll = container.scrollLeft
-      const containerOffsetLeft = container.offsetLeft
       const containerOffsetWidth = container.offsetWidth
       const isNextItem = (item: HTMLElement) => {
         return (
-          item.offsetLeft - containerOffsetLeft + item.offsetWidth >
+          item.offsetLeft + item.offsetWidth >
           Math.ceil(currentScroll + containerOffsetWidth)
         )
       }
@@ -455,18 +447,12 @@ const CarouselPrevPage = ({ children }: PropsWithChildren) => {
       const items = Array.from(
         container.querySelectorAll("[data-carousel-item]")
       ) as HTMLElement[]
-      const containerOffsetLeft = container.offsetLeft
-      const containerOffsetWidth = container.offsetWidth
       const currentScroll = container.scrollLeft
       const isPrevItem = (item: HTMLElement) => {
         const [, snapAlignInline] = getScrollSnapAlign(getComputedStyle(item))
-        return snapAlignInline === "start"
-          ? item.offsetLeft - containerOffsetLeft - item.offsetWidth <
-              currentScroll - containerOffsetWidth
-          : snapAlignInline === "center"
-          ? currentScroll > item.offsetLeft - containerOffsetLeft
-          : item.offsetLeft - containerOffsetLeft - item.offsetWidth <
-            currentScroll - containerOffsetWidth
+        return snapAlignInline === "center"
+          ? currentScroll > item.offsetLeft
+          : item.offsetLeft < currentScroll
       }
       const prevItems = items.filter(isPrevItem)
       const prevItem = prevItems[prevItems.length - 1] ?? items[0]
@@ -475,9 +461,7 @@ const CarouselPrevPage = ({ children }: PropsWithChildren) => {
         prevItem?.scrollIntoView({
           behavior: "smooth",
           block: "nearest",
-          inline: ["start", "center", "end"].includes(inline ?? "")
-            ? (inline as ScrollLogicalPosition)
-            : "start",
+          inline: inline === "center" ? "center" : "end",
         })
       }
     }
