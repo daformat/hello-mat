@@ -6,12 +6,29 @@
 
 .carousel_viewport {
   --mask-size: clamp(16px, 25vw, 64px);
+  --margin-inline: -12px;
+  --m-offset-b: min(
+    var(--remaining-backwards) + var(--margin-inline),
+    var(--margin-inline) * -1
+  );
+  --m-offset-f: min(
+    var(--remaining-forwards) + var(--margin-inline),
+    var(--margin-inline) * -1
+  );
+  margin-inline: var(--margin-inline);
   mask-image: linear-gradient(
     to right,
-    transparent,
-    #000 calc(min(var(--remaining-backwards), var(--mask-size))),
-    #000 calc(100% - min(var(--remaining-forwards), var(--mask-size))),
-    transparent 100%
+    transparent var(--m-offset-b),
+    #000
+      calc(
+        min(var(--remaining-backwards), var(--mask-size)) + var(--m-offset-b)
+      ),
+    #000
+      calc(
+        100% - min(var(--remaining-forwards), var(--mask-size)) -
+          var(--m-offset-f)
+      ),
+    transparent calc(100% - var(--m-offset-f))
   );
   mask-size: 100% 100%;
 
@@ -30,7 +47,8 @@
   display: flex;
   flex-direction: row;
   gap: 16px;
-  padding: 16px 0;
+  padding: 16px calc(var(--margin-inline) * -1);
+  width: fit-content;
 }
 
 .carousel_item {

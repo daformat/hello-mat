@@ -83,6 +83,8 @@ const CarouselViewport = ({
     lastTime: 0,
     velocityX: 0,
     animationId: null as number | null,
+    initialTarget: null as MaybeNull<EventTarget>,
+    initialPointerPosition: null as MaybeNull<{ x: number; y: number }>,
   })
 
   useLayoutEffect(() => setRef(containerRef))
@@ -170,6 +172,8 @@ const CarouselViewport = ({
     state.scrollLeft = container?.scrollLeft ?? 0
     state.lastTime = Date.now()
     state.velocityX = 0
+    state.initialTarget = event.target
+    state.initialPointerPosition = { x: event.clientX, y: event.clientY }
     event.preventDefault()
   }
 
@@ -288,6 +292,20 @@ const CarouselViewport = ({
       if (!state.isDragging || !container) {
         return
       }
+      // dispatch click if needed (we prevented it on pointer down)
+      if (
+        state.initialPointerPosition &&
+        Math.hypot(
+          state.initialPointerPosition.x - event.clientX,
+          state.initialPointerPosition.y - event.clientY
+        ) < 3
+      ) {
+        state.initialTarget?.dispatchEvent(
+          new PointerEvent("click", { bubbles: true })
+        )
+      }
+      state.initialTarget = null
+      state.initialPointerPosition = null
       state.isDragging = false
       startMomentumAnimation()
     },
