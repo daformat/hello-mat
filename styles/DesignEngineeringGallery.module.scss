@@ -25,6 +25,12 @@
     box-shadow 0.2s ease-in-out;
   width: 100%;
 
+  :global(.video_player) {
+    &::after {
+      display: none;
+    }
+  }
+
   video {
     max-width: 425px;
   }
