@@ -322,8 +322,35 @@ const CarouselViewport = ({
     }
     const state = scrollStateRef.current
     const friction = 0.05
-    const decelerationFactor = 1 - friction
+    let decelerationFactor = 1 - friction
     const minVelocity = 0.01
+
+    const x =
+      Math.log(minVelocity / Math.abs(state.velocityX)) /
+      Math.log(decelerationFactor)
+    const initialScroll = container.scrollLeft
+    const tFinalScroll = Math.max(
+      Math.min(
+        Array(Math.ceil(x))
+          .fill(0)
+          .reduce((acc, val, i) => {
+            return acc - state.velocityX * Math.pow(decelerationFactor, i) * 16
+          }, initialScroll),
+        container.scrollWidth - container.offsetWidth
+      ),
+      0
+    )
+    container.scrollLeft = tFinalScroll
+    container.style.scrollSnapType = ""
+    const scroll = container.scrollLeft
+    container.style.scrollSnapType = "none"
+    container.scrollLeft = initialScroll
+
+    decelerationFactor =
+      tFinalScroll < container.scrollWidth - container.offsetWidth &&
+      tFinalScroll > 0
+        ? findDecelerationFactor(container.scrollLeft, state.velocityX, scroll)
+        : decelerationFactor
 
     const animate = () => {
       const container = containerRef.current
@@ -334,12 +361,15 @@ const CarouselViewport = ({
       container.scrollLeft -= state.velocityX * 16 // ~16ms frame time
       state.scrollLeft = container.scrollLeft
       state.velocityX *= decelerationFactor
+
       const newScrollLeft = container.scrollLeft
       const scrollWidth = container.scrollWidth
       const offsetWidth = container.offsetWidth
       const maxScrollLeft = scrollWidth - offsetWidth
       const remainingForwards = scrollWidth - offsetWidth - newScrollLeft
       const remainingBackwards = newScrollLeft
+
+      // Overscroll
       const content = container.querySelector("[data-carousel-content]")
       if (content instanceof HTMLElement) {
         if (
@@ -353,7 +383,14 @@ const CarouselViewport = ({
           const theoreticalTranslate = state.velocityX * 50
           const currentTranslate = parseFloat(content.style.translate || "0")
           const delta = theoreticalTranslate - currentTranslate
-          content.style.translate = `${delta / 2}px 0`
+          const items = content.querySelectorAll("[data-carousel-item]")
+          // we have to translate the items instead of the content because
+          // Safari scrolls the viewport if the content is translated
+          items.forEach((item) => {
+            if (item instanceof HTMLElement) {
+              item.style.translate = `${delta / 2}px 0`
+            }
+          })
           state.velocityX *= decelerationFactor
         }
       }
@@ -587,6 +624,79 @@ const getScrollSnapAlign = (computedStyle: MaybeNull<CSSStyleDeclaration>) => {
     }
   }
   return [] as CSSProperties["scrollSnapAlign"][]
+}
+
+function findDecelerationFactor(
+  initialScroll: number,
+  velocity: number,
+  targetScroll: number
+) {
+  const minVelocity = 0.01
+  const totalDistance = targetScroll - initialScroll
+
+  // If distance is too small, return default factor
+  if (Math.abs(totalDistance) < 1) {
+    return 0.95
+  }
+
+  // Binary search for the deceleration factor
+  let low = 0.5 // Lower bound (more friction)
+  let high = 0.999 // Upper bound (less friction)
+  const tolerance = 1 // 1px tolerance
+  const maxIterations = 50
+
+  for (let iteration = 0; iteration < maxIterations; iteration++) {
+    const testFactor = (low + high) / 2
+
+    // Calculate x (number of frames until velocity reaches minVelocity)
+    const x = Math.log(minVelocity / Math.abs(velocity)) / Math.log(testFactor)
+
+    if (!isFinite(x) || x < 0) {
+      // Invalid calculation, adjust bounds
+      high = testFactor
+      continue
+    }
+
+    // Calculate final scroll with this factor
+    // Sum of geometric series: initial + v*r^0 + v*r^1 + ... + v*r^(n-1)
+    let calculatedScroll = initialScroll
+    for (let i = 0; i < Math.ceil(x); i++) {
+      calculatedScroll -= velocity * Math.pow(testFactor, i) * 16
+    }
+
+    const error = calculatedScroll - targetScroll
+
+    // Check if we're close enough
+    if (Math.abs(error) < tolerance) {
+      return testFactor
+    }
+
+    // Adjust search range based on direction
+    // When scrolling right (velocity < 0), calculatedScroll increases
+    // When scrolling left (velocity > 0), calculatedScroll decreases
+    if (velocity < 0) {
+      // Scrolling right
+      if (calculatedScroll > targetScroll) {
+        // Overshot - need more friction (lower factor)
+        high = testFactor
+      } else {
+        // Undershot - need less friction (higher factor)
+        low = testFactor
+      }
+    } else {
+      // Scrolling left
+      if (calculatedScroll < targetScroll) {
+        // Overshot - need more friction (lower factor)
+        high = testFactor
+      } else {
+        // Undershot - need less friction (higher factor)
+        low = testFactor
+      }
+    }
+  }
+
+  // Return best estimate
+  return (low + high) / 2
 }
 
 export const Carousel = {
