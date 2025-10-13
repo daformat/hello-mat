@@ -1,4 +1,5 @@
 import {
+  ComponentPropsWithoutRef,
   ContextType,
   createContext,
   CSSProperties,
@@ -65,11 +66,15 @@ const CarouselContext = createContext<{
 const CarouselRoot = ({
   boundaryOffset,
   children,
-}: PropsWithChildren<{
-  boundaryOffset?:
-    | { x: number; y: number }
-    | ((root: HTMLElement) => { x: number; y: number })
-}>) => {
+  className,
+  ...props
+}: PropsWithChildren<
+  {
+    boundaryOffset?:
+      | { x: number; y: number }
+      | ((root: HTMLElement) => { x: number; y: number })
+  } & ComponentPropsWithoutRef<"div">
+>) => {
   const [ref, setRef] = useState<MaybeNull<RefObject<HTMLElement>>>(null)
   const [scrollsBackwards, setScrollsBackwards] = useState(false)
   const [scrollsForwards, setScrollsForwards] = useState(false)
@@ -98,7 +103,11 @@ const CarouselRoot = ({
         rootRef,
       }}
     >
-      <div ref={rootRef} className={styles.carousel}>
+      <div
+        ref={rootRef}
+        className={[styles.carousel, className].filter(Boolean).join(" ")}
+        {...props}
+      >
         {children}
       </div>
     </CarouselContext.Provider>
