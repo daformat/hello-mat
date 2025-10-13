@@ -1,4 +1,5 @@
 import {
+  ContextType,
   createContext,
   CSSProperties,
   PropsWithChildren,
@@ -45,6 +46,10 @@ const CarouselContext = createContext<{
   setRemainingBackwards: (remainingBackwards: number) => void
   scrollStateRef?: MaybeUndefined<RefObject<ScrollState>>
   setScrollStateRef: (state: RefObject<ScrollState>) => void
+  boundaryOffset?:
+    | { x: number; y: number }
+    | ((root: HTMLElement) => { x: number; y: number })
+  rootRef: RefObject<HTMLElement>
 }>({
   setRef: () => {},
   setScrollsBackwards: () => {},
@@ -54,9 +59,17 @@ const CarouselContext = createContext<{
   setRemainingForwards: () => {},
   setRemainingBackwards: () => {},
   setScrollStateRef: () => {},
+  rootRef: { current: null },
 })
 
-const CarouselRoot = ({ children }: PropsWithChildren) => {
+const CarouselRoot = ({
+  boundaryOffset,
+  children,
+}: PropsWithChildren<{
+  boundaryOffset?:
+    | { x: number; y: number }
+    | ((root: HTMLElement) => { x: number; y: number })
+}>) => {
   const [ref, setRef] = useState<MaybeNull<RefObject<HTMLElement>>>(null)
   const [scrollsBackwards, setScrollsBackwards] = useState(false)
   const [scrollsForwards, setScrollsForwards] = useState(false)
@@ -64,6 +77,8 @@ const CarouselRoot = ({ children }: PropsWithChildren) => {
   const [remainingBackwards, setRemainingBackwards] = useState(0)
   const [scrollStateRef, setScrollStateRef] =
     useState<MaybeUndefined<RefObject<ScrollState>>>(undefined)
+  const rootRef = useRef<HTMLDivElement>(null)
+
   return (
     <CarouselContext.Provider
       value={{
@@ -79,9 +94,13 @@ const CarouselRoot = ({ children }: PropsWithChildren) => {
         setRemainingBackwards,
         scrollStateRef,
         setScrollStateRef,
+        boundaryOffset,
+        rootRef,
       }}
     >
-      <div className={styles.carousel}>{children}</div>
+      <div ref={rootRef} className={styles.carousel}>
+        {children}
+      </div>
     </CarouselContext.Provider>
   )
 }
@@ -391,6 +410,7 @@ const CarouselViewport = ({
       onWheel={(event) => {
         event.currentTarget.style.scrollSnapType = ""
       }}
+      data-carousel-viewport={""}
       data-can-scroll={
         scrollsForwards && scrollsBackwards
           ? "both"
@@ -427,25 +447,27 @@ const CarouselNextPage = ({ children }: PropsWithChildren) => {
     ref: containerRef,
     scrollsForwards,
     scrollStateRef,
+    rootRef,
+    boundaryOffset,
   } = useContext(CarouselContext)
 
   // Scrolls the container to next slide until hitting max
   const handleScrollToNext = () => {
     cancelAnimationFrame(scrollStateRef?.current?.animationId ?? 0)
     const container = containerRef?.current
-    if (container && container.scrollLeft < container.scrollWidth) {
+    const root = rootRef?.current
+    if (root && container && container.scrollLeft < container.scrollWidth) {
       container.style.scrollSnapType = ""
-
       const items = Array.from(
         container.querySelectorAll("[data-carousel-item]")
       ) as HTMLElement[]
       const currentScroll = container.scrollLeft
       const containerOffsetWidth = container.offsetWidth
-      const computedMaskSize = getMaskSize(container)
+      const { x: boundaryOffsetX } = getBoundaryOffset(boundaryOffset, root)
       const isNextItem = (item: HTMLElement) => {
         return (
           item.offsetLeft + item.offsetWidth >
-          Math.ceil(currentScroll + containerOffsetWidth - computedMaskSize)
+          Math.ceil(currentScroll + containerOffsetWidth - boundaryOffsetX)
         )
       }
       const nextItem = items.find(isNextItem) ?? items[items.length - 1]
@@ -476,21 +498,24 @@ const CarouselPrevPage = ({ children }: PropsWithChildren) => {
     ref: containerRef,
     scrollsBackwards,
     scrollStateRef,
+    rootRef,
+    boundaryOffset,
   } = useContext(CarouselContext)
 
   // Scrolls the container to previous slide until hitting 0
   const handleScrollToPrev = () => {
     cancelAnimationFrame(scrollStateRef?.current?.animationId ?? 0)
     const container = containerRef?.current
-    if (container && container.scrollLeft > 0) {
+    const root = rootRef?.current
+    if (root && container && container.scrollLeft > 0) {
       container.style.scrollSnapType = ""
       const items = Array.from(
         container.querySelectorAll("[data-carousel-item]")
       ) as HTMLElement[]
       const currentScroll = container.scrollLeft
-      const computedMaskSize = getMaskSize(container)
+      const { x: boundaryOffsetX } = getBoundaryOffset(boundaryOffset, root)
       const isPrevItem = (item: HTMLElement) => {
-        return currentScroll > item.offsetLeft - computedMaskSize
+        return currentScroll > item.offsetLeft - boundaryOffsetX
       }
       const prevItems = items.filter(isPrevItem)
       const prevItem = prevItems[prevItems.length - 1] ?? items[0]
@@ -523,17 +548,13 @@ const CarouselPrevPage = ({ children }: PropsWithChildren) => {
 //   return /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream
 // }
 
-const getMaskSize = (container: HTMLElement) => {
-  const computedStyle = getComputedStyle(container)
-  const maskSize = computedStyle.getPropertyValue("--mask-size")
-  const temp = document.createElement("div")
-  temp.style.position = "absolute"
-  temp.style.visibility = "hidden"
-  temp.style.setProperty("--mask-size", maskSize)
-  temp.style.width = "var(--mask-size)"
-  document.body.appendChild(temp)
-  const computed = getComputedStyle(temp)
-  return parseFloat(computed.getPropertyValue("width"))
+const getBoundaryOffset = (
+  boundaryOffset: ContextType<typeof CarouselContext>["boundaryOffset"],
+  root: HTMLElement
+) => {
+  return typeof boundaryOffset === "function"
+    ? boundaryOffset(root)
+    : boundaryOffset ?? { x: 0, y: 0 }
 }
 
 const isDesktopSafari = () => {

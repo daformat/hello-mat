@@ -48,7 +48,7 @@ const CarouselComponentPageContent = () => {
         <p>A scrollable, and swipeable carousel.</p>
 
         <div style={{ marginInline: -18 }}>
-          <Carousel.Root>
+          <Carousel.Root boundaryOffset={getBoundaryOffset}>
             <Carousel.Viewport>
               <Carousel.Content>
                 <Carousel.Item>
@@ -310,6 +310,25 @@ const CarouselComponentPageContent = () => {
       </div>
     </>
   )
+}
+
+const getBoundaryOffset = (container: HTMLElement) => {
+  const viewport = container.querySelector("[data-carousel-viewport]")
+  if (viewport) {
+    const computedStyle = getComputedStyle(viewport)
+    const maskSize = computedStyle.getPropertyValue("--mask-size")
+    const temp = document.createElement("div")
+    temp.style.position = "absolute"
+    temp.style.visibility = "hidden"
+    temp.style.setProperty("--mask-size", maskSize)
+    temp.style.width = "var(--mask-size)"
+    document.body.appendChild(temp)
+    const computed = getComputedStyle(temp)
+    const result = { x: parseFloat(computed.getPropertyValue("width")), y: 0 }
+    console.log(result)
+    return result
+  }
+  return { x: 0, y: 0 }
 }
 
 export default CarouselComponentPage
