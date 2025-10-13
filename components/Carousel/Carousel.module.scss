@@ -5,7 +5,7 @@
 }
 
 .carousel_viewport {
-  --mask-size: clamp(16px, 25vw, 64px);
+  --mask-size: clamp(16px, 10vw, 64px);
   --margin-inline: -12px;
   --m-offset-b: min(
     var(--remaining-backwards) + var(--margin-inline),

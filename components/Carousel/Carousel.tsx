@@ -441,10 +441,11 @@ const CarouselNextPage = ({ children }: PropsWithChildren) => {
       ) as HTMLElement[]
       const currentScroll = container.scrollLeft
       const containerOffsetWidth = container.offsetWidth
+      const computedMaskSize = getMaskSize(container)
       const isNextItem = (item: HTMLElement) => {
         return (
           item.offsetLeft + item.offsetWidth >
-          Math.ceil(currentScroll + containerOffsetWidth)
+          Math.ceil(currentScroll + containerOffsetWidth - computedMaskSize)
         )
       }
       const nextItem = items.find(isNextItem) ?? items[items.length - 1]
@@ -487,11 +488,9 @@ const CarouselPrevPage = ({ children }: PropsWithChildren) => {
         container.querySelectorAll("[data-carousel-item]")
       ) as HTMLElement[]
       const currentScroll = container.scrollLeft
+      const computedMaskSize = getMaskSize(container)
       const isPrevItem = (item: HTMLElement) => {
-        const [, snapAlignInline] = getScrollSnapAlign(getComputedStyle(item))
-        return snapAlignInline === "center"
-          ? currentScroll > item.offsetLeft
-          : item.offsetLeft < currentScroll
+        return currentScroll > item.offsetLeft - computedMaskSize
       }
       const prevItems = items.filter(isPrevItem)
       const prevItem = prevItems[prevItems.length - 1] ?? items[0]
@@ -523,6 +522,19 @@ const CarouselPrevPage = ({ children }: PropsWithChildren) => {
 //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 //   return /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream
 // }
+
+const getMaskSize = (container: HTMLElement) => {
+  const computedStyle = getComputedStyle(container)
+  const maskSize = computedStyle.getPropertyValue("--mask-size")
+  const temp = document.createElement("div")
+  temp.style.position = "absolute"
+  temp.style.visibility = "hidden"
+  temp.style.setProperty("--mask-size", maskSize)
+  temp.style.width = "var(--mask-size)"
+  document.body.appendChild(temp)
+  const computed = getComputedStyle(temp)
+  return parseFloat(computed.getPropertyValue("width"))
+}
 
 const isDesktopSafari = () => {
   const ua = navigator.userAgent
