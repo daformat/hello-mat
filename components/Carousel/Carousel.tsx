@@ -325,13 +325,20 @@ const CarouselViewport = ({
     let decelerationFactor = 1 - friction
     const minVelocity = 0.01
 
-    const x =
+    const x = Math.abs(
       Math.log(minVelocity / Math.abs(state.velocityX)) /
-      Math.log(decelerationFactor)
+        Math.log(decelerationFactor)
+    )
     const initialScroll = container.scrollLeft
+    console.log({
+      x,
+      velocityX: state.velocityX,
+      decelerationFactor,
+      minVelocity,
+    })
     const tFinalScroll = Math.max(
       Math.min(
-        Array(Math.ceil(x))
+        Array(Math.ceil(isFinite(x) ? x : 0))
           .fill(0)
           .reduce((acc, val, i) => {
             return acc - state.velocityX * Math.pow(decelerationFactor, i) * 16
@@ -453,6 +460,10 @@ const CarouselViewport = ({
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onClickCapture={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+      }}
       onWheel={(event) => {
         event.currentTarget.style.scrollSnapType = ""
       }}
