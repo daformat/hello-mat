@@ -1,5 +1,5 @@
 import { TableOfContents } from "@/components/TableOfContents/TocComponent"
-import { useEffect, useRef, useState } from "react"
+import { CSSProperties, useEffect, useRef, useState } from "react"
 import { NextCard } from "@/components/Navigation/NextCard"
 import Link from "next/link"
 import { PageMetas } from "@/components/PageMetas/PageMetas"
@@ -27,7 +27,7 @@ const CarouselComponentPage = () => (
 const CarouselComponentPageContent = () => {
   const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
-  const [size, setSize] = useState(1)
+  const [size, setSize] = useState(0.5)
 
   useEffect(() => {
     if (contentRef.current) {
@@ -61,7 +61,7 @@ const CarouselComponentPageContent = () => {
                       src="/media/hello-mat-light.png"
                       alt=""
                       style={{
-                        minWidth: "calc(20vw)",
+                        minWidth: `calc(20vw * ${size + 0.5})`,
                       }}
                     />
                   </picture>
@@ -76,7 +76,7 @@ const CarouselComponentPageContent = () => {
                       src="/media/design-engineering/toc/og-toc-light.png"
                       alt=""
                       style={{
-                        minWidth: "calc(20vw)",
+                        minWidth: `calc(20vw * ${size + 0.5})`,
                       }}
                     />
                   </picture>
@@ -91,7 +91,7 @@ const CarouselComponentPageContent = () => {
                       src="/media/design-engineering/details/og-details-light.png"
                       alt=""
                       style={{
-                        minWidth: "calc(20vw)",
+                        minWidth: `calc(20vw * ${size + 0.5})`,
                       }}
                     />
                   </picture>
@@ -106,7 +106,7 @@ const CarouselComponentPageContent = () => {
                       src="/media/design-engineering/images-and-embeds/og-media-light.png"
                       alt=""
                       style={{
-                        minWidth: "calc(20vw)",
+                        minWidth: `calc(20vw * ${size + 0.5})`,
                       }}
                     />
                   </picture>
@@ -121,7 +121,7 @@ const CarouselComponentPageContent = () => {
                       src="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png"
                       alt=""
                       style={{
-                        minWidth: "calc(20vw)",
+                        minWidth: `calc(20vw * ${size + 0.5})`,
                       }}
                     />
                   </picture>
@@ -136,7 +136,7 @@ const CarouselComponentPageContent = () => {
                       src="/media/design-engineering/publish-button/og-publish-button-light.png"
                       alt=""
                       style={{
-                        minWidth: "calc(20vw)",
+                        minWidth: `calc(20vw * ${size + 0.5})`,
                       }}
                     />
                   </picture>
@@ -151,7 +151,7 @@ const CarouselComponentPageContent = () => {
                       src="/media/design-engineering/dock/og-dock-light.png"
                       alt=""
                       style={{
-                        minWidth: "calc(20vw)",
+                        minWidth: `calc(20vw * ${size + 0.5})`,
                       }}
                     />
                   </picture>
@@ -166,7 +166,7 @@ const CarouselComponentPageContent = () => {
                       src="/media/hello-mat-light.png"
                       alt=""
                       style={{
-                        minWidth: "calc(20vw)",
+                        minWidth: `calc(20vw * ${size + 0.5})`,
                       }}
                     />
                   </picture>
@@ -181,7 +181,7 @@ const CarouselComponentPageContent = () => {
                       src="/media/design-engineering/toc/og-toc-light.png"
                       alt=""
                       style={{
-                        minWidth: "calc(20vw)",
+                        minWidth: `calc(20vw * ${size + 0.5})`,
                       }}
                     />
                   </picture>
@@ -196,7 +196,7 @@ const CarouselComponentPageContent = () => {
                       src="/media/design-engineering/details/og-details-light.png"
                       alt=""
                       style={{
-                        minWidth: "calc(20vw)",
+                        minWidth: `calc(20vw * ${size + 0.5})`,
                       }}
                     />
                   </picture>
@@ -211,7 +211,7 @@ const CarouselComponentPageContent = () => {
                       src="/media/design-engineering/images-and-embeds/og-media-light.png"
                       alt=""
                       style={{
-                        minWidth: "calc(20vw)",
+                        minWidth: `calc(20vw * ${size + 0.5})`,
                       }}
                     />
                   </picture>
@@ -226,7 +226,7 @@ const CarouselComponentPageContent = () => {
                       src="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png"
                       alt=""
                       style={{
-                        minWidth: "calc(20vw)",
+                        minWidth: `calc(20vw * ${size + 0.5})`,
                       }}
                     />
                   </picture>
@@ -241,7 +241,7 @@ const CarouselComponentPageContent = () => {
                       src="/media/design-engineering/publish-button/og-publish-button-light.png"
                       alt=""
                       style={{
-                        minWidth: "calc(20vw)",
+                        minWidth: `calc(20vw * ${size + 0.5})`,
                       }}
                     />
                   </picture>
@@ -256,7 +256,7 @@ const CarouselComponentPageContent = () => {
                       src="/media/design-engineering/dock/og-dock-light.png"
                       alt=""
                       style={{
-                        minWidth: "calc(20vw)",
+                        minWidth: `calc(20vw * ${size + 0.5})`,
                       }}
                     />
                   </picture>
@@ -283,27 +283,27 @@ const CarouselComponentPageContent = () => {
             </div>
           </Carousel.Root>
         </div>
-        {/*<div style={{ display: "flex", gap: 16, alignItems: "center" }}>*/}
-        {/*  <label htmlFor="size">*/}
-        {/*    <small>Card size</small>*/}
-        {/*  </label>*/}
-        {/*  <input*/}
-        {/*    name="size"*/}
-        {/*    type="range"*/}
-        {/*    min={0}*/}
-        {/*    max={1}*/}
-        {/*    value={size}*/}
-        {/*    step={0.01}*/}
-        {/*    onChange={(e) => {*/}
-        {/*      setSize(Number(e.target.value))*/}
-        {/*    }}*/}
-        {/*    style={*/}
-        {/*      {*/}
-        {/*        "--value": `${size * 100}%`,*/}
-        {/*      } as CSSProperties*/}
-        {/*    }*/}
-        {/*  />*/}
-        {/*</div>*/}
+        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+          <label htmlFor="size">
+            <small>Card size</small>
+          </label>
+          <input
+            name="size"
+            type="range"
+            min={0}
+            max={1}
+            value={size}
+            step={0.01}
+            onChange={(e) => {
+              setSize(Number(e.target.value))
+            }}
+            style={
+              {
+                "--value": `${size * 100}%`,
+              } as CSSProperties
+            }
+          />
+        </div>
         <NextCard href={"/design-engineering/component/table-of-contents"}>
           Table of contents
         </NextCard>
