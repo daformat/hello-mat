@@ -268,14 +268,18 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
       container.scrollLeft >= container.scrollWidth - container.offsetWidth - 1
     ) {
       const items = container.querySelectorAll("[data-carousel-item]")
+      const maxDistance = container.offsetWidth
+      const clampedDistance = Math.min(Math.abs(scrollDelta), maxDistance)
+      const sign = Math.sign(scrollDelta)
+      const rubberBand = iOSRubberBand(clampedDistance, 0, maxDistance)
       // we have to translate the items instead of the content because
       // Safari scrolls the viewport if the content is translated
       items.forEach((item) => {
         if (item instanceof HTMLElement) {
-          item.style.translate = `${-scrollDelta / 2}px 0`
+          item.style.translate = `${-sign * rubberBand}px 0`
         }
       })
-      state.velocityX = -scrollDelta / 50
+      state.velocityX = (-sign * clampedDistance) / 50
     }
   }
 
@@ -674,6 +678,16 @@ function findDecelerationFactor(
   return 0.95
   // best estimate
   // return (low + high) / 2
+}
+
+function iOSRubberBand(translation: number, ratio: number, dimension = 1) {
+  // iOS-style rubber banding formula
+  const constant = 0.55
+  const easedValue =
+    (1 - 1 / ((translation * constant) / dimension + 1)) * dimension
+
+  // Apply ratio to progressively reduce effect
+  return easedValue * (1 - ratio)
 }
 
 export const Carousel = {
