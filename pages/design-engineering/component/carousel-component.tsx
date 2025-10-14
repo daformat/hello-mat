@@ -55,7 +55,7 @@ const CarouselComponentPageContent = () => {
           , a one-stop shop for wealth management. Play with the component, and
           try changing the card size.
         </p>
-        <div style={{ marginInline: -18 }}>
+        <div className={styles.wrapper} style={{ marginBottom: 32 }}>
           <Carousel.Root boundaryOffset={getBoundaryOffset}>
             <Carousel.Viewport>
               <Carousel.Content>

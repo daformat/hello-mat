@@ -57,6 +57,11 @@
   scroll-snap-align: center;
 }
 
+.wrapper {
+  --margin-inline: clamp(-32px, calc(5vw * -1), 0px);
+  margin-inline: var(--margin-inline);
+}
+
 .card {
   user-select: none;
   white-space: nowrap;
