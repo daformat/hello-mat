@@ -238,6 +238,7 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
   const handlePointerMove = (event: React.PointerEvent) => {
     const container = containerRef.current
     const state = scrollStateRef.current
+    const maxAbsoluteVelocity = 15
     if (!state.isDragging || !container || event.pointerType !== "mouse") {
       return
     }
@@ -248,6 +249,9 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
     const deltaX = event.clientX - state.lastX
     if (deltaTime > 0) {
       state.velocityX = deltaX / deltaTime // (pixels per millisecond)
+      if (Math.abs(state.velocityX) > maxAbsoluteVelocity) {
+        state.velocityX = Math.sign(state.velocityX) * maxAbsoluteVelocity
+      }
     }
 
     // update scroll position
@@ -286,6 +290,9 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
       })
 
       state.velocityX = (-sign * easedDistance) / 50
+      if (Math.abs(state.velocityX) > maxAbsoluteVelocity) {
+        state.velocityX = Math.sign(state.velocityX) * maxAbsoluteVelocity
+      }
     }
   }
 
@@ -327,13 +334,13 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
     ) {
       container.scrollLeft = tFinalScroll
       container.style.scrollSnapType = ""
-      const snapedScroll = container.scrollLeft
+      const snappedScroll = container.scrollLeft
       container.style.scrollSnapType = "none"
       container.scrollLeft = initialScroll
       decelerationFactor = findDecelerationFactor(
         container.scrollLeft,
         state.velocityX,
-        snapedScroll
+        snappedScroll
       )
     }
 
@@ -370,7 +377,12 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
           // Safari scrolls the viewport if the content is translated
           items.forEach((item) => {
             if (item instanceof HTMLElement) {
-              item.style.translate = `${delta / 2}px 0`
+              const sign = Math.sign(delta)
+              const clampedDelta = Math.min(
+                Math.abs(delta / 2),
+                container.offsetWidth / 2
+              )
+              item.style.translate = `${sign * clampedDelta}px 0`
             }
           })
           state.velocityX *= decelerationFactor
