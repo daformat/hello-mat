@@ -114,10 +114,7 @@ const CarouselRoot = ({
   )
 }
 
-const CarouselViewport = ({
-  snapsOnDrag,
-  children,
-}: PropsWithChildren<{ snapsOnDrag?: boolean }>) => {
+const CarouselViewport = ({ children }: PropsWithChildren) => {
   const {
     setRef,
     setScrollsBackwards,
@@ -269,52 +266,6 @@ const CarouselViewport = ({
     state.lastTime = currentTime
   }
 
-  const handleMomentumEnd = useCallback(() => {
-    const container = containerRef.current
-    if (container && snapsOnDrag) {
-      const scrollLeft = container.scrollLeft
-      if (isDesktopSafari()) {
-        // Oh, safari! (doesn’t properly update scrollLeft upon snapping, so we
-        // have to snap manually)
-        const items = Array.from(
-          container.querySelectorAll("[data-carousel-item]")
-        ) as HTMLElement[]
-        const prevItems = items.filter((item) => item.offsetLeft <= scrollLeft)
-        const nextItems = items.filter((item) => item.offsetLeft >= scrollLeft)
-        const prevItem = prevItems[prevItems.length - 1]
-        const nextItem = nextItems[0]
-        let snapItem: MaybeUndefined<HTMLElement>
-        if (prevItem && nextItem) {
-          const prevItemLeftEdge = prevItem.offsetLeft
-          const nextItemLeftEdge = nextItem.offsetLeft
-          snapItem =
-            Math.abs(scrollLeft - prevItemLeftEdge) <=
-            Math.abs(nextItemLeftEdge - scrollLeft)
-              ? prevItem
-              : nextItem
-        } else {
-          snapItem = prevItem ?? nextItem
-        }
-        const delta = snapItem ? snapItem.offsetLeft - scrollLeft : 0
-        container.scrollBy({
-          left: delta,
-          behavior: "smooth",
-        })
-      } else {
-        // Other browsers play nicer
-        container.style.scrollSnapType = ""
-        const targetScrollLeft = container.scrollLeft
-        container.style.scrollSnapType = "none"
-        container.scrollLeft = scrollLeft
-        container.scrollBy({
-          left: targetScrollLeft - scrollLeft,
-          behavior: "smooth",
-        })
-      }
-      container.style.scrollSnapType = ""
-    }
-  }, [snapsOnDrag])
-
   const startMomentumAnimation = useCallback(() => {
     const container = containerRef.current
     if (!container) {
@@ -403,12 +354,11 @@ const CarouselViewport = ({
         state.animationId = requestAnimationFrame(animate)
       } else {
         state.animationId = null
-        handleMomentumEnd()
       }
     }
 
     state.animationId = requestAnimationFrame(animate)
-  }, [handleMomentumEnd])
+  }, [])
 
   const handlePointerUp = useCallback(
     (event: React.PointerEvent | PointerEvent) => {
@@ -705,9 +655,9 @@ function findDecelerationFactor(
   }
 
   // Return default factor if we didn't find a good one
-  // return 0.95
+  return 0.95
   // best estimate
-  return (low + high) / 2
+  // return (low + high) / 2
 }
 
 export const Carousel = {
