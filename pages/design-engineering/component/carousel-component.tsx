@@ -47,14 +47,14 @@ const CarouselComponentPageContent = () => {
         </h1>
         <p>
           A scrollable, and swipeable carousel, even on desktop (complete with
-          friction and overscroll). Inspired by a component made at{" "}
+          snapping, friction and overscroll). Inspired by a&nbsp;component made
+          at{" "}
           <a href="https://finary.com" target="_blank" rel="noopener">
             Finary
           </a>
           , a one-stop shop for wealth management. Play with the component, and
           try changing the card size.
         </p>
-
         <div style={{ marginInline: -18 }}>
           <Carousel.Root boundaryOffset={getBoundaryOffset}>
             <Carousel.Viewport>
@@ -329,6 +329,24 @@ const CarouselComponentPageContent = () => {
             </div>
           </Carousel.Root>
         </div>
+        <h2 id="things-to-try">Things to try</h2>
+        <h3 id="momentum-scrolling">Momentum scrolling</h3>
+        Of course you can scroll the regular way, but you can also drag to swipe
+        the carousel. On most browsers (cough cough, Safari...) dragging to
+        swipe will respect the css <code>scroll-snap-align</code>. When you drag
+        to swipe, we use a custom momentum scrolling implementation when needed
+        (desktop browsers). The greater the velocity, the further the carousel
+        will scroll.
+        <h3 id="overscroll">Overscroll / rubber-banding</h3>
+        When dragging to swipe, if you give it enough velocity the carousel will
+        overscroll, with a rubber-banding effect, similar to the one you get on
+        touch devices by default.
+        <h3 id="Pagination">Pagination</h3>
+        The carousel can be paginated, using the dedicated buttons, pagination
+        is based on the <code>scroll-snap-align</code> set in css. For this
+        demo, I chose to use <code>center</code>, so the next item that is not
+        fully visible will be centered in the viewport when clicking the next or
+        previous page buttons.
         <NextCard href={"/design-engineering/component/table-of-contents"}>
           Table of contents
         </NextCard>
