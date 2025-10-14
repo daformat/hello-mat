@@ -330,12 +330,6 @@ const CarouselViewport = ({
         Math.log(decelerationFactor)
     )
     const initialScroll = container.scrollLeft
-    console.log({
-      x,
-      velocityX: state.velocityX,
-      decelerationFactor,
-      minVelocity,
-    })
     const tFinalScroll = Math.max(
       Math.min(
         Array(Math.ceil(isFinite(x) ? x : 0))
@@ -347,17 +341,22 @@ const CarouselViewport = ({
       ),
       0
     )
-    container.scrollLeft = tFinalScroll
-    container.style.scrollSnapType = ""
-    const scroll = container.scrollLeft
-    container.style.scrollSnapType = "none"
-    container.scrollLeft = initialScroll
-
-    decelerationFactor =
+    if (
       tFinalScroll < container.scrollWidth - container.offsetWidth &&
       tFinalScroll > 0
-        ? findDecelerationFactor(container.scrollLeft, state.velocityX, scroll)
-        : decelerationFactor
+    ) {
+      container.scrollLeft = tFinalScroll
+      container.style.scrollSnapType = ""
+      const snapedScroll = container.scrollLeft
+      container.style.scrollSnapType = "none"
+      container.scrollLeft = initialScroll
+      decelerationFactor = findDecelerationFactor(
+        container.scrollLeft,
+        state.velocityX,
+        snapedScroll
+      )
+      console.log(decelerationFactor)
+    }
 
     const animate = () => {
       const container = containerRef.current
@@ -379,13 +378,11 @@ const CarouselViewport = ({
       // Overscroll
       const content = container.querySelector("[data-carousel-content]")
       if (content instanceof HTMLElement) {
+        const startScroll = state.initialMouseScrollLeft
         if (
-          (state.velocityX < 0 &&
-            remainingForwards <= 1 &&
-            state.initialMouseScrollLeft < maxScrollLeft - 1) ||
-          (state.velocityX > 0 &&
-            remainingBackwards < 1 &&
-            state.initialMouseScrollLeft > 1)
+          Math.abs(state.velocityX) > minVelocity &&
+          ((remainingForwards <= 1 && startScroll < maxScrollLeft - 1) ||
+            (remainingBackwards < 1 && startScroll > 1))
         ) {
           const theoreticalTranslate = state.velocityX * 50
           const currentTranslate = parseFloat(content.style.translate || "0")
@@ -679,6 +676,7 @@ function findDecelerationFactor(
 
     // Check if we're close enough
     if (Math.abs(error) < tolerance) {
+      console.log("close enough")
       return testFactor
     }
 
@@ -706,7 +704,9 @@ function findDecelerationFactor(
     }
   }
 
-  // Return best estimate
+  // Return default factor if we didn't find a good one
+  // return 0.95
+  // best estimate
   return (low + high) / 2
 }
 
