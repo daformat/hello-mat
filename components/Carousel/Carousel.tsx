@@ -261,9 +261,22 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
     }
     container.scrollLeft = state.scrollLeft + scrollDelta
     state.mouseScrollLeft = state.scrollLeft + scrollDelta
-
     state.lastX = event.clientX
     state.lastTime = currentTime
+    if (
+      container.scrollLeft <= 1 ||
+      container.scrollLeft >= container.scrollWidth - container.offsetWidth - 1
+    ) {
+      const items = container.querySelectorAll("[data-carousel-item]")
+      // we have to translate the items instead of the content because
+      // Safari scrolls the viewport if the content is translated
+      items.forEach((item) => {
+        if (item instanceof HTMLElement) {
+          item.style.translate = `${-scrollDelta / 2}px 0`
+        }
+      })
+      state.velocityX = -scrollDelta / 50
+    }
   }
 
   const startMomentumAnimation = useCallback(() => {
@@ -272,7 +285,13 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
       return
     }
     const state = scrollStateRef.current
-    const friction = 0.05
+    const isRubberBanding =
+      container.scrollLeft <= 1 ||
+      container.scrollLeft >= container.scrollWidth - container.offsetWidth - 1
+    const rubberBandingFactor = isRubberBanding
+      ? (state.velocityX * 50) / container.scrollWidth
+      : 0
+    const friction = 0.05 + Math.abs(rubberBandingFactor)
     let decelerationFactor = 1 - friction
     const minVelocity = 0.01
 
@@ -306,7 +325,6 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
         state.velocityX,
         snapedScroll
       )
-      console.log(decelerationFactor)
     }
 
     const animate = () => {
@@ -322,18 +340,17 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
       const newScrollLeft = container.scrollLeft
       const scrollWidth = container.scrollWidth
       const offsetWidth = container.offsetWidth
-      const maxScrollLeft = scrollWidth - offsetWidth
+      // const maxScrollLeft = scrollWidth - offsetWidth
       const remainingForwards = scrollWidth - offsetWidth - newScrollLeft
       const remainingBackwards = newScrollLeft
 
       // Overscroll
       const content = container.querySelector("[data-carousel-content]")
       if (content instanceof HTMLElement) {
-        const startScroll = state.initialMouseScrollLeft
+        // const startScroll = state.initialMouseScrollLeft
         if (
           Math.abs(state.velocityX) > minVelocity &&
-          ((remainingForwards <= 1 && startScroll < maxScrollLeft - 1) ||
-            (remainingBackwards < 1 && startScroll > 1))
+          (remainingForwards <= 1 || remainingBackwards < 1)
         ) {
           const theoreticalTranslate = state.velocityX * 50
           const currentTranslate = parseFloat(content.style.translate || "0")
@@ -626,7 +643,6 @@ function findDecelerationFactor(
 
     // Check if we're close enough
     if (Math.abs(error) < tolerance) {
-      console.log("close enough")
       return testFactor
     }
 
