@@ -45,7 +45,15 @@ const CarouselComponentPageContent = () => {
         <h1 id="design-engineering-a-dock-component">
           Design engineering: a carousel component
         </h1>
-        <p>A scrollable, and swipeable carousel.</p>
+        <p>
+          A scrollable, and swipeable carousel, even on desktop (complete with
+          friction and overscroll). Inspired by a component made at{" "}
+          <a href="https://finary.com" target="_blank" rel="noopener">
+            Finary
+          </a>
+          , a one-stop shop for wealth management. Play with the component, and
+          try changing the card size.
+        </p>
 
         <div style={{ marginInline: -18 }}>
           <Carousel.Root boundaryOffset={getBoundaryOffset}>
