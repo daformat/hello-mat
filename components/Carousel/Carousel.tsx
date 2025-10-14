@@ -552,6 +552,14 @@ const CarouselPrevPage = ({ children }: PropsWithChildren) => {
 //   return /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream
 // }
 
+// const isDesktopSafari = () => {
+//   const ua = navigator.userAgent
+//   const isSafari = /^((?!chrome|android).)*safari/i.test(ua)
+//   const isDesktop = !/iPhone|iPad|iPod|Android/i.test(ua)
+//
+//   return isSafari && isDesktop
+// }
+
 const getBoundaryOffset = (
   boundaryOffset: ContextType<typeof CarouselContext>["boundaryOffset"],
   root: HTMLElement
@@ -559,14 +567,6 @@ const getBoundaryOffset = (
   return typeof boundaryOffset === "function"
     ? boundaryOffset(root)
     : boundaryOffset ?? { x: 0, y: 0 }
-}
-
-const isDesktopSafari = () => {
-  const ua = navigator.userAgent
-  const isSafari = /^((?!chrome|android).)*safari/i.test(ua)
-  const isDesktop = !/iPhone|iPad|iPod|Android/i.test(ua)
-
-  return isSafari && isDesktop
 }
 
 const getScrollSnapAlign = (computedStyle: MaybeNull<CSSStyleDeclaration>) => {
