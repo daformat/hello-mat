@@ -268,18 +268,24 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
       container.scrollLeft >= container.scrollWidth - container.offsetWidth - 1
     ) {
       const items = container.querySelectorAll("[data-carousel-item]")
-      const maxDistance = container.offsetWidth
-      const clampedDistance = Math.min(Math.abs(scrollDelta), maxDistance)
+      const maxDistance = container.offsetWidth / 3
+      const maxScrollLeft = container.scrollWidth - container.offsetWidth
+      const targetScrollLeft = state.scrollLeft + scrollDelta
+      const overscroll =
+        targetScrollLeft < 0
+          ? Math.abs(targetScrollLeft)
+          : targetScrollLeft > maxScrollLeft
+          ? targetScrollLeft - maxScrollLeft
+          : 0
       const sign = Math.sign(scrollDelta)
-      const rubberBand = iOSRubberBand(clampedDistance, 0, maxDistance)
-      // we have to translate the items instead of the content because
-      // Safari scrolls the viewport if the content is translated
+      const easedDistance = iOSRubberBand(overscroll, 0, maxDistance)
       items.forEach((item) => {
         if (item instanceof HTMLElement) {
-          item.style.translate = `${-sign * rubberBand}px 0`
+          item.style.translate = `${-sign * easedDistance}px 0`
         }
       })
-      state.velocityX = (-sign * clampedDistance) / 50
+
+      state.velocityX = (-sign * easedDistance) / 50
     }
   }
 
@@ -605,11 +611,11 @@ const getScrollSnapAlign = (computedStyle: MaybeNull<CSSStyleDeclaration>) => {
   return [] as CSSProperties["scrollSnapAlign"][]
 }
 
-function findDecelerationFactor(
+const findDecelerationFactor = (
   initialScroll: number,
   velocity: number,
   targetScroll: number
-) {
+) => {
   const minVelocity = 0.01
   const totalDistance = targetScroll - initialScroll
 
@@ -627,48 +633,40 @@ function findDecelerationFactor(
   for (let iteration = 0; iteration < maxIterations; iteration++) {
     const testFactor = (low + high) / 2
 
-    // Calculate x (number of frames until velocity reaches minVelocity)
+    // Calculate number of frames until velocity reaches minVelocity
     const x = Math.log(minVelocity / Math.abs(velocity)) / Math.log(testFactor)
 
+    // Invalid calculation, adjust bounds
     if (!isFinite(x) || x < 0) {
-      // Invalid calculation, adjust bounds
       high = testFactor
       continue
     }
 
     // Calculate final scroll with this factor
-    // Sum of geometric series: initial + v*r^0 + v*r^1 + ... + v*r^(n-1)
+    // -> sum of geometric series: initial + v*r^0 + v*r^1 + ... + v*r^(n-1)
     let calculatedScroll = initialScroll
     for (let i = 0; i < Math.ceil(x); i++) {
       calculatedScroll -= velocity * Math.pow(testFactor, i) * 16
     }
 
+    // Close enough?
     const error = calculatedScroll - targetScroll
-
-    // Check if we're close enough
     if (Math.abs(error) < tolerance) {
       return testFactor
     }
 
-    // Adjust search range based on direction
-    // When scrolling right (velocity < 0), calculatedScroll increases
-    // When scrolling left (velocity > 0), calculatedScroll decreases
     if (velocity < 0) {
-      // Scrolling right
+      // Scrolling right, calculatedScroll increases
       if (calculatedScroll > targetScroll) {
-        // Overshot - need more friction (lower factor)
         high = testFactor
       } else {
-        // Undershot - need less friction (higher factor)
         low = testFactor
       }
     } else {
-      // Scrolling left
+      // Scrolling left, calculatedScroll decreases
       if (calculatedScroll < targetScroll) {
-        // Overshot - need more friction (lower factor)
         high = testFactor
       } else {
-        // Undershot - need less friction (higher factor)
         low = testFactor
       }
     }
@@ -676,17 +674,12 @@ function findDecelerationFactor(
 
   // Return default factor if we didn't find a good one
   return 0.95
-  // best estimate
-  // return (low + high) / 2
 }
 
-function iOSRubberBand(translation: number, ratio: number, dimension = 1) {
-  // iOS-style rubber banding formula
+const iOSRubberBand = (translation: number, ratio: number, dimension = 1) => {
   const constant = 0.55
   const easedValue =
     (1 - 1 / ((translation * constant) / dimension + 1)) * dimension
-
-  // Apply ratio to progressively reduce effect
   return easedValue * (1 - ratio)
 }
 
