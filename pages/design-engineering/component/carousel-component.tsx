@@ -348,7 +348,10 @@ const CarouselComponentPageContent = () => {
         When dragging to swipe, if you give it enough velocity the carousel will
         overscroll, with a rubber-banding effect, similar to the one you get on
         touch devices by default. For this to work, we calculate a velocity
-        based on fast you are moving your mouse and apply a deceleration factor.
+        based on how fast you are moving your mouse and apply a deceleration
+        factor. When yous scrolled to the start of the end of the carousel, you
+        can also trigger the rubber-banding effect by dragging the carousel even
+        more.
         <h3 id="Pagination">Pagination</h3>
         The carousel can be paginated, using the dedicated buttons, pagination
         is based on the <code>scroll-snap-align</code> set in css. For this
@@ -366,8 +369,8 @@ const CarouselComponentPageContent = () => {
         <h2 id="conclusion">That’s a wrap</h2>
         While implementing the basic version of the carousel is easy, thanks to
         modern css, implementing momentum scrolling with snapping and overscroll
-        on desktop isn’t trivial. Maybe I’ll try to enable infinite scrolling at
-        some point, but for now, this is a good start.
+        / rubber-banding on desktop isn’t trivial. Maybe I’ll try to enable
+        infinite scrolling at some point, but for now, this is a good start.
         <NextCard href={"/design-engineering/component/table-of-contents"}>
           Table of contents
         </NextCard>
