@@ -1,4 +1,3 @@
-import { ButtonReveal } from "./ButtonReveal"
 import { TbShare2 } from "react-icons/tb"
 import { HiLink } from "react-icons/hi"
 import { IoChevronDownOutline } from "react-icons/io5"
@@ -20,7 +19,8 @@ import {
 import { Dropdown } from "@/components/ButtonGroup/Dropdown/Dropdown"
 import { DropdownItem } from "@/components/ButtonGroup/Dropdown/DropdownItem"
 import { DropdownSeparator } from "@/components/ButtonGroup/Dropdown/DropdownSeparator"
-import { MaybeNull } from "@/components/Media/utils/maybe"
+import { MaybeNull, MaybeUndefined } from "@/components/Media/utils/maybe"
+import { ButtonReveal } from "@/components/PublishButton/ButtonReveal"
 
 import styles from "./ButtonReveal.module.scss"
 
@@ -107,7 +107,7 @@ const PublishDropdown = ({
       }
       // @ts-expect-error: inert is a valid attribute, but we're lagging behind
       // on our react version, so we need to disable the ts rule
-      inert={!published ? "" : undefined}
+      inert={!published}
       aria-hidden={published ? "false" : "true"}
     >
       {published ? (
@@ -143,6 +143,11 @@ const PublishButton = ({
   const handleTogglePublish = useCallback(() => {
     const timeout = timeoutRef.current
     if (!timeout) {
+      let published: MaybeUndefined<boolean>
+      setPublished((prev) => {
+        published = prev
+        return prev
+      })
       setButtonContent({
         icon: published ? <HiLink /> : <TbShare2 />,
         message: published ? "Unpublishing…" : "Publishing…",
@@ -153,31 +158,37 @@ const PublishButton = ({
           clearTimeout(feedbackTimeoutRef.current)
         }
         if (Math.random() <= 0.75) {
-          setPublished((prev) => !prev)
+          let published: MaybeUndefined<boolean>
+          setPublished((prev) => {
+            published = !prev
+            return published
+          })
           setButtonContent({
             icon: <IconCheckmark />,
-            message: published ? "Unpublished!" : "Published!",
+            message: published ? "Published!" : "Unpublished!",
           })
         } else {
           setButtonContent({
             icon: <IconError />,
-            message: published ? "Failed to unpublish" : "Failed to publish",
+            message: published ? "Failed to publish" : "Failed to unpublish",
           })
         }
         feedbackTimeoutRef.current = setTimeout(() => {
           feedbackTimeoutRef.current = null
-          setPublished((published) => {
-            setButtonContent(
-              published
-                ? { icon: <HiLink />, message: "Unpublish…" }
-                : { icon: <TbShare2 />, message: "Publish…" }
-            )
-            return published
+          let published: MaybeUndefined<boolean>
+          setPublished((prev) => {
+            published = prev
+            return prev
           })
+          setButtonContent(
+            published
+              ? { icon: <HiLink />, message: "Unpublish…" }
+              : { icon: <TbShare2 />, message: "Publish…" }
+          )
         }, 2_000)
       }, Math.random() * 2_000 + 1_500)
     }
-  }, [published, setPublished])
+  }, [setPublished])
 
   const handleEnter = () => {
     if (feedbackTimeoutRef.current) {
@@ -251,9 +262,9 @@ const IconError = () => {
       <path
         d="M3 3L13 13"
         stroke="currentColor"
-        stroke-width="1.75"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         style={{
           animation: "draw-check 0.25s ease-in-out both",
           strokeDasharray: "130%",
@@ -262,9 +273,9 @@ const IconError = () => {
       <path
         d="M13 3L3 13"
         stroke="currentColor"
-        stroke-width="1.75"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         style={{
           animation: "draw-check 0.25s ease-in-out both 0.1s",
           strokeDasharray: "130%",

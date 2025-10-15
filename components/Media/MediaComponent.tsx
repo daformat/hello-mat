@@ -314,7 +314,7 @@ export const Media = ({
         ref={collapsedContentRef}
         // @ts-expect-error: inert is a valid attribute, but we're lagging behind
         // on our react version, so we need to disable the ts rule
-        inert={!collapsed ? "" : undefined}
+        inert={!collapsed}
       >
         <button
           className={styles.icon}
@@ -336,7 +336,7 @@ export const Media = ({
         className={styles.media_content_wrapper}
         // @ts-expect-error: inert is a valid attribute, but we're lagging behind
         // on our react version, so we need to disable the ts rule
-        inert={collapsed ? "" : undefined}
+        inert={collapsed}
       >
         <div className={styles.placeholder}>
           {error || loadingError ? <SvgPlaceholderError /> : placeholder}
