@@ -289,7 +289,7 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
         }
       })
 
-      state.velocityX = (-sign * easedDistance) / 50
+      state.velocityX = (-sign * easedDistance) / 20
       if (Math.abs(state.velocityX) > maxAbsoluteVelocity) {
         state.velocityX = Math.sign(state.velocityX) * maxAbsoluteVelocity
       }
