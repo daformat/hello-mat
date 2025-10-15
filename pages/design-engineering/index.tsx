@@ -171,7 +171,7 @@ const DesignEngineeringIndex = () => (
               },
             }}
           />
-          A macOS inspired dock
+          A carousel component
         </Link>
       </div>
     </div>
