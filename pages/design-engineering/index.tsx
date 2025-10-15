@@ -153,6 +153,26 @@ const DesignEngineeringIndex = () => (
           />
           A macOS inspired dock
         </Link>
+
+        <Link
+          href={"/design-engineering/component/carousel-component"}
+          className={styles.card}
+        >
+          <VideoPlayer
+            style={{ aspectRatio: "990/500" }}
+            sources={{
+              dark: {
+                src: "/media/design-engineering/carousel/carousel-overview-dark.mp4",
+                type: "video/mp4",
+              },
+              light: {
+                src: "/media/design-engineering/carousel/carousel-overview-light.mp4",
+                type: "video/mp4",
+              },
+            }}
+          />
+          A macOS inspired dock
+        </Link>
       </div>
     </div>
   </>

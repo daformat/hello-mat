@@ -13,7 +13,7 @@ const CarouselComponentPage = () => (
   <>
     <PageMetas
       title="Design engineering: a carousel component"
-      description="Building a scrollable, and swipeable carousel, using React, TypeScript, and SCSS."
+      description="Building a scrollable, and swipeable carousel, with momentum scrolling, overscroll and rubber-banding using React, TypeScript, and SCSS."
       url="https://hello-mat.com/design-engineering/component/carousel-component"
       image="https://hello-mat.com/media/design-engineering/carousel/og-carousel-light.png"
       imageWidth={1200}
