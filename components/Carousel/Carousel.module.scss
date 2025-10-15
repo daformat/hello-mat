@@ -73,7 +73,7 @@
   img {
     --radius: clamp(6px, calc(1vw * var(--size, 1)), 10px);
     --padding: clamp(4px, calc(1vw * var(--size, 1)), 7px);
-    --base-size: 20vw;
+    --base-size: calc(var(--inline, 20vw) * 0.94);
     --final-size: calc(var(--base-size) * (var(--size, 1) + 0.5));
     align-items: center;
     background-color: var(--color-toolbar-background);

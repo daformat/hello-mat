@@ -7,6 +7,7 @@ import { Carousel } from "@/components/Carousel/Carousel"
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6"
 
 import styles from "@/components/Carousel/Carousel.module.scss"
+import { useCssSizeVariables } from "@/hooks/useCssSizeVariables"
 
 const CarouselComponentPage = () => (
   <>
@@ -28,6 +29,8 @@ const CarouselComponentPageContent = () => {
   const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState(0.7)
+  const carouselRef = useRef<HTMLDivElement>(null)
+  useCssSizeVariables(carouselRef)
 
   useEffect(() => {
     if (contentRef.current) {
@@ -55,7 +58,11 @@ const CarouselComponentPageContent = () => {
           , a one-stop shop for wealth management. Play with the component, and
           try changing the card size.
         </p>
-        <div className={styles.wrapper} style={{ marginBottom: 32 }}>
+        <div
+          ref={carouselRef}
+          className={styles.wrapper}
+          style={{ marginBottom: 32 }}
+        >
           <Carousel.Root boundaryOffset={getBoundaryOffset}>
             <Carousel.Viewport>
               <Carousel.Content>
