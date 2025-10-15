@@ -89,23 +89,6 @@ const CarouselComponentPageContent = () => {
                   >
                     <source
                       media="(prefers-color-scheme: dark)"
-                      srcSet="/media/design-engineering/toc/og-toc-dark.png"
-                    />
-                    <img
-                      src="/media/design-engineering/toc/og-toc-light.png"
-                      alt=""
-                    />
-                  </picture>
-                </Carousel.Item>
-                <Carousel.Item>
-                  <picture
-                    style={
-                      { fontSize: 0, "--size": `${size}` } as CSSProperties
-                    }
-                    className={styles.card}
-                  >
-                    <source
-                      media="(prefers-color-scheme: dark)"
                       srcSet="/media/design-engineering/details/og-details-dark.png"
                     />
                     <img
@@ -194,23 +177,6 @@ const CarouselComponentPageContent = () => {
                       srcSet="/media/hello-mat-dark.png"
                     />
                     <img src="/media/hello-mat-light.png" alt="" />
-                  </picture>
-                </Carousel.Item>
-                <Carousel.Item>
-                  <picture
-                    style={
-                      { fontSize: 0, "--size": `${size}` } as CSSProperties
-                    }
-                    className={styles.card}
-                  >
-                    <source
-                      media="(prefers-color-scheme: dark)"
-                      srcSet="/media/design-engineering/toc/og-toc-dark.png"
-                    />
-                    <img
-                      src="/media/design-engineering/toc/og-toc-light.png"
-                      alt=""
-                    />
                   </picture>
                 </Carousel.Item>
                 <Carousel.Item>
@@ -338,40 +304,51 @@ const CarouselComponentPageContent = () => {
         </div>
         <h2 id="things-to-try">Things to try</h2>
         <h3 id="momentum-scrolling">Momentum scrolling</h3>
-        Of course you can scroll the regular way, but you can also drag to swipe
-        the carousel. On most browsers (cough cough, Safari...) dragging to
-        swipe will respect the css <code>scroll-snap-align</code>. When you drag
-        to swipe, we use a custom momentum scrolling implementation when needed
-        (desktop browsers). The greater the velocity, the further the carousel
-        will scroll.
+        <p>
+          Of course you can scroll the regular way, but you can also drag to
+          swipe the carousel. On most browsers (cough cough, Safari...) dragging
+          to swipe will respect the css <code>scroll-snap-align</code>. When you
+          drag to swipe, we use a custom momentum scrolling implementation when
+          needed (desktop browsers). The greater the velocity, the further the
+          carousel will scroll.
+        </p>
         <h3 id="overscroll">Overscroll / rubber-banding</h3>
-        When dragging to swipe, if you give it enough velocity the carousel will
-        overscroll, with a rubber-banding effect, similar to the one you get on
-        touch devices by default. For this to work, we calculate a velocity
-        based on how fast you are moving your mouse and apply a deceleration
-        factor. When yous scrolled to the start of the end of the carousel, you
-        can also trigger the rubber-banding effect by dragging the carousel even
-        more.
+        <p>
+          When dragging to swipe, if you give it enough velocity the carousel
+          will overscroll, with a rubber-banding effect, similar to the one you
+          get on touch devices by default. For this to work, we calculate a
+          velocity based on how fast you are moving your mouse and apply a
+          deceleration factor. When yous scrolled to the start of the end of the
+          carousel, you can also trigger the rubber-banding effect by dragging
+          the carousel even more.
+        </p>
         <h3 id="Pagination">Pagination</h3>
-        The carousel can be paginated, using the dedicated buttons, pagination
-        is based on the <code>scroll-snap-align</code> set in css. For this
-        demo, I chose to use <code>center</code>, so the next item that is not
-        fully visible will be centered in the viewport when clicking the next or
-        previous page buttons.
+        <p>
+          The carousel can be paginated, using the dedicated buttons, pagination
+          is based on the <code>scroll-snap-align</code> set in css. For this
+          demo, I chose to use <code>center</code>, so the next item that is not
+          fully visible will be centered in the viewport when clicking the next
+          or previous page buttons.
+        </p>
         <h3 id="snapping">Snapping</h3>
-        Because of the css styles, the carousel items will snap naturally when
-        performing a regular scroll. I chose{" "}
-        <code>scroll-snap-align: center</code> for this demo. But when you drag
-        to scroll on desktop, this behavior is not a given. You have to
-        implement it yourself by adjusting the deceleration factor for the
-        velocity, so that the velocity reaches 0 towards the snap point. I also
-        chose to allow small movements not to snap, so that it feels more
-        natural.
+        <p>
+          Because of the css styles, the carousel items will snap naturally when
+          performing a regular scroll. I chose{" "}
+          <code>scroll-snap-align: center</code> for this demo. But when you
+          drag to scroll on desktop, this behavior is not a given. You have to
+          implement it yourself by adjusting the deceleration factor for the
+          velocity, so that the velocity reaches 0 towards the snap point. I
+          also chose to allow small movements not to snap, so that it feels more
+          natural.
+        </p>
         <h2 id="conclusion">That’s a wrap</h2>
-        While implementing the basic version of the carousel is easy, thanks to
-        modern css, implementing momentum scrolling with snapping and overscroll
-        / rubber-banding on desktop isn’t trivial. Maybe I’ll try to enable
-        infinite scrolling at some point, but for now, this is a good start.
+        <p>
+          While implementing the basic version of the carousel is easy, thanks
+          to modern css, implementing momentum scrolling with snapping and
+          overscroll / rubber-banding on desktop isn’t trivial. Maybe I’ll try
+          to enable infinite scrolling at some point, but for now, this is a
+          good start.
+        </p>
         <NextCard href={"/design-engineering/component/table-of-contents"}>
           Table of contents
         </NextCard>
