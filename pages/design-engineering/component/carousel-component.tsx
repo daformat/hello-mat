@@ -77,7 +77,11 @@ const CarouselComponentPageContent = () => {
                       media="(prefers-color-scheme: dark)"
                       srcSet="/media/hello-mat-dark.png"
                     />
-                    <img src="/media/hello-mat-light.png" alt="" />
+                    <img
+                      src="/media/hello-mat-light.png"
+                      alt=""
+                      style={{ aspectRatio: "1200 / 630" }}
+                    />
                   </picture>
                 </Carousel.Item>
                 <Carousel.Item>
@@ -94,6 +98,7 @@ const CarouselComponentPageContent = () => {
                     <img
                       src="/media/design-engineering/details/og-details-light.png"
                       alt=""
+                      style={{ aspectRatio: "1200 / 630" }}
                     />
                   </picture>
                 </Carousel.Item>
@@ -111,6 +116,7 @@ const CarouselComponentPageContent = () => {
                     <img
                       src="/media/design-engineering/images-and-embeds/og-media-light.png"
                       alt=""
+                      style={{ aspectRatio: "1200 / 630" }}
                     />
                   </picture>
                 </Carousel.Item>
@@ -128,6 +134,7 @@ const CarouselComponentPageContent = () => {
                     <img
                       src="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png"
                       alt=""
+                      style={{ aspectRatio: "1200 / 630" }}
                     />
                   </picture>
                 </Carousel.Item>
@@ -145,6 +152,7 @@ const CarouselComponentPageContent = () => {
                     <img
                       src="/media/design-engineering/publish-button/og-publish-button-light.png"
                       alt=""
+                      style={{ aspectRatio: "1200 / 630" }}
                     />
                   </picture>
                 </Carousel.Item>
@@ -162,6 +170,7 @@ const CarouselComponentPageContent = () => {
                     <img
                       src="/media/design-engineering/dock/og-dock-light.png"
                       alt=""
+                      style={{ aspectRatio: "1200 / 630" }}
                     />
                   </picture>
                 </Carousel.Item>
@@ -176,7 +185,11 @@ const CarouselComponentPageContent = () => {
                       media="(prefers-color-scheme: dark)"
                       srcSet="/media/hello-mat-dark.png"
                     />
-                    <img src="/media/hello-mat-light.png" alt="" />
+                    <img
+                      src="/media/hello-mat-light.png"
+                      alt=""
+                      style={{ aspectRatio: "1200 / 630" }}
+                    />
                   </picture>
                 </Carousel.Item>
                 <Carousel.Item>
@@ -193,6 +206,7 @@ const CarouselComponentPageContent = () => {
                     <img
                       src="/media/design-engineering/details/og-details-light.png"
                       alt=""
+                      style={{ aspectRatio: "1200 / 630" }}
                     />
                   </picture>
                 </Carousel.Item>
@@ -210,6 +224,7 @@ const CarouselComponentPageContent = () => {
                     <img
                       src="/media/design-engineering/images-and-embeds/og-media-light.png"
                       alt=""
+                      style={{ aspectRatio: "1200 / 630" }}
                     />
                   </picture>
                 </Carousel.Item>
@@ -227,6 +242,7 @@ const CarouselComponentPageContent = () => {
                     <img
                       src="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png"
                       alt=""
+                      style={{ aspectRatio: "1200 / 630" }}
                     />
                   </picture>
                 </Carousel.Item>
@@ -244,6 +260,7 @@ const CarouselComponentPageContent = () => {
                     <img
                       src="/media/design-engineering/publish-button/og-publish-button-light.png"
                       alt=""
+                      style={{ aspectRatio: "1200 / 630" }}
                     />
                   </picture>
                 </Carousel.Item>
@@ -261,6 +278,7 @@ const CarouselComponentPageContent = () => {
                     <img
                       src="/media/design-engineering/dock/og-dock-light.png"
                       alt=""
+                      style={{ aspectRatio: "1200 / 630" }}
                     />
                   </picture>
                 </Carousel.Item>
