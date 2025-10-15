@@ -359,7 +359,8 @@ const CarouselComponentPageContent = () => {
         fully visible will be centered in the viewport when clicking the next or
         previous page buttons.
         <h3 id="snapping">Snapping</h3>
-        Because of the css styles, the carousel items will snap. I chose{" "}
+        Because of the css styles, the carousel items will snap naturally when
+        performing a regular scroll. I chose{" "}
         <code>scroll-snap-align: center</code> for this demo. But when you drag
         to scroll on desktop, this behavior is not a given. You have to
         implement it yourself by adjusting the deceleration factor for the
