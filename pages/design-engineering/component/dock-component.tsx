@@ -76,8 +76,8 @@ const DockComponentPageContent = () => {
             <DockItem icon={<BeamIconBeta />} name="beam beta" />
           </Dock>
         </div>
-        <NextCard href={"/design-engineering/component/table-of-contents"}>
-          Table of contents
+        <NextCard href={"/design-engineering/component/carousel-component"}>
+          A carousel component
         </NextCard>
       </div>
     </>
