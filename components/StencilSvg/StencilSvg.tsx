@@ -2,7 +2,6 @@ import { CSSProperties, useCallback, useEffect, useRef, useState } from "react"
 import styles from "./StencilSvg.module.scss"
 import Link from "next/link"
 import { plotCircle, Position, translate, vec, Vector } from "@/utlis/geometry"
-import { usePointer } from "@/hooks/usePointer"
 import { globalWindowValue } from "@/hooks/useEventListener"
 import { isNonNullable } from "@/utlis/nullable"
 
@@ -80,6 +79,7 @@ type StencilSvgProps = {
   path: { paths: StencilSvgPath[]; name: string }
 }
 
+const cache = new Map<string, JSX.Element[]>()
 /**
  * This component is hacky and could definitely be improved.
  */
@@ -91,24 +91,6 @@ export const StencilSvg = ({
   height,
   path,
 }: StencilSvgProps) => {
-  const pointer = usePointer()
-  const { x, y } = pointer
-  const dX = globalWindowValue && x ? x - window.innerWidth / 2 : 1
-  const dY = globalWindowValue && y ? y - window.innerHeight / 2 : 1
-  let dist = Math.hypot(dX, dY)
-  const max = globalWindowValue
-    ? Math.hypot(window.innerWidth / 2, window.innerHeight / 2) * 0.35
-    : 1
-  // remove distance effect when hovering controls
-  if (isNonNullable(x) && isNonNullable(y)) {
-    const element = document.elementFromPoint(x, y)
-    if (element?.closest("[data-controls]")) {
-      dist = max
-    }
-  }
-  const ratio = Math.min(1, dist / max) ** 2
-  const t = 1 - ratio
-
   const [points, setPoints] = useState<JSX.Element[]>([])
   const svgRef = useRef<SVGSVGElement>(null)
   const boxWidth = width
@@ -117,37 +99,68 @@ export const StencilSvg = ({
   const pathName = useRef<string>()
 
   useEffect(() => {
-    let raf:
-      | ReturnType<typeof requestAnimationFrame>
-      | ReturnType<typeof requestIdleCallback>
-    const styles = svgRef.current && getComputedStyle(svgRef.current)
-    const refresh = () => {
-      if (styles) {
-        const target = parseFloat(
-          styles.getPropertyValue("--circle-pump-distance-max-target")
+    const svg = svgRef.current
+    let circlePumpDistanceMax = -6
+
+    if (svg) {
+      const refresh = (event: PointerEvent) => {
+        const { clientX: x, clientY: y } = event
+        const dX = globalWindowValue && x ? x - window.innerWidth / 2 : 1
+        const dY = globalWindowValue && y ? y - window.innerHeight / 2 : 1
+        let dist = Math.hypot(dX, dY)
+        const max = globalWindowValue
+          ? Math.hypot(window.innerWidth / 2, window.innerHeight / 2) * 0.35
+          : 1
+        // remove distance effect when hovering controls
+        if (isNonNullable(x) && isNonNullable(y)) {
+          const element = document.elementFromPoint(x, y)
+          if (element?.closest("[data-controls]")) {
+            dist = max
+          }
+        }
+        const ratio = Math.min(1, dist / max) ** 2
+        const t = 1 - ratio
+        const target = -6 * (1 + t * 40)
+        svg.style.setProperty(
+          "--circle-pump-distance-max-target",
+          `${target}px`
         )
-        const current = parseFloat(
-          styles.getPropertyValue("--circle-pump-distance-max")
-        )
+        const current = circlePumpDistanceMax
         if (current && target && Math.abs(target - current) > 2) {
-          svgRef.current.style.setProperty(
+          circlePumpDistanceMax = current + (target - current) / 4
+          svg.style.setProperty(
             "--circle-pump-distance-max",
-            `${current + (target - current) / 4}px`
+            `${circlePumpDistanceMax}px`
           )
-          raf =
-            typeof requestIdleCallback !== "undefined"
-              ? requestIdleCallback(refresh)
-              : requestAnimationFrame(refresh)
         }
       }
+      const leave = () => {
+        const target = -6 * (1 + 40)
+        svg.style.setProperty(
+          "--circle-pump-distance-max-target",
+          `${target}px`
+        )
+        svg.style.setProperty("--circle-pump-distance-max", `${-6}px`)
+      }
+      document.addEventListener("pointermove", refresh)
+      document.addEventListener("pointerleave", leave)
+      return () => {
+        document.removeEventListener("pointermove", refresh)
+        document.removeEventListener("pointerleave", leave)
+      }
     }
-    refresh()
-    return () => cancelAnimationFrame(raf)
-  })
+  }, [])
 
   const pathCallback = useCallback(
     (node: SVGPathElement) => {
       requestAnimationFrame(() => {
+        const nodeIndex = node.dataset.index
+        const cacheKey = `${path.name}-${nodeIndex}`
+        const cached = cache.get(cacheKey)
+        if (cached) {
+          setPoints(cached)
+          return
+        }
         const svg = node?.closest("svg")
         const g = node?.closest("g")
         if (node && svg && g) {
@@ -190,7 +203,7 @@ export const StencilSvg = ({
                 : []),
               ...stencilPoints,
             ]
-            // setPrevPoints(newPoints)
+            cache.set(cacheKey, newPoints)
             return newPoints
           })
           pathName.current = path.name
@@ -230,14 +243,7 @@ export const StencilSvg = ({
       style={
         {
           display: display || !points.length ? "" : "none",
-          // '--pointer-x': pointer.x
-          //   ? `${(pointer.x / window.innerWidth - 0.5) * window.innerWidth}px`
-          //   : '',
-          // '--pointer-y': pointer.y
-          //   ? `${(pointer.y / window.innerHeight - 0.5) * window.innerHeight}px`
-          //   : '',
           "--added-delay": !enter ? "calc(var(--duration) * 0.9)" : "0ms",
-          "--circle-pump-distance-max-target": `${-6 * (1 + t * 40)}px`,
         } as CSSProperties
       }
     >
