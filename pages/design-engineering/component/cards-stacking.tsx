@@ -148,16 +148,14 @@ const CardsStackingPageContent = () => {
         const lastDiscarded = discardedCards[discardedAmount - 1]
         const lastDiscardedScale = discardedScaleMap.get(lastDiscarded)
         if (lastDiscardedScale) {
+          const discardedRatio = 1 - (lastDiscardedScale - 0.78) / 0.22
           cardsContainer.style.translate = `0 -${
-            Math.max(discardedAmount - 1, 0) * 32 +
-            32 * (1 - lastDiscardedScale)
+            Math.max(discardedAmount - 1, 0) * 32 + 32 * discardedRatio
           }px`
           cardsContainer.style.marginBottom = `calc(-1 * ${Math.max(
             discardedAmount - 1,
             0
-          )} * var(--card-top-offset) - ${
-            1 - lastDiscardedScale
-          } * var(--card-top-offset))`
+          )} * var(--card-top-offset) - ${discardedRatio} * var(--card-top-offset))`
         }
         // console.log(discardedAmount)
         // cardsContainer.style.setProperty(
@@ -203,17 +201,12 @@ const CardsStackingPageContent = () => {
           Back to gallery
         </Link>
         <h1 id="design-engineering-a-dock-component">
-          Design engineering: a carousel component
+          Design engineering: rolling stacked cards
         </h1>
         <p>
-          A scrollable, and swipeable carousel, even on desktop (complete with
-          snapping, friction and overscroll). Inspired by a&nbsp;component made
-          at{" "}
-          <a href="https://finary.com" target="_blank" rel="noopener">
-            Finary
-          </a>
-          , a one-stop shop for wealth management. Play with the component, and
-          try changing the card size.
+          A scroll-driven animation that stacks cards in a rolling fashion, with
+          up to 4 stacked cards at a time. Just scroll the page to see it in
+          action.
         </p>
         <div
           ref={cardsContainerRef}
@@ -231,15 +224,18 @@ const CardsStackingPageContent = () => {
           <style
             dangerouslySetInnerHTML={{
               __html: `
-            @property --reverse-rolling-index {
-              inherits: true;
-              syntax: "<number>";
-              initial-value: 0;
+            .demo {
+              display: none;
             }
-            @property --reverse-rolling-index0 {
-              inherits: true;
-              syntax: "<number>";
-              initial-value: 0;
+
+            @supports (animation-timeline: view()) {
+              .warning:not([data-bug]) {
+                display: none;
+              }
+
+              .demo {
+                display: initial;
+              }
             }
           `,
             }}
@@ -255,85 +251,65 @@ const CardsStackingPageContent = () => {
           <Keyframes
             name="discard"
             to={{
-              scale: "0",
+              scale: "0.78",
               paddingTop: "0",
               marginTop: "calc(-1 * var(--card-margin))",
               // translate: "0 -100%",
             }}
           />
-          <div
-            data-cards-wrapper={""}
-            style={
-              {
-                viewTimelineName: "--cards-scrolling",
-                display: "grid",
-                gridTemplateColumns: "1fr",
-                gridTemplateRows:
-                  "repeat(var(--cards-amount), var(--card-height))",
-                gap: "var(--card-margin)",
-                paddingBottom:
-                  "calc((var(--cards-amount)) * var(--card-top-offset))",
-                marginBottom: "var(--card-margin)",
-                // outline: "10px solid #ff777799",
-                // translate:
-                //   "0 calc(var(--discarded-amount, 0) * var(--card-top-offset) * -1)",
-                // transition: "translate 0.2s var(--ease-out-cubic)",
-              } as CSSProperties
-            }
-          >
-            {cards.map((content, i) => (
-              <div
-                key={i}
-                data-card={""}
-                style={
-                  {
-                    "--start-range":
-                      "calc((var(--index0) + 3) / var(--cards-amount) * 100%)",
-                    "--end-range":
-                      "calc((var(--index) + 3) / var(--cards-amount) * 100%)",
-                    animation:
-                      i < cards.length - 4
-                        ? "discard linear forwards"
-                        : undefined,
-                    animationTimeline: "--cards-scrolling",
-                    animationRange:
-                      "exit-crossing var(--start-range) exit-crossing var(--end-range)",
-                    position: "sticky",
-                    top: 0,
-                    paddingTop: "calc(var(--index) * var(--card-top-offset))",
-                    // outline: "1px solid lime",
-                    "--index": `${i + 1}`,
-                    "--index0": "calc(var(--index) - 1)",
-                    "--reverse-index":
-                      "calc(var(--cards-amount) - var(--index0))",
-                    "--reverse-index0": "calc(var(--reverse-index) - 1)",
-                    "--reverse-rolling-index": `${4 - (i % 4)}`,
-                    "--reverse-rolling-index0":
-                      "calc(var(--reverse-rolling-index) - 1)",
-                    transition:
-                      "--reverse-rolling-index 0.2s var(--ease-out-cubic), --reverse-rolling-index0 0.2s var(--ease-out-cubic)",
-                  } as CSSProperties
-                }
-              >
+          <div className="warning">
+            ⚠️ This demo uses a feature that is not supported by your browser.
+          </div>
+          <div className="demo">
+            <div
+              data-cards-wrapper={""}
+              style={
+                {
+                  viewTimelineName: "--cards-scrolling",
+                  display: "grid",
+                  gridTemplateColumns: "1fr",
+                  gridTemplateRows:
+                    "repeat(var(--cards-amount), var(--card-height))",
+                  gap: "var(--card-margin)",
+                  paddingBottom:
+                    "calc((var(--cards-amount)) * var(--card-top-offset))",
+                  marginBottom: "var(--card-margin)",
+                  // outline: "10px solid #ff777799",
+                  // translate:
+                  //   "0 calc(var(--discarded-amount, 0) * var(--card-top-offset) * -1)",
+                  // transition: "translate 0.2s var(--ease-out-cubic)",
+                } as CSSProperties
+              }
+            >
+              {cards.map((content, i) => (
                 <div
+                  key={i}
+                  data-card={""}
                   style={
                     {
-                      "--start-range": `calc((var(--index0) + ${Math.min(
-                        cards.length - 1 - i,
-                        3
-                      )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
-                      "--end-range": `calc((var(--index) + ${Math.min(
-                        cards.length - 1 - i,
-                        3
-                      )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
-                      animation:
-                        i < cards.length - 4
-                          ? "scale linear forwards"
-                          : undefined,
+                      "--start-range":
+                        "calc((var(--index0) + 3) / var(--cards-amount) * 100%)",
+                      "--end-range":
+                        "calc((var(--index) + 3) / var(--cards-amount) * 100%)",
+                      animation: "discard linear forwards",
                       animationTimeline: "--cards-scrolling",
                       animationRange:
                         "exit-crossing var(--start-range) exit-crossing var(--end-range)",
-                      transformOrigin: "50% 0%",
+                      position: "sticky",
+                      top: 0,
+                      paddingTop: "calc(var(--index) * var(--card-top-offset))",
+                      // outline: "1px solid lime",
+                      "--index": `${i + 1}`,
+                      "--index0": "calc(var(--index) - 1)",
+                      "--reverse-index":
+                        "calc(var(--cards-amount) - var(--index0))",
+                      "--reverse-index0": "calc(var(--reverse-index) - 1)",
+                      "--reverse-rolling-index": `${4 - (i % 4)}`,
+                      "--reverse-rolling-index0":
+                        "calc(var(--reverse-rolling-index) - 1)",
+                      transition:
+                        "--reverse-rolling-index 0.2s var(--ease-out-cubic), --reverse-rolling-index0 0.2s var(--ease-out-cubic)",
+                      transformOrigin: "center 200%",
                     } as CSSProperties
                   }
                 >
@@ -342,14 +318,14 @@ const CardsStackingPageContent = () => {
                       {
                         "--start-range": `calc((var(--index0) + ${Math.min(
                           cards.length - 1 - i,
-                          2
+                          3
                         )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
                         "--end-range": `calc((var(--index) + ${Math.min(
                           cards.length - 1 - i,
-                          2
+                          3
                         )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
                         animation:
-                          i < cards.length - 3
+                          i < cards.length - 4
                             ? "scale linear forwards"
                             : undefined,
                         animationTimeline: "--cards-scrolling",
@@ -364,14 +340,14 @@ const CardsStackingPageContent = () => {
                         {
                           "--start-range": `calc((var(--index0) + ${Math.min(
                             cards.length - 1 - i,
-                            1
+                            2
                           )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
                           "--end-range": `calc((var(--index) + ${Math.min(
                             cards.length - 1 - i,
-                            1
+                            2
                           )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
                           animation:
-                            i < cards.length - 2
+                            i < cards.length - 3
                               ? "scale linear forwards"
                               : undefined,
                           animationTimeline: "--cards-scrolling",
@@ -381,40 +357,63 @@ const CardsStackingPageContent = () => {
                         } as CSSProperties
                       }
                     >
-                      <picture
-                        className="card tertiary"
+                      <div
                         style={
                           {
-                            "--start-range":
-                              "calc(var(--index0) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)",
-                            "--end-range":
-                              "calc(var(--index) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)",
-                            fontSize: 0,
-                            display: "inline-block",
-                            padding: "var(--card-padding)",
-                            // backgroundColor:
-                            //   "var(--color-toolbar-button-background-hover)",
-                            height: "fit-content",
+                            "--start-range": `calc((var(--index0) + ${Math.min(
+                              cards.length - 1 - i,
+                              1
+                            )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
+                            "--end-range": `calc((var(--index) + ${Math.min(
+                              cards.length - 1 - i,
+                              1
+                            )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
                             animation:
-                              i < cards.length - 1
+                              i < cards.length - 2
                                 ? "scale linear forwards"
                                 : undefined,
                             animationTimeline: "--cards-scrolling",
                             animationRange:
                               "exit-crossing var(--start-range) exit-crossing var(--end-range)",
                             transformOrigin: "50% 0%",
-                            width: "100%",
-                            // outline: "1px solid orange",
                           } as CSSProperties
                         }
                       >
-                        {content}
-                      </picture>
+                        <picture
+                          className="card flat shadow"
+                          style={
+                            {
+                              "--start-range":
+                                "calc(var(--index0) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)",
+                              "--end-range":
+                                "calc(var(--index) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)",
+                              fontSize: 0,
+                              display: "inline-block",
+                              padding: "var(--card-padding)",
+                              // backgroundColor:
+                              //   "var(--color-toolbar-button-background-hover)",
+                              height: "fit-content",
+                              animation:
+                                i < cards.length - 1
+                                  ? "scale linear forwards"
+                                  : undefined,
+                              animationTimeline: "--cards-scrolling",
+                              animationRange:
+                                "exit-crossing var(--start-range) exit-crossing var(--end-range)",
+                              transformOrigin: "50% 0%",
+                              width: "100%",
+                              // outline: "1px solid orange",
+                            } as CSSProperties
+                          }
+                        >
+                          {content}
+                        </picture>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
         <h2 id="things-to-try">Things to try</h2>
