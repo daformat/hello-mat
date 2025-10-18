@@ -30,12 +30,12 @@ export const Layout = ({ children }: { children: ReactNode }) => (
       <meta name="msapplication-TileColor" content="#da532c" />
       <meta
         name="theme-color"
-        content="#fff2eb"
+        content="#feefe7"
         media="(prefers-color-scheme: light)"
       />
       <meta
         name="theme-color"
-        content="#0d0a15"
+        content="#110c17"
         media="(prefers-color-scheme: dark)"
       />
       <meta name="mobile-web-app-capable" content="yes" />
