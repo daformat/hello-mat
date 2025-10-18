@@ -126,51 +126,52 @@ const CardsStackingPageContent = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      const cardsContainer = cardsContainerRef.current
-      if (cardsContainer) {
-        const cards = Array.from(cardsContainer.querySelectorAll("[data-card]"))
-        const discardedCards: HTMLElement[] = []
-        const remainingCards: HTMLElement[] = []
-        cards.forEach((card) => {
-          if (card instanceof HTMLElement) {
-            const scale = getComputedStyle(card).scale
-            console.log(scale)
-            if (scale !== "none") {
-              discardedCards.push(card)
-            } else {
-              remainingCards.push(card)
-            }
-          }
-        })
-        const discardedAmount = discardedCards.length
-        console.log(discardedAmount)
-        cardsContainer.style.setProperty(
-          "--discarded-amount",
-          `${discardedAmount}`
-        )
-        const lastDiscarded = discardedCards[discardedAmount - 1]
-        if (lastDiscarded) {
-          const translateY = `calc(-1 * ${Math.max(
-            discardedAmount - 1,
-            0
-          )} * var(--card-top-offset) - ${Math.sqrt(
-            Math.sqrt(1 - parseFloat(getComputedStyle(lastDiscarded).scale))
-          )} * var(--card-top-offset))`
-          const translate = `0 ${translateY}`
-          cardsContainer.style.translate = translate
-          cardsContainer.style.marginBottom = translateY
-          console.log(translate)
-        } else {
-          cardsContainer.style.translate = "0 0"
-          cardsContainer.style.marginBottom = "0"
-        }
-        remainingCards.forEach((card, index) => {
-          card.style.setProperty(
-            "--reverse-rolling-index",
-            `${4 - (index % 4)}`
-          )
-        })
-      }
+      return
+      // const cardsContainer = cardsContainerRef.current
+      // if (cardsContainer) {
+      //   const cards = Array.from(cardsContainer.querySelectorAll("[data-card]"))
+      //   const discardedCards: HTMLElement[] = []
+      //   const remainingCards: HTMLElement[] = []
+      //   cards.forEach((card) => {
+      //     if (card instanceof HTMLElement) {
+      //       const scale = getComputedStyle(card).scale
+      //       console.log(scale)
+      //       if (scale !== "none") {
+      //         discardedCards.push(card)
+      //       } else {
+      //         remainingCards.push(card)
+      //       }
+      //     }
+      //   })
+      //   const discardedAmount = discardedCards.length
+      //   console.log(discardedAmount)
+      //   cardsContainer.style.setProperty(
+      //     "--discarded-amount",
+      //     `${discardedAmount}`
+      //   )
+      //   const lastDiscarded = discardedCards[discardedAmount - 1]
+      //   if (lastDiscarded) {
+      //     const translateY = `calc(-1 * ${Math.max(
+      //       discardedAmount - 1,
+      //       0
+      //     )} * var(--card-top-offset) - ${Math.sqrt(
+      //       Math.sqrt(1 - parseFloat(getComputedStyle(lastDiscarded).scale))
+      //     )} * var(--card-top-offset))`
+      //     const translate = `0 ${translateY}`
+      //     cardsContainer.style.translate = translate
+      //     cardsContainer.style.marginBottom = translateY
+      //     console.log(translate)
+      //   } else {
+      //     cardsContainer.style.translate = "0 0"
+      //     cardsContainer.style.marginBottom = "0"
+      //   }
+      //   remainingCards.forEach((card, index) => {
+      //     card.style.setProperty(
+      //       "--reverse-rolling-index",
+      //       `${4 - (index % 4)}`
+      //     )
+      //   })
+      // }
     }
     handleScroll()
     document.addEventListener("scroll", handleScroll)
@@ -231,16 +232,24 @@ const CardsStackingPageContent = () => {
           <Keyframes
             name="scale"
             to={{
-              scale:
-                "calc(1 - calc( 0.1 * (var(--reverse-rolling-index0) ) ) )",
+              scale: "calc(1 - calc( 0.1 * ( 1 ) ) )",
               // marginTop:
               //   "calc(-1 * var(--discarded-amount, 0) * var(--card-top-offset))",
+            }}
+          />
+          <Keyframes
+            name="scale-shift"
+            to={{
+              scale: "calc(1 - calc( 0.1 * ( 1 ) ) )",
+              height: "calc(100% - var(--index) * var(--card-top-offset))",
             }}
           />
           <Keyframes
             name="discard"
             to={{
               scale: "0",
+              paddingTop: "0",
+              marginTop: "calc(-1 * var(--card-margin))",
               // translate: "0 -100%",
             }}
           />
@@ -294,32 +303,92 @@ const CardsStackingPageContent = () => {
                   } as CSSProperties
                 }
               >
-                <picture
-                  className="card tertiary"
+                <div
                   style={
                     {
-                      "--start-range":
-                        "calc(var(--index0) / var(--cards-amount) * 100%)",
-                      "--end-range":
-                        "calc((var(--index)) / var(--cards-amount) * 100%)",
-                      fontSize: 0,
-                      display: "inline-block",
-                      padding: "var(--card-padding)",
-                      // backgroundColor:
-                      //   "var(--color-toolbar-button-background-hover)",
-                      height: "fit-content",
-                      animation: "scale linear forwards",
+                      "--start-range": `calc((var(--index0) + ${Math.min(
+                        cards.length - 1 - i,
+                        3
+                      )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
+                      "--end-range": `calc((var(--index) + ${Math.min(
+                        cards.length - 1 - i,
+                        3
+                      )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
+                      animation: "scale-shift linear forwards",
                       animationTimeline: "--cards-scrolling",
                       animationRange:
                         "exit-crossing var(--start-range) exit-crossing var(--end-range)",
                       transformOrigin: "50% 0%",
-                      width: "100%",
-                      // outline: "1px solid orange",
                     } as CSSProperties
                   }
                 >
-                  {content}
-                </picture>
+                  <div
+                    style={
+                      {
+                        "--start-range": `calc((var(--index0) + ${Math.min(
+                          cards.length - 1 - i,
+                          2
+                        )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
+                        "--end-range": `calc((var(--index) + ${Math.min(
+                          cards.length - 1 - i,
+                          2
+                        )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
+                        animation: "scale linear forwards",
+                        animationTimeline: "--cards-scrolling",
+                        animationRange:
+                          "exit-crossing var(--start-range) exit-crossing var(--end-range)",
+                        transformOrigin: "50% 0%",
+                      } as CSSProperties
+                    }
+                  >
+                    <div
+                      style={
+                        {
+                          "--start-range": `calc((var(--index0) + ${Math.min(
+                            cards.length - 1 - i,
+                            1
+                          )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
+                          "--end-range": `calc((var(--index) + ${Math.min(
+                            cards.length - 1 - i,
+                            1
+                          )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
+                          animation: "scale linear forwards",
+                          animationTimeline: "--cards-scrolling",
+                          animationRange:
+                            "exit-crossing var(--start-range) exit-crossing var(--end-range)",
+                          transformOrigin: "50% 0%",
+                        } as CSSProperties
+                      }
+                    >
+                      <picture
+                        className="card tertiary"
+                        style={
+                          {
+                            "--start-range":
+                              "calc(var(--index0) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)",
+                            "--end-range":
+                              "calc(var(--index) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)",
+                            fontSize: 0,
+                            display: "inline-block",
+                            padding: "var(--card-padding)",
+                            // backgroundColor:
+                            //   "var(--color-toolbar-button-background-hover)",
+                            height: "fit-content",
+                            animation: "scale linear forwards",
+                            animationTimeline: "--cards-scrolling",
+                            animationRange:
+                              "exit-crossing var(--start-range) exit-crossing var(--end-range)",
+                            transformOrigin: "50% 0%",
+                            width: "100%",
+                            // outline: "1px solid orange",
+                          } as CSSProperties
+                        }
+                      >
+                        {content}
+                      </picture>
+                    </div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
