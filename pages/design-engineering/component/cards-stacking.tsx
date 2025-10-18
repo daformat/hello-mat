@@ -1,5 +1,5 @@
 import { TableOfContents } from "@/components/TableOfContents/TocComponent"
-import { CSSProperties, useEffect, useRef } from "react"
+import { CSSProperties, Fragment, useEffect, useRef } from "react"
 import { NextCard } from "@/components/Navigation/NextCard"
 import Link from "next/link"
 import { PageMetas } from "@/components/PageMetas/PageMetas"
@@ -33,6 +33,151 @@ const CardsStackingPageContent = () => {
     }
   })
 
+  const cards = [
+    <Fragment key="0">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/hello-mat-dark.png"
+      />
+      <img
+        src="/media/hello-mat-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="1">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/design-engineering/details/og-details-dark.png"
+      />
+      <img
+        src="/media/design-engineering/details/og-details-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="2">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/design-engineering/images-and-embeds/og-media-dark.png"
+      />
+      <img
+        src="/media/design-engineering/images-and-embeds/og-media-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="3">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-dark.png"
+      />
+      <img
+        src="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="4">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/hello-mat-dark.png"
+      />
+      <img
+        src="/media/hello-mat-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="5">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/design-engineering/details/og-details-dark.png"
+      />
+      <img
+        src="/media/design-engineering/details/og-details-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="6">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/design-engineering/images-and-embeds/og-media-dark.png"
+      />
+      <img
+        src="/media/design-engineering/images-and-embeds/og-media-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="7">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-dark.png"
+      />
+      <img
+        src="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+  ]
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const cardsContainer = cardsContainerRef.current
+      if (cardsContainer) {
+        const cards = Array.from(cardsContainer.querySelectorAll("[data-card]"))
+        const discardedCards: HTMLElement[] = []
+        const remainingCards: HTMLElement[] = []
+        cards.forEach((card) => {
+          if (card instanceof HTMLElement) {
+            const scale = getComputedStyle(card).scale
+            console.log(scale)
+            if (scale !== "none") {
+              discardedCards.push(card)
+            } else {
+              remainingCards.push(card)
+            }
+          }
+        })
+        const discardedAmount = discardedCards.length
+        console.log(discardedAmount)
+        cardsContainer.style.setProperty(
+          "--discarded-amount",
+          `${discardedAmount}`
+        )
+        const lastDiscarded = discardedCards[discardedAmount - 1]
+        if (lastDiscarded) {
+          const translateY = `calc(-1 * ${Math.max(
+            discardedAmount - 1,
+            0
+          )} * var(--card-top-offset) - ${Math.sqrt(
+            1 - parseFloat(getComputedStyle(lastDiscarded).scale)
+          )} * var(--card-top-offset))`
+          const translate = `0 ${translateY}`
+          cardsContainer.style.translate = translate
+          cardsContainer.style.marginBottom = translateY
+          console.log(translate)
+        } else {
+          cardsContainer.style.translate = "0 0"
+          cardsContainer.style.marginBottom = "0"
+        }
+        remainingCards.forEach((card, index) => {
+          card.style.setProperty(
+            "--reverse-rolling-index0",
+            `${4 - (index % 4)}`
+          )
+        })
+      }
+    }
+    document.addEventListener("scroll", handleScroll)
+    return () => {
+      document.removeEventListener("scroll", handleScroll)
+    }
+  }, [])
+
   return (
     <>
       <TableOfContents.Root />
@@ -53,20 +198,37 @@ const CardsStackingPageContent = () => {
           , a one-stop shop for wealth management. Play with the component, and
           try changing the card size.
         </p>
-        <div ref={cardsContainerRef}>
+        <div
+          ref={cardsContainerRef}
+          style={
+            {
+              "--cards-amount": cards.length,
+              "--card-top-offset": "32px",
+              "--card-height":
+                "calc(var(--inline-size) / 1.9047619048 + var(--card-padding) * 2)",
+              "--card-margin": "8px",
+              "--card-padding": "8px",
+            } as CSSProperties
+          }
+        >
           <Keyframes
             name="scale"
             to={{
-              transform: "scale(calc(1 - calc(0.1 * var(--reverse-index0))))",
+              scale: "calc(1.1 - calc( 0.1 * (var(--reverse-index) ) ) )",
+              // marginTop:
+              //   "calc(-1 * var(--discarded-amount, 0) * var(--card-top-offset))",
+            }}
+          />
+          <Keyframes
+            name="discard"
+            to={{
+              scale: "0",
+              // translate: "0 -100%",
             }}
           />
           <div
             style={
               {
-                "--cards-amount": 4,
-                "--card-top-offset": "32px",
-                "--card-height": "calc(var(--inline-size) / 1.9047619048)",
-                "--card-margin": "16px",
                 viewTimelineName: "--cards-scrolling",
                 display: "grid",
                 gridTemplateColumns: "1fr",
@@ -74,54 +236,69 @@ const CardsStackingPageContent = () => {
                   "repeat(var(--cards-amount), var(--card-height))",
                 gap: "var(--card-margin)",
                 paddingBottom:
-                  "calc(var(--cards-amount) * var(--card-top-offset))",
+                  "calc((var(--cards-amount)) * var(--card-top-offset))",
                 marginBottom: "var(--card-margin)",
                 // outline: "10px solid #ff777799",
+                // translate:
+                //   "0 calc(var(--discarded-amount, 0) * var(--card-top-offset) * -1)",
+                // transition: "translate 0.2s var(--ease-out-cubic)",
               } as CSSProperties
             }
           >
-            {["Card one", "Card two", "Card three", "Card four"].map(
-              (content, i) => (
-                <div
-                  key={i}
+            {cards.map((content, i) => (
+              <div
+                key={i}
+                data-card={""}
+                style={
+                  {
+                    "--start-range":
+                      "calc((var(--index0) + 3) / var(--cards-amount) * 100%)",
+                    "--end-range":
+                      "calc((var(--index) + 3) / var(--cards-amount) * 100%)",
+                    animation: "discard linear forwards",
+                    animationTimeline: "--cards-scrolling",
+                    animationRange:
+                      "exit-crossing var(--start-range) exit-crossing var(--end-range)",
+                    position: "sticky",
+                    top: 0,
+                    paddingTop: "calc(var(--index) * var(--card-top-offset))",
+                    // outline: "1px solid lime",
+                    "--index": `${i + 1}`,
+                    "--index0": "calc(var(--index) - 1)",
+                    "--reverse-index":
+                      "calc(var(--cards-amount) - var(--index0))",
+                    "--reverse-index0": "calc(var(--reverse-index) - 1)",
+                  } as CSSProperties
+                }
+              >
+                <picture
+                  className="card tertiary"
                   style={
                     {
-                      position: "sticky",
-                      top: 0,
-                      paddingTop: "calc(var(--index) * var(--card-top-offset))",
-                      // outline: "1px solid lime",
-                      "--index": `${i + 1}`,
-                      "--index0": "calc(var(--index) - 1)",
-                      "--reverse-index":
-                        "calc(var(--cards-amount) - var(--index0))",
-                      "--reverse-index0": "calc(var(--reverse-index) - 1)",
+                      "--start-range":
+                        "calc(var(--index0) / var(--cards-amount) * 100%)",
+                      "--end-range":
+                        "calc((var(--index)) / var(--cards-amount) * 100%)",
+                      fontSize: 0,
+                      display: "inline-block",
+                      padding: "var(--card-padding)",
+                      // backgroundColor:
+                      //   "var(--color-toolbar-button-background-hover)",
+                      height: "fit-content",
+                      animation: "scale linear forwards",
+                      animationTimeline: "--cards-scrolling",
+                      animationRange:
+                        "exit-crossing var(--start-range) exit-crossing var(--end-range)",
+                      transformOrigin: "50% 0%",
+                      width: "100%",
+                      // outline: "1px solid orange",
                     } as CSSProperties
                   }
                 >
-                  <div
-                    className="card tertiary"
-                    style={
-                      {
-                        "--start-range":
-                          "calc(var(--index0) / var(--cards-amount) * 100%)",
-                        "--end-range":
-                          "calc((var(--index)) / var(--cards-amount) * 100%)",
-                        // backgroundColor:
-                        //   "var(--color-toolbar-button-background-hover)",
-                        minHeight: "var(--card-height)",
-                        animation: "scale linear forwards",
-                        animationTimeline: "--cards-scrolling",
-                        animationRange:
-                          "exit-crossing var(--start-range) exit-crossing var(--end-range)",
-                        transformOrigin: "50% 0%",
-                      } as CSSProperties
-                    }
-                  >
-                    {content}
-                  </div>
-                </div>
-              )
-            )}
+                  {content}
+                </picture>
+              </div>
+            ))}
           </div>
         </div>
         <h2 id="things-to-try">Things to try</h2>
