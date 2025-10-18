@@ -302,6 +302,14 @@ kbd {
     > :first-child {
       margin-top: 0;
     }
+
+    &.secondary {
+      background-color: var(--color-card-background-secondary);
+    }
+
+    &.tertiary {
+      background-color: var(--color-card-background-tertiary);
+    }
   }
 }
 
