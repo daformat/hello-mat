@@ -154,7 +154,7 @@ const CardsStackingPageContent = () => {
             discardedAmount - 1,
             0
           )} * var(--card-top-offset) - ${Math.sqrt(
-            1 - parseFloat(getComputedStyle(lastDiscarded).scale)
+            Math.sqrt(1 - parseFloat(getComputedStyle(lastDiscarded).scale))
           )} * var(--card-top-offset))`
           const translate = `0 ${translateY}`
           cardsContainer.style.translate = translate
