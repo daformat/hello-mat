@@ -126,52 +126,62 @@ const CardsStackingPageContent = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      return
-      // const cardsContainer = cardsContainerRef.current
-      // if (cardsContainer) {
-      //   const cards = Array.from(cardsContainer.querySelectorAll("[data-card]"))
-      //   const discardedCards: HTMLElement[] = []
-      //   const remainingCards: HTMLElement[] = []
-      //   cards.forEach((card) => {
-      //     if (card instanceof HTMLElement) {
-      //       const scale = getComputedStyle(card).scale
-      //       console.log(scale)
-      //       if (scale !== "none") {
-      //         discardedCards.push(card)
-      //       } else {
-      //         remainingCards.push(card)
-      //       }
-      //     }
-      //   })
-      //   const discardedAmount = discardedCards.length
-      //   console.log(discardedAmount)
-      //   cardsContainer.style.setProperty(
-      //     "--discarded-amount",
-      //     `${discardedAmount}`
-      //   )
-      //   const lastDiscarded = discardedCards[discardedAmount - 1]
-      //   if (lastDiscarded) {
-      //     const translateY = `calc(-1 * ${Math.max(
-      //       discardedAmount - 1,
-      //       0
-      //     )} * var(--card-top-offset) - ${Math.sqrt(
-      //       Math.sqrt(1 - parseFloat(getComputedStyle(lastDiscarded).scale))
-      //     )} * var(--card-top-offset))`
-      //     const translate = `0 ${translateY}`
-      //     cardsContainer.style.translate = translate
-      //     cardsContainer.style.marginBottom = translateY
-      //     console.log(translate)
-      //   } else {
-      //     cardsContainer.style.translate = "0 0"
-      //     cardsContainer.style.marginBottom = "0"
-      //   }
-      //   remainingCards.forEach((card, index) => {
-      //     card.style.setProperty(
-      //       "--reverse-rolling-index",
-      //       `${4 - (index % 4)}`
-      //     )
-      //   })
-      // }
+      const cardsContainer = cardsContainerRef.current
+      const cardsWrapper = cardsContainer?.querySelector("[data-cards-wrapper]")
+      if (cardsContainer && cardsWrapper) {
+        const cards = Array.from(cardsContainer.querySelectorAll("[data-card]"))
+        const discardedCards: HTMLElement[] = []
+        const remainingCards: HTMLElement[] = []
+        const discardedScaleMap = new WeakMap<HTMLElement, number>()
+        cards.forEach((card) => {
+          if (card instanceof HTMLElement) {
+            const scale = getComputedStyle(card).scale
+            discardedScaleMap.set(card, parseFloat(scale))
+            if (scale !== "none") {
+              discardedCards.push(card)
+            } else {
+              remainingCards.push(card)
+            }
+          }
+        })
+        const discardedAmount = discardedCards.length
+        const lastDiscarded = discardedCards[discardedAmount - 1]
+        const lastDiscardedScale = discardedScaleMap.get(lastDiscarded)
+        if (lastDiscardedScale) {
+          cardsContainer.style.translate = `0 -${
+            Math.max(discardedAmount - 1, 0) * 32 +
+            32 * (1 - lastDiscardedScale)
+          }px`
+          cardsContainer.style.marginBottom = `calc(-1 * ${discardedCards.length} * var(--card-top-offset))`
+        }
+        // console.log(discardedAmount)
+        // cardsContainer.style.setProperty(
+        //   "--discarded-amount",
+        //   `${discardedAmount}`
+        // )
+        // const lastDiscarded = discardedCards[discardedAmount - 1]
+        // if (lastDiscarded) {
+        //   const translateY = `calc(-1 * ${Math.max(
+        //     discardedAmount - 1,
+        //     0
+        //   )} * var(--card-top-offset) - ${Math.sqrt(
+        //     Math.sqrt(1 - parseFloat(getComputedStyle(lastDiscarded).scale))
+        //   )} * var(--card-top-offset))`
+        //   const translate = `0 ${translateY}`
+        //   cardsContainer.style.translate = translate
+        //   cardsContainer.style.marginBottom = translateY
+        //   console.log(translate)
+        // } else {
+        //   cardsContainer.style.translate = "0 0"
+        //   cardsContainer.style.marginBottom = "0"
+        // }
+        // remainingCards.forEach((card, index) => {
+        //   card.style.setProperty(
+        //     "--reverse-rolling-index",
+        //     `${4 - (index % 4)}`
+        //   )
+        // })
+      }
     }
     handleScroll()
     document.addEventListener("scroll", handleScroll)
@@ -238,13 +248,6 @@ const CardsStackingPageContent = () => {
             }}
           />
           <Keyframes
-            name="scale-shift"
-            to={{
-              scale: "calc(1 - calc( 0.1 * ( 1 ) ) )",
-              height: "calc(100% - var(--index) * var(--card-top-offset))",
-            }}
-          />
-          <Keyframes
             name="discard"
             to={{
               scale: "0",
@@ -254,6 +257,7 @@ const CardsStackingPageContent = () => {
             }}
           />
           <div
+            data-cards-wrapper={""}
             style={
               {
                 viewTimelineName: "--cards-scrolling",
@@ -314,7 +318,10 @@ const CardsStackingPageContent = () => {
                         cards.length - 1 - i,
                         3
                       )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
-                      animation: "scale-shift linear forwards",
+                      animation:
+                        i < cards.length - 4
+                          ? "scale linear forwards"
+                          : undefined,
                       animationTimeline: "--cards-scrolling",
                       animationRange:
                         "exit-crossing var(--start-range) exit-crossing var(--end-range)",
@@ -333,7 +340,10 @@ const CardsStackingPageContent = () => {
                           cards.length - 1 - i,
                           2
                         )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
-                        animation: "scale linear forwards",
+                        animation:
+                          i < cards.length - 3
+                            ? "scale linear forwards"
+                            : undefined,
                         animationTimeline: "--cards-scrolling",
                         animationRange:
                           "exit-crossing var(--start-range) exit-crossing var(--end-range)",
@@ -352,7 +362,10 @@ const CardsStackingPageContent = () => {
                             cards.length - 1 - i,
                             1
                           )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
-                          animation: "scale linear forwards",
+                          animation:
+                            i < cards.length - 2
+                              ? "scale linear forwards"
+                              : undefined,
                           animationTimeline: "--cards-scrolling",
                           animationRange:
                             "exit-crossing var(--start-range) exit-crossing var(--end-range)",
@@ -374,7 +387,10 @@ const CardsStackingPageContent = () => {
                             // backgroundColor:
                             //   "var(--color-toolbar-button-background-hover)",
                             height: "fit-content",
-                            animation: "scale linear forwards",
+                            animation:
+                              i < cards.length - 1
+                                ? "scale linear forwards"
+                                : undefined,
                             animationTimeline: "--cards-scrolling",
                             animationRange:
                               "exit-crossing var(--start-range) exit-crossing var(--end-range)",
