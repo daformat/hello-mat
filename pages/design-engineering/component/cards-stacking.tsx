@@ -166,12 +166,13 @@ const CardsStackingPageContent = () => {
         }
         remainingCards.forEach((card, index) => {
           card.style.setProperty(
-            "--reverse-rolling-index0",
+            "--reverse-rolling-index",
             `${4 - (index % 4)}`
           )
         })
       }
     }
+    handleScroll()
     document.addEventListener("scroll", handleScroll)
     return () => {
       document.removeEventListener("scroll", handleScroll)
@@ -211,10 +212,27 @@ const CardsStackingPageContent = () => {
             } as CSSProperties
           }
         >
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `
+            @property --reverse-rolling-index {
+              inherits: true;
+              syntax: "<number>";
+              initial-value: 0;
+            }
+            @property --reverse-rolling-index0 {
+              inherits: true;
+              syntax: "<number>";
+              initial-value: 0;
+            }
+          `,
+            }}
+          />
           <Keyframes
             name="scale"
             to={{
-              scale: "calc(1.1 - calc( 0.1 * (var(--reverse-index) ) ) )",
+              scale:
+                "calc(1 - calc( 0.1 * (var(--reverse-rolling-index0) ) ) )",
               // marginTop:
               //   "calc(-1 * var(--discarded-amount, 0) * var(--card-top-offset))",
             }}
@@ -268,6 +286,11 @@ const CardsStackingPageContent = () => {
                     "--reverse-index":
                       "calc(var(--cards-amount) - var(--index0))",
                     "--reverse-index0": "calc(var(--reverse-index) - 1)",
+                    "--reverse-rolling-index": `${4 - (i % 4)}`,
+                    "--reverse-rolling-index0":
+                      "calc(var(--reverse-rolling-index) - 1)",
+                    transition:
+                      "--reverse-rolling-index 0.2s var(--ease-out-cubic), --reverse-rolling-index0 0.2s var(--ease-out-cubic)",
                   } as CSSProperties
                 }
               >
