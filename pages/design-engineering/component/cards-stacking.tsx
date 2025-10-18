@@ -152,7 +152,12 @@ const CardsStackingPageContent = () => {
             Math.max(discardedAmount - 1, 0) * 32 +
             32 * (1 - lastDiscardedScale)
           }px`
-          cardsContainer.style.marginBottom = `calc(-1 * ${discardedCards.length} * var(--card-top-offset))`
+          cardsContainer.style.marginBottom = `calc(-1 * ${Math.max(
+            discardedAmount - 1,
+            0
+          )} * var(--card-top-offset) - ${
+            1 - lastDiscardedScale
+          } * var(--card-top-offset))`
         }
         // console.log(discardedAmount)
         // cardsContainer.style.setProperty(
@@ -286,7 +291,10 @@ const CardsStackingPageContent = () => {
                       "calc((var(--index0) + 3) / var(--cards-amount) * 100%)",
                     "--end-range":
                       "calc((var(--index) + 3) / var(--cards-amount) * 100%)",
-                    animation: "discard linear forwards",
+                    animation:
+                      i < cards.length - 4
+                        ? "discard linear forwards"
+                        : undefined,
                     animationTimeline: "--cards-scrolling",
                     animationRange:
                       "exit-crossing var(--start-range) exit-crossing var(--end-range)",
