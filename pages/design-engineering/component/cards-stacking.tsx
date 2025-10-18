@@ -3,6 +3,7 @@ import { CSSProperties, useEffect, useRef } from "react"
 import { NextCard } from "@/components/Navigation/NextCard"
 import Link from "next/link"
 import { PageMetas } from "@/components/PageMetas/PageMetas"
+import { useCssSizeVariables } from "@/hooks/useCssSizeVariables"
 
 const CardsStackingPage = () => (
   <>
@@ -23,6 +24,8 @@ const CardsStackingPage = () => (
 const CardsStackingPageContent = () => {
   const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
+  const cardsContainerRef = useRef<HTMLDivElement>(null)
+  useCssSizeVariables(cardsContainerRef)
 
   useEffect(() => {
     if (contentRef.current) {
@@ -50,7 +53,7 @@ const CardsStackingPageContent = () => {
           , a one-stop shop for wealth management. Play with the component, and
           try changing the card size.
         </p>
-        <div>
+        <div ref={cardsContainerRef}>
           <Keyframes
             name="scale"
             to={{
@@ -62,7 +65,7 @@ const CardsStackingPageContent = () => {
               {
                 "--cards-amount": 4,
                 "--card-top-offset": "32px",
-                "--card-height": "30vh",
+                "--card-height": "calc(var(--inline-size) / 1.9047619048)",
                 "--card-margin": "16px",
                 viewTimelineName: "--cards-scrolling",
                 display: "grid",
@@ -187,6 +190,7 @@ export const Keyframes = ({ name, ...props }: IProps) => {
       ? cssObject
       : Object.keys(cssObject).reduce((accumulator, key) => {
           const cssKey = key.replace(/[A-Z]/g, (v) => `-${v.toLowerCase()}`)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const cssValue = (cssObject as any)[key].toString().replace("'", "")
           return `${accumulator}${cssKey}:${cssValue};`
         }, "")
