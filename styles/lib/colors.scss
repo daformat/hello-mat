@@ -32,6 +32,11 @@
 
   --color-code-background: #{rgba(palette.$light-desert-sky-2, 0.75)};
   --color-card-background: #{rgba(palette.$light-desert-sky-2, 0.75)};
+  --color-card-background-flat: #{mix(
+      palette.$light-desert-sky-1,
+      palette.$light-desert-sky-2,
+      25%
+    )};
   --color-card-background-secondary: #{rgba(palette.$light-desert-sky-2, 0.5)};
   --color-card-background-tertiary: #{rgba(palette.$light-desert-sky-2, 0.9)};
 
@@ -91,6 +96,11 @@
 
   --color-code-background: #{rgba(palette.$dark-desert-sky-3, 0.75)};
   --color-card-background: #{rgba(palette.$dark-desert-sky-3, 0.25)};
+  --color-card-background-flat: #{mix(
+      palette.$dark-desert-sky-1,
+      palette.$dark-desert-sky-3,
+      75%
+    )};
   --color-card-background-secondary: #{rgba(palette.$dark-desert-sky-3, 0.1)};
   --color-card-background-tertiary: #{rgba(palette.$dark-desert-sky-3, 0.5)};
 
