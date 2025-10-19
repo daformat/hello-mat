@@ -392,7 +392,6 @@ const CardsStackingPageContent = () => {
             const _ = element.offsetHeight
             element.style.animationName = prevAnimation
             const __ = element.offsetHeight
-            console.log(element)
             cardsContainer.scrollIntoView({ block: "nearest" })
           }
         }
@@ -515,9 +514,9 @@ const CardsStackingPageContent = () => {
                   style={
                     {
                       "--start-range":
-                        "calc((var(--index0) + 3) / var(--cards-amount) * 100%)",
+                        "calc((var(--index0) + 3) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)",
                       "--end-range":
-                        "calc((var(--index) + 3) / var(--cards-amount) * 100%)",
+                        "calc((var(--index) + 3) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)",
                       animation: "discard linear forwards",
                       animationTimeline: "--cards-scrolling",
                       animationRange:
