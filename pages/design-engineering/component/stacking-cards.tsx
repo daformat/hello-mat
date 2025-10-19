@@ -1,5 +1,5 @@
 import { TableOfContents } from "@/components/TableOfContents/TocComponent"
-import { Fragment, useEffect, useRef } from "react"
+import { useEffect, useRef } from "react"
 import { NextCard } from "@/components/Navigation/NextCard"
 import Link from "next/link"
 import { PageMetas } from "@/components/PageMetas/PageMetas"
@@ -149,52 +149,41 @@ const StackingCardsPageContent = () => {
           />
         </div>
 
-        <h2 id="things-to-try">Things to try</h2>
-        <h3 id="momentum-scrolling">Momentum scrolling</h3>
+        <h2 id="scroll-driven-animations">Scroll driven animations</h2>
         <p>
-          Of course you can scroll the regular way, but you can also drag to
-          swipe the carousel. On most browsers (cough cough, Safari...) dragging
-          to swipe will respect the css <code>scroll-snap-align</code>. When you
-          drag to swipe, we use a custom momentum scrolling implementation when
-          needed (desktop browsers). The greater the velocity, the further the
-          carousel will scroll.
+          A relatively new feature in modern browsers, scroll-driven animations
+          allows you to animate base on scroll progression instead of time.
+          While the basics are pretty simple to master, making the animation
+          rolling is a bit more complex. You’ll need to stack multiple
+          animations and calculate offsets based on the total wrapper height.
         </p>
-        <h3 id="overscroll">Overscroll / rubber-banding</h3>
+        <h3 id="stacking-multiple-animations">
+          Stacking multiple scroll-driven animations
+        </h3>
         <p>
-          When dragging to swipe, if you give it enough velocity the carousel
-          will overscroll, with a rubber-banding effect, similar to the one you
-          get on touch devices by default. For this to work, we calculate a
-          velocity based on how fast you are moving your mouse and apply a
-          deceleration factor. When yous scrolled to the start of the end of the
-          carousel, you can also trigger the rubber-banding effect by dragging
-          the carousel even more.
+          To stack multiple animations, we need to create a wrapper element that
+          will be animated for each animation we want to stack. We also need to
+          take care to disable animations for the last few cards, so that they
+          don’t keep shrinking after we scroll past the limit, leaving 4 stacked
+          cards as the final state, as intended.
         </p>
-        <h3 id="Pagination">Pagination</h3>
+        <h3 id="javascript-usage">Javascript usage</h3>
         <p>
-          The carousel can be paginated, using the dedicated buttons, pagination
-          is based on the <code>scroll-snap-align</code> set in css. For this
-          demo, I chose to use <code>center</code>, so the next item that is not
-          fully visible will be centered in the viewport when clicking the next
-          or previous page buttons.
-        </p>
-        <h3 id="snapping">Snapping</h3>
-        <p>
-          Because of the css styles, the carousel items will snap naturally when
-          performing a regular scroll. I chose{" "}
-          <code>scroll-snap-align: center</code> for this demo. But when you
-          drag to scroll on desktop, this behavior is not a given. You have to
-          implement it yourself by adjusting the deceleration factor for the
-          velocity, so that the velocity reaches 0 towards the snap point. I
-          also chose to allow small movements not to snap, so that it feels more
-          natural.
+          While the most of the effect happens in pure CSS, we’re still relying
+          on javascript to properly shift the cards as the previous one is
+          discarded. While this might be doable without javascript, the css
+          calculations are already a bit gnarly, and I didn’t want to complicate
+          things further.
         </p>
         <h2 id="conclusion">That’s a wrap</h2>
         <p>
-          While implementing the basic version of the carousel is easy, thanks
-          to modern css, implementing momentum scrolling with snapping and
-          overscroll / rubber-banding on desktop isn’t trivial. Maybe I’ll try
-          to enable infinite scrolling at some point, but for now, this is a
-          good start.
+          This is my first time playing with scroll-driven animations, as these
+          are not yet widely supported, I wanted to get a better understanding.
+          My conclusion is that while simple effects can be achieved with fairly
+          simple css, more complex effects require a bit more work. You’ll need
+          to compute animation ranges, which can get pretty intense depending on
+          the effect you’re aiming for, and deal with browsers quirks, because
+          life as a web engineer wouldn’t be fun without them.
         </p>
         <NextCard href={"/design-engineering/component/table-of-contents"}>
           Table of contents

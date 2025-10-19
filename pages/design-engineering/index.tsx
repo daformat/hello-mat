@@ -173,6 +173,26 @@ const DesignEngineeringIndex = () => (
           />
           A carousel component
         </Link>
+
+        <Link
+          href={"/design-engineering/component/stacking-cards"}
+          className={styles.card}
+        >
+          <VideoPlayer
+            style={{ aspectRatio: "990/500" }}
+            sources={{
+              dark: {
+                src: "/media/design-engineering/stacking-cards/stacking-cards-overview-dark.mp4",
+                type: "video/mp4",
+              },
+              light: {
+                src: "/media/design-engineering/stacking-cards/stacking-cards-overview-light.mp4",
+                type: "video/mp4",
+              },
+            }}
+          />
+          Rolling stacking cards
+        </Link>
       </div>
     </div>
   </>

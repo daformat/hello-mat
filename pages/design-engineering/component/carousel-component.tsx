@@ -367,8 +367,8 @@ const CarouselComponentPageContent = () => {
           to enable infinite scrolling at some point, but for now, this is a
           good start.
         </p>
-        <NextCard href={"/design-engineering/component/table-of-contents"}>
-          Table of contents
+        <NextCard href={"/design-engineering/component/stacking-cards"}>
+          Rolling stacking cards
         </NextCard>
       </div>
     </>
