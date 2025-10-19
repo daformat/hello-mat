@@ -1,3 +1,4 @@
+@use "sass:color";
 @use "./palette.scss";
 
 @mixin light-theme {
@@ -32,7 +33,7 @@
 
   --color-code-background: #{rgba(palette.$light-desert-sky-2, 0.75)};
   --color-card-background: #{rgba(palette.$light-desert-sky-2, 0.75)};
-  --color-card-background-flat: #{mix(
+  --color-card-background-flat: #{color.mix(
       palette.$light-desert-sky-1,
       palette.$light-desert-sky-2,
       25%
@@ -96,7 +97,7 @@
 
   --color-code-background: #{rgba(palette.$dark-desert-sky-3, 0.75)};
   --color-card-background: #{rgba(palette.$dark-desert-sky-3, 0.25)};
-  --color-card-background-flat: #{mix(
+  --color-card-background-flat: #{color.mix(
       palette.$dark-desert-sky-1,
       palette.$dark-desert-sky-3,
       75%
