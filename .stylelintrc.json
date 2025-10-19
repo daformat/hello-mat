@@ -12,12 +12,6 @@
         "ignore": ["custom-properties"]
       }
     ],
-    "string-quotes": [
-      "double",
-      {
-        "avoidEscape": false
-      }
-    ],
     "order/order": ["custom-properties", "declarations"],
     "selector-no-qualifying-type": [
       true,
