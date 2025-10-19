@@ -6,23 +6,23 @@ import { PageMetas } from "@/components/PageMetas/PageMetas"
 import { RollingStackedCards } from "@/components/RollingStackedCards/RollingStackedCards"
 import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer"
 
-const CardsStackingPage = () => (
+const StackingCardsPage = () => (
   <>
     <PageMetas
-      title="Design engineering: a carousel component"
-      description="Building a scrollable, and swipeable carousel, with momentum scrolling, overscroll and rubber-banding using React, TypeScript, and SCSS."
-      url="https://hello-mat.com/design-engineering/component/carousel-component"
-      image="https://hello-mat.com/media/design-engineering/carousel/og-carousel-light.png"
+      title="Design engineering: rolling stacking cards"
+      description="Building a rolling stacking cards scroll-driven animation with React, TypeScript, and SCSS."
+      url="https://hello-mat.com/design-engineering/stacking-cards"
+      image="https://hello-mat.com/media/design-engineering/stacking-cards/og-stacking-cards-dark.png"
       imageWidth={1200}
       imageHeight={630}
     />
     <TableOfContents.Provider>
-      <CardsStackingPageContent />
+      <StackingCardsPageContent />
     </TableOfContents.Provider>
   </>
 )
 
-const CardsStackingPageContent = () => {
+const StackingCardsPageContent = () => {
   const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
 
@@ -81,7 +81,7 @@ const CardsStackingPageContent = () => {
           Back to gallery
         </Link>
         <h1 id="design-engineering-a-dock-component">
-          Design engineering: rolling stacked cards
+          Design engineering: rolling stacking cards
         </h1>
         <p>
           A scroll-driven animation that stacks cards in a rolling fashion, with
@@ -237,4 +237,4 @@ export const Keyframes = ({ name, ...props }: IProps) => {
   )
 }
 
-export default CardsStackingPage
+export default StackingCardsPage
