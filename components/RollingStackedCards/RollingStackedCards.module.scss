@@ -1,0 +1,38 @@
+@keyframes scale {
+  to {
+    scale: calc(1 - calc(0.1 * (1)));
+  }
+}
+
+@keyframes discard {
+  to {
+    margin-top: calc(-1 * var(--card-margin));
+    opacity: 0;
+    padding-top: 0;
+    scale: 0.78;
+  }
+}
+
+.wrapper {
+  display: grid;
+  gap: var(--card-margin);
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(var(--cards-amount), var(--card-height));
+  margin-bottom: var(--card-margin);
+  padding-bottom: calc((var(--cards-amount)) * var(--card-top-offset));
+  view-timeline-name: --cards-scrolling;
+
+  .card_root {
+    --start-range: calc((var(--index0) + var(--rolling-count) - 1) * (var(--card-height) + var(--card-margin)) /
+    var(--block-size) * 100%);
+    --end-range: calc((var(--index) + var(--rolling-count) - 1) * (var(--card-height) + var(--card-margin)) /
+    var(--block-size) * 100%);
+    animation-range: exit-crossing var(--start-range) exit-crossing
+      var(--end-range);
+    animation-timeline: --cards-scrolling;
+    padding-top: calc(var(--card-top-distance) + var(--index0) * var(--card-top-offset));
+    position: sticky;
+    top: 0;
+    transform-origin: center 200%;
+  }
+}

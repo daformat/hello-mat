@@ -3,6 +3,7 @@ import { CSSProperties, Fragment, useEffect, useRef } from "react"
 import { NextCard } from "@/components/Navigation/NextCard"
 import Link from "next/link"
 import { PageMetas } from "@/components/PageMetas/PageMetas"
+import { RollingStackedCards } from "@/components/RollingStackedCards/RollingStackedCards"
 import { useCssSizeVariables } from "@/hooks/useCssSizeVariables"
 
 const CardsStackingPage = () => (
@@ -34,7 +35,11 @@ const CardsStackingPageContent = () => {
   })
 
   const cards = [
-    <Fragment key="0">
+    <picture
+      key="0"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/hello-mat-dark.png"
@@ -44,8 +49,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="1">
+    </picture>,
+    <picture
+      key="1"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/design-engineering/details/og-details-dark.png"
@@ -55,8 +64,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="2">
+    </picture>,
+    <picture
+      key="2"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/design-engineering/images-and-embeds/og-media-dark.png"
@@ -66,8 +79,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="3">
+    </picture>,
+    <picture
+      key="3"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-dark.png"
@@ -77,8 +94,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="4">
+    </picture>,
+    <picture
+      key="4"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/hello-mat-dark.png"
@@ -88,8 +109,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="5">
+    </picture>,
+    <picture
+      key="5"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/design-engineering/details/og-details-dark.png"
@@ -99,8 +124,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="6">
+    </picture>,
+    <picture
+      key="6"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/design-engineering/images-and-embeds/og-media-dark.png"
@@ -110,8 +139,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="7">
+    </picture>,
+    <picture
+      key="7"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-dark.png"
@@ -121,8 +154,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="0">
+    </picture>,
+    <picture
+      key="0"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/hello-mat-dark.png"
@@ -132,8 +169,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="1">
+    </picture>,
+    <picture
+      key="1"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/design-engineering/details/og-details-dark.png"
@@ -143,8 +184,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="2">
+    </picture>,
+    <picture
+      key="2"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/design-engineering/images-and-embeds/og-media-dark.png"
@@ -154,8 +199,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="3">
+    </picture>,
+    <picture
+      key="3"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-dark.png"
@@ -165,8 +214,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="4">
+    </picture>,
+    <picture
+      key="4"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/hello-mat-dark.png"
@@ -176,8 +229,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="5">
+    </picture>,
+    <picture
+      key="5"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/design-engineering/details/og-details-dark.png"
@@ -187,8 +244,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="6">
+    </picture>,
+    <picture
+      key="6"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/design-engineering/images-and-embeds/og-media-dark.png"
@@ -198,8 +259,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="7">
+    </picture>,
+    <picture
+      key="7"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-dark.png"
@@ -209,8 +274,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="0">
+    </picture>,
+    <picture
+      key="0"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/hello-mat-dark.png"
@@ -220,8 +289,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="1">
+    </picture>,
+    <picture
+      key="1"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/design-engineering/details/og-details-dark.png"
@@ -231,8 +304,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="2">
+    </picture>,
+    <picture
+      key="2"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/design-engineering/images-and-embeds/og-media-dark.png"
@@ -242,8 +319,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="3">
+    </picture>,
+    <picture
+      key="3"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-dark.png"
@@ -253,8 +334,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="4">
+    </picture>,
+    <picture
+      key="4"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/hello-mat-dark.png"
@@ -264,8 +349,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="5">
+    </picture>,
+    <picture
+      key="5"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/design-engineering/details/og-details-dark.png"
@@ -275,8 +364,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="6">
+    </picture>,
+    <picture
+      key="6"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/design-engineering/images-and-embeds/og-media-dark.png"
@@ -286,8 +379,12 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
-    <Fragment key="7">
+    </picture>,
+    <picture
+      key="7"
+      className="card flat shadow"
+      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+    >
       <source
         media="(prefers-color-scheme: dark)"
         srcSet="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-dark.png"
@@ -297,7 +394,7 @@ const CardsStackingPageContent = () => {
         alt=""
         style={{ aspectRatio: "1200 / 630" }}
       />
-    </Fragment>,
+    </picture>,
   ]
 
   useEffect(() => {
@@ -375,6 +472,7 @@ const CardsStackingPageContent = () => {
     }
   }, [])
 
+  const showOld = false
   return (
     <>
       <TableOfContents.Root />
@@ -390,33 +488,9 @@ const CardsStackingPageContent = () => {
           up to 4 stacked cards at a time. Just scroll the page to see it in
           action.
         </p>
-        <div
-          ref={cardsContainerRef}
-          style={
-            {
-              "--cards-amount": cards.length,
-              "--card-top-distance": "32px",
-              "--raw-card-top-offset": "32px",
-              "--card-top-offset":
-                "calc(32px / 1px / 464 * var(--card-height))",
-              // "--card-top-offset": "32px",
-              "--card-height":
-                "calc(var(--inline-size) / 1.9047619048 + var(--card-padding) * 2)",
-              "--card-margin": "8px",
-              "--card-padding": "8px",
-              marginBottom:
-                "calc(-1 * (max(var(--discarded-amount, 0) - 1, 0)) * var(--card-top-offset) - var(--discarded-ratio, 0) * var(--card-top-offset))",
-              // translate: `0 calc(
-              // -1 * (
-              //   max(calc(var(--discarded-amount, 0) - 1), 0) * var(--card-top-offset)
-              //   + var(--card-top-offset) * var(--discarded-ratio, 0)
-              // ))`,
-            } as CSSProperties
-          }
-        >
-          <style
-            dangerouslySetInnerHTML={{
-              __html: `
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
             .demo {
               display: none;
             }
@@ -435,99 +509,113 @@ const CardsStackingPageContent = () => {
               }
             }
           `,
-            }}
-          />
-          <Keyframes
-            name="scale"
-            to={{
-              scale: "calc(1 - calc( 0.1 * ( 1 ) ) )",
-            }}
-          />
-          <Keyframes
-            name="discard"
-            to={{
-              scale: "0.78",
-              paddingTop: "0",
-              marginTop: "calc(-1 * var(--card-margin))",
-              opacity: 0,
-              // translate: "0 -100%",
-            }}
-          />
-          <div className="warning">
-            ⚠️ This demo uses a feature that is not supported by your browser.
-          </div>
-          <div className="demo">
-            <div
-              data-cards-wrapper={""}
-              style={
-                {
-                  viewTimelineName: "--cards-scrolling",
-                  display: "grid",
-                  gridTemplateColumns: "1fr",
-                  gridTemplateRows:
-                    "repeat(var(--cards-amount), var(--card-height))",
-                  gap: "var(--card-margin)",
-                  paddingBottom:
-                    "calc((var(--cards-amount)) * var(--card-top-offset))",
-                  marginBottom: "var(--card-margin)",
-                  // outline: "10px solid #ff777799",
-                } as CSSProperties
-              }
-            >
-              {cards.map((content, i) => (
-                <div
-                  key={i}
-                  data-card={""}
-                  data-animates={""}
-                  style={
-                    {
-                      "--start-range":
-                        "calc((var(--index0) + 3) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)",
-                      "--end-range":
-                        "calc((var(--index) + 3) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)",
-                      animation: "discard linear forwards",
-                      animationTimeline: "--cards-scrolling",
-                      animationRange:
-                        "exit-crossing var(--start-range) exit-crossing var(--end-range)",
-                      position: "sticky",
-                      top: 0,
-                      paddingTop:
-                        "calc(var(--card-top-distance) + var(--index0) * var(--card-top-offset))",
-                      // outline: "1px solid lime",
-                      "--index": `${i + 1}`,
-                      "--index0": "calc(var(--index) - 1)",
-                      "--reverse-index":
-                        "calc(var(--cards-amount) - var(--index0))",
-                      "--reverse-index0": "calc(var(--reverse-index) - 1)",
-                      "--reverse-rolling-index": `${4 - (i % 4)}`,
-                      "--reverse-rolling-index0":
-                        "calc(var(--reverse-rolling-index) - 1)",
-                      transition:
-                        "--reverse-rolling-index 0.2s var(--ease-out-cubic), --reverse-rolling-index0 0.2s var(--ease-out-cubic)",
-                      transformOrigin: "center 200%",
-                    } as CSSProperties
-                  }
-                >
+          }}
+        />
+        <div className="warning">
+          ⚠️ This demo uses a feature that is not supported by your browser.
+        </div>
+        <RollingStackedCards
+          cards={cards}
+          topDistance={"32px"}
+          topOffset={"calc(32px / 1px / 464 * var(--card-height))"}
+          cardHeight={
+            "calc(var(--inline-size) / 1.9047619048 + var(--card-padding) * 2)"
+          }
+          cardMargin={"8px"}
+          cardPadding={"8px"}
+          rollingCount={4}
+        />
+
+        {showOld ? (
+          <div
+            ref={cardsContainerRef}
+            style={
+              {
+                "--cards-amount": cards.length,
+                "--card-top-distance": "32px",
+                "--raw-card-top-offset": "32px",
+                "--card-top-offset":
+                  "calc(32px / 1px / 464 * var(--card-height))",
+                // "--card-top-offset": "32px",
+                "--card-height":
+                  "calc(var(--inline-size) / 1.9047619048 + var(--card-padding) * 2)",
+                "--card-margin": "8px",
+                "--card-padding": "8px",
+                marginBottom:
+                  "calc(-1 * (max(var(--discarded-amount, 0) - 1, 0)) * var(--card-top-offset) - var(--discarded-ratio, 0) * var(--card-top-offset))",
+                // translate: `0 calc(
+                // -1 * (
+                //   max(calc(var(--discarded-amount, 0) - 1), 0) * var(--card-top-offset)
+                //   + var(--card-top-offset) * var(--discarded-ratio, 0)
+                // ))`,
+              } as CSSProperties
+            }
+          >
+            <Keyframes
+              name="scale"
+              to={{
+                scale: "calc(1 - calc( 0.1 * ( 1 ) ) )",
+              }}
+            />
+            <Keyframes
+              name="discard"
+              to={{
+                scale: "0.78",
+                paddingTop: "0",
+                marginTop: "calc(-1 * var(--card-margin))",
+                opacity: 0,
+                // translate: "0 -100%",
+              }}
+            />
+            <div className="demo">
+              <div
+                data-cards-wrapper={""}
+                style={
+                  {
+                    viewTimelineName: "--cards-scrolling",
+                    display: "grid",
+                    gridTemplateColumns: "1fr",
+                    gridTemplateRows:
+                      "repeat(var(--cards-amount), var(--card-height))",
+                    gap: "var(--card-margin)",
+                    paddingBottom:
+                      "calc((var(--cards-amount)) * var(--card-top-offset))",
+                    marginBottom: "var(--card-margin)",
+                    // outline: "10px solid #ff777799",
+                  } as CSSProperties
+                }
+              >
+                {cards.map((content, i) => (
                   <div
+                    key={i}
+                    data-card={""}
                     data-animates={""}
                     style={
                       {
-                        "--start-range": `calc((var(--index0) + ${Math.min(
-                          cards.length - 1 - i,
-                          3
-                        )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
-                        "--end-range": `calc((var(--index) + ${Math.min(
-                          cards.length - 1 - i,
-                          3
-                        )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
-                        animation:
-                          i < cards.length - 4
-                            ? "scale linear forwards"
-                            : undefined,
+                        "--start-range":
+                          "calc((var(--index0) + 3) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)",
+                        "--end-range":
+                          "calc((var(--index) + 3) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)",
+                        animation: "discard linear forwards",
                         animationTimeline: "--cards-scrolling",
                         animationRange:
                           "exit-crossing var(--start-range) exit-crossing var(--end-range)",
-                        transformOrigin: "50% 0%",
+                        position: "sticky",
+                        top: 0,
+                        paddingTop:
+                          "calc(var(--card-top-distance) + var(--index0) * var(--card-top-offset))",
+                        // outline: "1px solid lime",
+                        "--index": `${i + 1}`,
+                        "--index0": "calc(var(--index) - 1)",
+                        "--reverse-index":
+                          "calc(var(--cards-amount) - var(--index0))",
+                        "--reverse-index0": "calc(var(--reverse-index) - 1)",
+                        "--reverse-rolling-index": `${4 - (i % 4)}`,
+                        "--reverse-rolling-index0":
+                          "calc(var(--reverse-rolling-index) - 1)",
+                        transition:
+                          "--reverse-rolling-index 0.2s var(--ease-out-cubic), --reverse-rolling-index0 0.2s var(--ease-out-cubic)",
+                        transformOrigin: "center 200%",
                       } as CSSProperties
                     }
                   >
@@ -535,16 +623,20 @@ const CardsStackingPageContent = () => {
                       data-animates={""}
                       style={
                         {
+                          "--card-length": `${cards.length}`,
+                          "--card-i": `${i}`,
+                          "--card-min-value": "3",
+                          "--card-min": `${Math.min(cards.length - 1 - i, 3)}`,
                           "--start-range": `calc((var(--index0) + ${Math.min(
                             cards.length - 1 - i,
-                            2
+                            3
                           )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
                           "--end-range": `calc((var(--index) + ${Math.min(
                             cards.length - 1 - i,
-                            2
+                            3
                           )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
                           animation:
-                            i < cards.length - 3
+                            i < cards.length - 4
                               ? "scale linear forwards"
                               : undefined,
                           animationTimeline: "--cards-scrolling",
@@ -558,16 +650,23 @@ const CardsStackingPageContent = () => {
                         data-animates={""}
                         style={
                           {
+                            "--card-length": `${cards.length}`,
+                            "--card-i": `${i}`,
+                            "--card-min-value": "2",
+                            "--card-min": `${Math.min(
+                              cards.length - 1 - i,
+                              2
+                            )}`,
                             "--start-range": `calc((var(--index0) + ${Math.min(
                               cards.length - 1 - i,
-                              1
+                              2
                             )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
                             "--end-range": `calc((var(--index) + ${Math.min(
                               cards.length - 1 - i,
-                              1
+                              2
                             )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
                             animation:
-                              i < cards.length - 2
+                              i < cards.length - 3
                                 ? "scale linear forwards"
                                 : undefined,
                             animationTimeline: "--cards-scrolling",
@@ -577,44 +676,75 @@ const CardsStackingPageContent = () => {
                           } as CSSProperties
                         }
                       >
-                        <picture
-                          className="card flat shadow"
+                        <div
                           data-animates={""}
                           style={
                             {
-                              "--start-range":
-                                "calc(var(--index0) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)",
-                              "--end-range":
-                                "calc(var(--index) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)",
-                              fontSize: 0,
-                              display: "inline-block",
-                              padding: "var(--card-padding)",
-                              // backgroundColor:
-                              //   "var(--color-toolbar-button-background-hover)",
-                              height: "fit-content",
+                              "--card-length": `${cards.length}`,
+                              "--card-i": `${i}`,
+                              "--card-min-value": "1",
+                              "--card-min": `${Math.min(
+                                cards.length - 1 - i,
+                                1
+                              )}`,
+                              "--start-range": `calc((var(--index0) + ${Math.min(
+                                cards.length - 1 - i,
+                                1
+                              )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
+                              "--end-range": `calc((var(--index) + ${Math.min(
+                                cards.length - 1 - i,
+                                1
+                              )}) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)`,
                               animation:
-                                i < cards.length - 1
+                                i < cards.length - 2
                                   ? "scale linear forwards"
                                   : undefined,
                               animationTimeline: "--cards-scrolling",
                               animationRange:
                                 "exit-crossing var(--start-range) exit-crossing var(--end-range)",
                               transformOrigin: "50% 0%",
-                              width: "100%",
-                              // outline: "1px solid orange",
                             } as CSSProperties
                           }
                         >
-                          {content}
-                        </picture>
+                          <picture
+                            className="card flat shadow"
+                            data-animates={""}
+                            style={
+                              {
+                                "--start-range":
+                                  "calc(var(--index0) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)",
+                                "--end-range":
+                                  "calc(var(--index) * (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%)",
+                                fontSize: 0,
+                                display: "inline-block",
+                                padding: "var(--card-padding)",
+                                // backgroundColor:
+                                //   "var(--color-toolbar-button-background-hover)",
+                                height: "fit-content",
+                                animation:
+                                  i < cards.length - 1
+                                    ? "scale linear forwards"
+                                    : undefined,
+                                animationTimeline: "--cards-scrolling",
+                                animationRange:
+                                  "exit-crossing var(--start-range) exit-crossing var(--end-range)",
+                                transformOrigin: "50% 0%",
+                                width: "100%",
+                                // outline: "1px solid orange",
+                              } as CSSProperties
+                            }
+                          >
+                            {content}
+                          </picture>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        ) : null}
         <h2 id="things-to-try">Things to try</h2>
         <h3 id="momentum-scrolling">Momentum scrolling</h3>
         <p>
