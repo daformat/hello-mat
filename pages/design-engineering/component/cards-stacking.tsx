@@ -326,7 +326,6 @@ const CardsStackingPageContent = () => {
         const discardedAmount = discardedCards.length
         const lastDiscarded = discardedCards[discardedAmount - 1]
         const lastDiscardedScale = discardedScaleMap.get(lastDiscarded)
-        console.log({ discardedCards, remainingCards })
         const discardedRatio = lastDiscardedScale
           ? 1 - (lastDiscardedScale - 0.78) / 0.22
           : 0
@@ -346,37 +345,6 @@ const CardsStackingPageContent = () => {
             }) * var(--card-top-offset))`
           }
         })
-        // cardsContainer.style.translate = `0 -${
-        //   Math.max(discardedAmount - 1, 0) * 32 + 32 * discardedRatio
-        // }px`
-        // cardsContainer.style.marginBottom = `calc(-1 * var(--discarded-amount, 0) - 1), 0) * var(--card-top-offset) - var(--discarded-ratio, 0) * var(--card-top-offset))`
-        // console.log(discardedAmount)
-        // cardsContainer.style.setProperty(
-        //   "--discarded-amount",
-        //   `${discardedAmount}`
-        // )
-        // const lastDiscarded = discardedCards[discardedAmount - 1]
-        // if (lastDiscarded) {
-        //   const translateY = `calc(-1 * ${Math.max(
-        //     discardedAmount - 1,
-        //     0
-        //   )} * var(--card-top-offset) - ${Math.sqrt(
-        //     Math.sqrt(1 - parseFloat(getComputedStyle(lastDiscarded).scale))
-        //   )} * var(--card-top-offset))`
-        //   const translate = `0 ${translateY}`
-        //   cardsContainer.style.translate = translate
-        //   cardsContainer.style.marginBottom = translateY
-        //   console.log(translate)
-        // } else {
-        //   cardsContainer.style.translate = "0 0"
-        //   cardsContainer.style.marginBottom = "0"
-        // }
-        // remainingCards.forEach((card, index) => {
-        //   card.style.setProperty(
-        //     "--reverse-rolling-index",
-        //     `${4 - (index % 4)}`
-        //   )
-        // })
       }
     }
     handleScroll()
