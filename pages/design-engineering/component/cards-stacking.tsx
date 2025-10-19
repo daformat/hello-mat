@@ -122,11 +122,190 @@ const CardsStackingPageContent = () => {
         style={{ aspectRatio: "1200 / 630" }}
       />
     </Fragment>,
+    <Fragment key="0">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/hello-mat-dark.png"
+      />
+      <img
+        src="/media/hello-mat-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="1">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/design-engineering/details/og-details-dark.png"
+      />
+      <img
+        src="/media/design-engineering/details/og-details-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="2">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/design-engineering/images-and-embeds/og-media-dark.png"
+      />
+      <img
+        src="/media/design-engineering/images-and-embeds/og-media-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="3">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-dark.png"
+      />
+      <img
+        src="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="4">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/hello-mat-dark.png"
+      />
+      <img
+        src="/media/hello-mat-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="5">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/design-engineering/details/og-details-dark.png"
+      />
+      <img
+        src="/media/design-engineering/details/og-details-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="6">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/design-engineering/images-and-embeds/og-media-dark.png"
+      />
+      <img
+        src="/media/design-engineering/images-and-embeds/og-media-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="7">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-dark.png"
+      />
+      <img
+        src="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="0">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/hello-mat-dark.png"
+      />
+      <img
+        src="/media/hello-mat-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="1">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/design-engineering/details/og-details-dark.png"
+      />
+      <img
+        src="/media/design-engineering/details/og-details-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="2">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/design-engineering/images-and-embeds/og-media-dark.png"
+      />
+      <img
+        src="/media/design-engineering/images-and-embeds/og-media-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="3">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-dark.png"
+      />
+      <img
+        src="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="4">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/hello-mat-dark.png"
+      />
+      <img
+        src="/media/hello-mat-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="5">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/design-engineering/details/og-details-dark.png"
+      />
+      <img
+        src="/media/design-engineering/details/og-details-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="6">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/design-engineering/images-and-embeds/og-media-dark.png"
+      />
+      <img
+        src="/media/design-engineering/images-and-embeds/og-media-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
+    <Fragment key="7">
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-dark.png"
+      />
+      <img
+        src="/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png"
+        alt=""
+        style={{ aspectRatio: "1200 / 630" }}
+      />
+    </Fragment>,
   ]
 
   useEffect(() => {
+    const cardsContainer = cardsContainerRef.current
+    if (!cardsContainer) {
+      return
+    }
     const handleScroll = () => {
-      const cardsContainer = cardsContainerRef.current
       const cardsWrapper = cardsContainer?.querySelector("[data-cards-wrapper]")
       if (cardsContainer && cardsWrapper) {
         const cards = Array.from(cardsContainer.querySelectorAll("[data-card]"))
@@ -147,16 +326,30 @@ const CardsStackingPageContent = () => {
         const discardedAmount = discardedCards.length
         const lastDiscarded = discardedCards[discardedAmount - 1]
         const lastDiscardedScale = discardedScaleMap.get(lastDiscarded)
-        if (lastDiscardedScale) {
-          const discardedRatio = 1 - (lastDiscardedScale - 0.78) / 0.22
-          cardsContainer.style.translate = `0 -${
-            Math.max(discardedAmount - 1, 0) * 32 + 32 * discardedRatio
-          }px`
-          cardsContainer.style.marginBottom = `calc(-1 * ${Math.max(
-            discardedAmount - 1,
-            0
-          )} * var(--card-top-offset) - ${discardedRatio} * var(--card-top-offset))`
-        }
+        console.log({ discardedCards, remainingCards })
+        const discardedRatio = lastDiscardedScale
+          ? 1 - (lastDiscardedScale - 0.78) / 0.22
+          : 0
+        cardsContainer.style.setProperty(
+          "--discarded-amount",
+          `${discardedAmount}`
+        )
+        cardsContainer.style.setProperty(
+          "--discarded-ratio",
+          `${discardedRatio}`
+        )
+        cards.forEach((card) => {
+          if (card instanceof HTMLElement) {
+            const prevDiscarded = Math.max(discardedAmount - 1, 0)
+            card.style.paddingTop = `calc(var(--card-top-distance) + (var(--index0) - ${prevDiscarded} - ${
+              discardedAmount ? discardedRatio : 0
+            }) * var(--card-top-offset))`
+          }
+        })
+        // cardsContainer.style.translate = `0 -${
+        //   Math.max(discardedAmount - 1, 0) * 32 + 32 * discardedRatio
+        // }px`
+        // cardsContainer.style.marginBottom = `calc(-1 * var(--discarded-amount, 0) - 1), 0) * var(--card-top-offset) - var(--discarded-ratio, 0) * var(--card-top-offset))`
         // console.log(discardedAmount)
         // cardsContainer.style.setProperty(
         //   "--discarded-amount",
@@ -187,9 +380,12 @@ const CardsStackingPageContent = () => {
       }
     }
     handleScroll()
+    const resizeObserver = new ResizeObserver(handleScroll)
     document.addEventListener("scroll", handleScroll)
+    resizeObserver.observe(cardsContainer)
     return () => {
       document.removeEventListener("scroll", handleScroll)
+      resizeObserver.disconnect()
     }
   }, [])
 
@@ -213,11 +409,22 @@ const CardsStackingPageContent = () => {
           style={
             {
               "--cards-amount": cards.length,
-              "--card-top-offset": "32px",
+              "--card-top-distance": "32px",
+              "--raw-card-top-offset": "32px",
+              "--card-top-offset":
+                "calc(32px / 1px / 464 * var(--card-height))",
+              // "--card-top-offset": "32px",
               "--card-height":
                 "calc(var(--inline-size) / 1.9047619048 + var(--card-padding) * 2)",
               "--card-margin": "8px",
               "--card-padding": "8px",
+              marginBottom:
+                "calc(-1 * (max(var(--discarded-amount, 0) - 1, 0)) * var(--card-top-offset) - var(--discarded-ratio, 0) * var(--card-top-offset))",
+              // translate: `0 calc(
+              // -1 * (
+              //   max(calc(var(--discarded-amount, 0) - 1), 0) * var(--card-top-offset)
+              //   + var(--card-top-offset) * var(--discarded-ratio, 0)
+              // ))`,
             } as CSSProperties
           }
         >
@@ -226,6 +433,30 @@ const CardsStackingPageContent = () => {
               __html: `
             .demo {
               display: none;
+            }
+
+            @property --card-height {
+              inherits: true;
+              initial-value: 0;
+              syntax: "<length>";
+            }
+
+            @property --card-top-distance {
+              inherits: true;
+              initial-value: 0;
+              syntax: "<length>";
+            }
+
+            @property --card-offset-top {
+              inherits: true;
+              initial-value: 0;
+              syntax: "<length>";
+            }
+
+            @property --block-size {
+              inherits: true;
+              initial-value: 0;
+              syntax: "<length>";
             }
 
             @supports (animation-timeline: view()) {
@@ -244,8 +475,6 @@ const CardsStackingPageContent = () => {
             name="scale"
             to={{
               scale: "calc(1 - calc( 0.1 * ( 1 ) ) )",
-              // marginTop:
-              //   "calc(-1 * var(--discarded-amount, 0) * var(--card-top-offset))",
             }}
           />
           <Keyframes
@@ -254,6 +483,7 @@ const CardsStackingPageContent = () => {
               scale: "0.78",
               paddingTop: "0",
               marginTop: "calc(-1 * var(--card-margin))",
+              opacity: 0,
               // translate: "0 -100%",
             }}
           />
@@ -275,9 +505,6 @@ const CardsStackingPageContent = () => {
                     "calc((var(--cards-amount)) * var(--card-top-offset))",
                   marginBottom: "var(--card-margin)",
                   // outline: "10px solid #ff777799",
-                  // translate:
-                  //   "0 calc(var(--discarded-amount, 0) * var(--card-top-offset) * -1)",
-                  // transition: "translate 0.2s var(--ease-out-cubic)",
                 } as CSSProperties
               }
             >
@@ -297,7 +524,8 @@ const CardsStackingPageContent = () => {
                         "exit-crossing var(--start-range) exit-crossing var(--end-range)",
                       position: "sticky",
                       top: 0,
-                      paddingTop: "calc(var(--index) * var(--card-top-offset))",
+                      paddingTop:
+                        "calc(var(--card-top-distance) + var(--index0) * var(--card-top-offset))",
                       // outline: "1px solid lime",
                       "--index": `${i + 1}`,
                       "--index0": "calc(var(--index) - 1)",
