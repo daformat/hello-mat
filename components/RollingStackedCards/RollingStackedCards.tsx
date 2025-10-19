@@ -82,7 +82,6 @@ export const RollingStackedCards = ({
             const _ = element.offsetHeight
             element.style.animationName = prevAnimation
             const __ = element.offsetHeight
-            root.scrollIntoView({ block: "nearest" })
           }
         }
       })
