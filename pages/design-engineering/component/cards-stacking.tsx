@@ -380,7 +380,26 @@ const CardsStackingPageContent = () => {
       }
     }
     handleScroll()
-    const resizeObserver = new ResizeObserver(handleScroll)
+    const handleResize = () => {
+      // We need to force reflow to properly trigger the animations when resizing
+      const animationElements =
+        cardsContainer.querySelectorAll("[data-animates]")
+      animationElements.forEach((element) => {
+        if (element instanceof HTMLElement) {
+          const prevAnimation = element.style.animationName
+          if (prevAnimation) {
+            element.style.animationName = "none"
+            const _ = element.offsetHeight
+            element.style.animationName = prevAnimation
+            const __ = element.offsetHeight
+            console.log(element)
+            cardsContainer.scrollIntoView({ block: "nearest" })
+          }
+        }
+      })
+      handleScroll()
+    }
+    const resizeObserver = new ResizeObserver(handleResize)
     document.addEventListener("scroll", handleScroll)
     resizeObserver.observe(cardsContainer)
     return () => {
@@ -435,28 +454,8 @@ const CardsStackingPageContent = () => {
               display: none;
             }
 
-            @property --card-height {
-              inherits: true;
-              initial-value: 0;
-              syntax: "<length>";
-            }
-
-            @property --card-top-distance {
-              inherits: true;
-              initial-value: 0;
-              syntax: "<length>";
-            }
-
-            @property --card-offset-top {
-              inherits: true;
-              initial-value: 0;
-              syntax: "<length>";
-            }
-
-            @property --block-size {
-              inherits: true;
-              initial-value: 0;
-              syntax: "<length>";
+            *[style*="animation"] {
+              will-change: transform, opacity, padding-top, margin-top, scale;
             }
 
             @supports (animation-timeline: view()) {
@@ -512,6 +511,7 @@ const CardsStackingPageContent = () => {
                 <div
                   key={i}
                   data-card={""}
+                  data-animates={""}
                   style={
                     {
                       "--start-range":
@@ -542,6 +542,7 @@ const CardsStackingPageContent = () => {
                   }
                 >
                   <div
+                    data-animates={""}
                     style={
                       {
                         "--start-range": `calc((var(--index0) + ${Math.min(
@@ -564,6 +565,7 @@ const CardsStackingPageContent = () => {
                     }
                   >
                     <div
+                      data-animates={""}
                       style={
                         {
                           "--start-range": `calc((var(--index0) + ${Math.min(
@@ -586,6 +588,7 @@ const CardsStackingPageContent = () => {
                       }
                     >
                       <div
+                        data-animates={""}
                         style={
                           {
                             "--start-range": `calc((var(--index0) + ${Math.min(
@@ -609,6 +612,7 @@ const CardsStackingPageContent = () => {
                       >
                         <picture
                           className="card flat shadow"
+                          data-animates={""}
                           style={
                             {
                               "--start-range":
