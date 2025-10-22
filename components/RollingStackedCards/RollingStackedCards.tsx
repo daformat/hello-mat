@@ -10,16 +10,18 @@ export const RollingStackedCards = ({
   cardHeight,
   cardMargin,
   cardPadding,
+  gap,
   rollingCount,
   discardAnimationName = styles.discard,
   stackAnimationName = styles.scale,
 }: {
   cards: JSX.Element[]
-  topDistance: string | number
-  topOffset: string | number
-  cardHeight: string | number
-  cardMargin: string | number
-  cardPadding: string | number
+  topDistance: string
+  topOffset: string
+  cardHeight: string
+  cardMargin: string
+  cardPadding: string
+  gap: string
   rollingCount: number
   discardAnimationName?: string
   stackAnimationName?: string
@@ -174,6 +176,7 @@ export const RollingStackedCards = ({
           "--card-height": cardHeight,
           "--card-margin": cardMargin,
           "--card-padding": cardPadding,
+          "--cards-gap": gap,
           "--rolling-count": rollingCount,
           marginBottom:
             "calc(-1 * (max(var(--discarded-amount, 0) - 1, 0)) * var(--card-top-offset) - var(--discarded-ratio, 0) * var(--card-top-offset))",

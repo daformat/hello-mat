@@ -15,7 +15,7 @@
 
 .wrapper {
   display: grid;
-  gap: var(--card-margin);
+  gap: var(--cards-gap);
   grid-template-columns: 1fr;
   grid-template-rows: repeat(var(--cards-amount), var(--card-height));
   margin-bottom: var(--card-margin);

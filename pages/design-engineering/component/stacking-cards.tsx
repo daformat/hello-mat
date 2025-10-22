@@ -135,7 +135,7 @@ const StackingCardsPageContent = () => {
             }}
           />
         </div>
-        <div className="demo">
+        <div className="demo" style={{ paddingBottom: 48, display: "block" }}>
           <RollingStackedCards
             cards={[...cards, ...cards, ...cards, cards[0]]}
             topDistance={"32px"}
@@ -143,8 +143,9 @@ const StackingCardsPageContent = () => {
             cardHeight={
               "calc(var(--inline-size) / 1.9047619048 + var(--card-padding) * 2)"
             }
-            cardMargin={"8px"}
-            cardPadding={"8px"}
+            cardMargin={"0px"}
+            cardPadding={"0px"}
+            gap={"28px"}
             rollingCount={4}
           />
         </div>
@@ -152,7 +153,7 @@ const StackingCardsPageContent = () => {
         <h2 id="scroll-driven-animations">Scroll driven animations</h2>
         <p>
           A relatively new feature in modern browsers, scroll-driven animations
-          allows you to animate base on scroll progression instead of time.
+          allows you to animate based on scroll progression instead of time.
           While the basics are pretty simple to master, making the animation
           rolling is a bit more complex. You’ll need to stack multiple
           animations and calculate offsets based on the total wrapper height.
