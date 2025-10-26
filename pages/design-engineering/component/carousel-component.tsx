@@ -359,6 +359,13 @@ const CarouselComponentPageContent = () => {
           also chose to allow small movements not to snap, so that it feels more
           natural.
         </p>
+        <h3 id="scroll-fade">scroll-fade</h3>
+        <p>
+          Most scroll fades only animate the opacity when you reach the edges of
+          the scroll area. Instead of doing this, I decided to animate the
+          length of the mask based on the remaining scroll distance. This way,
+          the fading effect is more natural, and the transition is smoother.
+        </p>
         <h2 id="conclusion">That’s a wrap</h2>
         <p>
           While implementing the basic version of the carousel is easy, thanks
