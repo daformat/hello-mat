@@ -29,8 +29,6 @@ export const RollingStackedCards = ({
   const cardsRootRef = useRef<HTMLDivElement>(null)
   useCssSizeVariables(cardsRootRef)
 
-  console.log(discardAnimationName, stackAnimationName)
-
   useEffect(() => {
     const root = cardsRootRef.current
     if (!root) {
@@ -111,13 +109,6 @@ export const RollingStackedCards = ({
   }>) => {
     const remainingCards = cards.length - cardIndex - 1
     const isValid = currentDepth <= remainingCards
-    if (remainingCards <= rollingCount) {
-      console.log({
-        remainingCards,
-        isValid,
-        v: remainingCards >= rollingCount || isValid,
-      })
-    }
 
     const wrapped = (
       <div

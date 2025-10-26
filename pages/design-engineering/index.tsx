@@ -19,10 +19,11 @@ const DesignEngineeringIndex = () => (
         <h1 id="design-engineering">Design engineering portfolio</h1>
         <p>
           Hello! I’m Mat (Mathieu Jouhet) and this my design engineering
-          portfolio. I have a serious passion for the web platform, care deeply
-          about craft, design, UX, and obsess over details that are often
-          invisible, but never imperceptible. These&nbsp;make or break a great
-          experience and even if you don’t see them, you actually feel them.
+          portfolio. I&nbsp;have a serious passion for the web platform, care
+          deeply about craft, design, UX, and obsess over details that are often
+          invisible, but never imperceptible. I&nbsp;think these&nbsp;make or
+          break a great experience and even if you don’t see them, you actually
+          feel&nbsp;them.
         </p>
         <p>
           These are either real components, used in production, or it can also
