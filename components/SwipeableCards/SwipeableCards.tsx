@@ -87,8 +87,6 @@ export const SwipeableCards = ({
   })
   const animationRef = useRef<MaybeNull<Animation>>(null)
 
-  console.log(stack)
-
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
       const state = dragStateRef.current
@@ -183,14 +181,12 @@ export const SwipeableCards = ({
         }
       )
       animation.onfinish = () => {
-        console.log("animation finished")
         setDiscardedCardId("")
         setStack((prev) => {
           if (prev.length === 0) {
             return prev
           }
           const last = prev[prev.length - 1]
-          console.log(loop)
           return loop ? [last, ...prev.slice(0, -1)] : prev.slice(0, -1)
         })
         setTimeout(() => {
@@ -272,7 +268,6 @@ export const SwipeableCards = ({
               dragState.pivotX = event.clientX - centerX
               dragState.pivotY = event.clientY - centerY
               dragState.element = event.currentTarget
-              console.log(rect, centerX, centerY)
               event.currentTarget.style.transformOrigin = `${
                 event.clientX - rect.left
               }px ${event.clientY - rect.top}px`
@@ -280,24 +275,6 @@ export const SwipeableCards = ({
                 animationRef.current.finish()
               }
             }}
-            // onPointerCancel={(event) => {
-            //   console.log("pointercancel")
-            //   const state = dragStateRef.current
-            //   state.dragging = false
-            //   state.draggingId = ""
-            //
-            //   // Release pointer capture
-            //   if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-            //     event.currentTarget.releasePointerCapture(event.pointerId)
-            //   }
-            //
-            //   // Reset the card position
-            //   event.currentTarget.style.translate = ""
-            //   event.currentTarget.style.rotate = ""
-            //   event.currentTarget.style.transform = ""
-            //   event.currentTarget.style.transformOrigin = ""
-            // }}
-            onClick={(event) => {}}
           >
             {card.card}
           </div>
