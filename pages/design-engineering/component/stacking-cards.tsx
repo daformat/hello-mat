@@ -12,7 +12,7 @@ const StackingCardsPage = () => (
       title="Design engineering: rolling stacking cards"
       description="Building a rolling stacking cards scroll-driven animation with React, TypeScript, and SCSS."
       url="https://hello-mat.com/design-engineering/stacking-cards"
-      image="https://hello-mat.com/media/design-engineering/stacking-cards/og-stacking-cards-dark.png"
+      image="https://hello-mat.com/media/design-engineering/stacking-cards/og-stacking-cards-light.png"
       imageWidth={1200}
       imageHeight={630}
     />

@@ -1,9 +1,9 @@
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react"
 import styles from "./StencilSvg.module.scss"
 import Link from "next/link"
-import { plotCircle, Position, translate, vec, Vector } from "@/utlis/geometry"
+import { plotCircle, Position, translate, vec, Vector } from "@/utils/geometry"
 import { globalWindowValue } from "@/hooks/useEventListener"
-import { isNonNullable } from "@/utlis/nullable"
+import { isNonNullable } from "@/utils/nullable"
 
 const paths = [
   {

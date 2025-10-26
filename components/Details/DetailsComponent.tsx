@@ -12,7 +12,7 @@ import React, {
 } from "react"
 import detailsStyles from "./DetailsComponent.module.scss"
 import { useReducedMotion } from "@/hooks/useReducedMotion"
-import { isNotNull } from "@/utlis/nullable"
+import { isNotNull } from "@/utils/nullable"
 
 export type DetailsComponentProps = {
   summary: ReactNode
