@@ -1,11 +1,19 @@
-import { CSSProperties, useEffect, useMemo, useRef, useState } from "react"
+import {
+  CSSProperties,
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import styles from "./SwipeableCards.module.scss"
 import { cssEasing } from "@/utils/cssEasing"
 import { MaybeNull } from "@/components/Media/utils/maybe"
 
 const rotationFactor = 0.1
 const maxRotation = 45
-const loop = true
 
 export type DraggingState = {
   dragging: boolean
@@ -26,11 +34,34 @@ export type DraggingState = {
 
 export const SwipeableCards = ({
   cards,
+  loop,
   visibleStackLength,
+  emptyStackView,
 }: {
   cards: JSX.Element[]
   visibleStackLength: number
-}) => {
+} & (
+  | {
+      loop?: false
+      emptyStackView:
+        | ReactNode
+        | (({
+            cardsWithId,
+            setStack,
+          }: {
+            cardsWithId: { id: string; card: JSX.Element }[]
+            setStack: Dispatch<
+              SetStateAction<
+                {
+                  id: string
+                  card: JSX.Element
+                }[]
+              >
+            >
+          }) => ReactNode)
+    }
+  | { loop: true; emptyStackView?: never }
+)) => {
   const cardsWithId = useMemo(
     () => cards.map((card, index) => ({ id: `${index}`, card })).reverse(),
     [cards]
@@ -54,12 +85,19 @@ export const SwipeableCards = ({
     pivotY: 0,
     element: null,
   })
+  const animationRef = useRef<MaybeNull<Animation>>(null)
+
+  console.log(stack)
 
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
       const state = dragStateRef.current
       if (!state.dragging || !state.element) {
         return
+      }
+      if (animationRef.current) {
+        animationRef.current.finish()
+        // animationRef.current.dispatchEvent(new AnimationEvent("finish"))
       }
       const maxAbsoluteVelocity = 1000
       const currentTime = Date.now()
@@ -149,12 +187,14 @@ export const SwipeableCards = ({
         }
       )
       animation.onfinish = () => {
+        console.log("animation finished")
         setDiscardedCardId("")
         setStack((prev) => {
           if (prev.length === 0) {
             return prev
           }
           const last = prev[prev.length - 1]
+          console.log(loop)
           return loop ? [last, ...prev.slice(0, -1)] : prev.slice(0, -1)
         })
         setTimeout(() => {
@@ -168,6 +208,7 @@ export const SwipeableCards = ({
       state.dragging = false
       state.draggingId = ""
       state.element = null
+      animationRef.current = animation
     }
 
     document.addEventListener("pointermove", handlePointerMove)
@@ -189,6 +230,13 @@ export const SwipeableCards = ({
         } as CSSProperties
       }
     >
+      <div className={styles.empty_card}>
+        {emptyStackView
+          ? typeof emptyStackView === "function"
+            ? emptyStackView({ cardsWithId, setStack })
+            : emptyStackView
+          : null}
+      </div>
       {stack.map((card, index) => {
         const isBeingDiscarded = discardedCardId === card.id
         const isDiscarding = !!discardedCardId

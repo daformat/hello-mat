@@ -1,6 +1,8 @@
 .swipeable_cards {
   display: grid;
+  height: 432px;
   place-content: center;
+  position: relative;
 
   .card {
     grid-area: 1 / 1;
@@ -10,5 +12,14 @@
     transform-origin: center 0;
     transition: all 0.2s var(--ease-out-cubic);
     transition-property: opacity, scale, padding-top;
+  }
+
+  .empty_card {
+    display: grid;
+    grid-area: 1 / 1;
+    opacity: max(1 - var(--stack-length) + 1, 0);
+    place-content: center;
+    transition: opacity 0.2s var(--ease-out-cubic);
+    width: 100%;
   }
 }

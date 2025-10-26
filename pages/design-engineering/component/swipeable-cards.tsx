@@ -4,6 +4,7 @@ import { NextCard } from "@/components/Navigation/NextCard"
 import Link from "next/link"
 import { PageMetas } from "@/components/PageMetas/PageMetas"
 import { SwipeableCards } from "@/components/SwipeableCards/SwipeableCards"
+import { useCssSizeVariables } from "@/hooks/useCssSizeVariables"
 
 const SwipeableCardsPage = () => (
   <>
@@ -24,6 +25,8 @@ const SwipeableCardsPage = () => (
 const SwipeableCardsPageContent = () => {
   const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
+  const demoRef = useRef<HTMLDivElement>(null)
+  useCssSizeVariables(demoRef)
 
   useEffect(() => {
     if (contentRef.current) {
@@ -83,8 +86,45 @@ const SwipeableCardsPageContent = () => {
           Design engineering: a swipeable cards carousel
         </h1>
         <p>Cards carousel with swipe gestures.</p>
-        <div className="demo" style={{ marginBlock: 32 }}>
-          <SwipeableCards cards={[...cards]} visibleStackLength={3} />
+        <div
+          ref={demoRef}
+          className="demo"
+          style={{ marginBlock: 32, height: 432 }}
+        >
+          <SwipeableCards
+            cards={[...cards]}
+            visibleStackLength={3}
+            loop
+            // emptyStackView={({ cardsWithId, setStack }) => (
+            //   <div style={{ padding: 8 }}>
+            //     <div
+            //       style={{
+            //         textAlign: "center",
+            //         padding: "8px 16px",
+            //         borderRadius: 8,
+            //         border: "2px dashed var(--color-border-1)",
+            //         width: "var(--inline-size)",
+            //         aspectRatio: "1200 / 630",
+            //         display: "flex",
+            //         alignItems: "center",
+            //         justifyContent: "center",
+            //         flexDirection: "column",
+            //         padding: 0,
+            //         boxSizing: "border-box",
+            //         gap: 8,
+            //       }}
+            //     >
+            //       No more cards to show
+            //       <button
+            //         className="button"
+            //         onClick={() => setStack(cardsWithId)}
+            //       >
+            //         Reset stack
+            //       </button>
+            //     </div>
+            //   </div>
+            // )}
+          />
         </div>
 
         <h2 id="scroll-driven-animations">Scroll driven animations</h2>
