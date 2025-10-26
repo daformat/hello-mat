@@ -14,6 +14,9 @@ import { MaybeNull } from "@/components/Media/utils/maybe"
 
 const rotationFactor = 0.1
 const maxRotation = 32
+const minDistance = 150
+const minVelocity = 0.15
+const rotationBasis = 250
 
 export type DraggingState = {
   dragging: boolean
@@ -119,30 +122,51 @@ export const SwipeableCards = ({
       // Calculate rotation based on horizontal movement and pivot point
       // The further from center the pivot is, the more rotation per pixel moved
       let rotation =
-        ((translateX * state.pivotY - translateY * state.pivotX) *
+        ((translateX * state.pivotY * rotationBasis -
+          translateY * state.pivotX * rotationBasis) *
           rotationFactor) /
         100
       rotation = Math.sign(rotation) * Math.min(Math.abs(rotation), maxRotation)
+      console.log(rotation)
       state.element.style.translate = `${translateX}px ${translateY}px`
       state.element.style.rotate = `${rotation}deg`
     }
 
     const handlePointerUp = () => {
       const state = dragStateRef.current
-      if (!state.dragging || !state.element) {
+      const element = state.element
+      if (!state.dragging || !element) {
         return
       }
-      const element = state.element
       if (
-        Math.abs(state.velocityX) < 0.5 &&
-        Math.abs(state.velocityY) < 0.5 &&
-        Math.abs(state.startX - state.lastX) < 10 &&
-        Math.abs(state.startY - state.lastY) < 10
+        Math.abs(state.velocityX) < minVelocity &&
+        Math.abs(state.velocityY) < minVelocity &&
+        Math.hypot(state.startX - state.lastX, state.startY - state.lastY) <
+          minDistance
       ) {
-        element.style.transform = ""
-        element.style.translate = ""
-        element.style.rotate = ""
-        element.style.transformOrigin = ""
+        state.dragging = false
+        state.draggingId = ""
+        state.element = null
+        const animation = element.animate(
+          {
+            transform: ["none"],
+            translate: ["0 0"],
+            rotate: ["0deg"],
+            transformOrigin: ["center 0"],
+          },
+          {
+            duration: 200,
+            easing: cssEasing["--easing-bounce-strong"],
+            fill: "forwards",
+          }
+        )
+        animation.onfinish = () => {
+          element.style.transform = ""
+          element.style.translate = ""
+          element.style.rotate = ""
+          element.style.transformOrigin = ""
+          animation.cancel()
+        }
         return
       }
       setDiscardedCardId(element.dataset.id ?? "")
@@ -153,7 +177,8 @@ export const SwipeableCards = ({
       const currentTranslateX = state.lastX - state.startX
       const currentTranslateY = state.lastY - state.startY
       let currentRotation =
-        ((currentTranslateX * state.pivotY - currentTranslateY * state.pivotX) *
+        ((currentTranslateX * state.pivotY * rotationBasis -
+          currentTranslateY * state.pivotX * rotationBasis) *
           rotationFactor) /
         100
       currentRotation =
@@ -161,7 +186,8 @@ export const SwipeableCards = ({
         Math.min(Math.abs(currentRotation), maxRotation)
       let finalRotation =
         currentRotation +
-        ((distanceX * state.pivotY - distanceY * state.pivotX) *
+        ((distanceX * state.pivotY * rotationBasis -
+          distanceY * state.pivotX * rotationBasis) *
           rotationFactor) /
           100
       finalRotation =
@@ -267,8 +293,8 @@ export const SwipeableCards = ({
               dragState.velocityY = 0
               dragState.lastTime = Date.now()
               dragState.draggingId = card.id
-              dragState.pivotX = event.clientX - centerX
-              dragState.pivotY = event.clientY - centerY
+              dragState.pivotX = (event.clientX - centerX) / rect.width / 2
+              dragState.pivotY = (event.clientY - centerY) / rect.height / 2
               dragState.element = event.currentTarget
               event.currentTarget.style.transformOrigin = `${
                 event.clientX - rect.left
