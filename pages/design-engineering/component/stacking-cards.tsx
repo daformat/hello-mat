@@ -80,7 +80,7 @@ const StackingCardsPageContent = () => {
         <Link href="/design-engineering" className="back_link">
           Back to gallery
         </Link>
-        <h1 id="design-engineering-a-dock-component">
+        <h1 id="design-engineering-rolling-stacking-cards">
           Design engineering: rolling stacking cards
         </h1>
         <p>

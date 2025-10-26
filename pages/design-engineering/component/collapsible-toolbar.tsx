@@ -58,7 +58,9 @@ const CollapsibleToolbarPageContent = () => {
         <Link href="/design-engineering" className="back_link">
           Back to gallery
         </Link>
-        <h1>Design engineering: a collapsible resizable toolbar</h1>
+        <h1 id="design-engineering-a-collapsible-toolbar">
+          Design engineering: a collapsible resizable toolbar
+        </h1>
         <p>
           Within many applications, we need toolbars. The problem is that they
           can only fit as many tools as their size allows. What happens we we

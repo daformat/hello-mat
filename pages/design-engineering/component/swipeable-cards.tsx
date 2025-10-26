@@ -82,10 +82,17 @@ const SwipeableCardsPageContent = () => {
         <Link href="/design-engineering" className="back_link">
           Back to gallery
         </Link>
-        <h1 id="design-engineering-a-dock-component">
+        <h1 id="design-engineering-a-swipeable-cards-carousel">
           Design engineering: a swipeable cards carousel
         </h1>
-        <p>Cards carousel with swipe gestures.</p>
+        <p>
+          A cards carousel with swipe gestures, loopable or not. This is an
+          interaction pioneered by{" "}
+          <a href={"https://tinder.com/"} target="_blank" rel="noopener">
+            Tinder
+          </a>{" "}
+          and that is not so common in desktop apps.
+        </p>
         <div ref={demoRef} className="demo" style={{ marginBlock: 32 }}>
           <SwipeableCards
             cards={[...cards]}

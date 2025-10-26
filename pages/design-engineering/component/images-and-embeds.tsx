@@ -61,7 +61,7 @@ const ImageAndEmbedsContent = () => {
         <Link href="/design-engineering" className="back_link">
           Back to gallery
         </Link>
-        <h1 id="design-engineering-a-table-of-content-component">
+        <h1 id="design-engineering-an-image-and-embed-component">
           Design engineering: images and embeds
         </h1>
         <p>

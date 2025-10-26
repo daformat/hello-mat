@@ -14,7 +14,7 @@ import { MaybeNull } from "@/components/Media/utils/maybe"
 
 const rotationFactor = 0.1
 const maxRotation = 32
-const minDistance = 150
+const minDistanceThreshold = 0.3
 const minVelocity = 0.15
 const rotationBasis = 250
 
@@ -138,11 +138,12 @@ export const SwipeableCards = ({
       if (!state.dragging || !element) {
         return
       }
+      const rect = element.getBoundingClientRect()
       if (
         Math.abs(state.velocityX) < minVelocity &&
         Math.abs(state.velocityY) < minVelocity &&
         Math.hypot(state.startX - state.lastX, state.startY - state.lastY) <
-          minDistance
+          rect.width * minDistanceThreshold
       ) {
         state.dragging = false
         state.draggingId = ""

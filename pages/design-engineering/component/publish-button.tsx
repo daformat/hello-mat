@@ -41,7 +41,9 @@ const PublishButtonPageContent = () => {
         <Link href="/design-engineering" className="back_link">
           Back to gallery
         </Link>
-        <h1>Design engineering: a publish button</h1>
+        <h1 id="design-engineering-a-publish-button">
+          Design engineering: a publish button
+        </h1>
         <p>
           Whenever something is publishable, you need an action for that. And
           when it’s published, you need an action to unpublish it, and maybe

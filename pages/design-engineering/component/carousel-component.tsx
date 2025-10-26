@@ -45,7 +45,7 @@ const CarouselComponentPageContent = () => {
         <Link href="/design-engineering" className="back_link">
           Back to gallery
         </Link>
-        <h1 id="design-engineering-a-dock-component">
+        <h1 id="design-engineering-a-carousel-component">
           Design engineering: a carousel component
         </h1>
         <p>
