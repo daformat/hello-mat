@@ -5,6 +5,7 @@ import { MaybeNull } from "@/components/Media/utils/maybe"
 
 const rotationFactor = 0.1
 const maxRotation = 45
+const loop = true
 
 export type DraggingState = {
   dragging: boolean
@@ -84,24 +85,18 @@ export const SwipeableCards = ({
 
       // Calculate rotation based on horizontal movement and pivot point
       // The further from center the pivot is, the more rotation per pixel moved
-      const rotation = Math.min(
+      let rotation =
         ((translateX * state.pivotY - translateY * state.pivotX) *
           rotationFactor) /
-          100,
-        maxRotation
-      )
-
-      console.log(state.pivotX, state.pivotY)
+        100
+      rotation = Math.sign(rotation) * Math.min(Math.abs(rotation), maxRotation)
       state.element.style.translate = `${translateX}px ${translateY}px`
       state.element.style.rotate = `${rotation}deg`
     }
 
-    const handlePointerUp = (event: PointerEvent) => {
-      console.log("pointerup")
+    const handlePointerUp = () => {
       const state = dragStateRef.current
-      state.dragging = false
-      state.draggingId = ""
-      if (!state.element) {
+      if (!state.dragging || !state.element) {
         return
       }
       const element = state.element
@@ -124,19 +119,21 @@ export const SwipeableCards = ({
       // Calculate final rotation based on velocity and pivot
       const currentTranslateX = state.lastX - state.startX
       const currentTranslateY = state.lastY - state.startY
-      const currentRotation = Math.min(
+      let currentRotation =
         ((currentTranslateX * state.pivotY - currentTranslateY * state.pivotX) *
           rotationFactor) /
-          100,
-        maxRotation
-      )
-      const finalRotation = Math.min(
+        100
+      currentRotation =
+        Math.sign(currentRotation) *
+        Math.min(Math.abs(currentRotation), maxRotation)
+      let finalRotation =
         currentRotation +
-          ((distanceX * state.pivotY - distanceY * state.pivotX) *
-            rotationFactor) /
-            100,
-        maxRotation
-      )
+        ((distanceX * state.pivotY - distanceY * state.pivotX) *
+          rotationFactor) /
+          100
+      finalRotation =
+        Math.sign(finalRotation) *
+        Math.min(Math.abs(finalRotation), maxRotation)
       const animation = element.animate(
         {
           opacity: [0],
@@ -158,7 +155,7 @@ export const SwipeableCards = ({
             return prev
           }
           const last = prev[prev.length - 1]
-          return [last, ...prev.slice(0, -1)]
+          return loop ? [last, ...prev.slice(0, -1)] : prev.slice(0, -1)
         })
         setTimeout(() => {
           animation.cancel()
@@ -168,6 +165,9 @@ export const SwipeableCards = ({
           element.style.transformOrigin = ""
         })
       }
+      state.dragging = false
+      state.draggingId = ""
+      state.element = null
     }
 
     document.addEventListener("pointermove", handlePointerMove)
