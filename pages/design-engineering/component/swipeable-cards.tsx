@@ -86,11 +86,7 @@ const SwipeableCardsPageContent = () => {
           Design engineering: a swipeable cards carousel
         </h1>
         <p>Cards carousel with swipe gestures.</p>
-        <div
-          ref={demoRef}
-          className="demo"
-          style={{ marginBlock: 32, height: 432 }}
-        >
+        <div ref={demoRef} className="demo" style={{ marginBlock: 32 }}>
           <SwipeableCards
             cards={[...cards]}
             visibleStackLength={3}

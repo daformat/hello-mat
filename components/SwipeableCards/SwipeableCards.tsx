@@ -13,7 +13,7 @@ import { cssEasing } from "@/utils/cssEasing"
 import { MaybeNull } from "@/components/Media/utils/maybe"
 
 const rotationFactor = 0.1
-const maxRotation = 45
+const maxRotation = 32
 
 export type DraggingState = {
   dragging: boolean
@@ -93,6 +93,7 @@ export const SwipeableCards = ({
       if (!state.dragging || !state.element) {
         return
       }
+      event.preventDefault()
       const maxAbsoluteVelocity = 1000
       const currentTime = Date.now()
       const deltaTime = currentTime - state.lastTime
@@ -251,6 +252,7 @@ export const SwipeableCards = ({
               event.preventDefault()
             }}
             onPointerDown={(event) => {
+              event.preventDefault()
               event.currentTarget.setPointerCapture(event.pointerId)
               const dragState = dragStateRef.current
               const rect = event.currentTarget.getBoundingClientRect()
