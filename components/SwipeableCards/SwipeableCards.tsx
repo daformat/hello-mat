@@ -95,10 +95,6 @@ export const SwipeableCards = ({
       if (!state.dragging || !state.element) {
         return
       }
-      if (animationRef.current) {
-        animationRef.current.finish()
-        // animationRef.current.dispatchEvent(new AnimationEvent("finish"))
-      }
       const maxAbsoluteVelocity = 1000
       const currentTime = Date.now()
       const deltaTime = currentTime - state.lastTime
@@ -204,6 +200,7 @@ export const SwipeableCards = ({
           element.style.rotate = ""
           element.style.transformOrigin = ""
         })
+        animationRef.current = null
       }
       state.dragging = false
       state.draggingId = ""
@@ -279,6 +276,9 @@ export const SwipeableCards = ({
               event.currentTarget.style.transformOrigin = `${
                 event.clientX - rect.left
               }px ${event.clientY - rect.top}px`
+              if (animationRef.current) {
+                animationRef.current.finish()
+              }
             }}
             // onPointerCancel={(event) => {
             //   console.log("pointercancel")
