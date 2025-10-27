@@ -93,7 +93,11 @@ const SwipeableCardsPageContent = () => {
           </a>{" "}
           and that is not so common in desktop apps.
         </p>
-        <div ref={demoRef} className="demo" style={{ marginBlock: 32 }}>
+        <div
+          ref={demoRef}
+          className="demo"
+          style={{ marginBlock: 32, maxWidth: 650, marginInline: "auto" }}
+        >
           <SwipeableCards
             cards={[...cards]}
             visibleStackLength={3}
