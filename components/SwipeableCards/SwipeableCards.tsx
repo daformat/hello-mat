@@ -35,37 +35,45 @@ export type DraggingState = {
   element: MaybeNull<HTMLElement>
 }
 
+export type CardWithId = {
+  id: string
+  card: JSX.Element
+}
+
+export type BaseSwipeableCardsProps = {
+  cards: JSX.Element[]
+  visibleStackLength: number
+}
+
+export type NotLoopingSwipeableProps = BaseSwipeableCardsProps & {
+  loop?: false
+  emptyStackView:
+    | ReactNode
+    | (({
+        cardsWithId,
+        setStack,
+      }: {
+        cardsWithId: CardWithId[]
+        setStack: Dispatch<SetStateAction<CardWithId[]>>
+      }) => ReactNode)
+}
+
+export type LoopingSwipeableProps = BaseSwipeableCardsProps & {
+  loop: true
+  emptyStackView?: never
+}
+
+export type SwipeableCardsProps =
+  | NotLoopingSwipeableProps
+  | LoopingSwipeableProps
+
 export const SwipeableCards = ({
   cards,
   loop,
   visibleStackLength,
   emptyStackView,
-}: {
-  cards: JSX.Element[]
-  visibleStackLength: number
-} & (
-  | {
-      loop?: false
-      emptyStackView:
-        | ReactNode
-        | (({
-            cardsWithId,
-            setStack,
-          }: {
-            cardsWithId: { id: string; card: JSX.Element }[]
-            setStack: Dispatch<
-              SetStateAction<
-                {
-                  id: string
-                  card: JSX.Element
-                }[]
-              >
-            >
-          }) => ReactNode)
-    }
-  | { loop: true; emptyStackView?: never }
-)) => {
-  const cardsWithId = useMemo(
+}: SwipeableCardsProps) => {
+  const cardsWithId: CardWithId[] = useMemo(
     () => cards.map((card, index) => ({ id: `${index}`, card })).reverse(),
     [cards]
   )
