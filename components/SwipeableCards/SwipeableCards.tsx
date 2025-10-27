@@ -125,8 +125,8 @@ export const SwipeableCards = ({
             transformOrigin: ["center 0"],
           },
           {
-            duration: 200,
-            easing: cssEasing["--easing-bounce-strong"],
+            duration: 300,
+            easing: cssEasing["--spring-easing-1"],
             fill: "forwards",
           }
         )
@@ -139,23 +139,25 @@ export const SwipeableCards = ({
         }
         return
       }
-      const minEdgeDistance = Math.min(
-        rect.left,
-        window.innerWidth - (rect.left + rect.width)
-      )
-      const travelDistance = minEdgeDistance + rect.width
-      const minVelocityForExit = travelDistance / 200
-      console.log(minEdgeDistance, minVelocityForExit)
-      if (
-        Math.abs(state.velocityX) >= Math.abs(state.velocityY) ||
-        Math.abs(state.lastX - state.startX) >=
-          Math.abs(state.lastY - state.startY)
-      ) {
+
+      if (Math.abs(state.velocityX) >= Math.abs(state.velocityY)) {
+        const minEdgeDistance = Math.min(
+          rect.left,
+          window.innerWidth - (rect.left + rect.width)
+        )
+        const travelDistance = minEdgeDistance + rect.width
+        const minVelocityForExit = travelDistance / 200
         if (Math.abs(state.velocityX) < minVelocityForExit) {
           state.velocityX =
             Math.sign(state.lastX - state.startX) * minVelocityForExit
         }
       } else {
+        const minEdgeDistance = Math.min(
+          rect.top,
+          window.innerHeight - (rect.top + rect.height)
+        )
+        const travelDistance = minEdgeDistance + rect.height
+        const minVelocityForExit = travelDistance / 200
         if (Math.abs(state.velocityY) < minVelocityForExit) {
           state.velocityY =
             Math.sign(state.lastY - state.startY) * minVelocityForExit
