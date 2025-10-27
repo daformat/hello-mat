@@ -215,7 +215,10 @@ export const SwipeableCards = ({
         },
         options
       )
-      const animation2 = element.animate({ opacity: [0] }, options)
+      const animation2 = element.animate(
+        { opacity: [0] },
+        { ...options, easing: cssEasing["--ease-in-cubic"] }
+      )
       Promise.all([animation.finished, animation2.finished]).then(
         (animations) => {
           setDiscardedCardId("")
