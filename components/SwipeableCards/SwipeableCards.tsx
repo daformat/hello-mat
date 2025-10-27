@@ -139,6 +139,28 @@ export const SwipeableCards = ({
         }
         return
       }
+      const minEdgeDistance = Math.min(
+        rect.left,
+        window.innerWidth - (rect.left + rect.width)
+      )
+      const travelDistance = minEdgeDistance + rect.width
+      const minVelocityForExit = travelDistance / 200
+      console.log(minEdgeDistance, minVelocityForExit)
+      if (
+        Math.abs(state.velocityX) >= Math.abs(state.velocityY) ||
+        Math.abs(state.lastX - state.startX) >=
+          Math.abs(state.lastY - state.startY)
+      ) {
+        if (Math.abs(state.velocityX) < minVelocityForExit) {
+          state.velocityX =
+            Math.sign(state.lastX - state.startX) * minVelocityForExit
+        }
+      } else {
+        if (Math.abs(state.velocityY) < minVelocityForExit) {
+          state.velocityY =
+            Math.sign(state.lastY - state.startY) * minVelocityForExit
+        }
+      }
       setDiscardedCardId(element.dataset.id ?? "")
       const distanceX = state.velocityX * 200
       const distanceY = state.velocityY * 200
@@ -342,6 +364,9 @@ export const SwipeableCards = ({
         <button
           className={styles.button}
           onClick={() => {
+            if (discardedCardId) {
+              return
+            }
             const last = stack[stack.length - 1]
             const element = document.querySelector(`[data-id="${last.id}"]`)
             if (element instanceof HTMLElement) {
@@ -355,6 +380,8 @@ export const SwipeableCards = ({
               state.velocityY = Math.random()
               state.pivotX = -(Math.random() * 0.25 + 0.25)
               state.pivotY = Math.random() * 0.25 + 0.25
+              state.startX = 0
+              state.lastX = -1
               animateSwipeGesture(true)
             }
           }}
@@ -364,6 +391,9 @@ export const SwipeableCards = ({
         <button
           className={styles.button}
           onClick={() => {
+            if (discardedCardId) {
+              return
+            }
             const last = stack[stack.length - 1]
             const element = document.querySelector(`[data-id="${last.id}"]`)
             if (element instanceof HTMLElement) {
@@ -377,6 +407,8 @@ export const SwipeableCards = ({
               state.velocityY = Math.random()
               state.pivotX = Math.random() * 0.25 + 0.25
               state.pivotY = Math.random() * 0.25 + 0.25
+              state.startX = 0
+              state.lastX = 1
               animateSwipeGesture(true)
             }
           }}
