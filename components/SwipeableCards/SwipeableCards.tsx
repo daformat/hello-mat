@@ -11,7 +11,6 @@ import {
 import styles from "./SwipeableCards.module.scss"
 import { cssEasing } from "@/utils/cssEasing"
 import { MaybeNull } from "@/components/Media/utils/maybe"
-import { AnimationOptions } from "sharp"
 
 const rotationFactor = 0.1
 const maxRotation = 32
@@ -202,7 +201,7 @@ export const SwipeableCards = ({
       finalRotation =
         Math.sign(finalRotation) *
         Math.min(Math.abs(finalRotation), maxRotation)
-      const options: AnimationOptions = {
+      const options: KeyframeAnimationOptions = {
         duration: 200,
         easing: cssEasing["--ease-out-cubic"],
         fill: "forwards",
