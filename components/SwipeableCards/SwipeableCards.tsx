@@ -1,9 +1,10 @@
 import {
+  createContext,
   CSSProperties,
-  Dispatch,
+  PropsWithChildren,
   ReactNode,
-  SetStateAction,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -49,55 +50,47 @@ export type BaseSwipeableCardsProps = {
 
 export type NotLoopingSwipeableProps = BaseSwipeableCardsProps & {
   loop?: false
-  emptyStackView:
-    | ReactNode
-    | (({
-        cardsWithId,
-        setStack,
-      }: {
-        cardsWithId: CardWithId[]
-        setStack: Dispatch<SetStateAction<CardWithId[]>>
-      }) => ReactNode)
+  emptyView: ReactNode
 }
 
 export type LoopingSwipeableProps = BaseSwipeableCardsProps & {
   loop: true
-  emptyStackView?: never
+  emptyView?: never
 }
 
-export type SwipeableCardsProps =
-  | NotLoopingSwipeableProps
-  | LoopingSwipeableProps
+export type SwipeableCardsProps = PropsWithChildren<
+  NotLoopingSwipeableProps | LoopingSwipeableProps
+>
 
-export const SwipeableCards = ({
-  cards,
-  loop,
-  visibleStackLength,
-  emptyStackView,
-}: SwipeableCardsProps) => {
+const defaultDragState = {
+  dragging: false,
+  draggingId: "",
+  startX: 0,
+  startY: 0,
+  lastX: 0,
+  lastY: 0,
+  currentX: 0,
+  currentY: 0,
+  velocityX: 0,
+  velocityY: 0,
+  lastTime: 0,
+  pivotX: 0,
+  pivotY: 0,
+  element: null,
+}
+
+const useSwipeableCards = (
+  cards: JSX.Element[],
+  loop?: boolean,
+  emptyView?: ReactNode
+) => {
   const cardsWithId: CardWithId[] = useMemo(
     () => cards.map((card, index) => ({ id: `${index}`, card })).reverse(),
     [cards]
   )
   const [stack, setStack] = useState(cardsWithId)
-  const cardsTopDistance = "clamp(16px, 1vw, 32px)"
   const [discardedCardId, setDiscardedCardId] = useState<string>("")
-  const dragStateRef = useRef<DraggingState>({
-    dragging: false,
-    draggingId: "",
-    startX: 0,
-    startY: 0,
-    lastX: 0,
-    lastY: 0,
-    currentX: 0,
-    currentY: 0,
-    velocityX: 0,
-    velocityY: 0,
-    lastTime: 0,
-    pivotX: 0,
-    pivotY: 0,
-    element: null,
-  })
+  const dragStateRef = useRef<DraggingState>(defaultDragState)
   const animationRef = useRef<Animation[]>([])
 
   const animateSwipeGesture = useCallback(
@@ -235,8 +228,46 @@ export const SwipeableCards = ({
       state.element = null
       animationRef.current.push(animation, animation2)
     },
-    [loop]
+    [animationRef, dragStateRef, loop, setDiscardedCardId, setStack]
   )
+
+  return {
+    loop,
+    emptyView,
+    cardsWithId,
+    stack,
+    setStack,
+    discardedCardId,
+    setDiscardedCardId,
+    dragStateRef,
+    animationRef,
+    animateSwipeGesture,
+  }
+}
+
+const SwipeableCardsContext = createContext<
+  ReturnType<typeof useSwipeableCards>
+>({
+  loop: undefined,
+  emptyView: undefined,
+  cardsWithId: [],
+  stack: [],
+  setStack: () => undefined,
+  discardedCardId: "",
+  setDiscardedCardId: () => undefined,
+  dragStateRef: { current: defaultDragState },
+  animationRef: { current: [] },
+  animateSwipeGesture: () => undefined,
+})
+
+export const SwipeableCardsRoot = ({
+  cards,
+  loop,
+  emptyView,
+  children,
+}: SwipeableCardsProps) => {
+  const context = useSwipeableCards(cards, loop, emptyView)
+  const { dragStateRef, animateSwipeGesture } = context
 
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
@@ -289,135 +320,175 @@ export const SwipeableCards = ({
       document.removeEventListener("pointermove", handlePointerMove)
       document.removeEventListener("pointerup", handlePointerUp)
     }
-  }, [animateSwipeGesture])
+  }, [animateSwipeGesture, dragStateRef])
 
   return (
-    <div>
-      <div
-        className={styles.swipeable_cards}
-        style={
-          {
-            "--visible-stack-length": visibleStackLength,
-            "--stack-length": stack.length,
-            "--card-top-distance": cardsTopDistance,
-          } as CSSProperties
-        }
-      >
-        <div className={styles.empty_card}>
-          {emptyStackView
-            ? typeof emptyStackView === "function"
-              ? emptyStackView({ cardsWithId, setStack })
-              : emptyStackView
-            : null}
-        </div>
-        {stack.map((card, index) => {
-          const isBeingDiscarded = discardedCardId === card.id
-          const isDiscarding = !!discardedCardId
-          const stackIndex =
-            stack.length - (index + (isDiscarding && !isBeingDiscarded ? 1 : 0))
-          const stackIndex0 = stackIndex - 1
-          return (
-            <div
-              key={card.id}
-              className={styles.card}
-              data-id={card.id}
-              style={
-                {
-                  "--stack-index": stackIndex,
-                  "--stack-index0": stackIndex0,
-                } as CSSProperties
-              }
-              onDragStart={(event) => {
-                event.preventDefault()
-              }}
-              onPointerDown={(event) => {
-                event.preventDefault()
-                event.currentTarget.setPointerCapture(event.pointerId)
-                const dragState = dragStateRef.current
-                const rect = event.currentTarget.getBoundingClientRect()
-                const centerX = rect.left + rect.width / 2
-                const centerY = rect.top + rect.height / 2
-                dragState.dragging = true
-                dragState.startX = event.clientX
-                dragState.startY = event.clientY
-                dragState.lastX = event.clientX
-                dragState.lastY = event.clientY
-                dragState.velocityX = 0
-                dragState.velocityY = 0
-                dragState.lastTime = Date.now()
-                dragState.draggingId = card.id
-                dragState.pivotX = (event.clientX - centerX) / rect.width / 2
-                dragState.pivotY = (event.clientY - centerY) / rect.height / 2
-                dragState.element = event.currentTarget
-                event.currentTarget.style.transformOrigin = `${
-                  event.clientX - rect.left
-                }px ${event.clientY - rect.top}px`
-                animationRef.current.forEach((animation) => {
-                  animation.finish()
-                })
-              }}
-            >
-              {card.card}
-            </div>
-          )
-        })}
-      </div>
-      <p style={{ textAlign: "center" }}>
-        <button
-          className={styles.button}
-          onClick={() => {
-            if (discardedCardId) {
-              return
-            }
-            const last = stack[stack.length - 1]
-            const element = document.querySelector(`[data-id="${last.id}"]`)
-            if (element instanceof HTMLElement) {
-              const rect = element.getBoundingClientRect()
-              const xModifier = rect.width / 442
-              const state = dragStateRef.current
-              state.element = element
-              state.dragging = true
-              state.draggingId = last.id
-              state.velocityX = -(Math.random() * 2 + 3) * xModifier
-              state.velocityY = Math.random()
-              state.pivotX = -(Math.random() * 0.25 + 0.25)
-              state.pivotY = Math.random() * 0.25 + 0.25
-              state.startX = 0
-              state.lastX = -1
-              animateSwipeGesture(true)
-            }
-          }}
-        >
-          <FaXmark />
-        </button>{" "}
-        <button
-          className={styles.button}
-          onClick={() => {
-            if (discardedCardId) {
-              return
-            }
-            const last = stack[stack.length - 1]
-            const element = document.querySelector(`[data-id="${last.id}"]`)
-            if (element instanceof HTMLElement) {
-              const rect = element.getBoundingClientRect()
-              const xModifier = rect.width / 442
-              const state = dragStateRef.current
-              state.element = element
-              state.dragging = true
-              state.draggingId = last.id
-              state.velocityX = (Math.random() * 2 + 3) * xModifier
-              state.velocityY = Math.random()
-              state.pivotX = Math.random() * 0.25 + 0.25
-              state.pivotY = Math.random() * 0.25 + 0.25
-              state.startX = 0
-              state.lastX = 1
-              animateSwipeGesture(true)
-            }
-          }}
-        >
-          <FaCheck />
-        </button>
-      </p>
+    <SwipeableCardsContext.Provider value={context}>
+      {children}
+    </SwipeableCardsContext.Provider>
+  )
+}
+
+export type SwipeableCardsCardsProps = {
+  visibleStackLength?: number
+  cardsTopDistance?: string
+}
+
+const SwipeableCardsCards = ({
+  visibleStackLength = 4,
+  cardsTopDistance = "clamp(16px, 1vw, 32px)",
+}: SwipeableCardsCardsProps) => {
+  const { stack, emptyView } = useContext(SwipeableCardsContext)
+
+  return (
+    <div
+      className={styles.swipeable_cards}
+      style={
+        {
+          "--visible-stack-length": visibleStackLength - 1,
+          "--stack-length": stack.length,
+          "--card-top-distance": cardsTopDistance,
+        } as CSSProperties
+      }
+    >
+      <div className={styles.empty_card}>{emptyView ?? null}</div>
+      {stack.map((card) => (
+        <SwipeableCardsCard card={card} key={card.id} />
+      ))}
     </div>
   )
+}
+
+const SwipeableCardsCard = ({ card }: { card: CardWithId }) => {
+  const { discardedCardId, stack, dragStateRef, animationRef } = useContext(
+    SwipeableCardsContext
+  )
+  const isBeingDiscarded = discardedCardId === card.id
+  const isDiscarding = !!discardedCardId
+  const index = stack.findIndex((stackCard) => stackCard.id === card.id)
+  const stackIndex =
+    stack.length - (index + (isDiscarding && !isBeingDiscarded ? 1 : 0))
+  const stackIndex0 = stackIndex - 1
+  return (
+    <div
+      key={card.id}
+      className={styles.card}
+      data-id={card.id}
+      style={
+        {
+          "--stack-index": stackIndex,
+          "--stack-index0": stackIndex0,
+        } as CSSProperties
+      }
+      onDragStart={(event) => {
+        event.preventDefault()
+      }}
+      onPointerDown={(event) => {
+        event.preventDefault()
+        event.currentTarget.setPointerCapture(event.pointerId)
+        const dragState = dragStateRef.current
+        const rect = event.currentTarget.getBoundingClientRect()
+        const centerX = rect.left + rect.width / 2
+        const centerY = rect.top + rect.height / 2
+        dragState.dragging = true
+        dragState.startX = event.clientX
+        dragState.startY = event.clientY
+        dragState.lastX = event.clientX
+        dragState.lastY = event.clientY
+        dragState.velocityX = 0
+        dragState.velocityY = 0
+        dragState.lastTime = Date.now()
+        dragState.draggingId = card.id
+        dragState.pivotX = (event.clientX - centerX) / rect.width / 2
+        dragState.pivotY = (event.clientY - centerY) / rect.height / 2
+        dragState.element = event.currentTarget
+        event.currentTarget.style.transformOrigin = `${
+          event.clientX - rect.left
+        }px ${event.clientY - rect.top}px`
+        animationRef.current.forEach((animation) => {
+          animation.finish()
+        })
+      }}
+    >
+      {card.card}
+    </div>
+  )
+}
+
+const SwipeableCardsDeclineButton = () => {
+  const { discardedCardId, stack, dragStateRef, animateSwipeGesture } =
+    useContext(SwipeableCardsContext)
+
+  return (
+    <button
+      className={styles.button}
+      onClick={() => {
+        if (discardedCardId) {
+          return
+        }
+        const last = stack[stack.length - 1]
+        const element = document.querySelector(`[data-id="${last.id}"]`)
+        if (element instanceof HTMLElement) {
+          const rect = element.getBoundingClientRect()
+          const xModifier = rect.width / 442
+          const state = dragStateRef.current
+          state.element = element
+          state.dragging = true
+          state.draggingId = last.id
+          state.velocityX = -(Math.random() * 2 + 3) * xModifier
+          state.velocityY = Math.random()
+          state.pivotX = -(Math.random() * 0.25 + 0.25)
+          state.pivotY = Math.random() * 0.25 + 0.25
+          state.startX = 0
+          state.lastX = -1
+          animateSwipeGesture(true)
+        }
+      }}
+    >
+      <FaXmark />
+    </button>
+  )
+}
+
+const SwipeableCardsAcceptButton = () => {
+  const { discardedCardId, stack, dragStateRef, animateSwipeGesture } =
+    useContext(SwipeableCardsContext)
+
+  return (
+    <button
+      className={styles.button}
+      onClick={() => {
+        if (discardedCardId) {
+          return
+        }
+        const last = stack[stack.length - 1]
+        const element = document.querySelector(`[data-id="${last.id}"]`)
+        if (element instanceof HTMLElement) {
+          const rect = element.getBoundingClientRect()
+          const xModifier = rect.width / 442
+          const state = dragStateRef.current
+          state.element = element
+          state.dragging = true
+          state.draggingId = last.id
+          state.velocityX = (Math.random() * 2 + 3) * xModifier
+          state.velocityY = Math.random()
+          state.pivotX = Math.random() * 0.25 + 0.25
+          state.pivotY = Math.random() * 0.25 + 0.25
+          state.startX = 0
+          state.lastX = 1
+          animateSwipeGesture(true)
+        }
+      }}
+    >
+      <FaCheck />
+    </button>
+  )
+}
+
+export const SwipeableCards = {
+  Root: SwipeableCardsRoot,
+  Context: SwipeableCardsContext,
+  Cards: SwipeableCardsCards,
+  AcceptButton: SwipeableCardsAcceptButton,
+  DeclineButton: SwipeableCardsDeclineButton,
 }

@@ -98,7 +98,7 @@ const SwipeableCardsPageContent = () => {
           className="demo"
           style={{ marginBlock: 32, maxWidth: 650, marginInline: "auto" }}
         >
-          <SwipeableCards
+          <SwipeableCards.Root
             cards={[...cards]}
             visibleStackLength={3}
             loop
@@ -131,7 +131,12 @@ const SwipeableCardsPageContent = () => {
             //     </div>
             //   </div>
             // )}
-          />
+          >
+            <SwipeableCards.Cards />
+            <p style={{ textAlign: "center" }}>
+              <SwipeableCards.DeclineButton /> <SwipeableCards.AcceptButton />
+            </p>
+          </SwipeableCards.Root>
         </div>
 
         <h2 id="scroll-driven-animations">Scroll driven animations</h2>
