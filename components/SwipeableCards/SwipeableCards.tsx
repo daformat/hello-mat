@@ -11,6 +11,7 @@ import {
 import styles from "./SwipeableCards.module.scss"
 import { cssEasing } from "@/utils/cssEasing"
 import { MaybeNull } from "@/components/Media/utils/maybe"
+import { AnimationOptions } from "sharp"
 
 const rotationFactor = 0.1
 const maxRotation = 32
@@ -96,7 +97,7 @@ export const SwipeableCards = ({
     pivotY: 0,
     element: null,
   })
-  const animationRef = useRef<MaybeNull<Animation>>(null)
+  const animationRef = useRef<Animation[]>([])
 
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
@@ -135,7 +136,6 @@ export const SwipeableCards = ({
           rotationFactor) /
         100
       rotation = Math.sign(rotation) * Math.min(Math.abs(rotation), maxRotation)
-      console.log(rotation)
       state.element.style.translate = `${translateX}px ${translateY}px`
       state.element.style.rotate = `${rotation}deg`
     }
@@ -202,42 +202,48 @@ export const SwipeableCards = ({
       finalRotation =
         Math.sign(finalRotation) *
         Math.min(Math.abs(finalRotation), maxRotation)
+      const options: AnimationOptions = {
+        duration: 200,
+        easing: cssEasing["--ease-out-cubic"],
+        fill: "forwards",
+      }
       const animation = element.animate(
         {
-          opacity: [0],
           scale: [0.9],
           transform: [
             `translate(${distanceX}px, ${distanceY}px) rotate(${finalRotation}deg)`,
           ],
         },
-        {
-          duration: 200,
-          easing: cssEasing["--ease-out-cubic"],
-          fill: "forwards",
+        options
+      )
+      const animation2 = element.animate({ opacity: [0] }, options)
+      Promise.all([animation.finished, animation2.finished]).then(
+        (animations) => {
+          setDiscardedCardId("")
+          setStack((prev) => {
+            if (prev.length === 0) {
+              return prev
+            }
+            const last = prev[prev.length - 1]
+            return loop ? [last, ...prev.slice(0, -1)] : prev.slice(0, -1)
+          })
+          setTimeout(() => {
+            animations.forEach((animation) => {
+              animation.cancel()
+            })
+            element.style.transform = ""
+            element.style.translate = ""
+            element.style.rotate = ""
+            element.style.transformOrigin = ""
+          })
+          animationRef.current = []
         }
       )
-      animation.onfinish = () => {
-        setDiscardedCardId("")
-        setStack((prev) => {
-          if (prev.length === 0) {
-            return prev
-          }
-          const last = prev[prev.length - 1]
-          return loop ? [last, ...prev.slice(0, -1)] : prev.slice(0, -1)
-        })
-        setTimeout(() => {
-          animation.cancel()
-          element.style.transform = ""
-          element.style.translate = ""
-          element.style.rotate = ""
-          element.style.transformOrigin = ""
-        })
-        animationRef.current = null
-      }
+
       state.dragging = false
       state.draggingId = ""
       state.element = null
-      animationRef.current = animation
+      animationRef.current.push(animation, animation2)
     }
 
     document.addEventListener("pointermove", handlePointerMove)
@@ -308,9 +314,9 @@ export const SwipeableCards = ({
               event.currentTarget.style.transformOrigin = `${
                 event.clientX - rect.left
               }px ${event.clientY - rect.top}px`
-              if (animationRef.current) {
-                animationRef.current.finish()
-              }
+              animationRef.current.forEach((animation) => {
+                animation.finish()
+              })
             }}
           >
             {card.card}
