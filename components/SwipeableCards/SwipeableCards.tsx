@@ -3,6 +3,7 @@ import {
   Dispatch,
   ReactNode,
   SetStateAction,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -11,6 +12,7 @@ import {
 import styles from "./SwipeableCards.module.scss"
 import { cssEasing } from "@/utils/cssEasing"
 import { MaybeNull } from "@/components/Media/utils/maybe"
+import { FaCheck, FaXmark } from "react-icons/fa6"
 
 const rotationFactor = 0.1
 const maxRotation = 32
@@ -98,48 +100,8 @@ export const SwipeableCards = ({
   })
   const animationRef = useRef<Animation[]>([])
 
-  useEffect(() => {
-    const handlePointerMove = (event: PointerEvent) => {
-      const state = dragStateRef.current
-      if (!state.dragging || !state.element) {
-        return
-      }
-      event.preventDefault()
-      const maxAbsoluteVelocity = 1000
-      const currentTime = Date.now()
-      const deltaTime = currentTime - state.lastTime
-      const deltaX = event.clientX - state.lastX
-      const deltaY = event.clientY - state.lastY
-      if (deltaTime > 0) {
-        state.velocityX = deltaX / deltaTime // (pixels per millisecond)
-        if (Math.abs(state.velocityX) > maxAbsoluteVelocity) {
-          state.velocityX = Math.sign(state.velocityX) * maxAbsoluteVelocity
-        }
-        state.velocityY = deltaY / deltaTime // (pixels per millisecond)
-        if (Math.abs(state.velocityY) > maxAbsoluteVelocity) {
-          state.velocityY = Math.sign(state.velocityY) * maxAbsoluteVelocity
-        }
-      }
-      state.lastX = event.clientX
-      state.lastY = event.clientY
-      state.lastTime = currentTime
-
-      const translateX = state.lastX - state.startX
-      const translateY = state.lastY - state.startY
-
-      // Calculate rotation based on horizontal movement and pivot point
-      // The further from center the pivot is, the more rotation per pixel moved
-      let rotation =
-        ((translateX * state.pivotY * rotationBasis -
-          translateY * state.pivotX * rotationBasis) *
-          rotationFactor) /
-        100
-      rotation = Math.sign(rotation) * Math.min(Math.abs(rotation), maxRotation)
-      state.element.style.translate = `${translateX}px ${translateY}px`
-      state.element.style.rotate = `${rotation}deg`
-    }
-
-    const handlePointerUp = () => {
+  const animateSwipeGesture = useCallback(
+    (manual?: boolean) => {
       const state = dragStateRef.current
       const element = state.element
       if (!state.dragging || !element) {
@@ -203,7 +165,9 @@ export const SwipeableCards = ({
         Math.min(Math.abs(finalRotation), maxRotation)
       const options: KeyframeAnimationOptions = {
         duration: 200,
-        easing: cssEasing["--ease-out-cubic"],
+        easing: manual
+          ? cssEasing["--ease-in-out-cubic"]
+          : cssEasing["--ease-out-cubic"],
         fill: "forwards",
       }
       const animation = element.animate(
@@ -246,6 +210,53 @@ export const SwipeableCards = ({
       state.draggingId = ""
       state.element = null
       animationRef.current.push(animation, animation2)
+    },
+    [loop]
+  )
+
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      const state = dragStateRef.current
+      if (!state.dragging || !state.element) {
+        return
+      }
+      event.preventDefault()
+      const maxAbsoluteVelocity = 1000
+      const currentTime = Date.now()
+      const deltaTime = currentTime - state.lastTime
+      const deltaX = event.clientX - state.lastX
+      const deltaY = event.clientY - state.lastY
+      if (deltaTime > 0) {
+        state.velocityX = deltaX / deltaTime // (pixels per millisecond)
+        if (Math.abs(state.velocityX) > maxAbsoluteVelocity) {
+          state.velocityX = Math.sign(state.velocityX) * maxAbsoluteVelocity
+        }
+        state.velocityY = deltaY / deltaTime // (pixels per millisecond)
+        if (Math.abs(state.velocityY) > maxAbsoluteVelocity) {
+          state.velocityY = Math.sign(state.velocityY) * maxAbsoluteVelocity
+        }
+      }
+      state.lastX = event.clientX
+      state.lastY = event.clientY
+      state.lastTime = currentTime
+
+      const translateX = state.lastX - state.startX
+      const translateY = state.lastY - state.startY
+
+      // Calculate rotation based on horizontal movement and pivot point
+      // The further from center the pivot is, the more rotation per pixel moved
+      let rotation =
+        ((translateX * state.pivotY * rotationBasis -
+          translateY * state.pivotX * rotationBasis) *
+          rotationFactor) /
+        100
+      rotation = Math.sign(rotation) * Math.min(Math.abs(rotation), maxRotation)
+      state.element.style.translate = `${translateX}px ${translateY}px`
+      state.element.style.rotate = `${rotation}deg`
+    }
+
+    const handlePointerUp = () => {
+      animateSwipeGesture()
     }
 
     document.addEventListener("pointermove", handlePointerMove)
@@ -254,77 +265,125 @@ export const SwipeableCards = ({
       document.removeEventListener("pointermove", handlePointerMove)
       document.removeEventListener("pointerup", handlePointerUp)
     }
-  })
+  }, [animateSwipeGesture])
 
   return (
-    <div
-      className={styles.swipeable_cards}
-      style={
-        {
-          "--visible-stack-length": visibleStackLength,
-          "--stack-length": stack.length,
-          "--card-top-distance": cardsTopDistance,
-        } as CSSProperties
-      }
-    >
-      <div className={styles.empty_card}>
-        {emptyStackView
-          ? typeof emptyStackView === "function"
-            ? emptyStackView({ cardsWithId, setStack })
-            : emptyStackView
-          : null}
+    <div>
+      <div
+        className={styles.swipeable_cards}
+        style={
+          {
+            "--visible-stack-length": visibleStackLength,
+            "--stack-length": stack.length,
+            "--card-top-distance": cardsTopDistance,
+          } as CSSProperties
+        }
+      >
+        <div className={styles.empty_card}>
+          {emptyStackView
+            ? typeof emptyStackView === "function"
+              ? emptyStackView({ cardsWithId, setStack })
+              : emptyStackView
+            : null}
+        </div>
+        {stack.map((card, index) => {
+          const isBeingDiscarded = discardedCardId === card.id
+          const isDiscarding = !!discardedCardId
+          const stackIndex =
+            stack.length - (index + (isDiscarding && !isBeingDiscarded ? 1 : 0))
+          const stackIndex0 = stackIndex - 1
+          return (
+            <div
+              key={card.id}
+              className={styles.card}
+              data-id={card.id}
+              style={
+                {
+                  "--stack-index": stackIndex,
+                  "--stack-index0": stackIndex0,
+                } as CSSProperties
+              }
+              onDragStart={(event) => {
+                event.preventDefault()
+              }}
+              onPointerDown={(event) => {
+                event.preventDefault()
+                event.currentTarget.setPointerCapture(event.pointerId)
+                const dragState = dragStateRef.current
+                const rect = event.currentTarget.getBoundingClientRect()
+                const centerX = rect.left + rect.width / 2
+                const centerY = rect.top + rect.height / 2
+                dragState.dragging = true
+                dragState.startX = event.clientX
+                dragState.startY = event.clientY
+                dragState.lastX = event.clientX
+                dragState.lastY = event.clientY
+                dragState.velocityX = 0
+                dragState.velocityY = 0
+                dragState.lastTime = Date.now()
+                dragState.draggingId = card.id
+                dragState.pivotX = (event.clientX - centerX) / rect.width / 2
+                dragState.pivotY = (event.clientY - centerY) / rect.height / 2
+                dragState.element = event.currentTarget
+                event.currentTarget.style.transformOrigin = `${
+                  event.clientX - rect.left
+                }px ${event.clientY - rect.top}px`
+                animationRef.current.forEach((animation) => {
+                  animation.finish()
+                })
+              }}
+            >
+              {card.card}
+            </div>
+          )
+        })}
       </div>
-      {stack.map((card, index) => {
-        const isBeingDiscarded = discardedCardId === card.id
-        const isDiscarding = !!discardedCardId
-        const stackIndex =
-          stack.length - (index + (isDiscarding && !isBeingDiscarded ? 1 : 0))
-        const stackIndex0 = stackIndex - 1
-        return (
-          <div
-            key={card.id}
-            className={styles.card}
-            data-id={card.id}
-            style={
-              {
-                "--stack-index": stackIndex,
-                "--stack-index0": stackIndex0,
-              } as CSSProperties
+      <p style={{ textAlign: "center" }}>
+        <button
+          className={styles.button}
+          onClick={() => {
+            const last = stack[stack.length - 1]
+            const element = document.querySelector(`[data-id="${last.id}"]`)
+            if (element instanceof HTMLElement) {
+              const rect = element.getBoundingClientRect()
+              const xModifier = rect.width / 442
+              const state = dragStateRef.current
+              state.element = element
+              state.dragging = true
+              state.draggingId = last.id
+              state.velocityX = -(Math.random() * 2 + 3) * xModifier
+              state.velocityY = Math.random()
+              state.pivotX = -(Math.random() * 0.25 + 0.25)
+              state.pivotY = Math.random() * 0.25 + 0.25
+              animateSwipeGesture(true)
             }
-            onDragStart={(event) => {
-              event.preventDefault()
-            }}
-            onPointerDown={(event) => {
-              event.preventDefault()
-              event.currentTarget.setPointerCapture(event.pointerId)
-              const dragState = dragStateRef.current
-              const rect = event.currentTarget.getBoundingClientRect()
-              const centerX = rect.left + rect.width / 2
-              const centerY = rect.top + rect.height / 2
-              dragState.dragging = true
-              dragState.startX = event.clientX
-              dragState.startY = event.clientY
-              dragState.lastX = event.clientX
-              dragState.lastY = event.clientY
-              dragState.velocityX = 0
-              dragState.velocityY = 0
-              dragState.lastTime = Date.now()
-              dragState.draggingId = card.id
-              dragState.pivotX = (event.clientX - centerX) / rect.width / 2
-              dragState.pivotY = (event.clientY - centerY) / rect.height / 2
-              dragState.element = event.currentTarget
-              event.currentTarget.style.transformOrigin = `${
-                event.clientX - rect.left
-              }px ${event.clientY - rect.top}px`
-              animationRef.current.forEach((animation) => {
-                animation.finish()
-              })
-            }}
-          >
-            {card.card}
-          </div>
-        )
-      })}
+          }}
+        >
+          <FaXmark />
+        </button>{" "}
+        <button
+          className={styles.button}
+          onClick={() => {
+            const last = stack[stack.length - 1]
+            const element = document.querySelector(`[data-id="${last.id}"]`)
+            if (element instanceof HTMLElement) {
+              const rect = element.getBoundingClientRect()
+              const xModifier = rect.width / 442
+              const state = dragStateRef.current
+              state.element = element
+              state.dragging = true
+              state.draggingId = last.id
+              state.velocityX = (Math.random() * 2 + 3) * xModifier
+              state.velocityY = Math.random()
+              state.pivotX = Math.random() * 0.25 + 0.25
+              state.pivotY = Math.random() * 0.25 + 0.25
+              animateSwipeGesture(true)
+            }
+          }}
+        >
+          <FaCheck />
+        </button>
+      </p>
     </div>
   )
 }

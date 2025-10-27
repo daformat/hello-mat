@@ -1,3 +1,5 @@
+@use "styles/lib/mixins.scss";
+
 .swipeable_cards {
   display: grid;
   place-content: center;
@@ -8,7 +10,7 @@
   .card {
     grid-area: 1 / 1;
     opacity: calc(1 - clamp(0, var(--stack-index0) - var(--visible-stack-length), 1));
-    padding-top: calc(var(--card-top-distance, 0) * max((min(var(--stack-length) - 1,var(--visible-stack-length)) - var(--stack-index0)), 0));
+    padding-top: calc(var(--card-top-distance, 0) * max((min(var(--stack-length) - 1, var(--visible-stack-length)) - var(--stack-index0)), 0));
     scale: calc(100% - min(var(--stack-index0), var(--visible-stack-length)) * 10%);
     touch-action: none;
     transform-origin: center 0;
@@ -23,5 +25,43 @@
     place-content: center;
     transition: opacity 0.2s var(--ease-out-cubic);
     width: 100%;
+  }
+}
+
+.button {
+  align-items: center;
+  background-color: var(--color-toolbar-background);
+  border: 0;
+  border-radius: 24px;
+  box-shadow: 0 1px 12px var(--color-shadow-1),
+  inset 0 0 2px 0.75px var(--color-border-2),
+  inset 0 0 0 0.75px var(--color-border-1);
+  color: var(--text-primary);
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: inherit;
+  padding: 0.5em 1em;
+  transition: mixins.theme-transition(color, background-color, box-shadow);
+
+  &:not(:disabled) {
+    &:hover,
+    &:focus-visible,
+    &[data-state="open"] {
+      background-color: var(--color-toolbar-button-background-hover);
+      box-shadow: 0 0 24px var(--color-shadow-2),
+      inset 0 0 2px 0 var(--color-border-2),
+      inset 0 0 0 0.5px var(--color-border-1);
+      color: var(--color-toolbar-button-color-hover);
+      outline: 0;
+    }
+
+    &:active {
+      background-color: var(--color-toolbar-button-background-active);
+      color: var(--color-toolbar-button-color-active) !important;
+    }
+  }
+
+  &:disabled {
+    opacity: 0.5;
   }
 }
