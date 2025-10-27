@@ -3,6 +3,7 @@
   place-content: center;
   position: relative;
   touch-action: none;
+  z-index: 1;
 
   .card {
     grid-area: 1 / 1;
