@@ -91,7 +91,8 @@ const SwipeableCardsPageContent = () => {
           <a href={"https://tinder.com/"} target="_blank" rel="noopener">
             Tinder
           </a>{" "}
-          and that is not so common in desktop apps.
+          and that is not so common in desktop apps. It’s so much fun to use, go
+          ahead a drag / swipe cards around and see what happens.
         </p>
         <div
           ref={demoRef}
@@ -139,41 +140,35 @@ const SwipeableCardsPageContent = () => {
           </SwipeableCards.Root>
         </div>
 
-        <h2 id="scroll-driven-animations">Scroll driven animations</h2>
+        <h2 id="swipe-gesture">Swipe gestures</h2>
         <p>
-          A relatively new feature in modern browsers, scroll-driven animations
-          allows you to animate based on scroll progression instead of time.
-          While the basics are pretty simple to master, making the animation
-          rolling is a bit more complex. You’ll need to stack multiple
-          animations and calculate offsets based on the total wrapper height.
+          Performing swipe gestures on the web is not a native feature, so
+          you’ll have to do it yourself. The gist of it is to translate the card
+          as you drag it, and compute the velocity of the swipe for a realistic
+          momentum to be applied as you discard a card. This is done simply by
+          dividing the distance traveled by the card by the amount of time
+          elapsed since the last pointer move event.
         </p>
-        <h3 id="stacking-multiple-animations">
-          Stacking multiple scroll-driven animations
-        </h3>
+        <h3 id="handling-low-velocity">Handling low velocity</h3>
         <p>
-          To stack multiple animations, we need to create a wrapper element that
-          will be animated for each animation we want to stack. We also need to
-          take care to disable animations for the last few cards, so that they
-          don’t keep shrinking after we scroll past the limit, leaving 4 stacked
-          cards as the final state, as intended.
+          If you drag a card just a little a bit and release the pointer, the
+          card will return to the stack. Unless you moved it by some minimal
+          distance. In this case, we need to &rdquo;fake&ldquo; the velocity so
+          the card properly animates out of the viewport.
         </p>
-        <h3 id="javascript-usage">Javascript usage</h3>
+        <h3 id="faking-gestures">Faking gestures when using buttons</h3>
         <p>
-          While the most of the effect happens in pure CSS, we’re still relying
-          on javascript to properly shift the cards as the previous one is
-          discarded. While this might be doable without javascript, the css
-          calculations are already a bit gnarly, and I didn’t want to complicate
-          things further.
+          When using buttons, the user didn’t actually perform a swipe gesture,
+          so we need to simulate it. We do this by mocking the dragging state,
+          so that the card properly animates out.
         </p>
         <h2 id="conclusion">That’s a wrap</h2>
         <p>
-          This is my first time playing with scroll-driven animations, as these
-          are not yet widely supported, I wanted to get a better understanding.
-          My conclusion is that while simple effects can be achieved with fairly
-          simple css, more complex effects require a bit more work. You’ll need
-          to compute animation ranges, which can get pretty intense depending on
-          the effect you’re aiming for, and deal with browsers quirks, because
-          life as a web engineer wouldn’t be fun without them.
+          I was curious to see how I would implement this, so I settled on
+          finding out. I’m overall pretty pleased with the result, and I think
+          I’ll re-use the component in the future. There is something deeply
+          satisfying in using this interaction, and I think Tinder made it their
+          landmark for a reason.
         </p>
         <NextCard href={"/design-engineering/component/table-of-contents"}>
           Table of contents
