@@ -194,6 +194,26 @@ const DesignEngineeringIndex = () => (
           />
           Rolling stacking cards
         </Link>
+
+        <Link
+          href={"/design-engineering/component/swipeable-cards"}
+          className={styles.card}
+        >
+          <VideoPlayer
+            style={{ aspectRatio: "990/500" }}
+            sources={{
+              dark: {
+                src: "/media/design-engineering/swipeable-cards/swipeable-cards-overview-dark.mp4",
+                type: "video/mp4",
+              },
+              light: {
+                src: "/media/design-engineering/swipeable-cards/swipeable-cards-overview-light.mp4",
+                type: "video/mp4",
+              },
+            }}
+          />
+          Swipeable cards carousel
+        </Link>
       </div>
     </div>
   </>

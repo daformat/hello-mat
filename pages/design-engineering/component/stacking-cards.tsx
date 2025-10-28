@@ -186,8 +186,8 @@ const StackingCardsPageContent = () => {
           the effect you’re aiming for, and deal with browsers quirks, because
           life as a web engineer wouldn’t be fun without them.
         </p>
-        <NextCard href={"/design-engineering/component/table-of-contents"}>
-          Table of contents
+        <NextCard href={"/design-engineering/component/swipeable-cards"}>
+          Swipeable cards carousel
         </NextCard>
       </div>
     </>

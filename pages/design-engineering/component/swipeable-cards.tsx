@@ -17,7 +17,7 @@ const SwipeableCardsPage = () => (
       title="Design engineering: a swipeable cards carousel"
       description="Building a swipeable cards stack with React, TypeScript, and SCSS."
       url="https://hello-mat.com/design-engineering/swipeable-cards"
-      image="https://hello-mat.com/media/design-engineering/swipeable-cards/og-swipeable-cards-dark.png"
+      image="https://hello-mat.com/media/design-engineering/swipeable-cards/og-swipeable-cards-light.png"
       imageWidth={1200}
       imageHeight={630}
     />
