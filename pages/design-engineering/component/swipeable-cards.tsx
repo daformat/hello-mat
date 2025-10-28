@@ -1,10 +1,15 @@
 import { TableOfContents } from "@/components/TableOfContents/TocComponent"
-import { useContext, useEffect, useRef } from "react"
+import { useContext, useEffect, useRef, useState } from "react"
 import { NextCard } from "@/components/Navigation/NextCard"
 import Link from "next/link"
 import { PageMetas } from "@/components/PageMetas/PageMetas"
-import { SwipeableCards } from "@/components/SwipeableCards/SwipeableCards"
+import {
+  SwipeableCards,
+  SwipeDirection,
+} from "@/components/SwipeableCards/SwipeableCards"
 import { useCssSizeVariables } from "@/hooks/useCssSizeVariables"
+import { PiStarBold } from "react-icons/pi"
+import { FaCheck, FaXmark } from "react-icons/fa6"
 
 const SwipeableCardsPage = () => (
   <>
@@ -27,6 +32,14 @@ const SwipeableCardsPageContent = () => {
   const contentRef = useRef<HTMLDivElement>(null)
   const demoRef = useRef<HTMLDivElement>(null)
   useCssSizeVariables(demoRef)
+  const [_swipedCards, setSwipedCards] = useState<
+    Record<SwipeDirection, string[]>
+  >({
+    up: [],
+    down: [],
+    left: [],
+    right: [],
+  })
 
   useEffect(() => {
     if (contentRef.current) {
@@ -115,13 +128,39 @@ const SwipeableCardsPageContent = () => {
           <SwipeableCards.Root
             cards={[...cards]}
             visibleStackLength={3}
+            onSwipe={(direction, cardId) => {
+              setSwipedCards((prev) => {
+                const newSwipedCards = { ...prev }
+                if (newSwipedCards[direction].includes(cardId)) {
+                  return prev
+                } else {
+                  Object.entries(newSwipedCards).forEach(([key, value]) => {
+                    if (key !== direction) {
+                      newSwipedCards[key as SwipeDirection] = value.filter(
+                        (id) => id !== cardId
+                      )
+                    } else {
+                      newSwipedCards[key as SwipeDirection] = [...value, cardId]
+                    }
+                  })
+                }
+                return newSwipedCards
+              })
+            }}
             loop
             // emptyView={<EmptyView />}
           >
             <SwipeableCards.Cards />
             <p style={{ textAlign: "center" }}>
-              <SwipeableCards.DeclineButton /> <SwipeableCards.StarButton />{" "}
-              <SwipeableCards.AcceptButton />
+              <SwipeableCards.DeclineButton>
+                <FaXmark />
+              </SwipeableCards.DeclineButton>{" "}
+              <SwipeableCards.StarButton>
+                <PiStarBold />
+              </SwipeableCards.StarButton>{" "}
+              <SwipeableCards.AcceptButton>
+                <FaCheck />
+              </SwipeableCards.AcceptButton>
             </p>
           </SwipeableCards.Root>
         </div>

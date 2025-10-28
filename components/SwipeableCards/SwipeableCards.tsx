@@ -12,8 +12,6 @@ import {
 import styles from "./SwipeableCards.module.scss"
 import { cssEasing } from "@/utils/cssEasing"
 import { MaybeNull } from "@/components/Media/utils/maybe"
-import { FaCheck, FaXmark } from "react-icons/fa6"
-import { PiStarBold } from "react-icons/pi"
 
 const rotationFactor = 0.1
 const maxRotation = 32
@@ -56,6 +54,7 @@ export type CardWithId = {
 export type BaseSwipeableCardsProps = {
   cards: CardWithId[]
   visibleStackLength: number
+  onSwipe?: (direction: SwipeDirection, cardId: string) => void
 }
 
 export type NotLoopingSwipeableProps = BaseSwipeableCardsProps & {
@@ -292,7 +291,8 @@ const shouldReturnToStack = (state: DraggingState, rect: DOMRect) => {
 const useSwipeableCards = (
   cards: CardWithId[],
   loop?: boolean,
-  emptyView?: ReactNode
+  emptyView?: ReactNode,
+  onSwipe?: (direction: SwipeDirection, cardId: string) => void
 ) => {
   const [stack, setStack] = useState(cards)
   const [discardedCardId, setDiscardedCardId] = useState<string>("")
@@ -344,7 +344,8 @@ const useSwipeableCards = (
         return
       }
       adjustVelocityForExit(state, rect, animationDuration)
-      setDiscardedCardId(element.dataset.id ?? "")
+      const discardedCardId = element.dataset.id ?? ""
+      setDiscardedCardId(discardedCardId)
       const { animations } = animateSwipedElement(
         element,
         state,
@@ -357,9 +358,9 @@ const useSwipeableCards = (
       state.draggingId = ""
       state.element = null
       const swipeDirection = getSwipeDirection(state)
-      console.log(swipeDirection)
+      onSwipe?.(swipeDirection, discardedCardId)
     },
-    [handleAnimationsFinished]
+    [handleAnimationsFinished, onSwipe]
   )
 
   return {
@@ -394,10 +395,11 @@ const SwipeableCardsContext = createContext<
 export const SwipeableCardsRoot = ({
   cards,
   loop,
+  onSwipe,
   emptyView,
   children,
 }: SwipeableCardsProps) => {
-  const context = useSwipeableCards(cards, loop, emptyView)
+  const context = useSwipeableCards(cards, loop, emptyView, onSwipe)
   const { dragStateRef, commitSwipe } = context
 
   useEffect(() => {
@@ -525,7 +527,7 @@ const SwipeableCardsCard = ({ card }: { card: CardWithId }) => {
   )
 }
 
-const SwipeableCardsDeclineButton = () => {
+const SwipeableCardsDeclineButton = ({ children }: PropsWithChildren) => {
   const { discardedCardId, stack, dragStateRef, commitSwipe } = useContext(
     SwipeableCardsContext
   )
@@ -556,12 +558,12 @@ const SwipeableCardsDeclineButton = () => {
         }
       }}
     >
-      <FaXmark />
+      {children}
     </button>
   )
 }
 
-const SwipeableCardsAcceptButton = () => {
+const SwipeableCardsAcceptButton = ({ children }: PropsWithChildren) => {
   const { discardedCardId, stack, dragStateRef, commitSwipe } = useContext(
     SwipeableCardsContext
   )
@@ -592,12 +594,12 @@ const SwipeableCardsAcceptButton = () => {
         }
       }}
     >
-      <FaCheck />
+      {children}
     </button>
   )
 }
 
-const SwipeableCardsStarButton = () => {
+const SwipeableCardsStarButton = ({ children }: PropsWithChildren) => {
   const { discardedCardId, stack, dragStateRef, commitSwipe } = useContext(
     SwipeableCardsContext
   )
@@ -630,7 +632,7 @@ const SwipeableCardsStarButton = () => {
         }
       }}
     >
-      <PiStarBold />
+      {children}
     </button>
   )
 }
