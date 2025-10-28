@@ -23,19 +23,29 @@ const minVelocity = 0.15
 const rotationBasis = 250
 
 export type DraggingState = {
+  // whether a card is being dragged
   dragging: boolean
+  // the id of the card being dragged, if any
   draggingId: string
+  // the x coordinate of the pointer when the drag started
   startX: number
+  // the y coordinate of the pointer when the drag started
   startY: number
+  // the latest x coordinate of the pointer
   lastX: number
+  // the latest y coordinate of the pointer
   lastY: number
-  currentX: number
-  currentY: number
+  // the x velocity of the pointer since the last update
   velocityX: number
+  // the y velocity of the pointer since the last update
   velocityY: number
+  // the last time the state was updated
   lastTime: number
+  // the pivot point of the drag, relative to the center of the card, percentage
   pivotX: number
+  // the pivot point of the drag, relative to the center of the card, percentage
   pivotY: number
+  // the element being dragged, if any
   element: MaybeNull<HTMLElement>
 }
 
@@ -63,15 +73,13 @@ export type SwipeableCardsProps = PropsWithChildren<
   NotLoopingSwipeableProps | LoopingSwipeableProps
 >
 
-const defaultDragState = {
+const defaultDragState: DraggingState = {
   dragging: false,
   draggingId: "",
   startX: 0,
   startY: 0,
   lastX: 0,
   lastY: 0,
-  currentX: 0,
-  currentY: 0,
   velocityX: 0,
   velocityY: 0,
   lastTime: 0,
