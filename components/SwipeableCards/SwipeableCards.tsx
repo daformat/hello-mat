@@ -57,14 +57,18 @@ export type BaseSwipeableCardsProps = {
   onSwipe?: (direction: SwipeDirection, cardId: string) => void
 }
 
+export type DiscardStyle = "fling" | "sendToBack"
+
 export type NotLoopingSwipeableProps = BaseSwipeableCardsProps & {
   loop?: false
   emptyView: ReactNode
+  discardStyle?: never
 }
 
 export type LoopingSwipeableProps = BaseSwipeableCardsProps & {
   loop: true
   emptyView?: never
+  discardStyle?: DiscardStyle
 }
 
 export type SwipeableCardsProps = PropsWithChildren<
@@ -121,8 +125,23 @@ const animateReturnToStack = (state: DraggingState, element: HTMLElement) => {
 const adjustVelocityForExit = (
   state: DraggingState,
   rect: DOMRect,
-  animationDuration: number
+  animationDuration: number,
+  discardStyle: DiscardStyle
 ) => {
+  // rotation is the final (max) rotation of the element during the animation
+  const { rotation } = getAnimationValues(state, animationDuration)
+  const rotatedRect = getRotatedBoundingBox(rect, rotation)
+  let originalRect = rect
+  if (state.element) {
+    const prevRotate = state.element.style.rotate
+    const prevTranslate = state.element.style.translate
+    state.element.style.rotate = `${0}deg`
+    state.element.style.translate = "none"
+    originalRect = state.element.getBoundingClientRect()
+    state.element.style.rotate = prevRotate
+    state.element.style.translate = prevTranslate
+  }
+
   if (
     Math.abs(state.velocityX) >= Math.abs(state.velocityY) ||
     Math.abs(state.startX - state.lastX) >= Math.abs(state.startY - state.lastY)
@@ -131,9 +150,18 @@ const adjustVelocityForExit = (
       rect.left,
       window.innerWidth - (rect.left + rect.width)
     )
-    const travelDistance = minEdgeDistance + rect.width
+    const travelDistance =
+      discardStyle === "fling"
+        ? minEdgeDistance + rect.width
+        : originalRect.width - Math.abs(rotatedRect.left - originalRect.left)
+    console.log(travelDistance)
+
     const minVelocityForExit = travelDistance / animationDuration
-    if (Math.abs(state.velocityX) < minVelocityForExit) {
+    console.log(minVelocityForExit, state.velocityX)
+    if (
+      Math.abs(state.velocityX) < minVelocityForExit ||
+      discardStyle === "sendToBack"
+    ) {
       state.velocityX =
         Math.sign(state.lastX - state.startX) * minVelocityForExit
     }
@@ -142,9 +170,16 @@ const adjustVelocityForExit = (
       rect.top,
       window.innerHeight - (rect.top + rect.height)
     )
-    const travelDistance = minEdgeDistance + rect.height
+    const travelDistance =
+      discardStyle === "fling"
+        ? minEdgeDistance + rect.height
+        : originalRect.height - Math.abs(rotatedRect.top - originalRect.top) / 2
+    // : rect.height * 0.9 - Math.abs(translateY)
     const minVelocityForExit = travelDistance / 200
-    if (Math.abs(state.velocityY) < minVelocityForExit) {
+    if (
+      Math.abs(state.velocityY) < minVelocityForExit ||
+      discardStyle === "sendToBack"
+    ) {
       state.velocityY =
         Math.sign(state.lastY - state.startY) * minVelocityForExit
     }
@@ -225,8 +260,11 @@ const animateSwipedElement = (
   element: HTMLElement,
   state: DraggingState,
   animationDuration: number,
+  discardStyle: DiscardStyle,
   manual?: boolean
 ) => {
+  const [_emptyView, firstChild] = element.parentElement?.children ?? []
+  const firstChildStyle = firstChild ? getComputedStyle(firstChild) : undefined
   const { distanceX, distanceY, rotation } = getAnimationValues(
     state,
     animationDuration
@@ -240,19 +278,93 @@ const animateSwipedElement = (
   }
   const animation = element.animate(
     {
-      scale: [0.9],
+      scale: discardStyle === "fling" ? [0.9] : [1],
+      rotate: [0],
+      translate: [0],
       transform: [
         `translate(${distanceX}px, ${distanceY}px) rotate(${rotation}deg)`,
       ],
     },
     options
   )
-  const animation2 = element.animate(
-    { opacity: [0] },
-    { ...options, easing: cssEasing["--ease-in-cubic"] }
-  )
+  const animation2 =
+    discardStyle === "fling"
+      ? element.animate(
+          { opacity: [0] },
+          { ...options, easing: cssEasing["--ease-in-cubic"] }
+        )
+      : element.animate(
+          {
+            scale: [firstChildStyle?.getPropertyValue("scale") ?? "0"],
+            transform: ["translate(0, 0) rotate(0deg)"],
+            translate: [0],
+            transformOrigin: ["center 0"],
+            rotate: [0],
+            zIndex: [-1, -1],
+            opacity: [0.5],
+            paddingTop: [
+              firstChildStyle?.getPropertyValue("padding-top") ?? "0",
+            ],
+          },
+          {
+            ...options,
+            easing: cssEasing["--ease-in-out-cubic"],
+            delay: animationDuration,
+          }
+        )
   const animations = [animation, animation2]
   return { animations }
+}
+
+const getRotatedBoundingBox = (
+  rect: DOMRect,
+  rotationDegrees: number
+): DOMRect => {
+  // Convert rotation to radians
+  const radians = (rotationDegrees * Math.PI) / 180
+  const cos = Math.cos(radians)
+  const sin = Math.sin(radians)
+
+  // Get the four corners of the original rectangle
+  // Assuming rotation is around the center of the rect
+  const cx = rect.left + rect.width / 2
+  const cy = rect.top + rect.height / 2
+
+  const corners = [
+    { x: rect.left, y: rect.top },
+    { x: rect.right, y: rect.top },
+    { x: rect.right, y: rect.bottom },
+    { x: rect.left, y: rect.bottom },
+  ]
+
+  // Rotate each corner around the center
+  const rotatedCorners = corners.map((corner) => {
+    // Translate to origin
+    const x = corner.x - cx
+    const y = corner.y - cy
+
+    // Rotate
+    const rotatedX = x * cos - y * sin
+    const rotatedY = x * sin + y * cos
+
+    // Translate back
+    return {
+      x: rotatedX + cx,
+      y: rotatedY + cy,
+    }
+  })
+
+  // Find min/max to get the bounding box
+  const xs = rotatedCorners.map((c) => c.x)
+  const ys = rotatedCorners.map((c) => c.y)
+
+  const minX = Math.min(...xs)
+  const maxX = Math.max(...xs)
+  const minY = Math.min(...ys)
+  const maxY = Math.max(...ys)
+
+  // Return as DOMRect
+  return new DOMRect(minX, minY, maxX - minX, maxY - minY)
 }
 
 /**
@@ -292,7 +404,8 @@ const useSwipeableCards = (
   cards: CardWithId[],
   loop?: boolean,
   emptyView?: ReactNode,
-  onSwipe?: (direction: SwipeDirection, cardId: string) => void
+  onSwipe?: (direction: SwipeDirection, cardId: string) => void,
+  discardStyle: DiscardStyle = "fling"
 ) => {
   const [stack, setStack] = useState(cards)
   const [discardedCardId, setDiscardedCardId] = useState<string>("")
@@ -332,7 +445,7 @@ const useSwipeableCards = (
 
   const commitSwipe = useCallback(
     (manual?: boolean, _event?: PointerEvent) => {
-      const animationDuration = 200
+      const animationDuration = 300
       const state = dragStateRef.current
       const element = state.element
       if (!state.dragging || !element) {
@@ -343,13 +456,14 @@ const useSwipeableCards = (
         animateReturnToStack(state, element)
         return
       }
-      adjustVelocityForExit(state, rect, animationDuration)
+      adjustVelocityForExit(state, rect, animationDuration, discardStyle)
       const discardedCardId = element.dataset.id ?? ""
       setDiscardedCardId(discardedCardId)
       const { animations } = animateSwipedElement(
         element,
         state,
         animationDuration,
+        discardStyle,
         manual
       )
       handleAnimationsFinished(animations, element)
@@ -360,7 +474,7 @@ const useSwipeableCards = (
       const swipeDirection = getSwipeDirection(state)
       onSwipe?.(swipeDirection, discardedCardId)
     },
-    [handleAnimationsFinished, onSwipe]
+    [discardStyle, handleAnimationsFinished, onSwipe]
   )
 
   return {
@@ -374,6 +488,7 @@ const useSwipeableCards = (
     dragStateRef,
     animationRef,
     commitSwipe,
+    discardStyle,
   }
 }
 
@@ -390,6 +505,7 @@ const SwipeableCardsContext = createContext<
   dragStateRef: { current: defaultDragState },
   animationRef: { current: [] },
   commitSwipe: () => undefined,
+  discardStyle: "fling",
 })
 
 export const SwipeableCardsRoot = ({
@@ -397,9 +513,16 @@ export const SwipeableCardsRoot = ({
   loop,
   onSwipe,
   emptyView,
+  discardStyle,
   children,
 }: SwipeableCardsProps) => {
-  const context = useSwipeableCards(cards, loop, emptyView, onSwipe)
+  const context = useSwipeableCards(
+    cards,
+    loop,
+    emptyView,
+    onSwipe,
+    discardStyle
+  )
   const { dragStateRef, commitSwipe } = context
 
   useEffect(() => {
@@ -528,9 +651,8 @@ const SwipeableCardsCard = ({ card }: { card: CardWithId }) => {
 }
 
 const SwipeableCardsDeclineButton = ({ children }: PropsWithChildren) => {
-  const { discardedCardId, stack, dragStateRef, commitSwipe } = useContext(
-    SwipeableCardsContext
-  )
+  const { discardedCardId, stack, dragStateRef, commitSwipe, discardStyle } =
+    useContext(SwipeableCardsContext)
 
   return (
     <button
@@ -548,8 +670,12 @@ const SwipeableCardsDeclineButton = ({ children }: PropsWithChildren) => {
           state.element = element
           state.dragging = true
           state.draggingId = last.id
-          state.velocityX = -(Math.random() * 2 + 3) * xModifier
-          state.velocityY = Math.random()
+          state.velocityX =
+            discardStyle === "fling"
+              ? -(Math.random() * 2 + 3) * xModifier
+              : -0.15
+          state.velocityY =
+            discardStyle === "fling" ? -Math.random() : Math.random() * -0.14
           state.pivotX = -(Math.random() * 0.25 + 0.25)
           state.pivotY = Math.random() * 0.25 + 0.25
           state.startX = 0
@@ -564,9 +690,8 @@ const SwipeableCardsDeclineButton = ({ children }: PropsWithChildren) => {
 }
 
 const SwipeableCardsAcceptButton = ({ children }: PropsWithChildren) => {
-  const { discardedCardId, stack, dragStateRef, commitSwipe } = useContext(
-    SwipeableCardsContext
-  )
+  const { discardedCardId, stack, dragStateRef, commitSwipe, discardStyle } =
+    useContext(SwipeableCardsContext)
 
   return (
     <button
@@ -584,8 +709,12 @@ const SwipeableCardsAcceptButton = ({ children }: PropsWithChildren) => {
           state.element = element
           state.dragging = true
           state.draggingId = last.id
-          state.velocityX = (Math.random() * 2 + 3) * xModifier
-          state.velocityY = Math.random()
+          state.velocityX =
+            discardStyle === "fling"
+              ? (Math.random() * 2 + 3) * xModifier
+              : 0.15
+          state.velocityY =
+            discardStyle === "fling" ? Math.random() : Math.random() * 0.14
           state.pivotX = Math.random() * 0.25 + 0.25
           state.pivotY = Math.random() * 0.25 + 0.25
           state.startX = 0
@@ -600,9 +729,8 @@ const SwipeableCardsAcceptButton = ({ children }: PropsWithChildren) => {
 }
 
 const SwipeableCardsStarButton = ({ children }: PropsWithChildren) => {
-  const { discardedCardId, stack, dragStateRef, commitSwipe } = useContext(
-    SwipeableCardsContext
-  )
+  const { discardedCardId, stack, dragStateRef, commitSwipe, discardStyle } =
+    useContext(SwipeableCardsContext)
 
   return (
     <button
@@ -620,8 +748,14 @@ const SwipeableCardsStarButton = ({ children }: PropsWithChildren) => {
           state.element = element
           state.dragging = true
           state.draggingId = last.id
-          state.velocityX = Math.random() * 2 - 1
-          state.velocityY = -(Math.random() * 2 + 3) * yModifier
+          state.velocityX =
+            discardStyle === "fling"
+              ? Math.random() * 2 - 1
+              : Math.random() * 0.1 - 0.1
+          state.velocityY =
+            discardStyle === "fling"
+              ? -(Math.random() * 2 + 3) * yModifier
+              : -0.15
           state.pivotX = Math.random() * 0.125 - 0.25
           state.pivotY = -(Math.random() * 0.25 + 0.25)
           state.startX = 0

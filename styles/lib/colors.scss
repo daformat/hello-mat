@@ -127,6 +127,10 @@
   --color-dropdown-active: #{palette.$dark-ivory-5};
   --color-shadow-10: #{rgba(palette.$dark-shadow, 0.25)};
   --color-shadow-20: #{rgba(palette.$dark-shadow, 0.5)};
+
+  input[type="checkbox"] {
+    color-scheme: dark;
+  }
 }
 
 :root {

@@ -4,6 +4,7 @@ import { NextCard } from "@/components/Navigation/NextCard"
 import Link from "next/link"
 import { PageMetas } from "@/components/PageMetas/PageMetas"
 import {
+  DiscardStyle,
   SwipeableCards,
   SwipeDirection,
 } from "@/components/SwipeableCards/SwipeableCards"
@@ -31,6 +32,7 @@ const SwipeableCardsPageContent = () => {
   const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
   const demoRef = useRef<HTMLDivElement>(null)
+  const [discardStyle, setDiscardStyle] = useState<DiscardStyle>("fling")
   useCssSizeVariables(demoRef)
   const [_swipedCards, setSwipedCards] = useState<
     Record<SwipeDirection, string[]>
@@ -128,6 +130,7 @@ const SwipeableCardsPageContent = () => {
           <SwipeableCards.Root
             cards={[...cards]}
             visibleStackLength={3}
+            discardStyle={discardStyle}
             onSwipe={(direction, cardId) => {
               setSwipedCards((prev) => {
                 const newSwipedCards = { ...prev }
@@ -151,16 +154,46 @@ const SwipeableCardsPageContent = () => {
             // emptyView={<EmptyView />}
           >
             <SwipeableCards.Cards />
-            <p style={{ textAlign: "center" }}>
-              <SwipeableCards.DeclineButton>
-                <FaXmark />
-              </SwipeableCards.DeclineButton>{" "}
-              <SwipeableCards.StarButton>
-                <PiStarBold />
-              </SwipeableCards.StarButton>{" "}
-              <SwipeableCards.AcceptButton>
-                <FaCheck />
-              </SwipeableCards.AcceptButton>
+            <p
+              style={{
+                textAlign: "center",
+                display: "flex",
+                gap: 8,
+                justifyContent: "center",
+              }}
+            >
+              <span>
+                <SwipeableCards.DeclineButton>
+                  <FaXmark />
+                </SwipeableCards.DeclineButton>{" "}
+                <SwipeableCards.StarButton>
+                  <PiStarBold />
+                </SwipeableCards.StarButton>{" "}
+                <SwipeableCards.AcceptButton>
+                  <FaCheck />
+                </SwipeableCards.AcceptButton>
+              </span>
+            </p>
+            <p
+              style={{
+                textAlign: "center",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <label style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <input
+                  type="checkbox"
+                  defaultChecked={discardStyle === "sendToBack"}
+                  onChange={(event) =>
+                    setDiscardStyle(
+                      event.target.checked ? "sendToBack" : "fling"
+                    )
+                  }
+                  style={{ width: 16, height: 16 }}
+                />{" "}
+                send to back
+              </label>
             </p>
           </SwipeableCards.Root>
         </div>
