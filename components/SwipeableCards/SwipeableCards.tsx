@@ -167,6 +167,24 @@ const getSwipeDirection = (state: DraggingState): SwipeDirection => {
 }
 
 /**
+ * Calculate rotation based on horizontal movement and pivot point, the further
+ * from the center the pivot is, the more rotation per pixel moved
+ */
+const getRotation = (
+  distanceX: number,
+  distanceY: number,
+  pivotX: number,
+  pivotY: number,
+  initialRotation?: number
+) => {
+  const rotation =
+    (initialRotation ?? 0) +
+    ((distanceX * pivotY * rotationBasis - distanceY * pivotX * rotationBasis) *
+      rotationFactor) /
+      100
+  return Math.sign(rotation) * Math.min(Math.abs(rotation), maxRotation)
+}
+/**
  * @returns the final animations values
  */
 const getAnimationValues = (
@@ -177,21 +195,19 @@ const getAnimationValues = (
   const distanceY = state.velocityY * animationDuration
   const currentTranslateX = state.lastX - state.startX
   const currentTranslateY = state.lastY - state.startY
-  let currentRotation =
-    ((currentTranslateX * state.pivotY * rotationBasis -
-      currentTranslateY * state.pivotX * rotationBasis) *
-      rotationFactor) /
-    100
-  currentRotation =
-    Math.sign(currentRotation) *
-    Math.min(Math.abs(currentRotation), maxRotation)
-  let rotation =
-    currentRotation +
-    ((distanceX * state.pivotY * rotationBasis -
-      distanceY * state.pivotX * rotationBasis) *
-      rotationFactor) /
-      100
-  rotation = Math.sign(rotation) * Math.min(Math.abs(rotation), maxRotation)
+  const currentRotation = getRotation(
+    currentTranslateX,
+    currentTranslateY,
+    state.pivotX,
+    state.pivotY
+  )
+  const rotation = getRotation(
+    distanceX,
+    distanceY,
+    state.pivotX,
+    state.pivotY,
+    currentRotation
+  )
   return { distanceX, distanceY, rotation }
 }
 
@@ -389,18 +405,14 @@ export const SwipeableCardsRoot = ({
       }
       event.preventDefault()
       computeVelocity(state, event)
-
       const translateX = state.lastX - state.startX
       const translateY = state.lastY - state.startY
-
-      // Calculate rotation based on horizontal movement and pivot point
-      // The further from center the pivot is, the more rotation per pixel moved
-      let rotation =
-        ((translateX * state.pivotY * rotationBasis -
-          translateY * state.pivotX * rotationBasis) *
-          rotationFactor) /
-        100
-      rotation = Math.sign(rotation) * Math.min(Math.abs(rotation), maxRotation)
+      const rotation = getRotation(
+        translateX,
+        translateY,
+        state.pivotX,
+        state.pivotY
+      )
       state.element.style.translate = `${translateX}px ${translateY}px`
       state.element.style.rotate = `${rotation}deg`
     }
