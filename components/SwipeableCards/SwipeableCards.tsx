@@ -6,7 +6,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react"
@@ -55,7 +54,7 @@ export type CardWithId = {
 }
 
 export type BaseSwipeableCardsProps = {
-  cards: JSX.Element[]
+  cards: CardWithId[]
   visibleStackLength: number
 }
 
@@ -291,15 +290,11 @@ const shouldReturnToStack = (state: DraggingState, rect: DOMRect) => {
 }
 
 const useSwipeableCards = (
-  cards: JSX.Element[],
+  cards: CardWithId[],
   loop?: boolean,
   emptyView?: ReactNode
 ) => {
-  const cardsWithId: CardWithId[] = useMemo(
-    () => cards.map((card, index) => ({ id: `${index}`, card })).reverse(),
-    [cards]
-  )
-  const [stack, setStack] = useState(cardsWithId)
+  const [stack, setStack] = useState(cards)
   const [discardedCardId, setDiscardedCardId] = useState<string>("")
   const dragStateRef = useRef<DraggingState>(defaultDragState)
   const animationRef = useRef<Animation[]>([])
@@ -370,7 +365,7 @@ const useSwipeableCards = (
   return {
     loop,
     emptyView,
-    cardsWithId,
+    cards,
     stack,
     setStack,
     discardedCardId,
@@ -386,7 +381,7 @@ const SwipeableCardsContext = createContext<
 >({
   loop: undefined,
   emptyView: undefined,
-  cardsWithId: [],
+  cards: [],
   stack: [],
   setStack: () => undefined,
   discardedCardId: "",

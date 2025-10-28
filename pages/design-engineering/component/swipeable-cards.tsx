@@ -1,5 +1,5 @@
 import { TableOfContents } from "@/components/TableOfContents/TocComponent"
-import { useEffect, useRef } from "react"
+import { useContext, useEffect, useRef } from "react"
 import { NextCard } from "@/components/Navigation/NextCard"
 import Link from "next/link"
 import { PageMetas } from "@/components/PageMetas/PageMetas"
@@ -35,45 +35,58 @@ const SwipeableCardsPageContent = () => {
   })
 
   const cardsSources = [
-    { dark: "/media/hello-mat-dark.png", light: "/media/hello-mat-light.png" },
     {
+      id: "2bc312dc-803e-4ab2-b727-aabff8aec505",
+      dark: "/media/hello-mat-dark.png",
+      light: "/media/hello-mat-light.png",
+    },
+    {
+      id: "a7e24cb8-16da-4215-bbef-83b59718244c",
       dark: "/media/design-engineering/details/og-details-dark.png",
       light: "/media/design-engineering/details/og-details-light.png",
     },
     // {
+    //   id: "040147cc-f129-49d0-8551-cc2b399498cd",
     //   dark: "/media/design-engineering/images-and-embeds/og-media-dark.png",
     //   light: "/media/design-engineering/images-and-embeds/og-media-light.png",
     // },
     {
+      id: "85623db9-de4d-43bc-8be6-df7a5f9905a1",
       dark: "/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-dark.png",
       light:
         "/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png",
     },
     // {
+    //   id: "278f0eb3-bf92-41ad-ad62-17a0e5752e05",
     //   dark: "/media/design-engineering/publish-button/og-publish-button-dark.png",
     //   light:
     //     "/media/design-engineering/publish-button/og-publish-button-light.png",
     // },
     {
+      id: "d3519545-e090-414f-a62c-49de2cbc6482",
       dark: "/media/design-engineering/dock/og-dock-dark.png",
       light: "/media/design-engineering/dock/og-dock-light.png",
     },
     {
+      id: "320fc292-94fb-4e72-ada0-33911abce69f",
       dark: "/media/design-engineering/carousel/og-carousel-dark.png",
       light: "/media/design-engineering/carousel/og-carousel-light.png",
     },
   ]
 
-  const cards = cardsSources.map(({ light, dark }, index) => (
-    <picture
-      key={index}
-      className="card flat shadow"
-      style={{ display: "inline-block", fontSize: 0, padding: 8 }}
-    >
-      <source media="(prefers-color-scheme: dark)" srcSet={dark} />
-      <img src={light} alt="" style={{ aspectRatio: "1200 / 630" }} />
-    </picture>
-  ))
+  const cards = cardsSources.map(({ id, light, dark }, index) => ({
+    id,
+    card: (
+      <picture
+        key={index}
+        className="card flat shadow"
+        style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+      >
+        <source media="(prefers-color-scheme: dark)" srcSet={dark} />
+        <img src={light} alt="" style={{ aspectRatio: "1200 / 630" }} />
+      </picture>
+    ),
+  }))
 
   return (
     <>
@@ -103,35 +116,7 @@ const SwipeableCardsPageContent = () => {
             cards={[...cards]}
             visibleStackLength={3}
             loop
-            // emptyStackView={({ cardsWithId, setStack }) => (
-            //   <div style={{ padding: 8 }}>
-            //     <div
-            //       style={{
-            //         textAlign: "center",
-            //         padding: "8px 16px",
-            //         borderRadius: 8,
-            //         border: "2px dashed var(--color-border-1)",
-            //         width: "var(--inline-size)",
-            //         aspectRatio: "1200 / 630",
-            //         display: "flex",
-            //         alignItems: "center",
-            //         justifyContent: "center",
-            //         flexDirection: "column",
-            //         padding: 0,
-            //         boxSizing: "border-box",
-            //         gap: 8,
-            //       }}
-            //     >
-            //       No more cards to show
-            //       <button
-            //         className="button"
-            //         onClick={() => setStack(cardsWithId)}
-            //       >
-            //         Reset stack
-            //       </button>
-            //     </div>
-            //   </div>
-            // )}
+            // emptyView={<EmptyView />}
           >
             <SwipeableCards.Cards />
             <p style={{ textAlign: "center" }}>
@@ -179,4 +164,32 @@ const SwipeableCardsPageContent = () => {
   )
 }
 
+const EmptyView = () => {
+  const { setStack, cards } = useContext(SwipeableCards.Context)
+  return (
+    <div style={{ padding: 8 }}>
+      <div
+        style={{
+          textAlign: "center",
+          padding: "8px 16px",
+          borderRadius: 8,
+          border: "2px dashed var(--color-border-1)",
+          width: "var(--inline-size)",
+          aspectRatio: "1200 / 630",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexDirection: "column",
+          boxSizing: "border-box",
+          gap: 8,
+        }}
+      >
+        No more cards to show
+        <button className="button" onClick={() => setStack(cards)}>
+          Reset stack
+        </button>
+      </div>
+    </div>
+  )
+}
 export default SwipeableCardsPage
