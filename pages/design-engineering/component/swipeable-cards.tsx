@@ -135,7 +135,8 @@ const SwipeableCardsPageContent = () => {
           >
             <SwipeableCards.Cards />
             <p style={{ textAlign: "center" }}>
-              <SwipeableCards.DeclineButton /> <SwipeableCards.AcceptButton />
+              <SwipeableCards.DeclineButton /> <SwipeableCards.StarButton />{" "}
+              <SwipeableCards.AcceptButton />
             </p>
           </SwipeableCards.Root>
         </div>
