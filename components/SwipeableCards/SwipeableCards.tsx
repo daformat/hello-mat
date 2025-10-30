@@ -414,6 +414,7 @@ const animateSwipedElement = (
   const prevTransform = element.style.transform
   const prevTranslate = element.style.translate
   const prevRotate = element.style.rotate
+  console.log({ prevTransform, prevTranslate, prevRotate })
   element.style.transform = ""
   element.style.translate = ""
   element.style.rotate = ""
@@ -424,6 +425,14 @@ const animateSwipedElement = (
   element.style.transformOrigin = `${
     state.pivotX * originalRect.width + originalRect.width / 2
   }px ${state.pivotY * originalRect.height + originalRect.height / 2}px`
+  const [translateX, translateY] = prevTranslate
+    .split(" ")
+    .map((v) => parseFloat(v))
+  console.log({ translateX, translateY })
+  const isTranslatedEnough =
+    Math.abs(translateX) >= Math.abs(distanceX) &&
+    Math.abs(translateY) >= Math.abs(distanceY)
+
   console.log({ distanceX, distanceY, rotation })
   const options: KeyframeAnimationOptions = {
     duration: animationDuration,
@@ -438,7 +447,9 @@ const animateSwipedElement = (
       rotate: [0],
       translate: [0],
       transform: [
-        `translate(${distanceX}px, ${distanceY}px) rotate(${rotation}deg)`,
+        `translate(${isTranslatedEnough ? translateX : distanceX}px, ${
+          isTranslatedEnough ? translateY : distanceY
+        }px) rotate(${rotation}deg)`,
       ],
     },
     options
@@ -465,7 +476,7 @@ const animateSwipedElement = (
           {
             ...options,
             easing: cssEasing["--ease-in-out-cubic"],
-            delay: animationDuration,
+            delay: isTranslatedEnough ? 0 : animationDuration,
           }
         )
   const animations = [animation, animation2]
