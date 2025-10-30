@@ -21,6 +21,7 @@ const minDistanceThreshold = 0.3
 const minVelocity = 0.15
 const rotationBasis = 250
 const debug = false
+const sendToBackMargin = 16
 
 export type DraggingState = {
   // whether a card is being dragged
@@ -221,7 +222,9 @@ const adjustVelocityForExit = (
         rect2.left - (originalRect.left + originalRect.width),
         0
       )
-      const minVelocityForExit = (travelDistance - d) / animationDuration
+      const newTravelDistance = travelDistance - d + sendToBackMargin
+      console.log("hop", newTravelDistance)
+      const minVelocityForExit = newTravelDistance / animationDuration
       if (
         Math.abs(state.velocityX) < minVelocityForExit ||
         discardStyle === "sendToBack"
@@ -289,7 +292,8 @@ const adjustVelocityForExit = (
         rect2.top - (originalRect.top + originalRect.height),
         0
       )
-      const minVelocityForExit = (travelDistance - d) / animationDuration
+      const newTravelDistance = travelDistance - d + sendToBackMargin
+      const minVelocityForExit = newTravelDistance / animationDuration
       if (
         Math.abs(state.velocityY) < minVelocityForExit ||
         discardStyle === "sendToBack"
