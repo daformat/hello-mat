@@ -120,7 +120,7 @@ const SwipeableCardsPageContent = () => {
             Tinder
           </a>{" "}
           and that is not so common in desktop apps. It’s so much fun to use, go
-          ahead a drag / swipe cards around and see what happens.
+          ahead and drag / swipe cards around and see what happens.
         </p>
         <div
           ref={demoRef}
