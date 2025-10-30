@@ -12,12 +12,15 @@ import {
 import styles from "./SwipeableCards.module.scss"
 import { cssEasing } from "@/utils/cssEasing"
 import { MaybeNull } from "@/components/Media/utils/maybe"
+import { Position } from "@/utils/geometry"
+import { getPointsBoundingBox } from "@/utils/boundingBox"
 
 const rotationFactor = 0.1
 const maxRotation = 32
 const minDistanceThreshold = 0.3
 const minVelocity = 0.15
 const rotationBasis = 250
+const debug = true
 
 export type DraggingState = {
   // whether a card is being dragged
@@ -119,6 +122,25 @@ const animateReturnToStack = (state: DraggingState, element: HTMLElement) => {
   }
 }
 
+const drawRect = (id: string, rect: DOMRect, color: string) => {
+  const scroll = document.documentElement.scrollTop
+  const prev = document.body.querySelector(`[data-temp='${id}']`)
+  prev?.remove()
+  const div = document.createElement("div")
+  if (debug) {
+    div.style.position = "absolute"
+    div.style.top = `${rect.top + scroll}px`
+    div.style.left = `${rect.left}px`
+    div.style.width = `${rect.width}px`
+    div.style.height = `${rect.height}px`
+    div.style.outline = `1px dashed ${color}`
+    div.dataset.temp = id
+    div.style.zIndex = "10000"
+    div.style.pointerEvents = "none"
+    document.body.appendChild(div)
+  }
+  return div
+}
 /**
  * Boost the velocity so that the element animates out of the viewport
  */
@@ -126,11 +148,15 @@ const adjustVelocityForExit = (
   state: DraggingState,
   rect: DOMRect,
   animationDuration: number,
-  discardStyle: DiscardStyle
+  discardStyle: DiscardStyle,
+  pass = 0
 ) => {
-  // rotation is the final (max) rotation of the element during the animation
   const { rotation } = getAnimationValues(state, animationDuration)
-  const rotatedRect = getRotatedBoundingBox(rect, rotation)
+  const transformOrigin = state.element
+    ? getComputedStyle(state.element).transformOrigin
+    : ""
+
+  const scroll = document.documentElement.scrollTop
   let originalRect = rect
   if (state.element) {
     const prevRotate = state.element.style.rotate
@@ -141,10 +167,26 @@ const adjustVelocityForExit = (
     state.element.style.rotate = prevRotate
     state.element.style.translate = prevTranslate
   }
+  const rotatedRect = getRotatedBoundingBox(
+    new DOMRect(
+      originalRect.x,
+      originalRect.y,
+      originalRect.width,
+      originalRect.height
+    ),
+    rotation,
+    state.pivotX,
+    state.pivotY
+  )
+
+  drawRect("original", originalRect, "red")
+  drawRect("rect", rect, "orange")
 
   if (
     Math.abs(state.velocityX) >= Math.abs(state.velocityY) ||
-    Math.abs(state.startX - state.lastX) >= Math.abs(state.startY - state.lastY)
+    Math.abs(state.startX - state.lastX) >=
+      Math.abs(state.startY - state.lastY) ||
+    pass > 0
   ) {
     const minEdgeDistance = Math.min(
       rect.left,
@@ -153,18 +195,111 @@ const adjustVelocityForExit = (
     const travelDistance =
       discardStyle === "fling"
         ? minEdgeDistance + rect.width
-        : originalRect.width - Math.abs(rotatedRect.left - originalRect.left)
-    console.log(travelDistance)
+        : originalRect.width -
+          Math.abs(rotatedRect.left - originalRect.left) +
+          (rotatedRect.width - originalRect.width)
 
     const minVelocityForExit = travelDistance / animationDuration
-    console.log(minVelocityForExit, state.velocityX)
     if (
       Math.abs(state.velocityX) < minVelocityForExit ||
       discardStyle === "sendToBack"
     ) {
       state.velocityX =
         Math.sign(state.lastX - state.startX) * minVelocityForExit
+      console.log(
+        "pass",
+        pass,
+        "new velocity",
+        state.velocityX,
+        "travelDistance",
+        travelDistance
+      )
     }
+    const yDistance = state.velocityY * animationDuration
+    const { rotation } = getAnimationValues(state, animationDuration)
+    if (pass === 1 && discardStyle === "sendToBack") {
+      const rect2 = getRotatedBoundingBox(
+        new DOMRect(
+          originalRect.x + travelDistance * Math.sign(state.velocityX),
+          originalRect.y + yDistance,
+          originalRect.width,
+          originalRect.height
+        ),
+        rotation,
+        state.pivotX,
+        state.pivotY
+      )
+      console.log("d", rect2.left - (originalRect.left + originalRect.width))
+      const d = Math.max(
+        rect2.left - (originalRect.left + originalRect.width),
+        0
+      )
+      if (Math.sign(state.velocityX) === 1) {
+        const minVelocityForExit = (travelDistance - d) / animationDuration
+        if (
+          Math.abs(state.velocityX) < minVelocityForExit ||
+          discardStyle === "sendToBack"
+        ) {
+          state.velocityX =
+            Math.sign(state.lastX - state.startX) * minVelocityForExit
+        }
+      }
+      drawRect(
+        "rotated-destination",
+        new DOMRect(rect2.x - d, rect2.y, rect2.width, rect2.height),
+        "purple"
+      )
+      const { rotation: newRotation } = getAnimationValues(
+        state,
+        animationDuration
+      )
+      const div = drawRect("initial-destination", originalRect, "yellow")
+      div.style.transform = `translate(${
+        (travelDistance - d) * Math.sign(state.velocityX)
+      }px, ${yDistance}px) rotate(${newRotation}deg)`
+      div.style.transformOrigin = `${
+        state.pivotX * originalRect.width + originalRect.width / 2
+      }px ${state.pivotY * originalRect.height + originalRect.height / 2}px`
+
+      // rect2.x += travelDistance * Math.sign(state.velocityX)
+      // rect2.y += yDistance
+      // const rect3 = getRotatedBoundingBox(
+      //   rect2,
+      //   -rotation,
+      //   state.pivotX,
+      //   state.pivotY
+      // )
+      // travelDistance += rect3.width - rect2.width
+      // const minVelocityForExit = travelDistance / animationDuration
+      // console.log(
+      //   "delta",
+      //   rect2.width - rect.width,
+      //   "minVelocityForExit",
+      //   minVelocityForExit,
+      //   "travelDistance",
+      //   travelDistance
+      // )
+      // if (
+      //   Math.abs(state.velocityX) < minVelocityForExit ||
+      //   discardStyle === "sendToBack"
+      // ) {
+      //   console.log("prev velocity", state.velocityX)
+      //   state.velocityX =
+      //     Math.sign(state.lastX - state.startX) * minVelocityForExit
+      //   console.log("new velocity", state.velocityX)
+      // }
+    }
+    console.log({
+      travelDistance: travelDistance * Math.sign(state.velocityX),
+      yDistance,
+      rotation,
+    })
+    // const points = document.body.querySelectorAll("[data-point]")
+    // points.forEach((point) => {
+    //   point.style.translate = `${
+    //     travelDistance * Math.sign(state.velocityX)
+    //   }px ${yDistance * Math.sign(state.velocityX) + scroll}px`
+    // })
   } else {
     const minEdgeDistance = Math.min(
       rect.top,
@@ -183,6 +318,17 @@ const adjustVelocityForExit = (
       state.velocityY =
         Math.sign(state.lastY - state.startY) * minVelocityForExit
     }
+  }
+
+  if (pass === 0 && discardStyle === "sendToBack") {
+    console.log("new pass")
+    adjustVelocityForExit(
+      state,
+      rect,
+      animationDuration,
+      discardStyle,
+      pass + 1
+    )
   }
 }
 
@@ -269,6 +415,20 @@ const animateSwipedElement = (
     state,
     animationDuration
   )
+  const prevTransform = element.style.transform
+  const prevTranslate = element.style.translate
+  const prevRotate = element.style.rotate
+  element.style.transform = ""
+  element.style.translate = ""
+  element.style.rotate = ""
+  const originalRect = element.getBoundingClientRect()
+  element.style.transform = prevTransform
+  element.style.translate = prevTranslate
+  element.style.rotate = prevRotate
+  element.style.transformOrigin = `${
+    state.pivotX * originalRect.width + originalRect.width / 2
+  }px ${state.pivotY * originalRect.height + originalRect.height / 2}px`
+  console.log({ distanceX, distanceY, rotation })
   const options: KeyframeAnimationOptions = {
     duration: animationDuration,
     easing: manual
@@ -316,55 +476,117 @@ const animateSwipedElement = (
   return { animations }
 }
 
-const getRotatedBoundingBox = (
+export const rotate = (point: Position, center: Position, radians: number) => {
+  const cos = Math.cos(radians),
+    sin = Math.sin(radians),
+    nx = cos * (point.x - center.x) + sin * (point.y - center.y) + center.x,
+    ny = cos * (point.y - center.y) - sin * (point.x - center.x) + center.y
+  return { x: nx, y: ny }
+}
+
+export const drawPoint = (id: string, point: Position, color = "green") => {
+  const prev = document.body.querySelector(`[data-point="${id}"]`)
+  prev?.remove()
+  const div = document.createElement("div")
+  if (debug) {
+    div.style.position = "absolute"
+    div.style.left = `${point.x - 4}px`
+    div.style.top = `${point.y - 4}px`
+    div.style.width = "8px"
+    div.style.height = "8px"
+    div.style.borderRadius = "50%"
+    div.style.backgroundColor = color
+    div.style.zIndex = "10000"
+    div.dataset.point = id
+    document.body.appendChild(div)
+  }
+  return div
+}
+
+function getRotatedBoundingBox(
   rect: DOMRect,
-  rotationDegrees: number
-): DOMRect => {
+  rotationDegrees: number,
+  pivotX = 0,
+  pivotY = 0
+) {
   // Convert rotation to radians
-  const radians = (rotationDegrees * Math.PI) / 180
+  const radians = -(rotationDegrees * Math.PI) / 180
   const cos = Math.cos(radians)
   const sin = Math.sin(radians)
 
-  // Get the four corners of the original rectangle
-  // Assuming rotation is around the center of the rect
-  const cx = rect.left + rect.width / 2
-  const cy = rect.top + rect.height / 2
+  // Calculate the center of the rectangle
+  const centerX = rect.x + rect.width / 2
+  const centerY = rect.y + rect.height / 2
 
-  const corners = [
-    { x: rect.left, y: rect.top },
-    { x: rect.right, y: rect.top },
-    { x: rect.right, y: rect.bottom },
-    { x: rect.left, y: rect.bottom },
+  // Calculate absolute pivot point
+  // pivotX and pivotY are percentages from -0.5 to 0.5 relative to the center
+  const pivotPointX = centerX + pivotX * rect.width
+  const pivotPointY = centerY + pivotY * rect.height
+  const topLeft = { x: rect.x, y: rect.y }
+  const topRight = { x: rect.x + rect.width, y: rect.y }
+  const bottomLeft = { x: rect.x, y: rect.y + rect.height }
+  const bottomRight = { x: rect.x + rect.width, y: rect.y + rect.height }
+  const pivot = { x: pivotPointX, y: pivotPointY }
+
+  const rotatedTopLeft = rotate(topLeft, pivot, radians)
+  const rotatedTopRight = rotate(topRight, pivot, radians)
+  const rotatedBottomLeft = rotate(bottomLeft, pivot, radians)
+  const rotatedBottomRight = rotate(bottomRight, pivot, radians)
+  const points = [
+    rotatedTopLeft,
+    rotatedTopRight,
+    rotatedBottomLeft,
+    rotatedBottomRight,
   ]
-
-  // Rotate each corner around the center
-  const rotatedCorners = corners.map((corner) => {
-    // Translate to origin
-    const x = corner.x - cx
-    const y = corner.y - cy
-
-    // Rotate
-    const rotatedX = x * cos - y * sin
-    const rotatedY = x * sin + y * cos
-
-    // Translate back
-    return {
-      x: rotatedX + cx,
-      y: rotatedY + cy,
-    }
+  points.forEach((point, index) => {
+    drawPoint(`rotated-bbox-point-${index}`, point)
   })
+  return getPointsBoundingBox(points)
 
-  // Find min/max to get the bounding box
-  const xs = rotatedCorners.map((c) => c.x)
-  const ys = rotatedCorners.map((c) => c.y)
-
-  const minX = Math.min(...xs)
-  const maxX = Math.max(...xs)
-  const minY = Math.min(...ys)
-  const maxY = Math.max(...ys)
-
-  // Return as DOMRect
-  return new DOMRect(minX, minY, maxX - minX, maxY - minY)
+  // Define the four corners of the original rectangle
+  // const corners = [
+  //   { x: rect.x, y: rect.y }, // top-left
+  //   { x: rect.x + rect.width, y: rect.y }, // top-right
+  //   { x: rect.x + rect.width, y: rect.y + rect.height }, // bottom-right
+  //   { x: rect.x, y: rect.y + rect.height }, // bottom-left
+  // ]
+  //
+  // // Rotate each corner around the pivot point
+  // let minX = Infinity,
+  //   minY = Infinity
+  // let maxX = -Infinity,
+  //   maxY = -Infinity
+  //
+  // corners.forEach((corner) => {
+  //   // Get position relative to pivot
+  //   const dx = corner.x - pivotPointX
+  //   const dy = corner.y - pivotPointY
+  //
+  //   // Apply 2D rotation matrix
+  //   const rotatedX = dx * cos - dy * sin
+  //   const rotatedY = dx * sin + dy * cos
+  //
+  //   // Convert back to absolute position
+  //   const finalX = rotatedX + pivotPointX
+  //   const finalY = rotatedY + pivotPointY
+  //
+  //   // Update bounds
+  //   minX = Math.min(minX, finalX)
+  //   minY = Math.min(minY, finalY)
+  //   maxX = Math.max(maxX, finalX)
+  //   maxY = Math.max(maxY, finalY)
+  // })
+  //
+  // return {
+  //   x: minX,
+  //   y: minY,
+  //   width: maxX - minX,
+  //   height: maxY - minY,
+  //   left: minX,
+  //   top: minY,
+  //   right: maxX,
+  //   bottom: maxY,
+  // }
 }
 
 /**

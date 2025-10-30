@@ -32,7 +32,7 @@ const SwipeableCardsPageContent = () => {
   const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
   const demoRef = useRef<HTMLDivElement>(null)
-  const [discardStyle, setDiscardStyle] = useState<DiscardStyle>("fling")
+  const [discardStyle, setDiscardStyle] = useState<DiscardStyle>("sendToBack")
   useCssSizeVariables(demoRef)
   const [_swipedCards, setSwipedCards] = useState<
     Record<SwipeDirection, string[]>
