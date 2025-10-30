@@ -234,7 +234,12 @@ const adjustVelocityForExit = (
       }
       drawRect(
         "rotated-destination",
-        new DOMRect(rect2.x - d, rect2.y, rect2.width, rect2.height),
+        new DOMRect(
+          rect2.x - d + sendToBackMargin * Math.sign(state.velocityX),
+          rect2.y,
+          rect2.width,
+          rect2.height
+        ),
         "purple"
       )
       const { rotation: newRotation } = getAnimationValues(
@@ -243,7 +248,7 @@ const adjustVelocityForExit = (
       )
       const div = drawRect("initial-destination", originalRect, "yellow")
       div.style.transform = `translate(${
-        (travelDistance - d) * Math.sign(state.velocityX)
+        newTravelDistance * Math.sign(state.velocityX)
       }px, ${yDistance}px) rotate(${newRotation}deg)`
       div.style.transformOrigin = `${
         state.pivotX * originalRect.width + originalRect.width / 2
@@ -288,11 +293,19 @@ const adjustVelocityForExit = (
         state.pivotX,
         state.pivotY
       )
+      const paddingTop = state.element
+        ? parseFloat(getComputedStyle(state.element).paddingTop)
+        : 0
       const d = Math.max(
-        rect2.top - (originalRect.top + originalRect.height),
+        rect2.top -
+          (originalRect.top + originalRect.height) +
+          (Math.sign(state.velocityY) === 1 ? paddingTop : 0),
         0
       )
+      console.log({ paddingTop })
       const newTravelDistance = travelDistance - d + sendToBackMargin
+      console.log({ travelDistance, d, sendToBackMargin, newTravelDistance })
+      console.log("hop", newTravelDistance)
       const minVelocityForExit = newTravelDistance / animationDuration
       if (
         Math.abs(state.velocityY) < minVelocityForExit ||
@@ -432,12 +445,20 @@ const animateSwipedElement = (
   const [translateX, translateY] = prevTranslate
     .split(" ")
     .map((v) => parseFloat(v))
-  console.log({ translateX, translateY })
   const isTranslatedEnough =
-    Math.abs(translateX) >= Math.abs(distanceX) &&
-    Math.abs(translateY) >= Math.abs(distanceY)
-
-  console.log({ distanceX, distanceY, rotation })
+    (Math.abs(distanceX) >= Math.abs(distanceY) &&
+      Math.abs(translateX) >= Math.abs(distanceX)) ||
+    (Math.abs(distanceX) < Math.abs(distanceY) &&
+      Math.abs(translateY) >= Math.abs(distanceY))
+  console.log({
+    isTranslatedEnough,
+    translateX,
+    distanceX,
+    translateY,
+    distanceY,
+    prevRotate,
+    prevTransform,
+  })
   const options: KeyframeAnimationOptions = {
     duration: animationDuration,
     easing: manual
@@ -448,15 +469,23 @@ const animateSwipedElement = (
   const animation = element.animate(
     {
       scale: discardStyle === "fling" ? [0.9] : [1],
-      rotate: [0],
-      translate: [0],
+      rotate: ["0deg"],
+      translate: ["none"],
+      // rotate: [`${rotation}deg`],
+      // translate: [
+      //   `${isTranslatedEnough ? translateX : distanceX}px ${
+      //     isTranslatedEnough ? translateY : distanceY
+      //   }px`,
+      // ],
       transform: [
         `translate(${isTranslatedEnough ? translateX : distanceX}px, ${
           isTranslatedEnough ? translateY : distanceY
-        }px) rotate(${rotation}deg)`,
+        }px) rotate(${
+          isTranslatedEnough ? parseFloat(prevRotate) : rotation
+        }deg)`,
       ],
     },
-    options
+    { ...options, duration: isTranslatedEnough ? 0 : animationDuration }
   )
   const animation2 =
     discardStyle === "fling"
@@ -468,9 +497,9 @@ const animateSwipedElement = (
           {
             scale: [firstChildStyle?.getPropertyValue("scale") ?? "0"],
             transform: ["translate(0, 0) rotate(0deg)"],
-            translate: [0],
+            translate: ["none"],
             transformOrigin: ["center 0"],
-            rotate: [0],
+            rotate: ["0deg"],
             zIndex: [-1, -1],
             opacity: [0.5],
             paddingTop: [
