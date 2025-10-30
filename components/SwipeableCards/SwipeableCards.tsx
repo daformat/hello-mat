@@ -20,7 +20,7 @@ const maxRotation = 32
 const minDistanceThreshold = 0.3
 const minVelocity = 0.15
 const rotationBasis = 250
-const debug = true
+const debug = false
 
 export type DraggingState = {
   // whether a card is being dragged
@@ -143,6 +143,7 @@ const drawRect = (id: string, rect: DOMRect, color: string) => {
 }
 /**
  * Boost the velocity so that the element animates out of the viewport
+ * TODO this is a mess and I'm not proud of the code, but it works
  */
 const adjustVelocityForExit = (
   state: DraggingState,
@@ -152,11 +153,6 @@ const adjustVelocityForExit = (
   pass = 0
 ) => {
   const { rotation } = getAnimationValues(state, animationDuration)
-  const transformOrigin = state.element
-    ? getComputedStyle(state.element).transformOrigin
-    : ""
-
-  const scroll = document.documentElement.scrollTop
   let originalRect = rect
   if (state.element) {
     const prevRotate = state.element.style.rotate
@@ -167,6 +163,7 @@ const adjustVelocityForExit = (
     state.element.style.rotate = prevRotate
     state.element.style.translate = prevTranslate
   }
+
   const rotatedRect = getRotatedBoundingBox(
     new DOMRect(
       originalRect.x,
@@ -184,9 +181,7 @@ const adjustVelocityForExit = (
 
   if (
     Math.abs(state.velocityX) >= Math.abs(state.velocityY) ||
-    Math.abs(state.startX - state.lastX) >=
-      Math.abs(state.startY - state.lastY) ||
-    pass > 0
+    Math.abs(state.startX - state.lastX) >= Math.abs(state.startY - state.lastY)
   ) {
     const minEdgeDistance = Math.min(
       rect.left,
@@ -194,11 +189,12 @@ const adjustVelocityForExit = (
     )
     const travelDistance =
       discardStyle === "fling"
-        ? minEdgeDistance + rect.width
+        ? minEdgeDistance + rect.width * 1.5
         : originalRect.width -
           Math.abs(rotatedRect.left - originalRect.left) +
           (rotatedRect.width - originalRect.width)
 
+    console.log({ travelDistance })
     const minVelocityForExit = travelDistance / animationDuration
     if (
       Math.abs(state.velocityX) < minVelocityForExit ||
@@ -206,18 +202,10 @@ const adjustVelocityForExit = (
     ) {
       state.velocityX =
         Math.sign(state.lastX - state.startX) * minVelocityForExit
-      console.log(
-        "pass",
-        pass,
-        "new velocity",
-        state.velocityX,
-        "travelDistance",
-        travelDistance
-      )
     }
     const yDistance = state.velocityY * animationDuration
-    const { rotation } = getAnimationValues(state, animationDuration)
     if (pass === 1 && discardStyle === "sendToBack") {
+      const { rotation } = getAnimationValues(state, animationDuration)
       const rect2 = getRotatedBoundingBox(
         new DOMRect(
           originalRect.x + travelDistance * Math.sign(state.velocityX),
@@ -229,20 +217,17 @@ const adjustVelocityForExit = (
         state.pivotX,
         state.pivotY
       )
-      console.log("d", rect2.left - (originalRect.left + originalRect.width))
       const d = Math.max(
         rect2.left - (originalRect.left + originalRect.width),
         0
       )
-      if (Math.sign(state.velocityX) === 1) {
-        const minVelocityForExit = (travelDistance - d) / animationDuration
-        if (
-          Math.abs(state.velocityX) < minVelocityForExit ||
-          discardStyle === "sendToBack"
-        ) {
-          state.velocityX =
-            Math.sign(state.lastX - state.startX) * minVelocityForExit
-        }
+      const minVelocityForExit = (travelDistance - d) / animationDuration
+      if (
+        Math.abs(state.velocityX) < minVelocityForExit ||
+        discardStyle === "sendToBack"
+      ) {
+        state.velocityX =
+          Math.sign(state.lastX - state.startX) * minVelocityForExit
       }
       drawRect(
         "rotated-destination",
@@ -260,56 +245,23 @@ const adjustVelocityForExit = (
       div.style.transformOrigin = `${
         state.pivotX * originalRect.width + originalRect.width / 2
       }px ${state.pivotY * originalRect.height + originalRect.height / 2}px`
-
-      // rect2.x += travelDistance * Math.sign(state.velocityX)
-      // rect2.y += yDistance
-      // const rect3 = getRotatedBoundingBox(
-      //   rect2,
-      //   -rotation,
-      //   state.pivotX,
-      //   state.pivotY
-      // )
-      // travelDistance += rect3.width - rect2.width
-      // const minVelocityForExit = travelDistance / animationDuration
-      // console.log(
-      //   "delta",
-      //   rect2.width - rect.width,
-      //   "minVelocityForExit",
-      //   minVelocityForExit,
-      //   "travelDistance",
-      //   travelDistance
-      // )
-      // if (
-      //   Math.abs(state.velocityX) < minVelocityForExit ||
-      //   discardStyle === "sendToBack"
-      // ) {
-      //   console.log("prev velocity", state.velocityX)
-      //   state.velocityX =
-      //     Math.sign(state.lastX - state.startX) * minVelocityForExit
-      //   console.log("new velocity", state.velocityX)
-      // }
     }
-    console.log({
-      travelDistance: travelDistance * Math.sign(state.velocityX),
-      yDistance,
-      rotation,
-    })
-    // const points = document.body.querySelectorAll("[data-point]")
-    // points.forEach((point) => {
-    //   point.style.translate = `${
-    //     travelDistance * Math.sign(state.velocityX)
-    //   }px ${yDistance * Math.sign(state.velocityX) + scroll}px`
-    // })
   } else {
     const minEdgeDistance = Math.min(
       rect.top,
       window.innerHeight - (rect.top + rect.height)
     )
+    // const travelDistance =
+    //   discardStyle === "fling"
+    //     ? minEdgeDistance + rect.height
+    //     : originalRect.height - Math.abs(rotatedRect.top - originalRect.top) / 2
+
     const travelDistance =
       discardStyle === "fling"
-        ? minEdgeDistance + rect.height
-        : originalRect.height - Math.abs(rotatedRect.top - originalRect.top) / 2
-    // : rect.height * 0.9 - Math.abs(translateY)
+        ? minEdgeDistance + rect.height * 1.5
+        : originalRect.height -
+          Math.abs(rotatedRect.top - originalRect.top) +
+          (rotatedRect.height - originalRect.height)
     const minVelocityForExit = travelDistance / 200
     if (
       Math.abs(state.velocityY) < minVelocityForExit ||
@@ -317,6 +269,50 @@ const adjustVelocityForExit = (
     ) {
       state.velocityY =
         Math.sign(state.lastY - state.startY) * minVelocityForExit
+    }
+
+    const xDistance = state.velocityX * animationDuration
+    if (pass === 1 && discardStyle === "sendToBack") {
+      const { rotation } = getAnimationValues(state, animationDuration)
+      const rect2 = getRotatedBoundingBox(
+        new DOMRect(
+          originalRect.x + xDistance,
+          originalRect.y + travelDistance * Math.sign(state.velocityY),
+          originalRect.width,
+          originalRect.height
+        ),
+        rotation,
+        state.pivotX,
+        state.pivotY
+      )
+      const d = Math.max(
+        rect2.top - (originalRect.top + originalRect.height),
+        0
+      )
+      const minVelocityForExit = (travelDistance - d) / animationDuration
+      if (
+        Math.abs(state.velocityY) < minVelocityForExit ||
+        discardStyle === "sendToBack"
+      ) {
+        state.velocityY =
+          Math.sign(state.lastY - state.startY) * minVelocityForExit
+      }
+      drawRect(
+        "rotated-destination",
+        new DOMRect(rect2.x, rect2.y - d, rect2.width, rect2.height),
+        "purple"
+      )
+      const { rotation: newRotation } = getAnimationValues(
+        state,
+        animationDuration
+      )
+      const div = drawRect("initial-destination", originalRect, "yellow")
+      div.style.transform = `translate(${xDistance}px, ${
+        (travelDistance - d) * Math.sign(state.velocityY)
+      }px) rotate(${newRotation}deg)`
+      div.style.transformOrigin = `${
+        state.pivotX * originalRect.width + originalRect.width / 2
+      }px ${state.pivotY * originalRect.height + originalRect.height / 2}px`
     }
   }
 
