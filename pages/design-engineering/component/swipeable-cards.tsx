@@ -11,6 +11,7 @@ import {
 import { useCssSizeVariables } from "@/hooks/useCssSizeVariables"
 import { PiStarBold } from "react-icons/pi"
 import { FaCheck, FaXmark } from "react-icons/fa6"
+import { Checkbox } from "@/components/ui/Checkbox/Checkbox"
 
 const SwipeableCardsPage = () => (
   <>
@@ -181,18 +182,16 @@ const SwipeableCardsPageContent = () => {
                 justifyContent: "center",
               }}
             >
-              <label style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <input
-                  type="checkbox"
+              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Checkbox
                   defaultChecked={discardStyle === "sendToBack"}
                   onChange={(event) =>
                     setDiscardStyle(
                       event.target.checked ? "sendToBack" : "fling"
                     )
                   }
-                  style={{ width: 16, height: 16 }}
-                />{" "}
-                send to back
+                />
+                <small style={{ opacity: 0.8 }}>send cards to back</small>
               </label>
             </p>
           </SwipeableCards.Root>
