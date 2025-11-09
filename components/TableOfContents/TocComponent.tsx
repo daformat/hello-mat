@@ -49,7 +49,7 @@ function buildTopographicalMap(
     // until we find a heading with a level less than current heading
     while (stack.length > 0) {
       const lastInStack = stack[stack.length - 1]
-      const lastHeadingLevel = parseInt(lastInStack.heading.tagName.charAt(1))
+      const lastHeadingLevel = lastInStack ? parseInt(lastInStack.heading.tagName.charAt(1)) : 1
 
       if (lastHeadingLevel < headingLevel) {
         // Found the parent
@@ -62,10 +62,11 @@ function buildTopographicalMap(
     newNode.level = stack.length
 
     // Add to parent's children or root
+    const lastInStack = stack[stack.length - 1]
     if (stack.length === 0) {
       result.push(newNode)
-    } else {
-      stack[stack.length - 1].children.push(newNode)
+    } else if (lastInStack) {
+      lastInStack.children.push(newNode)
     }
 
     // Push current node to stack

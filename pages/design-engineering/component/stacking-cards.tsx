@@ -60,7 +60,7 @@ const StackingCardsPageContent = () => {
       dark: "/media/design-engineering/carousel/og-carousel-dark.png",
       light: "/media/design-engineering/carousel/og-carousel-light.png",
     },
-  ]
+  ] as const
 
   const cards = cardsSources.map(({ light, dark }, index) => (
     <picture
@@ -137,7 +137,7 @@ const StackingCardsPageContent = () => {
         </div>
         <div className="demo" style={{ paddingBottom: 48, display: "block" }}>
           <RollingStackedCards
-            cards={[...cards, ...cards, ...cards, cards[0]]}
+            cards={[...cards, ...cards, ...cards, ...cards.slice(0, 1)]}
             topDistance={"32px"}
             topOffset={"calc(32px / 1px / 464 * var(--card-height))"}
             cardHeight={
@@ -191,39 +191,6 @@ const StackingCardsPageContent = () => {
         </NextCard>
       </div>
     </>
-  )
-}
-
-interface IProps {
-  name: string
-  [key: string]: React.CSSProperties | string
-}
-
-export const Keyframes = ({ name, ...props }: IProps) => {
-  const toCss = (cssObject: React.CSSProperties | string) =>
-    typeof cssObject === "string"
-      ? cssObject
-      : Object.keys(cssObject).reduce((accumulator, key) => {
-          const cssKey = key.replace(/[A-Z]/g, (v) => `-${v.toLowerCase()}`)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const cssValue = (cssObject as any)[key].toString().replace("'", "")
-          return `${accumulator}${cssKey}:${cssValue};`
-        }, "")
-
-  return (
-    <style>
-      {`@keyframes ${name} {
-        ${Object.keys(props)
-          .map((key) => {
-            return ["from", "to"].includes(key)
-              ? `${key} { ${toCss(props[key])} }`
-              : /^_[0-9]+$/.test(key)
-              ? `${key.replace("_", "")}% { ${toCss(props[key])} }`
-              : ""
-          })
-          .join(" ")}
-      }`}
-    </style>
   )
 }
 

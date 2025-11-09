@@ -188,11 +188,15 @@ export const StencilSvg = ({
             },
           ]
           const index = parseInt(node.dataset.index ?? "0")
+          const pathSubPath = path.paths[index]
+          if (!pathSubPath) {
+            return
+          }
           const stencilPoints = settings.flatMap((s, i) => {
             return distribute(
               `${path.name}-node-${node.dataset.index}-distribution-${i}`,
               svg,
-              path.paths[index],
+              pathSubPath,
               node,
               s.intersections,
               s.getRadius,

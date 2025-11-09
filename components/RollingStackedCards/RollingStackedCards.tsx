@@ -54,7 +54,9 @@ export const RollingStackedCards = ({
         })
         const discardedAmount = discardedCards.length
         const lastDiscarded = discardedCards[discardedAmount - 1]
-        const lastDiscardedScale = discardedScaleMap.get(lastDiscarded)
+        const lastDiscardedScale = lastDiscarded
+          ? discardedScaleMap.get(lastDiscarded)
+          : 1
         const discardedRatio = lastDiscardedScale
           ? 1 - (lastDiscardedScale - 0.78) / 0.22
           : 0

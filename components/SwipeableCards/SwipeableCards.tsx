@@ -442,7 +442,7 @@ const animateSwipedElement = (
   element.style.transformOrigin = `${
     state.pivotX * originalRect.width + originalRect.width / 2
   }px ${state.pivotY * originalRect.height + originalRect.height / 2}px`
-  const [translateX, translateY] = prevTranslate
+  const [translateX = 0, translateY = 0] = prevTranslate
     .split(" ")
     .map((v) => parseFloat(v))
   const isTranslatedEnough =
@@ -920,10 +920,10 @@ const SwipeableCardsDeclineButton = ({ children }: PropsWithChildren) => {
     <button
       className={styles.button}
       onClick={() => {
-        if (discardedCardId) {
+        const last = stack[stack.length - 1]
+        if (discardedCardId || !last) {
           return
         }
-        const last = stack[stack.length - 1]
         const element = document.querySelector(`[data-id="${last.id}"]`)
         if (element instanceof HTMLElement) {
           const rect = element.getBoundingClientRect()
@@ -959,10 +959,10 @@ const SwipeableCardsAcceptButton = ({ children }: PropsWithChildren) => {
     <button
       className={styles.button}
       onClick={() => {
-        if (discardedCardId) {
+        const last = stack[stack.length - 1]
+        if (discardedCardId || !last) {
           return
         }
-        const last = stack[stack.length - 1]
         const element = document.querySelector(`[data-id="${last.id}"]`)
         if (element instanceof HTMLElement) {
           const rect = element.getBoundingClientRect()
@@ -998,10 +998,10 @@ const SwipeableCardsStarButton = ({ children }: PropsWithChildren) => {
     <button
       className={styles.button}
       onClick={() => {
-        if (discardedCardId) {
+        const last = stack[stack.length - 1]
+        if (discardedCardId || !last) {
           return
         }
-        const last = stack[stack.length - 1]
         const element = document.querySelector(`[data-id="${last.id}"]`)
         if (element instanceof HTMLElement) {
           const rect = element.getBoundingClientRect()

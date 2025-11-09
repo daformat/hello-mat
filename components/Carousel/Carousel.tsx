@@ -514,14 +514,16 @@ const CarouselNextPage = ({ children }: PropsWithChildren) => {
         )
       }
       const nextItem = items.find(isNextItem) ?? items[items.length - 1]
-      const [_, inline] = getScrollSnapAlign(getComputedStyle(nextItem))
-      nextItem?.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: ["start", "center", "end"].includes(inline ?? "")
-          ? (inline as ScrollLogicalPosition)
-          : "start",
-      })
+      if (nextItem) {
+        const [_, inline] = getScrollSnapAlign(getComputedStyle(nextItem))
+        nextItem?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: ["start", "center", "end"].includes(inline ?? "")
+            ? (inline as ScrollLogicalPosition)
+            : "start",
+        })
+      }
     }
   }
 
