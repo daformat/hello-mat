@@ -153,6 +153,9 @@ export const StencilSvg = ({
 
   const pathCallback = useCallback(
     (node: SVGPathElement) => {
+      if (!node) {
+        return
+      }
       requestAnimationFrame(() => {
         const nodeIndex = node.dataset.index
         const cacheKey = `${path.name}-${nodeIndex}`
