@@ -549,16 +549,9 @@ function getRotatedBoundingBox(
   pivotX = 0,
   pivotY = 0
 ) {
-  // Convert rotation to radians
   const radians = -(rotationDegrees * Math.PI) / 180
-  const cos = Math.cos(radians)
-  const sin = Math.sin(radians)
-
-  // Calculate the center of the rectangle
   const centerX = rect.x + rect.width / 2
   const centerY = rect.y + rect.height / 2
-
-  // Calculate absolute pivot point
   // pivotX and pivotY are percentages from -0.5 to 0.5 relative to the center
   const pivotPointX = centerX + pivotX * rect.width
   const pivotPointY = centerY + pivotY * rect.height
@@ -567,7 +560,6 @@ function getRotatedBoundingBox(
   const bottomLeft = { x: rect.x, y: rect.y + rect.height }
   const bottomRight = { x: rect.x + rect.width, y: rect.y + rect.height }
   const pivot = { x: pivotPointX, y: pivotPointY }
-
   const rotatedTopLeft = rotate(topLeft, pivot, radians)
   const rotatedTopRight = rotate(topRight, pivot, radians)
   const rotatedBottomLeft = rotate(bottomLeft, pivot, radians)
@@ -582,51 +574,6 @@ function getRotatedBoundingBox(
     drawPoint(`rotated-bbox-point-${index}`, point)
   })
   return getPointsBoundingBox(points)
-
-  // Define the four corners of the original rectangle
-  // const corners = [
-  //   { x: rect.x, y: rect.y }, // top-left
-  //   { x: rect.x + rect.width, y: rect.y }, // top-right
-  //   { x: rect.x + rect.width, y: rect.y + rect.height }, // bottom-right
-  //   { x: rect.x, y: rect.y + rect.height }, // bottom-left
-  // ]
-  //
-  // // Rotate each corner around the pivot point
-  // let minX = Infinity,
-  //   minY = Infinity
-  // let maxX = -Infinity,
-  //   maxY = -Infinity
-  //
-  // corners.forEach((corner) => {
-  //   // Get position relative to pivot
-  //   const dx = corner.x - pivotPointX
-  //   const dy = corner.y - pivotPointY
-  //
-  //   // Apply 2D rotation matrix
-  //   const rotatedX = dx * cos - dy * sin
-  //   const rotatedY = dx * sin + dy * cos
-  //
-  //   // Convert back to absolute position
-  //   const finalX = rotatedX + pivotPointX
-  //   const finalY = rotatedY + pivotPointY
-  //
-  //   // Update bounds
-  //   minX = Math.min(minX, finalX)
-  //   minY = Math.min(minY, finalY)
-  //   maxX = Math.max(maxX, finalX)
-  //   maxY = Math.max(maxY, finalY)
-  // })
-  //
-  // return {
-  //   x: minX,
-  //   y: minY,
-  //   width: maxX - minX,
-  //   height: maxY - minY,
-  //   left: minX,
-  //   top: minY,
-  //   right: maxX,
-  //   bottom: maxY,
-  // }
 }
 
 /**
