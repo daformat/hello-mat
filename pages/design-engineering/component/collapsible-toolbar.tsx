@@ -21,18 +21,16 @@ import { ToolbarButton } from "@/components/Toolbar/ToolbarButton"
 import { TableOfContents } from "@/components/TableOfContents/TocComponent"
 import { NextCard } from "@/components/Navigation/NextCard"
 import { PageMetas } from "@/components/PageMetas/PageMetas"
+import {
+  COMPONENTS,
+  getNextComponent,
+} from "@/constants/design-engineering/components"
 
 const CollapsibleToolbarPage = () => {
+  const component = COMPONENTS["collapsible-toolbar"]
   return (
     <>
-      <PageMetas
-        title="Design engineering: a collapsible toolbar"
-        description="Building a collapsible / resizable toolbar using React, TypeScript, and SCSS."
-        url="https://hello-mat.com/design-engineering/component/collapsible-toolbar"
-        image="https://hello-mat.com/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png"
-        imageWidth={1200}
-        imageHeight={630}
-      />
+      <PageMetas {...component.metas} />
       <TableOfContents.Provider>
         <CollapsibleToolbarPageContent />
       </TableOfContents.Provider>
@@ -41,6 +39,7 @@ const CollapsibleToolbarPage = () => {
 }
 
 const CollapsibleToolbarPageContent = () => {
+  const nextComponent = getNextComponent("collapsible-toolbar")
   const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
   const [slow, setSlow] = useState(false)
@@ -120,8 +119,8 @@ const CollapsibleToolbarPageContent = () => {
             10%
           </button>
         </div>
-        <NextCard href={"/design-engineering/component/publish-button"}>
-          Publish button
+        <NextCard href={nextComponent.metas.url}>
+          {nextComponent.shortTitle}
         </NextCard>
       </div>
     </>

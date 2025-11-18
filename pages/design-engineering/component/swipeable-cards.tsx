@@ -12,24 +12,25 @@ import { useCssSizeVariables } from "@/hooks/useCssSizeVariables"
 import { PiStarBold } from "react-icons/pi"
 import { FaCheck, FaXmark } from "react-icons/fa6"
 import { Checkbox } from "@/components/ui/Checkbox/Checkbox"
+import {
+  COMPONENTS,
+  getNextComponent,
+} from "@/constants/design-engineering/components"
 
-const SwipeableCardsPage = () => (
-  <>
-    <PageMetas
-      title="Design engineering: a swipeable cards carousel"
-      description="Building a swipeable cards stack with React, TypeScript, and SCSS."
-      url="https://hello-mat.com/design-engineering/swipeable-cards"
-      image="https://hello-mat.com/media/design-engineering/swipeable-cards/og-swipeable-cards-light.png"
-      imageWidth={1200}
-      imageHeight={630}
-    />
-    <TableOfContents.Provider>
-      <SwipeableCardsPageContent />
-    </TableOfContents.Provider>
-  </>
-)
+const SwipeableCardsPage = () => {
+  const component = COMPONENTS["swipeable-cards"]
+  return (
+    <>
+      <PageMetas {...component.metas} />
+      <TableOfContents.Provider>
+        <SwipeableCardsPageContent />
+      </TableOfContents.Provider>
+    </>
+  )
+}
 
 const SwipeableCardsPageContent = () => {
+  const nextComponent = getNextComponent("swipeable-cards")
   const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
   const demoRef = useRef<HTMLDivElement>(null)
@@ -227,8 +228,8 @@ const SwipeableCardsPageContent = () => {
           satisfying in using this interaction, and I think Tinder made it their
           landmark for a reason.
         </p>
-        <NextCard href={"/design-engineering/component/table-of-contents"}>
-          Table of contents
+        <NextCard href={nextComponent.metas.url}>
+          {nextComponent.shortTitle}
         </NextCard>
       </div>
     </>

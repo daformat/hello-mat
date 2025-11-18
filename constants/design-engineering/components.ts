@@ -174,7 +174,7 @@ export const COMPONENTS = {
       title: "Design engineering: rolling stacking cards",
       description:
         "Building a rolling stacking cards scroll-driven animation with React, TypeScript, and SCSS.",
-      url: "/design-engineering/stacking-cards",
+      url: "/design-engineering/component/stacking-cards",
       image:
         "/media/design-engineering/stacking-cards/og-stacking-cards-light.png",
       imageWidth: 1200,
@@ -197,7 +197,7 @@ export const COMPONENTS = {
       title: "Design engineering: a swipeable cards carousel",
       description:
         "Building a swipeable cards stack with React, TypeScript, and SCSS.",
-      url: "/design-engineering/swipeable-cards",
+      url: "/design-engineering/component/swipeable-cards",
       image:
         "/media/design-engineering/swipeable-cards/og-swipeable-cards-light.png",
       imageWidth: 1200,
@@ -251,3 +251,12 @@ export const COMPONENTS_ORDER = createComponentOrder([
   "stacking-cards",
   "swipeable-cards",
 ] as const)
+
+export const getNextComponent = (currentComponentId: ComponentId) => {
+  const componentIndex = COMPONENTS_ORDER.findIndex(
+    (id) => id === currentComponentId
+  )
+  const nextComponentId =
+    COMPONENTS_ORDER[componentIndex + 1] ?? COMPONENTS_ORDER[0]
+  return COMPONENTS[nextComponentId]
+}

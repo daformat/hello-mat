@@ -5,18 +5,16 @@ import { DetailsComponent } from "@/components/Details/DetailsComponent"
 import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer"
 import { NextCard } from "@/components/Navigation/NextCard"
 import { PageMetas } from "@/components/PageMetas/PageMetas"
+import {
+  COMPONENTS,
+  getNextComponent,
+} from "@/constants/design-engineering/components"
 
 const TableOfContentsPage = () => {
+  const component = COMPONENTS["toc"]
   return (
     <>
-      <PageMetas
-        title="Design engineering: a table of contents component"
-        description="Building a table of contents component, using React, TypeScript, and SCSS."
-        url="https://hello-mat.com/design-engineering/component/table-of-contents"
-        image="https://hello-mat.com/media/design-engineering/toc/og-toc-light.png"
-        imageWidth={1200}
-        imageHeight={630}
-      />
+      <PageMetas {...component.metas} />
       <TableOfContents.Provider>
         <TableOfContentsPageContent />
       </TableOfContents.Provider>
@@ -25,6 +23,7 @@ const TableOfContentsPage = () => {
 }
 
 const TableOfContentsPageContent = () => {
+  const nextComponent = getNextComponent("toc")
   const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
 
@@ -244,10 +243,8 @@ const TableOfContentsPageContent = () => {
             the table of content
           </li>
         </ul>
-        <NextCard
-          href={"/design-engineering/component/details-disclosure-component"}
-        >
-          Details / disclosure component
+        <NextCard href={nextComponent.metas.url}>
+          {nextComponent.shortTitle}
         </NextCard>
       </div>
     </>

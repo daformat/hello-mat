@@ -53,20 +53,40 @@ export const PageMetas = ({
     url,
     title,
     description,
-    images: [{ url: image, height: imageHeight, width: imageWidth, secureUrl: image }],
+    images: [
+      {
+        url: getAbsoluteUrl(image),
+        height: imageHeight,
+        width: imageWidth,
+        secureUrl: getAbsoluteUrl(image),
+      },
+    ],
   }
   if (video) {
     openGraph.videos = [
-      { url: video, type: videoType, width: videoWidth, height: videoHeight },
+      {
+        url: getAbsoluteUrl(video),
+        type: videoType,
+        width: videoWidth,
+        height: videoHeight,
+      },
     ]
   }
   return (
     <NextSeo
       title={title}
       description={description}
-      canonical={url}
+      canonical={getAbsoluteUrl(url)}
       openGraph={openGraph}
       twitter={{ handle: "@daformat", cardType: "summary_large_image" }}
     />
   )
+}
+
+const getAbsoluteUrl = (url: string) => {
+  const base = "https://hello-mat.com"
+  if (!url.startsWith("http")) {
+    return `${base}${url}`
+  }
+  return url
 }

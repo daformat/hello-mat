@@ -5,24 +5,25 @@ import { DetailsComponent } from "@/components/Details/DetailsComponent"
 import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer"
 import { NextCard } from "@/components/Navigation/NextCard"
 import { PageMetas } from "@/components/PageMetas/PageMetas"
+import {
+  COMPONENTS,
+  getNextComponent,
+} from "@/constants/design-engineering/components"
 
-const DetailsDisclosureComponent = () => (
-  <>
-    <PageMetas
-      title="Design engineering: a details (or disclosure) component"
-      description="Building a details (disclosure) component, using React, TypeScript, and SCSS."
-      url="https://hello-mat.com/design-engineering/component/details-disclosure-component"
-      image="https://hello-mat.com/media/design-engineering/details/og-details-light.png"
-      imageWidth={1200}
-      imageHeight={630}
-    />
-    <TableOfContents.Provider>
-      <DetailsPageContent />
-    </TableOfContents.Provider>
-  </>
-)
+const DetailsDisclosureComponent = () => {
+  const component = COMPONENTS.details
+  return (
+    <>
+      <PageMetas {...component.metas} />
+      <TableOfContents.Provider>
+        <DetailsPageContent />
+      </TableOfContents.Provider>
+    </>
+  )
+}
 
 const DetailsPageContent = () => {
+  const nextComponent = getNextComponent("details")
   const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
   const [slow, setSlow] = useState(false)
@@ -207,8 +208,8 @@ const DetailsPageContent = () => {
           <li>The component should be accessible to mouse users</li>
           <li>The component should be accessible to touch users</li>
         </ul>
-        <NextCard href={"/design-engineering/component/images-and-embeds"}>
-          Images and embeds
+        <NextCard href={nextComponent.metas.url}>
+          {nextComponent.shortTitle}
         </NextCard>
       </div>
     </>

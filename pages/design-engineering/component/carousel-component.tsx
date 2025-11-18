@@ -8,24 +8,25 @@ import { FaChevronLeft, FaChevronRight } from "react-icons/fa6"
 
 import styles from "@/components/Carousel/Carousel.module.scss"
 import { useCssSizeVariables } from "@/hooks/useCssSizeVariables"
+import {
+  COMPONENTS,
+  getNextComponent,
+} from "@/constants/design-engineering/components"
 
-const CarouselComponentPage = () => (
-  <>
-    <PageMetas
-      title="Design engineering: a carousel component"
-      description="Building a scrollable, and swipeable carousel, with momentum scrolling, overscroll and rubber-banding using React, TypeScript, and SCSS."
-      url="https://hello-mat.com/design-engineering/component/carousel-component"
-      image="https://hello-mat.com/media/design-engineering/carousel/og-carousel-light.png"
-      imageWidth={1200}
-      imageHeight={630}
-    />
-    <TableOfContents.Provider>
-      <CarouselComponentPageContent />
-    </TableOfContents.Provider>
-  </>
-)
+const CarouselComponentPage = () => {
+  const component = COMPONENTS["carousel-component"]
+  return (
+    <>
+      <PageMetas {...component.metas} />
+      <TableOfContents.Provider>
+        <CarouselComponentPageContent />
+      </TableOfContents.Provider>
+    </>
+  )
+}
 
 const CarouselComponentPageContent = () => {
+  const nextComponent = getNextComponent("carousel-component")
   const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState(0.7)
@@ -374,8 +375,8 @@ const CarouselComponentPageContent = () => {
           to enable infinite scrolling at some point, but for now, this is a
           good start.
         </p>
-        <NextCard href={"/design-engineering/component/stacking-cards"}>
-          Rolling stacking cards
+        <NextCard href={nextComponent.metas.url}>
+          {nextComponent.shortTitle}
         </NextCard>
       </div>
     </>

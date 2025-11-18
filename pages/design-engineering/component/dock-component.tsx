@@ -10,24 +10,25 @@ import {
   BeamIconNightly,
 } from "@/components/Dock/BeamIcon"
 import { PageMetas } from "@/components/PageMetas/PageMetas"
+import {
+  COMPONENTS,
+  getNextComponent,
+} from "@/constants/design-engineering/components"
 
-const DockComponentPage = () => (
-  <>
-    <PageMetas
-      title="Design engineering: a dock component"
-      description="Building a macOS-like dock component, using React, TypeScript, and SCSS."
-      url="https://hello-mat.com/design-engineering/component/dock-component"
-      image="https://hello-mat.com/media/design-engineering/dock/og-dock-light.png"
-      imageWidth={1200}
-      imageHeight={630}
-    />
-    <TableOfContents.Provider>
-      <DockComponentPageContent />
-    </TableOfContents.Provider>
-  </>
-)
+const DockComponentPage = () => {
+  const component = COMPONENTS["dock-component"]
+  return (
+    <>
+      <PageMetas {...component.metas} />
+      <TableOfContents.Provider>
+        <DockComponentPageContent />
+      </TableOfContents.Provider>
+    </>
+  )
+}
 
 const DockComponentPageContent = () => {
+  const nextComponent = getNextComponent("dock-component")
   const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
 
@@ -76,8 +77,8 @@ const DockComponentPageContent = () => {
             <DockItem icon={<BeamIconBeta />} name="beam beta" />
           </Dock>
         </div>
-        <NextCard href={"/design-engineering/component/carousel-component"}>
-          A carousel component
+        <NextCard href={nextComponent.metas.url}>
+          {nextComponent.shortTitle}
         </NextCard>
       </div>
     </>

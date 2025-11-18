@@ -5,24 +5,25 @@ import { EmbedComp, ImageComp } from "@/components/Media/MediaComponent"
 import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer"
 import { NextCard } from "@/components/Navigation/NextCard"
 import { PageMetas } from "@/components/PageMetas/PageMetas"
+import {
+  COMPONENTS,
+  getNextComponent,
+} from "@/constants/design-engineering/components"
 
-const ImageAndEmbedsPage = () => (
-  <>
-    <PageMetas
-      title="Design engineering: images and embeds"
-      description="Building a Media component supporting images and embeds using React, TypeScript, and SCSS."
-      url="https://hello-mat.com/design-engineering/component/images-and-embeds"
-      image="https://hello-mat.com/media/design-engineering/images-and-embeds/og-media-light.png"
-      imageWidth={1200}
-      imageHeight={630}
-    />
-    <TableOfContents.Provider>
-      <ImageAndEmbedsContent />
-    </TableOfContents.Provider>
-  </>
-)
+const ImageAndEmbedsPage = () => {
+  const component = COMPONENTS["images-and-embeds"]
+  return (
+    <>
+      <PageMetas {...component.metas} />
+      <TableOfContents.Provider>
+        <ImageAndEmbedsContent />
+      </TableOfContents.Provider>
+    </>
+  )
+}
 
 const ImageAndEmbedsContent = () => {
+  const nextComponent = getNextComponent("images-and-embeds")
   const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
   const [render, setRender] = useState(0)
@@ -214,8 +215,8 @@ const ImageAndEmbedsContent = () => {
             },
           }}
         />
-        <NextCard href={"/design-engineering/component/collapsible-toolbar"}>
-          Collapsible toolbar
+        <NextCard href={nextComponent.metas.url}>
+          {nextComponent.shortTitle}
         </NextCard>
       </div>
     </>

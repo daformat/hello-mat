@@ -4,18 +4,16 @@ import { PublishSplitButton } from "@/components/PublishButton/PublishButton"
 import { TableOfContents } from "@/components/TableOfContents/TocComponent"
 import { NextCard } from "@/components/Navigation/NextCard"
 import { PageMetas } from "@/components/PageMetas/PageMetas"
+import {
+  COMPONENTS,
+  getNextComponent,
+} from "@/constants/design-engineering/components"
 
 const PublishButtonPage = () => {
+  const component = COMPONENTS["publish-button"]
   return (
     <>
-      <PageMetas
-        title="Design engineering: a publish button"
-        description="Building a publish button component with feedback, using React, TypeScript, and SCSS."
-        url="https://hello-mat.com/design-engineering/component/publish-button"
-        image="https://hello-mat.com/media/design-engineering/publish-button/og-publish-button-light.png"
-        imageWidth={1200}
-        imageHeight={630}
-      />
+      <PageMetas {...component.metas} />
       <TableOfContents.Provider>
         <PublishButtonPageContent />
       </TableOfContents.Provider>
@@ -24,6 +22,7 @@ const PublishButtonPage = () => {
 }
 
 const PublishButtonPageContent = () => {
+  const nextComponent = getNextComponent("publish-button")
   const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
   const [slow, setSlow] = useState(false)
@@ -107,8 +106,8 @@ const PublishButtonPageContent = () => {
             </button>
           </div>
         </div>
-        <NextCard href={"/design-engineering/component/dock-component"}>
-          A dock component
+        <NextCard href={nextComponent.metas.url}>
+          {nextComponent.shortTitle}
         </NextCard>
       </div>
     </>

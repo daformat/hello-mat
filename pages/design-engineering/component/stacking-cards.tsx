@@ -5,24 +5,25 @@ import Link from "next/link"
 import { PageMetas } from "@/components/PageMetas/PageMetas"
 import { RollingStackedCards } from "@/components/RollingStackedCards/RollingStackedCards"
 import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer"
+import {
+  COMPONENTS,
+  getNextComponent,
+} from "@/constants/design-engineering/components"
 
-const StackingCardsPage = () => (
-  <>
-    <PageMetas
-      title="Design engineering: rolling stacking cards"
-      description="Building a rolling stacking cards scroll-driven animation with React, TypeScript, and SCSS."
-      url="https://hello-mat.com/design-engineering/stacking-cards"
-      image="https://hello-mat.com/media/design-engineering/stacking-cards/og-stacking-cards-light.png"
-      imageWidth={1200}
-      imageHeight={630}
-    />
-    <TableOfContents.Provider>
-      <StackingCardsPageContent />
-    </TableOfContents.Provider>
-  </>
-)
+const StackingCardsPage = () => {
+  const component = COMPONENTS["stacking-cards"]
+  return (
+    <>
+      <PageMetas {...component.metas} />
+      <TableOfContents.Provider>
+        <StackingCardsPageContent />
+      </TableOfContents.Provider>
+    </>
+  )
+}
 
 const StackingCardsPageContent = () => {
+  const nextComponent = getNextComponent("stacking-cards")
   const tocContext = TableOfContents.useToc()
   const contentRef = useRef<HTMLDivElement>(null)
 
@@ -186,8 +187,8 @@ const StackingCardsPageContent = () => {
           the effect you’re aiming for, and deal with browsers quirks, because
           life as a web engineer wouldn’t be fun without them.
         </p>
-        <NextCard href={"/design-engineering/component/swipeable-cards"}>
-          Swipeable cards carousel
+        <NextCard href={nextComponent.metas.url}>
+          {nextComponent.shortTitle}
         </NextCard>
       </div>
     </>
