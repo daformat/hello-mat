@@ -118,7 +118,10 @@ export const COMPONENTS = {
       imageHeight: 630,
     },
   },
-} as const satisfies Record<string, { metas: PageMetasProps, shortTitle: string }>
+} as const satisfies Record<
+  string,
+  { metas: PageMetasProps; shortTitle: string }
+>
 
 export type ComponentId = keyof typeof COMPONENTS
 
