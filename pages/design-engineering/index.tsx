@@ -3,6 +3,10 @@ import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer"
 import { PageMetas } from "@/components/PageMetas/PageMetas"
 
 import styles from "/styles/DesignEngineeringGallery.module.scss"
+import {
+  COMPONENTS,
+  COMPONENTS_ORDER,
+} from "@/constants/design-engineering/components"
 
 const DesignEngineeringIndex = () => (
   <>
@@ -37,183 +41,22 @@ const DesignEngineeringIndex = () => (
         </p>
       </div>
       <div className={styles.card_list} style={{ marginTop: "1.5em" }}>
-        <Link
-          href={"/design-engineering/component/table-of-contents"}
-          className={styles.card}
-        >
-          <VideoPlayer
-            style={{ aspectRatio: "990/500" }}
-            sources={{
-              dark: {
-                src: "/media/design-engineering/toc/toc-overview-dark.mp4",
-                type: "video/mp4",
-              },
-              light: {
-                src: "/media/design-engineering/toc/toc-overview-light.mp4",
-                type: "video/mp4",
-              },
-            }}
-          />
-          A Table of content component
-        </Link>
-        <Link
-          href={"/design-engineering/component/details-disclosure-component"}
-          className={styles.card}
-        >
-          <VideoPlayer
-            style={{ aspectRatio: "990/500" }}
-            sources={{
-              dark: {
-                src: "/media/design-engineering/details/details-overview-dark.mp4",
-                type: "video/mp4",
-              },
-              light: {
-                src: "/media/design-engineering/details/details-overview-light.mp4",
-                type: "video/mp4",
-              },
-            }}
-          />
-          A details (or disclosure) component
-        </Link>
-        <Link
-          href={"/design-engineering/component/images-and-embeds"}
-          className={styles.card}
-        >
-          <VideoPlayer
-            style={{ aspectRatio: "990/500" }}
-            sources={{
-              dark: {
-                src: "/media/design-engineering/images-and-embeds/images-and-embeds-overview-slow-dark.mp4",
-                type: "video/mp4",
-              },
-              light: {
-                src: "/media/design-engineering/images-and-embeds/images-and-embeds-overview-slow-light.mp4",
-                type: "video/mp4",
-              },
-            }}
-          />
-          Images and embeds
-        </Link>
-
-        <Link
-          href={"/design-engineering/component/collapsible-toolbar"}
-          className={styles.card}
-        >
-          <VideoPlayer
-            style={{ aspectRatio: "990/500" }}
-            sources={{
-              dark: {
-                src: "/media/design-engineering/collapsible-toolbar/collapsible-toolbar-overview-dark.mp4",
-                type: "video/mp4",
-              },
-              light: {
-                src: "/media/design-engineering/collapsible-toolbar/collapsible-toolbar-overview-light.mp4",
-                type: "video/mp4",
-              },
-            }}
-          />
-          A collapsible toolbar
-        </Link>
-
-        <Link
-          href={"/design-engineering/component/publish-button"}
-          className={styles.card}
-        >
-          <VideoPlayer
-            style={{ aspectRatio: "990/500" }}
-            sources={{
-              dark: {
-                src: "/media/design-engineering/publish-button/publish-button-overview-dark.mp4",
-                type: "video/mp4",
-              },
-              light: {
-                src: "/media/design-engineering/publish-button/publish-button-overview-light.mp4",
-                type: "video/mp4",
-              },
-            }}
-          />
-          A publish button
-        </Link>
-
-        <Link
-          href={"/design-engineering/component/dock-component"}
-          className={styles.card}
-        >
-          <VideoPlayer
-            style={{ aspectRatio: "990/500" }}
-            sources={{
-              dark: {
-                src: "/media/design-engineering/dock/dock-overview-dark.mp4",
-                type: "video/mp4",
-              },
-              light: {
-                src: "/media/design-engineering/dock/dock-overview-light.mp4",
-                type: "video/mp4",
-              },
-            }}
-          />
-          A macOS inspired dock
-        </Link>
-
-        <Link
-          href={"/design-engineering/component/carousel-component"}
-          className={styles.card}
-        >
-          <VideoPlayer
-            style={{ aspectRatio: "990/500" }}
-            sources={{
-              dark: {
-                src: "/media/design-engineering/carousel/carousel-overview-dark.mp4",
-                type: "video/mp4",
-              },
-              light: {
-                src: "/media/design-engineering/carousel/carousel-overview-light.mp4",
-                type: "video/mp4",
-              },
-            }}
-          />
-          A carousel component
-        </Link>
-
-        <Link
-          href={"/design-engineering/component/stacking-cards"}
-          className={styles.card}
-        >
-          <VideoPlayer
-            style={{ aspectRatio: "990/500" }}
-            sources={{
-              dark: {
-                src: "/media/design-engineering/stacking-cards/stacking-cards-overview-dark.mp4",
-                type: "video/mp4",
-              },
-              light: {
-                src: "/media/design-engineering/stacking-cards/stacking-cards-overview-light.mp4",
-                type: "video/mp4",
-              },
-            }}
-          />
-          Rolling stacking cards
-        </Link>
-
-        <Link
-          href={"/design-engineering/component/swipeable-cards"}
-          className={styles.card}
-        >
-          <VideoPlayer
-            style={{ aspectRatio: "990/500" }}
-            sources={{
-              dark: {
-                src: "/media/design-engineering/swipeable-cards/swipeable-cards-overview-dark.mp4",
-                type: "video/mp4",
-              },
-              light: {
-                src: "/media/design-engineering/swipeable-cards/swipeable-cards-overview-light.mp4",
-                type: "video/mp4",
-              },
-            }}
-          />
-          Swipeable cards carousel
-        </Link>
+        {COMPONENTS_ORDER.map((componentId) => {
+          const component = COMPONENTS[componentId]
+          return (
+            <Link
+              key={componentId}
+              href={component.metas.url}
+              className={styles.card}
+            >
+              <VideoPlayer
+                style={{ aspectRatio: "990/500" }}
+                sources={component.video}
+              />
+              {component.shortTitle}
+            </Link>
+          )
+        })}
       </div>
     </div>
   </>
