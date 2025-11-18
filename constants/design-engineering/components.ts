@@ -126,7 +126,7 @@ type HasDuplicates<T extends readonly unknown[]> = T extends readonly [
     : HasDuplicates<Rest>
   : never
 
-const createComponentOrder = <T extends readonly unknown[] = []>(
+const createComponentOrder = <T extends readonly ComponentId[] = []>(
   order: MissingKeys<T> extends never
     ? ExtraKeys<T> extends never
       ? HasDuplicates<T> extends never
