@@ -11,15 +11,15 @@ type BaseVideoSources = {
   }
 }
 
-type VideoSourcesWithSlowVersions = BaseVideoSources & {
+export type VideoSourcesWithSlowVersions = BaseVideoSources & {
   slow: BaseVideoSources
 }
 
-type VideoSourcesWithoutSlowVersions = BaseVideoSources & {
+export type VideoSourcesWithoutSlowVersions = BaseVideoSources & {
   slow?: never
 }
 
-type VideoSources =
+export type VideoSources =
   | VideoSourcesWithSlowVersions
   | VideoSourcesWithoutSlowVersions
 
