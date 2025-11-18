@@ -2,6 +2,7 @@ import { PageMetasProps } from "@/components/PageMetas/PageMetas"
 
 export const COMPONENTS = {
   toc: {
+    shortTitle: "A Table of content component",
     metas: {
       title: "Design engineering: a table of contents component",
       description:
@@ -14,6 +15,7 @@ export const COMPONENTS = {
     },
   },
   details: {
+    shortTitle: "A details (or disclosure) component",
     metas: {
       title: "Design engineering: a details (or disclosure) component",
       description:
@@ -26,6 +28,7 @@ export const COMPONENTS = {
     },
   },
   "images-and-embeds": {
+    shortTitle: "Images and embeds",
     metas: {
       title: "Design engineering: images and embeds",
       description:
@@ -38,6 +41,7 @@ export const COMPONENTS = {
     },
   },
   "collapsible-toolbar": {
+    shortTitle: "A collapsible toolbar",
     metas: {
       title: "Design engineering: a collapsible toolbar",
       description:
@@ -50,6 +54,7 @@ export const COMPONENTS = {
     },
   },
   "publish-button": {
+    shortTitle: "A publish button",
     metas: {
       title: "Design engineering: a publish button",
       description:
@@ -62,6 +67,7 @@ export const COMPONENTS = {
     },
   },
   "dock-component": {
+    shortTitle: "A macOS inspired dock",
     metas: {
       title: "Design engineering: a dock component",
       description:
@@ -74,6 +80,7 @@ export const COMPONENTS = {
     },
   },
   "carousel-component": {
+    shortTitle: "A carousel component",
     metas: {
       title: "Design engineering: a carousel component",
       description:
@@ -86,6 +93,7 @@ export const COMPONENTS = {
     },
   },
   "stacking-cards": {
+    shortTitle: "Rolling stacking cards",
     metas: {
       title: "Design engineering: rolling stacking cards",
       description:
@@ -98,6 +106,7 @@ export const COMPONENTS = {
     },
   },
   "swipeable-cards": {
+    shortTitle: "Swipeable cards carousel",
     metas: {
       title: "Design engineering: a swipeable cards carousel",
       description:
@@ -109,7 +118,7 @@ export const COMPONENTS = {
       imageHeight: 630,
     },
   },
-} as const satisfies Record<string, { metas: PageMetasProps }>
+} as const satisfies Record<string, { metas: PageMetasProps, shortTitle: string }>
 
 export type ComponentId = keyof typeof COMPONENTS
 
