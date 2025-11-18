@@ -1,126 +1,216 @@
 import { PageMetasProps } from "@/components/PageMetas/PageMetas"
+import { VideoSourcesWithoutSlowVersions } from "@/components/VideoPlayer/VideoPlayer"
 
 export const COMPONENTS = {
   toc: {
     shortTitle: "A Table of content component",
+    video: {
+      dark: {
+        src: "/media/design-engineering/toc/toc-overview-dark.mp4",
+        type: "video/mp4",
+      },
+      light: {
+        src: "/media/design-engineering/toc/toc-overview-light.mp4",
+        type: "video/mp4",
+      },
+    },
     metas: {
       title: "Design engineering: a table of contents component",
       description:
         "Building a table of contents component, using React, TypeScript, and SCSS.",
-      url: "https://hello-mat.com/design-engineering/component/table-of-contents",
-      image:
-        "https://hello-mat.com/media/design-engineering/toc/og-toc-light.png",
+      url: "/design-engineering/component/table-of-contents",
+      image: "/media/design-engineering/toc/og-toc-light.png",
       imageWidth: 1200,
       imageHeight: 630,
     },
   },
   details: {
     shortTitle: "A details (or disclosure) component",
+    video: {
+      dark: {
+        src: "/media/design-engineering/details/details-overview-dark.mp4",
+        type: "video/mp4",
+      },
+      light: {
+        src: "/media/design-engineering/details/details-overview-light.mp4",
+        type: "video/mp4",
+      },
+    },
     metas: {
       title: "Design engineering: a details (or disclosure) component",
       description:
         "Building a details (disclosure) component, using React, TypeScript, and SCSS.",
-      url: "https://hello-mat.com/design-engineering/component/details-disclosure-component",
-      image:
-        "https://hello-mat.com/media/design-engineering/details/og-details-light.png",
+      url: "/design-engineering/component/details-disclosure-component",
+      image: "/media/design-engineering/details/og-details-light.png",
       imageWidth: 1200,
       imageHeight: 630,
     },
   },
   "images-and-embeds": {
     shortTitle: "Images and embeds",
+    video: {
+      dark: {
+        src: "/media/design-engineering/images-and-embeds/images-and-embeds-overview-slow-dark.mp4",
+        type: "video/mp4",
+      },
+      light: {
+        src: "/media/design-engineering/images-and-embeds/images-and-embeds-overview-slow-light.mp4",
+        type: "video/mp4",
+      },
+    },
     metas: {
       title: "Design engineering: images and embeds",
       description:
         "Building a Media component supporting images and embeds using React, TypeScript, and SCSS.",
-      url: "https://hello-mat.com/design-engineering/component/images-and-embeds",
-      image:
-        "https://hello-mat.com/media/design-engineering/images-and-embeds/og-media-light.png",
+      url: "/design-engineering/component/images-and-embeds",
+      image: "/media/design-engineering/images-and-embeds/og-media-light.png",
       imageWidth: 1200,
       imageHeight: 630,
     },
   },
   "collapsible-toolbar": {
     shortTitle: "A collapsible toolbar",
+    video: {
+      dark: {
+        src: "/media/design-engineering/collapsible-toolbar/collapsible-toolbar-overview-dark.mp4",
+        type: "video/mp4",
+      },
+      light: {
+        src: "/media/design-engineering/collapsible-toolbar/collapsible-toolbar-overview-light.mp4",
+        type: "video/mp4",
+      },
+    },
     metas: {
       title: "Design engineering: a collapsible toolbar",
       description:
         "Building a collapsible / resizable toolbar using React, TypeScript, and SCSS.",
-      url: "https://hello-mat.com/design-engineering/component/collapsible-toolbar",
+      url: "/design-engineering/component/collapsible-toolbar",
       image:
-        "https://hello-mat.com/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png",
+        "/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png",
       imageWidth: 1200,
       imageHeight: 630,
     },
   },
   "publish-button": {
     shortTitle: "A publish button",
+    video: {
+      dark: {
+        src: "/media/design-engineering/publish-button/publish-button-overview-dark.mp4",
+        type: "video/mp4",
+      },
+      light: {
+        src: "/media/design-engineering/publish-button/publish-button-overview-light.mp4",
+        type: "video/mp4",
+      },
+    },
     metas: {
       title: "Design engineering: a publish button",
       description:
         "Building a publish button component with feedback, using React, TypeScript, and SCSS.",
-      url: "https://hello-mat.com/design-engineering/component/publish-button",
+      url: "/design-engineering/component/publish-button",
       image:
-        "https://hello-mat.com/media/design-engineering/publish-button/og-publish-button-light.png",
+        "/media/design-engineering/publish-button/og-publish-button-light.png",
       imageWidth: 1200,
       imageHeight: 630,
     },
   },
   "dock-component": {
     shortTitle: "A macOS inspired dock",
+    video: {
+      dark: {
+        src: "/media/design-engineering/dock/dock-overview-dark.mp4",
+        type: "video/mp4",
+      },
+      light: {
+        src: "/media/design-engineering/dock/dock-overview-light.mp4",
+        type: "video/mp4",
+      },
+    },
     metas: {
       title: "Design engineering: a dock component",
       description:
         "Building a macOS-like dock component, using React, TypeScript, and SCSS.",
-      url: "https://hello-mat.com/design-engineering/component/dock-component",
-      image:
-        "https://hello-mat.com/media/design-engineering/dock/og-dock-light.png",
+      url: "/design-engineering/component/dock-component",
+      image: "/media/design-engineering/dock/og-dock-light.png",
       imageWidth: 1200,
       imageHeight: 630,
     },
   },
   "carousel-component": {
     shortTitle: "A carousel component",
+    video: {
+      dark: {
+        src: "/media/design-engineering/carousel/carousel-overview-dark.mp4",
+        type: "video/mp4",
+      },
+      light: {
+        src: "/media/design-engineering/carousel/carousel-overview-light.mp4",
+        type: "video/mp4",
+      },
+    },
     metas: {
       title: "Design engineering: a carousel component",
       description:
         "Building a scrollable, and swipeable carousel, with momentum scrolling, overscroll and rubber-banding using React, TypeScript, and SCSS.",
-      url: "https://hello-mat.com/design-engineering/component/carousel-component",
-      image:
-        "https://hello-mat.com/media/design-engineering/carousel/og-carousel-light.png",
+      url: "/design-engineering/component/carousel-component",
+      image: "/media/design-engineering/carousel/og-carousel-light.png",
       imageWidth: 1200,
       imageHeight: 630,
     },
   },
   "stacking-cards": {
     shortTitle: "Rolling stacking cards",
+    video: {
+      dark: {
+        src: "/media/design-engineering/stacking-cards/stacking-cards-overview-dark.mp4",
+        type: "video/mp4",
+      },
+      light: {
+        src: "/media/design-engineering/stacking-cards/stacking-cards-overview-light.mp4",
+        type: "video/mp4",
+      },
+    },
     metas: {
       title: "Design engineering: rolling stacking cards",
       description:
         "Building a rolling stacking cards scroll-driven animation with React, TypeScript, and SCSS.",
-      url: "https://hello-mat.com/design-engineering/stacking-cards",
+      url: "/design-engineering/stacking-cards",
       image:
-        "https://hello-mat.com/media/design-engineering/stacking-cards/og-stacking-cards-light.png",
+        "/media/design-engineering/stacking-cards/og-stacking-cards-light.png",
       imageWidth: 1200,
       imageHeight: 630,
     },
   },
   "swipeable-cards": {
     shortTitle: "Swipeable cards carousel",
+    video: {
+      dark: {
+        src: "/media/design-engineering/swipeable-cards/swipeable-cards-overview-dark.mp4",
+        type: "video/mp4",
+      },
+      light: {
+        src: "/media/design-engineering/swipeable-cards/swipeable-cards-overview-light.mp4",
+        type: "video/mp4",
+      },
+    },
     metas: {
       title: "Design engineering: a swipeable cards carousel",
       description:
         "Building a swipeable cards stack with React, TypeScript, and SCSS.",
-      url: "https://hello-mat.com/design-engineering/swipeable-cards",
+      url: "/design-engineering/swipeable-cards",
       image:
-        "https://hello-mat.com/media/design-engineering/swipeable-cards/og-swipeable-cards-light.png",
+        "/media/design-engineering/swipeable-cards/og-swipeable-cards-light.png",
       imageWidth: 1200,
       imageHeight: 630,
     },
   },
 } as const satisfies Record<
   string,
-  { metas: PageMetasProps; shortTitle: string }
+  {
+    metas: PageMetasProps
+    shortTitle: string
+    video: VideoSourcesWithoutSlowVersions
+  }
 >
 
 export type ComponentId = keyof typeof COMPONENTS
