@@ -1,17 +1,6 @@
 import { PageMetasProps } from "@/components/PageMetas/PageMetas"
 
-export type ComponentId =
-  | "toc"
-  | "details"
-  | "images-and-embeds"
-  | "collapsible-toolbar"
-  | "publish-button"
-  | "dock-component"
-  | "carousel-component"
-  | "stacking-cards"
-  | "swipeable-cards"
-
-export const COMPONENTS: Record<ComponentId, { metas: PageMetasProps }> = {
+export const COMPONENTS = {
   toc: {
     metas: {
       title: "Design engineering: a table of contents component",
@@ -120,9 +109,36 @@ export const COMPONENTS: Record<ComponentId, { metas: PageMetasProps }> = {
       imageHeight: 630,
     },
   },
+} as const satisfies Record<string, { metas: PageMetasProps }>
+
+export type ComponentId = keyof typeof COMPONENTS
+
+type MissingKeys<T extends readonly unknown[]> = Exclude<ComponentId, T[number]>
+
+type ExtraKeys<T extends readonly unknown[]> = Exclude<T[number], ComponentId>
+
+type HasDuplicates<T extends readonly unknown[]> = T extends readonly [
+  infer First,
+  ...infer Rest
+]
+  ? First extends Rest[number]
+    ? First
+    : HasDuplicates<Rest>
+  : never
+
+const createComponentOrder = <T extends readonly unknown[] = []>(
+  order: MissingKeys<T> extends never
+    ? ExtraKeys<T> extends never
+      ? HasDuplicates<T> extends never
+        ? T
+        : `Error: Duplicate component ID: ${HasDuplicates<T> & string}`
+      : `Error: Invalid component ID: ${ExtraKeys<T> & string}`
+    : `Error: Missing component IDs: ${MissingKeys<T> & string}`
+): T => {
+  return order as T
 }
 
-export const COMPONENTS_ORDER: ComponentId[] = [
+export const COMPONENTS_ORDER = createComponentOrder([
   "toc",
   "details",
   "images-and-embeds",
@@ -132,4 +148,4 @@ export const COMPONENTS_ORDER: ComponentId[] = [
   "carousel-component",
   "stacking-cards",
   "swipeable-cards",
-]
+] as const)
