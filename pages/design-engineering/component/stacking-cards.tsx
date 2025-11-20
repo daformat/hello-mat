@@ -106,7 +106,7 @@ const StackingCardsPageContent = () => {
               }
 
               .demo {
-                display: initial;
+                display: block;
               }
             }
           `,
@@ -136,7 +136,7 @@ const StackingCardsPageContent = () => {
             }}
           />
         </div>
-        <div className="demo" style={{ paddingBottom: 48, display: "block" }}>
+        <div className="demo" style={{ paddingBottom: 48 }}>
           <RollingStackedCards
             cards={[...cards, ...cards, ...cards, ...cards.slice(0, 1)]}
             topDistance={"32px"}
