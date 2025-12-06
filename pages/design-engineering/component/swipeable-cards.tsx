@@ -264,4 +264,5 @@ const EmptyView = () => {
     </div>
   )
 }
+
 export default SwipeableCardsPage
