@@ -46,9 +46,10 @@ export const NumberFlowInput = ({
     (value: string) => {
       isUserInputRef.current = true
 
-      // Allow intermediate states like "-" or "1." while typing
+      // Handle empty or invalid intermediate states
       if (value === "" || value === "-" || value === "." || value === "-.") {
-        // Don't update the parent with these intermediate values
+        onChange?.(undefined)
+        setUncontrolledValue(undefined)
         return
       }
 
