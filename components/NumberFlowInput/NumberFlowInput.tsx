@@ -388,7 +388,7 @@ export const NumberFlowInput = ({
       if (value === "" || value === "-" || value === "." || value === "-.") {
         onChange?.(undefined)
         setUncontrolledValue(undefined)
-        updateDOM("")
+        updateDOM(value) // <-- Keep the intermediate value, don't clear it!
         return
       }
 
@@ -397,7 +397,7 @@ export const NumberFlowInput = ({
 
       onChange?.(finalValue)
       setUncontrolledValue(finalValue)
-      updateDOM(value) // Pass old value here
+      updateDOM(value)
     },
     [onChange, updateDOM]
   )
@@ -545,16 +545,20 @@ export const NumberFlowInput = ({
           event.preventDefault()
           return
         }
-        return
+        return // ALLOW the digit
       }
 
       // Allow decimal point only if there isn't one already and not before a minus sign
-      if (key === "." && !currentText.includes(".")) {
-        // Don't allow decimal point before a minus sign
-        if (currentText.startsWith("-") && cursorPosition === 0) {
-          event.preventDefault()
-          return
+      if (key === ".") {
+        if (!currentText.includes(".")) {
+          // Don't allow decimal point before a minus sign
+          if (currentText.startsWith("-") && cursorPosition === 0) {
+            event.preventDefault()
+            return
+          }
+          return // ALLOW the decimal
         }
+        event.preventDefault() // BLOCK - already has decimal
         return
       }
 
@@ -564,10 +568,13 @@ export const NumberFlowInput = ({
 
         // Allow if empty, cursor at start and no minus, or replacing a selection at start
         if (currentText.length === 0 || (cursorPosition === 0 && !hasMinus)) {
-          return
+          return // ALLOW the minus
         }
+        event.preventDefault() // BLOCK - not at start or already has minus
+        return
       }
 
+      // Block everything else
       event.preventDefault()
     },
     [updateValue]
@@ -661,6 +668,7 @@ export const NumberFlowInput = ({
         style={{
           border: "1px solid #ccc",
           display: "inline-block",
+          fontSize: "2em",
         }}
       >
         <span
