@@ -231,8 +231,41 @@ export const NumberFlowInput = ({
 
   const handleInput = useCallback<FormEventHandler<HTMLSpanElement>>(
     (event) => {
-      const { textContent } = event.currentTarget
-      updateValue(textContent ?? "")
+      const textContent = event.currentTarget.textContent ?? ""
+
+      // Remove any invalid characters that slip through
+      const cleanedText = textContent.replace(/[^\d.-]/g, "")
+
+      // If the text was cleaned, update the contentEditable
+      if (cleanedText !== textContent && spanRef.current) {
+        const selection = window.getSelection()
+        const cursorPosition = selection?.anchorOffset ?? 0
+
+        spanRef.current.textContent = cleanedText
+
+        // Restore cursor position
+        if (spanRef.current.firstChild) {
+          const newRange = document.createRange()
+          const newSelection = window.getSelection()
+          const maxPosition = cleanedText.length
+          const restoredPosition = Math.min(cursorPosition, maxPosition)
+
+          try {
+            newRange.setStart(spanRef.current.firstChild, restoredPosition)
+            newRange.collapse(true)
+            newSelection?.removeAllRanges()
+            newSelection?.addRange(newRange)
+          } catch {
+            // If setting the position fails, just place cursor at the end
+            newRange.selectNodeContents(spanRef.current)
+            newRange.collapse(false)
+            newSelection?.removeAllRanges()
+            newSelection?.addRange(newRange)
+          }
+        }
+      }
+
+      updateValue(cleanedText)
     },
     [updateValue]
   )
