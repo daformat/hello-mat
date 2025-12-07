@@ -38,8 +38,8 @@ export const NumberFlowInput = ({
   const spanRef = useRef<HTMLSpanElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const isUserInputRef = useRef(false)
-  const isControlled = value !== undefined
   const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue)
+  const isControlled = value !== undefined
   const actualValue = isControlled ? value : uncontrolledValue
 
   const updateValue = useCallback(
@@ -55,11 +55,8 @@ export const NumberFlowInput = ({
       const numberValue = parseFloat(value)
       const finalValue = isNaN(numberValue) ? undefined : numberValue
 
-      if (onChange) {
-        onChange(finalValue)
-      } else {
-        setUncontrolledValue(finalValue)
-      }
+      onChange?.(finalValue)
+      setUncontrolledValue(finalValue)
     },
     [onChange]
   )
@@ -258,6 +255,7 @@ export const NumberFlowInput = ({
         value={actualValue?.toString() ?? ""}
         readOnly
       />
+      actual: <code>{actualValue}</code>
     </>
   )
 }
