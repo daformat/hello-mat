@@ -100,6 +100,52 @@ const setCursorLogicalPosition = (container: HTMLElement, position: number) => {
   selection?.addRange(range)
 }
 
+const getComponents = (value: string) => {
+  const sign = value.replaceAll(/[^+-]/g, "")
+  const separator = value.replaceAll(/[^.]/g, "")
+  const [digits = "", decimals = ""] = value.replace(sign, "").split(".")
+
+  return {
+    sign,
+    separator,
+    digits: digits.split(""),
+    decimals: decimals.split(""),
+  }
+}
+
+const wrapFirstLevelChars = (container: HTMLElement) => {
+  // Get only direct child nodes (not nested)
+  const childNodes = Array.from(container.childNodes)
+
+  childNodes.forEach((node) => {
+    // Only process text nodes
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent ?? ""
+
+      // Split into characters and wrap each digit
+      const fragment = document.createDocumentFragment()
+      for (const char of text) {
+        // Wrap digit in span
+        const span = document.createElement("span")
+        span.dataset.flow = ""
+        span.textContent = char
+        fragment.appendChild(span)
+      }
+
+      // Replace the text node with the fragment
+      node.parentNode?.replaceChild(fragment, node)
+    } else if (
+      node.nodeType === Node.ELEMENT_NODE &&
+      (node.textContent?.length ?? 0) > 1
+    ) {
+      wrapFirstLevelChars(node as HTMLElement)
+      const fragment = document.createDocumentFragment()
+      fragment.append(...node.childNodes)
+      node.parentNode?.replaceChild(fragment, node)
+    }
+  })
+}
+
 export const NumberFlowInput = ({
   value,
   defaultValue,
@@ -124,35 +170,34 @@ export const NumberFlowInput = ({
     const cursorPosition = getCursorLogicalPosition(spanRef.current)
 
     if (newValue) {
-      const sign = newValue.replaceAll(/[^+-]/g, "")
-      const separator = newValue.replaceAll(/[^.]/g, "")
-      const [digits, decimals] = newValue.replace(sign, "").split(".")
+      const { sign, digits, separator, decimals } = getComponents(newValue)
 
-      spanRef.current.innerHTML = `${
-        sign ? `<span data-flow="" data-sign="">${sign}</span>` : ""
-      }${
-        digits?.length
-          ? digits
-              .split("")
-              .map(
-                (digit) => `<span data-flow="" data-digit="">${digit}</span>`
-              )
-              .join("")
-          : ""
-      }${
-        separator
-          ? `<span data-flow="" data-separator="">${separator}</span>`
-          : ""
-      }${
-        decimals?.length
-          ? decimals
-              .split("")
-              .map(
-                (digit) => `<span data-flow="" data-decimal="">${digit}</span>`
-              )
-              .join("")
-          : ""
-      }`
+      // spanRef.current.innerHTML = `${
+      //   sign ? `<span data-flow="" data-sign="">${sign}</span>` : ""
+      // }${
+      //   digits?.length
+      //     ? digits
+      //         .map(
+      //           (digit) => `<span data-flow="" data-digit="">${digit}</span>`
+      //         )
+      //         .join("")
+      //     : ""
+      // }${
+      //   separator
+      //     ? `<span data-flow="" data-separator="">${separator}</span>`
+      //     : ""
+      // }${
+      //   decimals?.length
+      //     ? decimals
+      //         .map(
+      //           (digit) => `<span data-flow="" data-decimal="">${digit}</span>`
+      //         )
+      //         .join("")
+      //     : ""
+      // }`
+
+      wrapFirstLevelChars(spanRef.current)
+
       setTimeout(() => {
         const flowElements = spanRef.current?.querySelectorAll("[data-flow]")
         flowElements?.forEach((flowElement) => {
