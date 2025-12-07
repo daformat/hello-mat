@@ -146,6 +146,177 @@ const wrapFirstLevelChars = (container: HTMLElement) => {
   })
 }
 
+interface Changes {
+  addedIndices: Set<number>
+  removedIndices: Set<number>
+  unchangedIndices: Set<number>
+}
+
+interface Changes {
+  addedIndices: Set<number>
+  removedIndices: Set<number>
+  unchangedIndices: Set<number>
+  changedIndices: Set<number> // Indices in newValue where character was replaced
+}
+
+const getStringChanges = (
+  oldValue: string,
+  newValue: string,
+  cursorPosition?: number
+): Changes => {
+  const changes: Changes = {
+    addedIndices: new Set(),
+    removedIndices: new Set(),
+    unchangedIndices: new Set(),
+    changedIndices: new Set(),
+  }
+
+  // Handle empty cases
+  if (!oldValue && !newValue) {
+    return changes
+  }
+
+  if (!oldValue) {
+    for (let i = 0; i < newValue.length; i++) {
+      changes.addedIndices.add(i)
+    }
+    return changes
+  }
+
+  if (!newValue) {
+    for (let i = 0; i < oldValue.length; i++) {
+      changes.removedIndices.add(i)
+    }
+    return changes
+  }
+
+  const oldLen = oldValue.length
+  const newLen = newValue.length
+  const lengthDiff = newLen - oldLen
+
+  // If we have cursor position, use it to guide the comparison
+  if (cursorPosition !== undefined) {
+    if (lengthDiff > 0) {
+      // Characters were added
+      const changeStartPos = cursorPosition - lengthDiff
+      const changeEndPos = cursorPosition
+
+      // Mark unchanged before the change
+      for (let i = 0; i < changeStartPos; i++) {
+        if (oldValue[i] === newValue[i]) {
+          changes.unchangedIndices.add(i)
+        }
+      }
+
+      // Mark added characters
+      for (let i = changeStartPos; i < changeEndPos; i++) {
+        changes.addedIndices.add(i)
+      }
+
+      // Mark unchanged after the change
+      for (let i = changeEndPos; i < newLen; i++) {
+        const oldIndex = i - lengthDiff
+        if (
+          oldIndex >= 0 &&
+          oldIndex < oldLen &&
+          oldValue[oldIndex] === newValue[i]
+        ) {
+          changes.unchangedIndices.add(i)
+        }
+      }
+    } else if (lengthDiff < 0) {
+      // Characters were removed
+      const changeStartPos = cursorPosition
+
+      // Mark unchanged before the change
+      for (let i = 0; i < changeStartPos; i++) {
+        changes.unchangedIndices.add(i)
+      }
+
+      // Mark removed characters (in old string)
+      for (let i = changeStartPos; i < changeStartPos - lengthDiff; i++) {
+        changes.removedIndices.add(i)
+      }
+
+      // Mark unchanged after the change
+      for (let i = changeStartPos; i < newLen; i++) {
+        const oldIndex = i - lengthDiff
+        if (oldIndex >= 0 && oldIndex < oldLen) {
+          changes.unchangedIndices.add(i)
+        }
+      }
+    } else {
+      // Same length - could be replacements or unchanged
+      for (let i = 0; i < newLen; i++) {
+        if (oldValue[i] === newValue[i]) {
+          changes.unchangedIndices.add(i)
+        } else {
+          changes.changedIndices.add(i)
+        }
+      }
+    }
+
+    return changes
+  }
+
+  // Fallback to prefix/suffix algorithm when no cursor position
+  let prefixLen = 0
+  const minLen = Math.min(oldLen, newLen)
+  while (prefixLen < minLen && oldValue[prefixLen] === newValue[prefixLen]) {
+    prefixLen++
+  }
+
+  let suffixLen = 0
+  while (
+    suffixLen < minLen - prefixLen &&
+    oldValue[oldLen - 1 - suffixLen] === newValue[newLen - 1 - suffixLen]
+  ) {
+    suffixLen++
+  }
+
+  // Mark unchanged in prefix
+  for (let i = 0; i < prefixLen; i++) {
+    changes.unchangedIndices.add(i)
+  }
+
+  // Mark unchanged in suffix
+  for (let i = 0; i < suffixLen; i++) {
+    changes.unchangedIndices.add(newLen - 1 - i)
+  }
+
+  const oldMiddleStart = prefixLen
+  const oldMiddleEnd = oldLen - suffixLen
+  const newMiddleStart = prefixLen
+  const newMiddleEnd = newLen - suffixLen
+
+  const oldMiddleLen = oldMiddleEnd - oldMiddleStart
+  const newMiddleLen = newMiddleEnd - newMiddleStart
+
+  if (oldMiddleLen === newMiddleLen && oldMiddleLen > 0) {
+    // Same length middle section - could be replacements
+    for (let i = 0; i < oldMiddleLen; i++) {
+      const oldIndex = oldMiddleStart + i
+      const newIndex = newMiddleStart + i
+      if (oldValue[oldIndex] !== newValue[newIndex]) {
+        changes.changedIndices.add(newIndex)
+      } else {
+        changes.unchangedIndices.add(newIndex)
+      }
+    }
+  } else {
+    // Different lengths - mark as additions/removals
+    for (let i = newMiddleStart; i < newMiddleEnd; i++) {
+      changes.addedIndices.add(i)
+    }
+
+    for (let i = oldMiddleStart; i < oldMiddleEnd; i++) {
+      changes.removedIndices.add(i)
+    }
+  }
+
+  return changes
+}
+
 export const NumberFlowInput = ({
   value,
   defaultValue,
@@ -168,47 +339,40 @@ export const NumberFlowInput = ({
 
     // Save cursor position BEFORE updating
     const cursorPosition = getCursorLogicalPosition(spanRef.current)
+    const oldValue = lastValueRef.current // Get old value before updating
 
-    if (newValue) {
-      const { sign, digits, separator, decimals } = getComponents(newValue)
-
-      // spanRef.current.innerHTML = `${
-      //   sign ? `<span data-flow="" data-sign="">${sign}</span>` : ""
-      // }${
-      //   digits?.length
-      //     ? digits
-      //         .map(
-      //           (digit) => `<span data-flow="" data-digit="">${digit}</span>`
-      //         )
-      //         .join("")
-      //     : ""
-      // }${
-      //   separator
-      //     ? `<span data-flow="" data-separator="">${separator}</span>`
-      //     : ""
-      // }${
-      //   decimals?.length
-      //     ? decimals
-      //         .map(
-      //           (digit) => `<span data-flow="" data-decimal="">${digit}</span>`
-      //         )
-      //         .join("")
-      //     : ""
-      // }`
-
-      wrapFirstLevelChars(spanRef.current)
-
-      setTimeout(() => {
-        const flowElements = spanRef.current?.querySelectorAll("[data-flow]")
-        flowElements?.forEach((flowElement) => {
-          if (flowElement instanceof HTMLElement) {
-            flowElement.dataset.show = ""
-          }
-        })
-      })
-    } else {
+    if (!newValue) {
       spanRef.current.innerHTML = ""
+      lastValueRef.current = newValue
+      return
     }
+
+    // Find what changed between old and new
+    const changes = getStringChanges(oldValue, newValue, cursorPosition)
+
+    // First, wrap all characters
+    wrapFirstLevelChars(spanRef.current)
+    const flowElements = Array.from(
+      spanRef.current?.querySelectorAll("[data-flow]")
+    )
+    changes.unchangedIndices.forEach((index) => {
+      const element = flowElements[index]
+      if (element instanceof HTMLElement) {
+        element.dataset.show = ""
+      }
+    })
+
+    // Then mark only the NEW characters with data-show
+    setTimeout(() => {
+      const flowElements = spanRef.current?.querySelectorAll("[data-flow]")
+      if (!flowElements) return
+
+      Array.from(flowElements).forEach((element, index) => {
+        if (element instanceof HTMLElement && changes.addedIndices.has(index)) {
+          element.dataset.show = ""
+        }
+      })
+    })
 
     // Restore cursor position AFTER updating
     setCursorLogicalPosition(spanRef.current, cursorPosition)
@@ -233,7 +397,7 @@ export const NumberFlowInput = ({
 
       onChange?.(finalValue)
       setUncontrolledValue(finalValue)
-      updateDOM(value)
+      updateDOM(value) // Pass old value here
     },
     [onChange, updateDOM]
   )
@@ -310,6 +474,26 @@ export const NumberFlowInput = ({
       const key = event.key
       const currentText = event.currentTarget.textContent ?? ""
 
+      // Handle Cmd/Ctrl + Backspace - delete everything before cursor
+      if ((event.metaKey || event.ctrlKey) && key === "Backspace") {
+        event.preventDefault()
+
+        if (!spanRef.current) return
+
+        const cursorPosition = getCursorLogicalPosition(spanRef.current)
+
+        // Delete everything before cursor
+        const newText = currentText.slice(cursorPosition)
+        spanRef.current.textContent = newText
+
+        // Place cursor at the beginning
+        setCursorLogicalPosition(spanRef.current, 0)
+
+        // Update the value
+        updateValue(newText)
+        return
+      }
+
       // Prevent formatting shortcuts (Cmd/Ctrl + B, I, U, K)
       if (event.metaKey || event.ctrlKey) {
         const formattingKeys = ["b", "i", "u", "k"]
@@ -317,7 +501,22 @@ export const NumberFlowInput = ({
           event.preventDefault()
           return
         }
-        // Allow all other Ctrl/Cmd shortcuts (including A, C, V, X, Z, Y for copy/paste/undo/redo)
+      }
+
+      // Handle word/line navigation shortcuts
+      if (
+        (event.metaKey || event.ctrlKey || event.altKey) &&
+        (key === "ArrowLeft" || key === "ArrowRight")
+      ) {
+        event.preventDefault()
+
+        if (!spanRef.current) return
+
+        // Cmd/Ctrl + Arrow or Alt + Arrow should move to start/end
+        const targetPosition = key === "ArrowLeft" ? 0 : currentText.length
+
+        setCursorLogicalPosition(spanRef.current, targetPosition)
+        return
       }
 
       const allowedKeys = [
@@ -329,6 +528,7 @@ export const NumberFlowInput = ({
         "Home",
         "End",
       ]
+
       // Allow control keys
       if (allowedKeys.includes(key) || event.ctrlKey || event.metaKey) {
         return
@@ -367,9 +567,10 @@ export const NumberFlowInput = ({
           return
         }
       }
+
       event.preventDefault()
     },
-    []
+    [updateValue]
   )
 
   const handlePaste = useCallback<ClipboardEventHandler<HTMLSpanElement>>(
