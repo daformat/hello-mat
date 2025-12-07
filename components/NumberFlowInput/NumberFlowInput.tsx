@@ -171,8 +171,13 @@ export const NumberFlowInput = ({
         return
       }
 
-      // Allow decimal point only if there isn't one already
+      // Allow decimal point only if there isn't one already and not before a minus sign
       if (key === "." && !currentText.includes(".")) {
+        // Don't allow decimal point before a minus sign
+        if (currentText.startsWith("-") && cursorPosition === 0) {
+          event.preventDefault()
+          return
+        }
         return
       }
 
