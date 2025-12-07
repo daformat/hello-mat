@@ -21,6 +21,8 @@ export type NumberFlowInputUncontrolledProps = {
 
 export type NumberFlowInputCommonProps = {
   onChange?: (value: MaybeUndefined<number>) => void
+  name?: string
+  id?: string
 }
 
 export type NumberFlowInputProps = NumberFlowInputCommonProps &
@@ -30,8 +32,11 @@ export const NumberFlowInput = ({
   value,
   defaultValue,
   onChange,
+  name,
+  id,
 }: NumberFlowInputProps) => {
   const spanRef = useRef<HTMLSpanElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const isUserInputRef = useRef(false)
   const isControlled = value !== undefined
   const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue)
@@ -64,7 +69,16 @@ export const NumberFlowInput = ({
     if (spanRef.current && spanRef.current.textContent === "") {
       spanRef.current.textContent = actualValue?.toString() ?? ""
     }
+    // We don't want to run this effect when actualValue changes, only on initial render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Sync hidden input value whenever actualValue changes
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.value = actualValue?.toString() ?? ""
+    }
+  }, [actualValue])
 
   // Sync the display value only when controlled value changes externally (not from user input)
   useEffect(() => {
@@ -106,7 +120,7 @@ export const NumberFlowInput = ({
           newRange.collapse(true)
           newSelection?.removeAllRanges()
           newSelection?.addRange(newRange)
-        } catch (e) {
+        } catch {
           // If setting the position fails, just place cursor at the end
           newRange.selectNodeContents(spanRef.current)
           newRange.collapse(false)
@@ -221,19 +235,29 @@ export const NumberFlowInput = ({
   )
 
   return (
-    <span
-      ref={spanRef}
-      contentEditable
-      onInput={handleInput}
-      onKeyDown={handleKeyDown}
-      onPaste={handlePaste}
-      suppressContentEditableWarning
-      style={{
-        border: "1px solid #ccc",
-        padding: "5px",
-        minWidth: "50px",
-        display: "inline-block",
-      }}
-    />
+    <>
+      <span
+        ref={spanRef}
+        contentEditable
+        onInput={handleInput}
+        onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
+        suppressContentEditableWarning
+        style={{
+          border: "1px solid #ccc",
+          padding: "5px",
+          minWidth: "50px",
+          display: "inline-block",
+        }}
+      />
+      <input
+        ref={inputRef}
+        type="hidden"
+        name={name}
+        id={id}
+        value={actualValue?.toString() ?? ""}
+        readOnly
+      />
+    </>
   )
 }
