@@ -1,0 +1,17 @@
+.number_flow_input {
+  mask-image: linear-gradient(to bottom, transparent, #000 10px, #000 calc(100% - 10px), transparent);
+
+  :is([data-digit], [data-separator], [data-sign], [data-decimal]) {
+    display: inline-block;
+    transition: translate 0.2s var(--ease-out-cubic);
+    translate: 0 -100%;
+
+    &[data-show] {
+      translate: 0 0;
+    }
+
+    &[data-hide] {
+      translate: 0 -100%;
+    }
+  }
+}

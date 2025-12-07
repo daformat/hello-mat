@@ -8,6 +8,7 @@ import {
   useState,
 } from "react"
 import { MaybeUndefined } from "@/components/Media/utils/maybe"
+import styles from "./NumberFlowInput.module.scss"
 
 export type NumberFlowInputControlledProps = {
   value: MaybeUndefined<number>
@@ -28,6 +29,77 @@ export type NumberFlowInputCommonProps = {
 export type NumberFlowInputProps = NumberFlowInputCommonProps &
   (NumberFlowInputControlledProps | NumberFlowInputUncontrolledProps)
 
+// Convert DOM cursor position to logical character index
+const getCursorLogicalPosition = (container: HTMLElement): number => {
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) return 0
+
+  const range = selection.getRangeAt(0)
+  let position = 0
+
+  // Walk through all child nodes until we find the cursor
+  const walker = document.createTreeWalker(
+    container,
+    NodeFilter.SHOW_TEXT,
+    null
+  )
+
+  let node: Node | null
+  while ((node = walker.nextNode())) {
+    if (node === range.startContainer) {
+      position += range.startOffset
+      break
+    }
+    position += node.textContent?.length ?? 0
+  }
+
+  return position
+}
+
+// Set cursor at logical character index
+const setCursorLogicalPosition = (container: HTMLElement, position: number) => {
+  const walker = document.createTreeWalker(
+    container,
+    NodeFilter.SHOW_TEXT,
+    null
+  )
+
+  let currentPosition = 0
+  let node: Node | null
+
+  while ((node = walker.nextNode())) {
+    const nodeLength = node.textContent?.length ?? 0
+
+    if (currentPosition + nodeLength >= position) {
+      // Cursor is in this text node
+      const offset = position - currentPosition
+      const range = document.createRange()
+      const selection = window.getSelection()
+
+      try {
+        range.setStart(node, offset)
+        range.collapse(true)
+        selection?.removeAllRanges()
+        selection?.addRange(range)
+        return
+      } catch {
+        // If position is invalid, place at end
+        break
+      }
+    }
+
+    currentPosition += nodeLength
+  }
+
+  // Fallback: place cursor at end
+  const range = document.createRange()
+  const selection = window.getSelection()
+  range.selectNodeContents(container)
+  range.collapse(false)
+  selection?.removeAllRanges()
+  selection?.addRange(range)
+}
+
 export const NumberFlowInput = ({
   value,
   defaultValue,
@@ -41,6 +113,63 @@ export const NumberFlowInput = ({
   const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue)
   const isControlled = value !== undefined
   const actualValue = isControlled ? value : uncontrolledValue
+  const lastValueRef = useRef<string>(actualValue?.toString() ?? "")
+
+  const updateDOM = useCallback((newValue: string) => {
+    if (!spanRef.current) {
+      return
+    }
+
+    // Save cursor position BEFORE updating
+    const cursorPosition = getCursorLogicalPosition(spanRef.current)
+
+    if (newValue) {
+      const sign = newValue.replaceAll(/[^+-]/g, "")
+      const separator = newValue.replaceAll(/[^.]/g, "")
+      const [digits, decimals] = newValue.replace(sign, "").split(".")
+
+      spanRef.current.innerHTML = `${
+        sign ? `<span data-flow="" data-sign="">${sign}</span>` : ""
+      }${
+        digits?.length
+          ? digits
+              .split("")
+              .map(
+                (digit) => `<span data-flow="" data-digit="">${digit}</span>`
+              )
+              .join("")
+          : ""
+      }${
+        separator
+          ? `<span data-flow="" data-separator="">${separator}</span>`
+          : ""
+      }${
+        decimals?.length
+          ? decimals
+              .split("")
+              .map(
+                (digit) => `<span data-flow="" data-decimal="">${digit}</span>`
+              )
+              .join("")
+          : ""
+      }`
+      setTimeout(() => {
+        const flowElements = spanRef.current?.querySelectorAll("[data-flow]")
+        flowElements?.forEach((flowElement) => {
+          if (flowElement instanceof HTMLElement) {
+            flowElement.dataset.show = ""
+          }
+        })
+      })
+    } else {
+      spanRef.current.innerHTML = ""
+    }
+
+    // Restore cursor position AFTER updating
+    setCursorLogicalPosition(spanRef.current, cursorPosition)
+
+    lastValueRef.current = newValue
+  }, [])
 
   const updateValue = useCallback(
     (value: string) => {
@@ -50,6 +179,7 @@ export const NumberFlowInput = ({
       if (value === "" || value === "-" || value === "." || value === "-.") {
         onChange?.(undefined)
         setUncontrolledValue(undefined)
+        updateDOM("")
         return
       }
 
@@ -58,8 +188,9 @@ export const NumberFlowInput = ({
 
       onChange?.(finalValue)
       setUncontrolledValue(finalValue)
+      updateDOM(value)
     },
-    [onChange]
+    [onChange, updateDOM]
   )
 
   // Set initial value
@@ -222,7 +353,6 @@ export const NumberFlowInput = ({
 
       // Validate the result would be a valid float pattern
       if (/^-?\d*\.?\d*$/.test(resultText)) {
-        // Use execCommand to insert at cursor position
         document.execCommand("insertText", false, pastedText)
       }
     },
@@ -282,27 +412,29 @@ export const NumberFlowInput = ({
   return (
     <>
       <span
-        ref={spanRef}
-        contentEditable
-        onInput={handleInput}
-        onKeyDown={handleKeyDown}
-        onPaste={handlePaste}
-        suppressContentEditableWarning
         style={{
           border: "1px solid #ccc",
-          padding: "5px",
-          minWidth: "50px",
           display: "inline-block",
         }}
-      />
-      <input
-        ref={inputRef}
-        type="hidden"
-        name={name}
-        id={id}
-        value={actualValue?.toString() ?? ""}
-        readOnly
-      />
+      >
+        <span
+          ref={spanRef}
+          contentEditable
+          onInput={handleInput}
+          onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
+          className={styles.number_flow_input}
+          style={{ padding: "5px", minWidth: "50px", display: "inline-block" }}
+        />
+        <input
+          ref={inputRef}
+          type="hidden"
+          name={name}
+          id={id}
+          value={actualValue?.toString() ?? ""}
+          readOnly
+        />
+      </span>
       actual: <code>{actualValue}</code>
     </>
   )
