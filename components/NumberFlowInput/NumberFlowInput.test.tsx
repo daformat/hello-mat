@@ -1242,7 +1242,7 @@ describe("NumberFlowInput", () => {
       // When "0" becomes "1" after leading zero removal, the "1" should be marked as added
       const spans = input.querySelectorAll("[data-flow][data-show]")
       expect(spans.length).toBe(1)
-      expect(spans[0].textContent).toBe("1")
+      expect(spans[0]?.textContent).toBe("1")
     })
 
     it("should preserve data-show attributes when deleting decimal point from 0.122", async () => {
@@ -1279,6 +1279,162 @@ describe("NumberFlowInput", () => {
           .join("")
         expect(text).toBe("122")
       })
+    })
+
+    it("should animate barrel wheel when replacing single digit (e.g., 2 -> 5)", async () => {
+      render(<NumberFlowInput />)
+
+      const input = getInput()
+      input.focus()
+
+      await typeText(input, "123")
+      await waitFor(() => {
+        expect(input.textContent).toBe("123")
+      })
+      await new Promise((resolve) => setTimeout(resolve, 50))
+
+      // Select the middle digit "2"
+      await waitFor(() => {
+        const walker = document.createTreeWalker(
+          input,
+          NodeFilter.SHOW_TEXT,
+          null
+        )
+        let currentPos = 0
+        let startNode: Node | null = null
+        let endNode: Node | null = null
+        let startOffset = 0
+        let endOffset = 0
+
+        let node: Node | null
+        while ((node = walker.nextNode())) {
+          const nodeLength = node.textContent?.length ?? 0
+          if (!startNode && currentPos + nodeLength >= 1) {
+            startNode = node
+            startOffset = Math.min(1 - currentPos, nodeLength)
+          }
+          if (!endNode && currentPos + nodeLength >= 2) {
+            endNode = node
+            endOffset = Math.min(2 - currentPos, nodeLength)
+            break
+          }
+          currentPos += nodeLength
+        }
+
+        if (startNode && endNode) {
+          const selection = window.getSelection()
+          if (selection) {
+            const range = document.createRange()
+            range.setStart(startNode, startOffset)
+            range.setEnd(endNode, endOffset)
+            selection.removeAllRanges()
+            selection.addRange(range)
+          }
+        }
+      })
+
+      // Type "5" to replace "2"
+      await typeText(input, "5")
+
+      await waitFor(
+        () => {
+          // Check for barrel wheel element in parent container (it's outside contentEditable now)
+          const parentContainer = input.parentElement
+          const barrelWheel =
+            parentContainer?.querySelector("[data-final-digit]")
+          expect(barrelWheel).toBeTruthy()
+          if (barrelWheel) {
+            expect(barrelWheel.getAttribute("data-direction")).toBe("up")
+            const digits = barrelWheel.querySelectorAll("[data-digit]")
+            // Should only have digits from 2 to 5 (inclusive): [2, 3, 4, 5]
+            expect(digits.length).toBe(4)
+            // Verify it has the sequence digits
+            const digitTexts = Array.from(digits).map((d) => d.textContent)
+            expect(digitTexts).toEqual(["2", "3", "4", "5"])
+            // Verify final digit is 5
+            expect(barrelWheel.getAttribute("data-final-digit")).toBe("5")
+          }
+        },
+        { timeout: 2000 }
+      )
+    })
+
+    it("should animate barrel wheel downward when replacing digit with lower value (e.g., 5 -> 2)", async () => {
+      render(<NumberFlowInput />)
+
+      const input = getInput()
+      input.focus()
+
+      await typeText(input, "153")
+      await waitFor(() => {
+        expect(input.textContent).toBe("153")
+      })
+      await new Promise((resolve) => setTimeout(resolve, 50))
+
+      // Select the middle digit "5"
+      await waitFor(() => {
+        const walker = document.createTreeWalker(
+          input,
+          NodeFilter.SHOW_TEXT,
+          null
+        )
+        let currentPos = 0
+        let startNode: Node | null = null
+        let endNode: Node | null = null
+        let startOffset = 0
+        let endOffset = 0
+
+        let node: Node | null
+        while ((node = walker.nextNode())) {
+          const nodeLength = node.textContent?.length ?? 0
+          if (!startNode && currentPos + nodeLength >= 1) {
+            startNode = node
+            startOffset = Math.min(1 - currentPos, nodeLength)
+          }
+          if (!endNode && currentPos + nodeLength >= 2) {
+            endNode = node
+            endOffset = Math.min(2 - currentPos, nodeLength)
+            break
+          }
+          currentPos += nodeLength
+        }
+
+        if (startNode && endNode) {
+          const selection = window.getSelection()
+          if (selection) {
+            const range = document.createRange()
+            range.setStart(startNode, startOffset)
+            range.setEnd(endNode, endOffset)
+            selection.removeAllRanges()
+            selection.addRange(range)
+          }
+        }
+      })
+
+      // Type "2" to replace "5"
+      await typeText(input, "2")
+
+      await waitFor(
+        () => {
+          // Check for barrel wheel element in parent container (it's outside contentEditable now)
+          const parentContainer = input.parentElement
+          const barrelWheel =
+            parentContainer?.querySelector("[data-final-digit]")
+          expect(barrelWheel).toBeTruthy()
+          if (barrelWheel) {
+            expect(barrelWheel.getAttribute("data-direction")).toBe("down")
+            const digits = barrelWheel.querySelectorAll("[data-digit]")
+            // Should only have digits from 5 to 2 (inclusive, descending): [5, 4, 3, 2]
+            expect(digits.length).toBe(4)
+            // Verify it has the sequence digits
+            const digitTexts = Array.from(digits).map((d) => d.textContent)
+            expect(digitTexts).toEqual(["5", "4", "3", "2"])
+            // Verify final digit is 2
+            expect(barrelWheel.getAttribute("data-final-digit")).toBe("2")
+          }
+        },
+        { timeout: 2000 }
+      )
     })
   })
 

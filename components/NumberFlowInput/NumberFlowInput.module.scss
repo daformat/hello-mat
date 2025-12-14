@@ -1,8 +1,25 @@
-.number_flow_input {
+.number_flow_input_root {
+  &:focus-within:has(:focus-visible)  {
+    outline: 2px solid Highlight; /* Uses system accent color */
+    // stylelint-disable-next-line
+    outline: 2px solid -webkit-focus-ring-color; /* Fallback for WebKit browsers */
+    outline-offset: 2px;
+  }
+}
+
+// Container that wraps both contentEditable and barrel wheels - applies mask to clip both
+.number_flow_input_wrapper {
+  display: inline-flex;
   mask-image: linear-gradient(to bottom, transparent, #000 10px, #000 calc(100% - 10px), transparent);
+  position: relative;
+}
+
+.number_flow_input {
+  display: flex;
+  line-height: 1;
+  outline: none;
 
   :is([data-flow]) {
-    display: inline-block;
     transition: translate 0.2s var(--ease-out-cubic);
     translate: 0 100%;
 
@@ -13,5 +30,82 @@
     &[data-hide] {
       translate: 0 100%;
     }
+  }
+
+}
+
+.barrel_wheel {
+  --current-digit: 0;
+  --final-digit: 0;
+  display: block;
+  height: 1em;
+  overflow: visible;
+  pointer-events: none;
+  position: absolute;
+  -webkit-touch-callout: none;
+  user-select: none;
+  // stylelint-disable property-no-vendor-prefix
+  // stylelint-disable order/properties-alphabetical-order
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-touch-callout: none;
+  // stylelint-enable property-no-vendor-prefix
+  // stylelint-enable order/properties-alphabetical-order
+  width: 1ch;
+
+  // Prevent selection of barrel wheel content
+  &::selection,
+  *::selection {
+    background: transparent;
+  }
+
+  // Wrapper that contains all digits stacked vertically and moves to show target digit
+  .barrel_digits_wrapper {
+    // Use CSS variable for the digit position
+    --digit-position: 0;
+
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transform: translateY(calc(var(--digit-position) * -1em));
+    transition: none;
+    user-select: none;
+    // stylelint-disable property-no-vendor-prefix
+    // stylelint-disable order/properties-alphabetical-order
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-touch-callout: none;
+    // stylelint-enable property-no-vendor-prefix
+    // stylelint-enable order/properties-alphabetical-order
+    width: 100%;
+    will-change: transform;
+
+    &.animating {
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+
+  &[data-direction="down"] .barrel_digits_wrapper {
+    transform: translateY(calc(var(--digit-position) * 1em));
+  }
+
+  .barrel_digit {
+    display: inline-flex;
+    height: 1em;
+    line-height: 1em;
+    pointer-events: none;
+    text-align: center;
+    user-select: none;
+    // stylelint-disable property-no-vendor-prefix
+    // stylelint-disable order/properties-alphabetical-order
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-touch-callout: none;
+    // stylelint-enable property-no-vendor-prefix
+    // stylelint-enable order/properties-alphabetical-order
+    width: 100%;
   }
 }
