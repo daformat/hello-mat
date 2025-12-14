@@ -773,8 +773,12 @@ export const NumberFlowInput = ({
             }
 
             // Remove if index is out of bounds
+            // For short cleanedText (like "-"), we should be more aggressive about removing out-of-bounds spans
+            // to prevent ghost characters
             if (index < 0 || index >= cleanedText.length) {
-              if (!isCurrentlyAnimating) {
+              // Remove out-of-bounds spans unless they're currently animating AND cleanedText is long enough
+              // This prevents ghost characters when cleanedText changes significantly (e.g., "1881" -> "-")
+              if (!isCurrentlyAnimating || cleanedText.length <= 1) {
                 span.remove()
               }
             } else if (span.textContent !== cleanedText[index]) {
@@ -1241,10 +1245,27 @@ export const NumberFlowInput = ({
     if (currentParsed !== actualValue) {
       setDisplayValue(newDisplay)
       if (spanRef.current) {
+        // When syncing external changes (especially when actualValue becomes undefined),
+        // we need to ensure the contentEditable matches the new display value exactly.
+        // Only clear spans and barrel wheels if this is a significant change (e.g., actualValue became undefined)
+        // to avoid interfering with normal DOM updates from user input
+        if (actualValue === undefined && displayValue !== newDisplay) {
+          const allSpans = spanRef.current.querySelectorAll("[data-char-index]")
+          allSpans.forEach((span) => span.remove())
+          // Also remove any barrel wheels
+          const parentContainer = spanRef.current.parentElement
+          if (parentContainer) {
+            const barrelWheels = parentContainer.querySelectorAll(
+              `[data-char-index].${styles.barrel_wheel || ""}`
+            )
+            barrelWheels.forEach((wheel) => wheel.remove())
+          }
+        }
+        // Set textContent to new display value - this ensures contentEditable matches actualValue
         spanRef.current.textContent = newDisplay
       }
     }
-  }, [actualValue])
+  }, [actualValue, displayValue, styles.barrel_wheel])
 
   const handleKeyDown = useCallback<KeyboardEventHandler<HTMLSpanElement>>(
     (event) => {
@@ -2062,6 +2083,8 @@ export const NumberFlowInput = ({
     },
     [displayValue, updateValue]
   )
+
+  console.log({ actualValue })
 
   return (
     <>

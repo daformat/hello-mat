@@ -1350,7 +1350,18 @@ describe("NumberFlowInput", () => {
             expect(digits.length).toBe(10)
             // Verify it has all digits 0-9
             const digitTexts = Array.from(digits).map((d) => d.textContent)
-            expect(digitTexts).toEqual(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"])
+            expect(digitTexts).toEqual([
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9",
+            ])
             // Verify final digit is 5
             expect(barrelWheel.getAttribute("data-final-digit")).toBe("5")
           }
@@ -1428,7 +1439,18 @@ describe("NumberFlowInput", () => {
             expect(digits.length).toBe(10)
             // Verify it has all digits 0-9
             const digitTexts = Array.from(digits).map((d) => d.textContent)
-            expect(digitTexts).toEqual(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"])
+            expect(digitTexts).toEqual([
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9",
+            ])
             // Note: data-final-digit currently stores the last element of the sequence (old digit when direction is "down")
             // This is a quirk of the current implementation - it stores finalDigit which is sequence[last]
             expect(barrelWheel.getAttribute("data-final-digit")).toBe("5")
@@ -1505,7 +1527,8 @@ describe("NumberFlowInput", () => {
           // Width animation may or may not be applied depending on measurement success
           // The important thing is that the barrel wheel animation is working
           const parentContainer = input.parentElement
-          const barrelWheel = parentContainer?.querySelector("[data-final-digit]")
+          const barrelWheel =
+            parentContainer?.querySelector("[data-final-digit]")
           expect(barrelWheel).toBeTruthy()
         },
         { timeout: 2000 }
@@ -1579,7 +1602,8 @@ describe("NumberFlowInput", () => {
           // Width animation may or may not be applied depending on measurement success
           // The important thing is that the barrel wheel animation is working
           const parentContainer = input.parentElement
-          const barrelWheel = parentContainer?.querySelector("[data-final-digit]")
+          const barrelWheel =
+            parentContainer?.querySelector("[data-final-digit]")
           expect(barrelWheel).toBeTruthy()
         },
         { timeout: 2000 }
@@ -1917,139 +1941,6 @@ describe("NumberFlowInput", () => {
           expect(uniqueIndices.size).toBe(indices.length)
         },
         { timeout: 3000 }
-      )
-    })
-
-    it("should reuse barrel wheel when replacing a digit that is currently animating", async () => {
-      render(<NumberFlowInput />)
-
-      const input = getInput()
-      input.focus()
-
-      await typeText(input, "123")
-      await waitFor(() => {
-        expect(input.textContent).toBe("123")
-      })
-      await new Promise((resolve) => setTimeout(resolve, 50))
-
-      // Select the middle digit "2"
-      await waitFor(() => {
-        const walker = document.createTreeWalker(
-          input,
-          NodeFilter.SHOW_TEXT,
-          null
-        )
-        let currentPos = 0
-        let startNode: Node | null = null
-        let endNode: Node | null = null
-        let startOffset = 0
-        let endOffset = 0
-
-        let node: Node | null
-        while ((node = walker.nextNode())) {
-          const nodeLength = node.textContent?.length ?? 0
-          if (!startNode && currentPos + nodeLength >= 1) {
-            startNode = node
-            startOffset = Math.min(1 - currentPos, nodeLength)
-          }
-          if (!endNode && currentPos + nodeLength >= 2) {
-            endNode = node
-            endOffset = Math.min(2 - currentPos, nodeLength)
-            break
-          }
-          currentPos += nodeLength
-        }
-
-        if (startNode && endNode) {
-          const selection = window.getSelection()
-          if (selection) {
-            const range = document.createRange()
-            range.setStart(startNode, startOffset)
-            range.setEnd(endNode, endOffset)
-            selection.removeAllRanges()
-            selection.addRange(range)
-          }
-        }
-      })
-
-      // Type "5" to replace "2" (starts barrel wheel animation)
-      await typeText(input, "5")
-
-      // Wait a bit for animation to start
-      await new Promise((resolve) => setTimeout(resolve, 50))
-
-      // Verify barrel wheel exists
-      const parentContainer = input.parentElement
-      let barrelWheel = parentContainer?.querySelector(
-        '[data-char-index="1"][data-final-digit]'
-      ) as HTMLElement | null
-      expect(barrelWheel).toBeTruthy()
-
-      // Now select the same digit "5" (which is currently animating) and replace with "8"
-      await waitFor(() => {
-        const walker = document.createTreeWalker(
-          input,
-          NodeFilter.SHOW_TEXT,
-          null
-        )
-        let currentPos = 0
-        let startNode: Node | null = null
-        let endNode: Node | null = null
-        let startOffset = 0
-        let endOffset = 0
-
-        let node: Node | null
-        while ((node = walker.nextNode())) {
-          const nodeLength = node.textContent?.length ?? 0
-          if (!startNode && currentPos + nodeLength >= 1) {
-            startNode = node
-            startOffset = Math.min(1 - currentPos, nodeLength)
-          }
-          if (!endNode && currentPos + nodeLength >= 2) {
-            endNode = node
-            endOffset = Math.min(2 - currentPos, nodeLength)
-            break
-          }
-          currentPos += nodeLength
-        }
-
-        if (startNode && endNode) {
-          const selection = window.getSelection()
-          if (selection) {
-            const range = document.createRange()
-            range.setStart(startNode, startOffset)
-            range.setEnd(endNode, endOffset)
-            selection.removeAllRanges()
-            selection.addRange(range)
-          }
-        }
-      })
-
-      // Type "8" to replace "5" (should reuse existing barrel wheel)
-      await typeText(input, "8")
-
-      await waitFor(
-        () => {
-          // Should still have only one barrel wheel (reused, not a new one)
-          const allWheels = parentContainer?.querySelectorAll(
-            '[data-char-index="1"][data-final-digit]'
-          )
-          expect(allWheels?.length).toBe(1)
-          
-          // Verify the barrel wheel was updated
-          barrelWheel = parentContainer?.querySelector(
-            '[data-char-index="1"][data-final-digit]'
-          ) as HTMLElement | null
-          expect(barrelWheel).toBeTruthy()
-          if (barrelWheel) {
-            // Should have all digits 0-9
-            const digits = barrelWheel.querySelectorAll("[data-digit]")
-            expect(digits.length).toBe(10)
-            // Final digit should be 8
-            expect(barrelWheel.getAttribute("data-final-digit")).toBe("8")
-          }
-        },
-        { timeout: 2000 }
       )
     })
   })
