@@ -623,14 +623,14 @@ export const NumberFlowInput = ({
                 ) {
                   // Update existing span for barrel wheel - barrel wheel code will handle width animation
                   span = existingSpan
-                  
+
                   // Preserve old width BEFORE updating textContent to prevent flash
                   // Get the current width (which is the old digit's width)
                   const oldWidth = span.getBoundingClientRect().width
-                  
+
                   // Ensure display is inline-block so width can be applied
                   span.style.display = "inline-block"
-                  
+
                   // Constrain to old width IMMEDIATELY before updating textContent
                   // This prevents flash of natural width when textContent changes
                   if (oldWidth > 0) {
@@ -640,12 +640,12 @@ export const NumberFlowInput = ({
                     // Force reflow to ensure width constraint is applied
                     void span.offsetWidth
                   }
-                  
+
                   // NOW update textContent (span is already constrained, so no flash)
                   if (span.textContent !== char) {
                     span.textContent = char ?? ""
                   }
-                  
+
                   // Update data-char-index to ensure it's correct
                   span.setAttribute("data-char-index", i.toString())
                   // Don't set data-flow for barrel wheel (barrel wheel code handles it)
@@ -900,19 +900,31 @@ export const NumberFlowInput = ({
             // wrapper.style.flexDirection =
             //   direction === "up" ? "column" : "column-reverse"
 
-            // Create only the digits in the sequence (from old to new, inclusive)
-            const sequence = barrelWheelData.sequence
-            sequence.forEach((digitStr, index) => {
-              const digit = document.createElement("div")
-              digit.className = styles.barrel_digit || ""
-              digit.setAttribute("data-digit", digitStr)
-              digit.textContent = digitStr
-              // digit.style.display = "block"
-              digit.style.position = "relative"
-              digit.style.height = "1em"
-              digit.style.lineHeight = "1em"
-              wrapper.appendChild(digit)
-            })
+            // Create ALL digits from 0 to 9 (always)
+            for (let digit = 0; digit <= 9; digit++) {
+              const digitStr = digit.toString()
+              const digitElement = document.createElement("div")
+              digitElement.className = styles.barrel_digit || ""
+              digitElement.setAttribute("data-digit", digitStr)
+              digitElement.textContent = digitStr
+              digitElement.style.position = "relative"
+              digitElement.style.height = "1em"
+              digitElement.style.lineHeight = "1em"
+              wrapper.appendChild(digitElement)
+            }
+
+            const rect = charSpan.getBoundingClientRect()
+            const parentRect = parentContainer.getBoundingClientRect()
+
+            wheel.style.position = "absolute"
+            wheel.style.left = `${rect.left - parentRect.left}px`
+            wheel.style.top = `${rect.top - parentRect.top}px`
+            wheel.style.width = `${rect.width}px`
+            wheel.style.height = `${rect.height}px`
+            wheel.style.display = "flex"
+
+            // Hide the original character span (barrel wheel will show it)
+            charSpan.style.color = "transparent"
 
             wheel.appendChild(wrapper)
             parentContainer.appendChild(wheel)
@@ -953,26 +965,14 @@ export const NumberFlowInput = ({
                 }
               }
 
-              const rect = charSpan.getBoundingClientRect()
-              const parentRect = parentContainer.getBoundingClientRect()
-
-              wheel.style.position = "absolute"
-              wheel.style.left = `${rect.left - parentRect.left}px`
-              wheel.style.top = `${rect.top - parentRect.top}px`
-              wheel.style.width = `${rect.width}px`
-              wheel.style.height = `${rect.height}px`
-              wheel.style.display = "flex"
-              wheel.style.alignItems =
-                direction === "up" ? "flex-start" : "flex-end"
-
-              // Hide the original character span (barrel wheel will show it)
-              charSpan.style.color = "transparent"
-
               // The sequence contains digits from old to new (inclusive)
               // Position 0 = old digit (first in sequence)
               // Position sequence.length - 1 = new digit (last in sequence)
-              const initialPosition = 0 // Start at first digit in sequence (old digit)
-              const finalPosition = sequence.length - 1 // End at last digit in sequence (new digit)
+              console.log(oldDigitStr, newDigitStr)
+              const initialPosition = oldDigitStr
+                ? parseInt(oldDigitStr, 10)
+                : 0 // Start at first digit in sequence (old digit)
+              const finalPosition = newDigitStr ? parseInt(newDigitStr, 10) : 0 // End at last digit in sequence (new digit)
 
               // Set initial position using CSS variable (no transition yet)
               // Position 0 means translateY(0) - showing the first digit (old digit)
@@ -982,7 +982,7 @@ export const NumberFlowInput = ({
               )
 
               // Force a reflow to ensure the initial state is rendered
-              void wrapper.offsetHeight
+              // void wrapper.offsetHeight
 
               // Trigger animation from old digit to new digit
               // Use requestAnimationFrame to ensure initial state is painted
@@ -991,7 +991,7 @@ export const NumberFlowInput = ({
                 wrapper.classList.add(styles.animating || "")
 
                 // Force a reflow to ensure transition is applied
-                void wrapper.offsetHeight
+                // void wrapper.offsetHeight
 
                 // Now update to final digit in the next frame - this will trigger the smooth animation
                 requestAnimationFrame(() => {
@@ -1014,52 +1014,61 @@ export const NumberFlowInput = ({
                       charSpan.style.maxWidth = `${oldDigitWidth}px`
                       void charSpan.offsetWidth
                     }
-                    
+
                     // Ensure data-width-animate is set and transition is ready
                     if (!charSpan.hasAttribute("data-width-animate")) {
                       charSpan.setAttribute("data-width-animate", "")
                     }
                     // Ensure display is inline-block for width to work
-                    if (window.getComputedStyle(charSpan).display !== "inline-block") {
+                    if (
+                      window.getComputedStyle(charSpan).display !==
+                      "inline-block"
+                    ) {
                       charSpan.style.display = "inline-block"
                     }
-                    
+
                     // Force a reflow to ensure initial width and CSS transition are applied
                     void charSpan.offsetWidth
-                    
+
                     // Wait one more frame to ensure CSS transition is fully active
                     requestAnimationFrame(() => {
                       // Force another reflow to ensure CSS transition is applied
                       void charSpan.offsetWidth
-                      
+
                       // Verify transition is active by checking computed style
                       const computedStyle = window.getComputedStyle(charSpan)
                       const transition = computedStyle.transition
-                      
+
                       // If transition isn't active, try setting it inline as fallback
-                      if (!transition || transition === "none" || transition === "all 0s ease 0s") {
-                        charSpan.style.transition = "width 0.4s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
+                      if (
+                        !transition ||
+                        transition === "none" ||
+                        transition === "all 0s ease 0s"
+                      ) {
+                        charSpan.style.transition =
+                          "width 0.4s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
                         // Force reflow after setting inline transition
                         void charSpan.offsetWidth
                       }
-                      
+
                       // Change width - this should trigger the CSS transition
                       charSpan.style.width = `${newDigitWidth}px`
                       charSpan.style.minWidth = `${newDigitWidth}px`
                       charSpan.style.maxWidth = `${newDigitWidth}px`
-                      
+
                       console.log({
                         oldDigitStr,
                         oldDigitWidth,
                         newDigitStr,
                         newDigitWidth,
-                        hasAttribute: charSpan.hasAttribute("data-width-animate"),
+                        hasAttribute:
+                          charSpan.hasAttribute("data-width-animate"),
                         computedWidth: computedStyle.width,
                         transition: transition,
                         inlineTransition: charSpan.style.transition,
                         display: computedStyle.display,
                       })
-                      
+
                       // Listen for width animation completion
                       const handleWidthAnimationEnd = (e: TransitionEvent) => {
                         // Only handle width-related transitions

@@ -98,8 +98,12 @@
     }
   }
 
-  &[data-direction="down"] .barrel_digits_wrapper {
-    transform: translateY(calc(var(--digit-position) * 1em));
+  &[data-direction="up"] {
+    align-items: flex-end;
+
+    .barrel_digits_wrapper {
+      transform: translateY(calc((9 - var(--digit-position)) * 1em));
+    }
   }
 
   .barrel_digit {
