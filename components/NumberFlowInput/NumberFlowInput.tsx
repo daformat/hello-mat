@@ -1022,6 +1022,121 @@ export const NumberFlowInput = ({
           return
         }
 
+        // Handle ArrowLeft and ArrowRight to move cursor by one character
+        if (key === "ArrowLeft" || key === "ArrowRight") {
+          event.preventDefault()
+          if (!spanRef.current) return
+          const selection = window.getSelection()
+          if (!selection) return
+
+          // Calculate target position
+          let targetPos: number
+          if (event.shiftKey) {
+            // Extend selection
+            // Use the selection's anchor point as the anchor
+            let anchorPos = start
+            if (
+              selection.anchorNode &&
+              spanRef.current.contains(selection.anchorNode)
+            ) {
+              const anchorRange = document.createRange()
+              anchorRange.selectNodeContents(spanRef.current)
+              anchorRange.setEnd(selection.anchorNode, selection.anchorOffset)
+              anchorPos = anchorRange.toString().length
+            }
+
+            if (key === "ArrowLeft") {
+              targetPos = Math.max(0, anchorPos - 1)
+            } else {
+              targetPos = Math.min(currentText.length, anchorPos + 1)
+            }
+
+            // Find both anchor and target nodes/offsets
+            let currentPos = 0
+            const walker = document.createTreeWalker(
+              spanRef.current,
+              NodeFilter.SHOW_TEXT,
+              null
+            )
+            let anchorNode: Node | null = null
+            let anchorOffset = 0
+            let targetNode: Node | null = null
+            let targetOffset = 0
+
+            let node: Node | null
+            while ((node = walker.nextNode())) {
+              const nodeLength = node.textContent?.length ?? 0
+
+              // Find anchor node
+              if (!anchorNode && currentPos + nodeLength >= anchorPos) {
+                anchorNode = node
+                anchorOffset = anchorPos - currentPos
+              }
+
+              // Find target node
+              if (!targetNode && currentPos + nodeLength >= targetPos) {
+                targetNode = node
+                targetOffset = targetPos - currentPos
+              }
+
+              if (anchorNode && targetNode) break
+
+              currentPos += nodeLength
+            }
+
+            if (anchorNode && targetNode) {
+              const range = document.createRange()
+              if (key === "ArrowLeft") {
+                range.setStart(targetNode, targetOffset)
+                range.setEnd(anchorNode, anchorOffset)
+              } else {
+                range.setStart(anchorNode, anchorOffset)
+                range.setEnd(targetNode, targetOffset)
+              }
+              selection.removeAllRanges()
+              selection.addRange(range)
+            }
+          } else {
+            // Move cursor (no selection)
+            if (key === "ArrowLeft") {
+              targetPos = Math.max(0, start - 1)
+            } else {
+              targetPos = Math.min(currentText.length, start + 1)
+            }
+
+            // Find target node
+            let currentPos = 0
+            const walker = document.createTreeWalker(
+              spanRef.current,
+              NodeFilter.SHOW_TEXT,
+              null
+            )
+            let node: Node | null
+
+            while ((node = walker.nextNode())) {
+              const nodeLength = node.textContent?.length ?? 0
+              if (currentPos + nodeLength >= targetPos) {
+                const offset = targetPos - currentPos
+                const range = document.createRange()
+                range.setStart(node, offset)
+                range.collapse(true)
+                selection.removeAllRanges()
+                selection.addRange(range)
+                return
+              }
+              currentPos += nodeLength
+            }
+
+            // Fallback
+            const range = document.createRange()
+            range.selectNodeContents(spanRef.current)
+            range.collapse(key === "ArrowLeft")
+            selection.removeAllRanges()
+            selection.addRange(range)
+          }
+          return
+        }
+
         // Allow other navigation keys
         return
       }
