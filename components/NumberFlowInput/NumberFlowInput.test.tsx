@@ -1586,6 +1586,340 @@ describe("NumberFlowInput", () => {
         { timeout: 2000 }
       )
     })
+
+    it("should not create ghost spans when replacing a digit", async () => {
+      render(<NumberFlowInput />)
+
+      const input = getInput()
+      input.focus()
+
+      await typeText(input, "123")
+      await waitFor(() => {
+        expect(input.textContent).toBe("123")
+      })
+      await new Promise((resolve) => setTimeout(resolve, 50))
+
+      // Select the middle digit "2"
+      await waitFor(() => {
+        const walker = document.createTreeWalker(
+          input,
+          NodeFilter.SHOW_TEXT,
+          null
+        )
+        let currentPos = 0
+        let startNode: Node | null = null
+        let endNode: Node | null = null
+        let startOffset = 0
+        let endOffset = 0
+
+        let node: Node | null
+        while ((node = walker.nextNode())) {
+          const nodeLength = node.textContent?.length ?? 0
+          if (!startNode && currentPos + nodeLength >= 1) {
+            startNode = node
+            startOffset = Math.min(1 - currentPos, nodeLength)
+          }
+          if (!endNode && currentPos + nodeLength >= 2) {
+            endNode = node
+            endOffset = Math.min(2 - currentPos, nodeLength)
+            break
+          }
+          currentPos += nodeLength
+        }
+
+        if (startNode && endNode) {
+          const selection = window.getSelection()
+          if (selection) {
+            const range = document.createRange()
+            range.setStart(startNode, startOffset)
+            range.setEnd(endNode, endOffset)
+            selection.removeAllRanges()
+            selection.addRange(range)
+          }
+        }
+      })
+
+      // Type "5" to replace "2" (triggers barrel wheel animation)
+      await typeText(input, "5")
+
+      await waitFor(
+        () => {
+          expect(input.textContent).toBe("153")
+          // Count all spans with data-char-index - should be exactly 3
+          const allSpans = input.querySelectorAll("[data-char-index]")
+          expect(allSpans.length).toBe(3)
+          // Verify all spans have correct indices
+          const indices = Array.from(allSpans).map((span) =>
+            parseInt(
+              (span as HTMLElement).getAttribute("data-char-index") ?? "-1",
+              10
+            )
+          )
+          indices.sort((a, b) => a - b)
+          expect(indices).toEqual([0, 1, 2])
+        },
+        { timeout: 2000 }
+      )
+
+      // Wait a bit for any async updates
+      await new Promise((resolve) => setTimeout(resolve, 100))
+
+      // Verify no ghost spans remain
+      const allSpans = input.querySelectorAll("[data-char-index]")
+      expect(allSpans.length).toBe(3)
+      const text = Array.from(allSpans)
+        .map((span) => span.textContent)
+        .join("")
+      expect(text).toBe("153")
+    })
+
+    it("should remove all spans including hidden ones when selecting all and deleting", async () => {
+      render(<NumberFlowInput />)
+
+      const input = getInput()
+      input.focus()
+
+      await typeText(input, "123")
+      await waitFor(() => {
+        expect(input.textContent).toBe("123")
+      })
+      await new Promise((resolve) => setTimeout(resolve, 50))
+
+      // Select the middle digit "2" and replace it (triggers barrel wheel - span becomes hidden)
+      await waitFor(() => {
+        const walker = document.createTreeWalker(
+          input,
+          NodeFilter.SHOW_TEXT,
+          null
+        )
+        let currentPos = 0
+        let startNode: Node | null = null
+        let endNode: Node | null = null
+        let startOffset = 0
+        let endOffset = 0
+
+        let node: Node | null
+        while ((node = walker.nextNode())) {
+          const nodeLength = node.textContent?.length ?? 0
+          if (!startNode && currentPos + nodeLength >= 1) {
+            startNode = node
+            startOffset = Math.min(1 - currentPos, nodeLength)
+          }
+          if (!endNode && currentPos + nodeLength >= 2) {
+            endNode = node
+            endOffset = Math.min(2 - currentPos, nodeLength)
+            break
+          }
+          currentPos += nodeLength
+        }
+
+        if (startNode && endNode) {
+          const selection = window.getSelection()
+          if (selection) {
+            const range = document.createRange()
+            range.setStart(startNode, startOffset)
+            range.setEnd(endNode, endOffset)
+            selection.removeAllRanges()
+            selection.addRange(range)
+          }
+        }
+      })
+
+      // Type "5" to replace "2" - this will hide the span during barrel wheel animation
+      await typeText(input, "5")
+
+      // Wait a bit for barrel wheel to start (span becomes hidden)
+      await new Promise((resolve) => setTimeout(resolve, 50))
+
+      // Verify there's a hidden span (barrel wheel animation in progress)
+      const hiddenSpans = Array.from(
+        input.querySelectorAll("[data-char-index]")
+      ).filter(
+        (span) =>
+          (span as HTMLElement).style.color === "transparent" ||
+          (span as HTMLElement).style.color === "rgba(0, 0, 0, 0)"
+      )
+      // There might be a hidden span during animation, or it might have completed
+      // The important thing is that when we select all and delete, all spans are removed
+
+      // Now select all and delete
+      await waitFor(() => {
+        const walker = document.createTreeWalker(
+          input,
+          NodeFilter.SHOW_TEXT,
+          null
+        )
+        let currentPos = 0
+        let startNode: Node | null = null
+        let endNode: Node | null = null
+        let startOffset = 0
+        let endOffset = 0
+
+        let node: Node | null
+        while ((node = walker.nextNode())) {
+          const nodeLength = node.textContent?.length ?? 0
+          if (!startNode && currentPos === 0) {
+            startNode = node
+            startOffset = 0
+          }
+          if (!endNode && currentPos + nodeLength >= 3) {
+            endNode = node
+            endOffset = Math.min(3 - currentPos, nodeLength)
+            break
+          }
+          currentPos += nodeLength
+        }
+
+        if (startNode && endNode) {
+          const selection = window.getSelection()
+          if (selection) {
+            const range = document.createRange()
+            range.setStart(startNode, startOffset)
+            range.setEnd(endNode, endOffset)
+            selection.removeAllRanges()
+            selection.addRange(range)
+          }
+        }
+      })
+
+      // Delete all (Cmd+Backspace or just Backspace with all selected)
+      fireEvent.keyDown(input, {
+        key: "Backspace",
+        preventDefault: vi.fn(),
+      })
+
+      await waitFor(
+        () => {
+          expect(input.textContent).toBe("")
+          // All spans should be removed, including hidden ones
+          const allSpans = input.querySelectorAll("[data-char-index]")
+          expect(allSpans.length).toBe(0)
+        },
+        { timeout: 2000 }
+      )
+    })
+
+    it("should not create duplicate spans when typing fast with repeated digits", async () => {
+      render(<NumberFlowInput />)
+
+      const input = getInput()
+      input.focus()
+
+      // Type a fast sequence with repeated digits
+      await typeText(input, "12122121212121212121122121212121212212121121212")
+
+      await waitFor(
+        () => {
+          const expectedText = "12122121212121212121122121212121212212121121212"
+          expect(input.textContent).toBe(expectedText)
+
+          // Count all spans - should match text length exactly
+          const allSpans = input.querySelectorAll("[data-char-index]")
+          expect(allSpans.length).toBe(expectedText.length)
+
+          // Verify all spans have unique and correct indices
+          const indices = Array.from(allSpans).map((span) =>
+            parseInt(
+              (span as HTMLElement).getAttribute("data-char-index") ?? "-1",
+              10
+            )
+          )
+          // Check for duplicates
+          const uniqueIndices = new Set(indices)
+          expect(uniqueIndices.size).toBe(indices.length)
+
+          // Verify indices are sequential
+          indices.sort((a, b) => a - b)
+          for (let i = 0; i < indices.length; i++) {
+            expect(indices[i]).toBe(i)
+          }
+
+          // Verify text content matches
+          const text = Array.from(allSpans)
+            .map((span) => span.textContent)
+            .join("")
+          expect(text).toBe(expectedText)
+        },
+        { timeout: 3000 }
+      )
+    })
+
+    it("should handle multiple rapid digit replacements without ghost spans", async () => {
+      render(<NumberFlowInput />)
+
+      const input = getInput()
+      input.focus()
+
+      await typeText(input, "12345")
+      await waitFor(() => {
+        expect(input.textContent).toBe("12345")
+      })
+      await new Promise((resolve) => setTimeout(resolve, 50))
+
+      // Rapidly replace multiple digits
+      for (let i = 0; i < 5; i++) {
+        // Select digit at position i
+        await waitFor(() => {
+          const walker = document.createTreeWalker(
+            input,
+            NodeFilter.SHOW_TEXT,
+            null
+          )
+          let currentPos = 0
+          let startNode: Node | null = null
+          let endNode: Node | null = null
+
+          let node: Node | null
+          while ((node = walker.nextNode())) {
+            const nodeLength = node.textContent?.length ?? 0
+            if (!startNode && currentPos + nodeLength > i) {
+              startNode = node
+            }
+            if (!endNode && currentPos + nodeLength > i + 1) {
+              endNode = node
+              break
+            }
+            currentPos += nodeLength
+          }
+
+          if (startNode && endNode) {
+            const selection = window.getSelection()
+            if (selection) {
+              const range = document.createRange()
+              range.setStart(startNode, Math.max(0, i - currentPos))
+              range.setEnd(endNode, Math.max(0, i + 1 - currentPos))
+              selection.removeAllRanges()
+              selection.addRange(range)
+            }
+          }
+        })
+
+        // Replace with a different digit
+        const newDigit = ((i + 1) % 10).toString()
+        await typeText(input, newDigit)
+        await new Promise((resolve) => setTimeout(resolve, 20))
+      }
+
+      await waitFor(
+        () => {
+          // Verify no ghost spans
+          const allSpans = input.querySelectorAll("[data-char-index]")
+          const expectedLength = input.textContent?.length ?? 0
+          expect(allSpans.length).toBe(expectedLength)
+
+          // Verify all spans have unique indices
+          const indices = Array.from(allSpans).map((span) =>
+            parseInt(
+              (span as HTMLElement).getAttribute("data-char-index") ?? "-1",
+              10
+            )
+          )
+          const uniqueIndices = new Set(indices)
+          expect(uniqueIndices.size).toBe(indices.length)
+        },
+        { timeout: 3000 }
+      )
+    })
   })
 
   describe("Controlled vs Uncontrolled", () => {
