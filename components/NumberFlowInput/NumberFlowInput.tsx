@@ -1033,22 +1033,43 @@ export const NumberFlowInput = ({
           let targetPos: number
           if (event.shiftKey) {
             // Extend selection
-            // Use the selection's anchor point as the anchor
-            let anchorPos = start
-            if (
-              selection.anchorNode &&
-              spanRef.current.contains(selection.anchorNode)
-            ) {
-              const anchorRange = document.createRange()
-              anchorRange.selectNodeContents(spanRef.current)
-              anchorRange.setEnd(selection.anchorNode, selection.anchorOffset)
-              anchorPos = anchorRange.toString().length
+            // Helper function to get position from node and offset
+            const getPositionFromNode = (
+              node: Node | null,
+              offset: number
+            ): number => {
+              if (!node || !spanRef.current?.contains(node)) {
+                return start // Fallback to cursor position
+              }
+              const range = document.createRange()
+              range.setStart(spanRef.current, 0)
+              range.setEnd(node, offset)
+              return range.toString().length
             }
 
+            // Get anchor and focus positions from Selection API
+            let anchorPos = getPositionFromNode(
+              selection.anchorNode,
+              selection.anchorOffset
+            )
+            let focusPos = getPositionFromNode(
+              selection.focusNode,
+              selection.focusOffset
+            )
+
+            // If there's no selection (anchor === focus), initialize both to cursor position
+            // This happens when starting a new selection
+            if (anchorPos === focusPos && start === end) {
+              anchorPos = start
+              focusPos = start
+            }
+
+            // Extend from focus position (the moving end of selection)
+            // Anchor stays fixed, focus moves
             if (key === "ArrowLeft") {
-              targetPos = Math.max(0, anchorPos - 1)
+              targetPos = Math.max(0, focusPos - 1)
             } else {
-              targetPos = Math.min(currentText.length, anchorPos + 1)
+              targetPos = Math.min(currentText.length, focusPos + 1)
             }
 
             // Find both anchor and target nodes/offsets
@@ -1084,17 +1105,42 @@ export const NumberFlowInput = ({
               currentPos += nodeLength
             }
 
-            if (anchorNode && targetNode) {
-              const range = document.createRange()
-              if (key === "ArrowLeft") {
-                range.setStart(targetNode, targetOffset)
-                range.setEnd(anchorNode, anchorOffset)
-              } else {
-                range.setStart(anchorNode, anchorOffset)
-                range.setEnd(targetNode, targetOffset)
+            if (targetNode) {
+              // Use Selection.extend() if available - it keeps anchor fixed and only moves focus
+              // This is the proper way to extend selections
+              try {
+                selection.extend(targetNode, targetOffset)
+              } catch (e) {
+                // extend() might not work in all cases, fall back to setting range
+                // Find anchor node for range
+                let anchorNode: Node | null = null
+                let anchorOffset = 0
+                let currentPos = 0
+                const walker = document.createTreeWalker(
+                  spanRef.current,
+                  NodeFilter.SHOW_TEXT,
+                  null
+                )
+                let node: Node | null
+                while ((node = walker.nextNode())) {
+                  const nodeLength = node.textContent?.length ?? 0
+                  if (!anchorNode && currentPos + nodeLength >= anchorPos) {
+                    anchorNode = node
+                    anchorOffset = anchorPos - currentPos
+                    break
+                  }
+                  currentPos += nodeLength
+                }
+                
+                if (anchorNode) {
+                  const range = document.createRange()
+                  // Set range with anchor at start, new focus at end
+                  range.setStart(anchorNode, anchorOffset)
+                  range.setEnd(targetNode, targetOffset)
+                  selection.removeAllRanges()
+                  selection.addRange(range)
+                }
               }
-              selection.removeAllRanges()
-              selection.addRange(range)
             }
           } else {
             // Move cursor (no selection)
@@ -1316,6 +1362,33 @@ export const NumberFlowInput = ({
     [displayValue, onChange, updateValue]
   )
 
+  const handleCopy = useCallback<ClipboardEventHandler<HTMLSpanElement>>(
+    (event) => {
+      // Handle copy to ensure plain text without line breaks
+      const selection = window.getSelection()
+      const range = selection?.getRangeAt(0)
+      if (!range || !spanRef.current) return
+
+      const preRange = document.createRange()
+      preRange.selectNodeContents(spanRef.current)
+      preRange.setEnd(range.startContainer, range.startOffset)
+      const start = preRange.toString().length
+
+      preRange.setEnd(range.endContainer, range.endOffset)
+      const end = preRange.toString().length
+
+      if (start === end) return // No selection, nothing to copy
+
+      const currentText = displayValue
+      const selectedText = currentText.slice(start, end)
+
+      // Copy plain text to clipboard (no HTML, no line breaks)
+      event.clipboardData.setData("text/plain", selectedText)
+      event.preventDefault() // Prevent default to avoid copying HTML
+    },
+    [displayValue]
+  )
+
   const handleCut = useCallback<ClipboardEventHandler<HTMLSpanElement>>(
     (event) => {
       // Handle cut from context menu or other sources
@@ -1468,6 +1541,7 @@ export const NumberFlowInput = ({
             onKeyDown={handleKeyDown}
             onBeforeInput={handleBeforeInput}
             onInput={handleInput}
+            onCopy={handleCopy}
             onPaste={handlePaste}
             onCut={handleCut}
             className={styles.number_flow_input}
