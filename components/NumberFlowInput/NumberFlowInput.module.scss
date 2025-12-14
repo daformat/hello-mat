@@ -32,6 +32,13 @@
     }
   }
 
+  // Width animation for replaced digits (barrel wheel animation)
+  :is([data-width-animate]) {
+    transition: width 0.4s var(--ease-out-cubic),
+      min-width 0.4s var(--ease-out-cubic),
+      max-width 0.4s var(--ease-out-cubic);
+  }
+
 }
 
 .barrel_wheel {

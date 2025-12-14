@@ -505,6 +505,12 @@ export const NumberFlowInput = ({
               ? parseInt(initialDigitStr, 10)
               : finalDigit
 
+            // Determine old and new digits based on direction
+            // When direction is "up": sequence = [old, ..., new] so initialDigitStr = old, finalDigitStr = new
+            // When direction is "down": sequence = [new, ..., old] so initialDigitStr = new, finalDigitStr = old
+            const oldDigitStr = direction === "up" ? initialDigitStr : finalDigitStr
+            const newDigitStr = direction === "up" ? finalDigitStr : initialDigitStr
+
             // Find the span element at this index
             const charSpan = spanRef.current?.querySelector(
               `[data-char-index="${index}"]`
@@ -514,6 +520,50 @@ export const NumberFlowInput = ({
             // Get position of the character span relative to the parent container
             const parentContainer = spanRef.current?.parentElement
             if (!parentContainer) return
+
+            // Measure the old digit's width (previous digit) - this will be the initial width
+            let oldDigitWidth = 0
+            if (oldDigitStr && charSpan) {
+              const computedStyle = window.getComputedStyle(charSpan)
+              const tempMeasure = document.createElement("span")
+              tempMeasure.style.position = "absolute"
+              tempMeasure.style.visibility = "hidden"
+              tempMeasure.style.whiteSpace = "pre"
+              tempMeasure.style.font = computedStyle.font
+              tempMeasure.style.fontSize = computedStyle.fontSize
+              tempMeasure.style.fontFamily = computedStyle.fontFamily
+              tempMeasure.style.fontWeight = computedStyle.fontWeight
+              tempMeasure.style.fontStyle = computedStyle.fontStyle
+              tempMeasure.style.letterSpacing = computedStyle.letterSpacing
+              tempMeasure.style.textTransform = computedStyle.textTransform
+              tempMeasure.style.lineHeight = computedStyle.lineHeight
+              tempMeasure.textContent = oldDigitStr
+              document.body.appendChild(tempMeasure)
+              oldDigitWidth = tempMeasure.getBoundingClientRect().width
+              document.body.removeChild(tempMeasure)
+            }
+
+            // Measure the new digit's width (final digit) - this will be the destination width
+            let newDigitWidth = 0
+            if (newDigitStr && charSpan) {
+              const computedStyle = window.getComputedStyle(charSpan)
+              const tempMeasure = document.createElement("span")
+              tempMeasure.style.position = "absolute"
+              tempMeasure.style.visibility = "hidden"
+              tempMeasure.style.whiteSpace = "pre"
+              tempMeasure.style.font = computedStyle.font
+              tempMeasure.style.fontSize = computedStyle.fontSize
+              tempMeasure.style.fontFamily = computedStyle.fontFamily
+              tempMeasure.style.fontWeight = computedStyle.fontWeight
+              tempMeasure.style.fontStyle = computedStyle.fontStyle
+              tempMeasure.style.letterSpacing = computedStyle.letterSpacing
+              tempMeasure.style.textTransform = computedStyle.textTransform
+              tempMeasure.style.lineHeight = computedStyle.lineHeight
+              tempMeasure.textContent = newDigitStr
+              document.body.appendChild(tempMeasure)
+              newDigitWidth = tempMeasure.getBoundingClientRect().width
+              document.body.removeChild(tempMeasure)
+            }
 
             // Create barrel wheel element
             const wheel = document.createElement("span")
@@ -548,6 +598,15 @@ export const NumberFlowInput = ({
 
             // Position the barrel wheel over the character
             requestAnimationFrame(() => {
+              // Set initial width of the new digit span to match old digit width (previous digit)
+              // This will animate to the new digit's natural width (final digit)
+              if (oldDigitWidth > 0 && newDigitWidth > 0) {
+                charSpan.style.width = `${oldDigitWidth}px`
+                charSpan.style.minWidth = `${oldDigitWidth}px`
+                charSpan.style.maxWidth = `${oldDigitWidth}px`
+                charSpan.setAttribute("data-width-animate", "")
+              }
+
               const rect = charSpan.getBoundingClientRect()
               const parentRect = parentContainer.getBoundingClientRect()
 
@@ -596,7 +655,44 @@ export const NumberFlowInput = ({
                     "--digit-position",
                     finalPosition.toString()
                   )
-                  // After animation, remove barrel wheel and show the character without animation
+
+                  // Start width animation in parallel with barrel wheel animation
+                  // Animate from old digit width (previous) to new digit width (final)
+                  if (oldDigitWidth > 0 && newDigitWidth > 0) {
+                    // Force a reflow to ensure initial width is set
+                    void charSpan.offsetWidth
+                    // Animate to new digit width (final digit)
+                    requestAnimationFrame(() => {
+                      charSpan.style.width = `${newDigitWidth}px`
+                      charSpan.style.minWidth = `${newDigitWidth}px`
+                      charSpan.style.maxWidth = `${newDigitWidth}px`
+                      // Listen for width animation completion
+                      const handleWidthAnimationEnd = (e: TransitionEvent) => {
+                        // Only handle width-related transitions
+                        if (
+                          e.propertyName === "width" ||
+                          e.propertyName === "min-width" ||
+                          e.propertyName === "max-width"
+                        ) {
+                          // Remove width constraints after animation completes
+                          charSpan.style.width = ""
+                          charSpan.style.minWidth = ""
+                          charSpan.style.maxWidth = ""
+                          charSpan.removeAttribute("data-width-animate")
+                          charSpan.removeEventListener(
+                            "transitionend",
+                            handleWidthAnimationEnd
+                          )
+                        }
+                      }
+                      charSpan.addEventListener(
+                        "transitionend",
+                        handleWidthAnimationEnd
+                      )
+                    })
+                  }
+
+                  // After barrel wheel animation, remove barrel wheel and show the character without animation
                   wrapper.addEventListener(
                     "transitionend",
                     () => {
@@ -1131,7 +1227,7 @@ export const NumberFlowInput = ({
                   }
                   currentPos += nodeLength
                 }
-                
+
                 if (anchorNode) {
                   const range = document.createRange()
                   // Set range with anchor at start, new focus at end
