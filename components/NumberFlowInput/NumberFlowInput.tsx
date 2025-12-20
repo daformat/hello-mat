@@ -952,8 +952,8 @@ export const NumberFlowInput = ({
                     }
                     if (isUnchanged) {
                       span.setAttribute("data-show", "")
-                    } else if (referenceNode && !referenceNode.nextSibling) {
-                      // Last span: animate width
+                    } else if (isAdded) {
+                      // Animate width from 0 for newly added digits
                       span.style.width = "0px"
                       span.style.minWidth = "0px"
                       span.style.maxWidth = "0px"
@@ -2493,8 +2493,7 @@ export const NumberFlowInput = ({
           <span
             ref={spanRef}
             contentEditable
-            // @ts-expect-error this prop isn't recognized by TS
-            inputmode="numeric"
+            inputMode="numeric"
             suppressContentEditableWarning
             onKeyDown={handleKeyDown}
             onBeforeInput={handleBeforeInput}
@@ -2504,7 +2503,7 @@ export const NumberFlowInput = ({
             onCut={handleCut}
             className={styles.number_flow_input}
             style={{
-              minWidth: "50px",
+              minWidth: "1ch",
               padding: "0",
             }}
           />
