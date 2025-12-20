@@ -39,6 +39,27 @@ interface Changes {
   >
 }
 
+const measureText = (text: string, referenceElement: HTMLElement) => {
+  const computedStyle = window.getComputedStyle(referenceElement)
+  const tempMeasure = document.createElement("span")
+  tempMeasure.style.position = "absolute"
+  tempMeasure.style.visibility = "hidden"
+  tempMeasure.style.whiteSpace = "pre"
+  tempMeasure.style.font = computedStyle.font
+  tempMeasure.style.fontSize = computedStyle.fontSize
+  tempMeasure.style.fontFamily = computedStyle.fontFamily
+  tempMeasure.style.fontWeight = computedStyle.fontWeight
+  tempMeasure.style.fontStyle = computedStyle.fontStyle
+  tempMeasure.style.letterSpacing = computedStyle.letterSpacing
+  tempMeasure.style.textTransform = computedStyle.textTransform
+  tempMeasure.style.lineHeight = computedStyle.lineHeight
+  tempMeasure.textContent = text
+  document.body.appendChild(tempMeasure)
+  const width = tempMeasure.getBoundingClientRect().width
+  document.body.removeChild(tempMeasure)
+  return width
+}
+
 const getChanges = (
   oldValue: string,
   newValue: string,
@@ -257,7 +278,12 @@ export const NumberFlowInput = ({
     }
     // Remove inline transition if it was set (check if it contains width-related transitions)
     const transition = charSpan.style.transition
-    if (transition && (transition.includes("width") || transition.includes("min-width") || transition.includes("max-width"))) {
+    if (
+      transition &&
+      (transition.includes("width") ||
+        transition.includes("min-width") ||
+        transition.includes("max-width"))
+    ) {
       charSpan.style.transition = ""
     }
   }, [])
@@ -265,12 +291,12 @@ export const NumberFlowInput = ({
   // Helper function to reposition all existing barrel wheels
   const repositionAllBarrelWheels = useCallback(() => {
     if (!spanRef.current?.parentElement) return
-    
+
     const parentContainer = spanRef.current.parentElement
     const existingBarrelWheels = parentContainer.querySelectorAll(
       `[data-char-index].${styles.barrel_wheel || ""}`
     )
-    
+
     existingBarrelWheels.forEach((wheel) => {
       const wheelEl = wheel as HTMLElement
       const indexStr = wheelEl.getAttribute("data-char-index")
@@ -280,14 +306,17 @@ export const NumberFlowInput = ({
           const charSpan = spanRef.current.querySelector(
             `[data-char-index="${index}"]`
           ) as HTMLElement | null
-          
+
           if (charSpan) {
             // Ensure the digit remains transparent while barrel wheel is animating
             // This prevents the digit from showing through the barrel wheel
-            if (charSpan.style.color !== "transparent" && charSpan.style.color !== "rgba(0, 0, 0, 0)") {
+            if (
+              charSpan.style.color !== "transparent" &&
+              charSpan.style.color !== "rgba(0, 0, 0, 0)"
+            ) {
               charSpan.style.color = "transparent"
             }
-            
+
             const rect = charSpan.getBoundingClientRect()
             const parentRect = parentContainer.getBoundingClientRect()
             wheelEl.style.left = `${rect.left - parentRect.left}px`
@@ -301,72 +330,79 @@ export const NumberFlowInput = ({
   }, [styles.barrel_wheel])
 
   // Helper function to remove barrel wheels at specific indices
-  const removeBarrelWheelsAtIndices = useCallback((indices: number[]) => {
-    if (!spanRef.current) return
-    const parentContainer = spanRef.current.parentElement
-    if (!parentContainer) return
+  const removeBarrelWheelsAtIndices = useCallback(
+    (indices: number[]) => {
+      if (!spanRef.current) return
+      const parentContainer = spanRef.current.parentElement
+      if (!parentContainer) return
 
-    indices.forEach((index) => {
-      // Clean up ResizeObserver for this index
-      const observer = resizeObserversRef.current.get(index)
-      if (observer) {
-        observer.disconnect()
-        resizeObserversRef.current.delete(index)
-      }
-      
-      // Clean up width animation styles and attributes for the digit span
-      const charSpan = spanRef.current?.querySelector(
-        `[data-char-index="${index}"]`
-      ) as HTMLElement | null
-      if (charSpan) {
-        if (charSpan.hasAttribute("data-width-animate")) {
-          cleanupWidthAnimation(charSpan)
+      indices.forEach((index) => {
+        // Clean up ResizeObserver for this index
+        const observer = resizeObserversRef.current.get(index)
+        if (observer) {
+          observer.disconnect()
+          resizeObserversRef.current.delete(index)
         }
-        // Always remove color: transparent when barrel wheel is removed
-        if (charSpan.style.color === "transparent" || 
+
+        // Clean up width animation styles and attributes for the digit span
+        const charSpan = spanRef.current?.querySelector(
+          `[data-char-index="${index}"]`
+        ) as HTMLElement | null
+        if (charSpan) {
+          if (charSpan.hasAttribute("data-width-animate")) {
+            cleanupWidthAnimation(charSpan)
+          }
+          // Always remove color: transparent when barrel wheel is removed
+          if (
+            charSpan.style.color === "transparent" ||
             charSpan.style.color === "rgba(0, 0, 0, 0)" ||
-            window.getComputedStyle(charSpan).color === "rgba(0, 0, 0, 0)") {
-          charSpan.style.color = ""
+            window.getComputedStyle(charSpan).color === "rgba(0, 0, 0, 0)"
+          ) {
+            charSpan.style.color = ""
+          }
         }
-      }
-      
-      const barrelWheel = parentContainer.querySelector(
-        `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
-      ) as HTMLElement | null
-      if (barrelWheel) {
-        // Before removing, get the final digit to do a comprehensive cleanup
-        const finalDigit = barrelWheel.getAttribute("data-final-digit")
-        
-        barrelWheel.remove()
-        
-        // After removing barrel wheel, do a final pass to ensure the span at THIS index is not still transparent
-        // IMPORTANT: Only check the span at the specific index, not other spans with the same final digit
-        // This prevents conflicts when multiple barrel wheels have the same final digit
-        if (spanRef.current) {
-          const spanAtIndex = spanRef.current.querySelector(
-            `[data-char-index="${index}"]`
-          ) as HTMLElement | null
-          
-          if (spanAtIndex) {
-            const isTransparent = spanAtIndex.style.color === "transparent" || 
-                                 spanAtIndex.style.color === "rgba(0, 0, 0, 0)" ||
-                                 window.getComputedStyle(spanAtIndex).color === "rgba(0, 0, 0, 0)"
-            
-            // Check if there's still a barrel wheel for THIS specific index
-            const hasBarrelWheel = parentContainer.querySelector(
-              `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
-            )
-            
-            // If no barrel wheel exists for THIS index and span is transparent, restore color
-            // Only check the span at this index, not other spans with the same final digit
-            if (isTransparent && !hasBarrelWheel) {
-              spanAtIndex.style.color = ""
+
+        const barrelWheel = parentContainer.querySelector(
+          `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
+        ) as HTMLElement | null
+        if (barrelWheel) {
+          // Before removing, get the final digit to do a comprehensive cleanup
+          const finalDigit = barrelWheel.getAttribute("data-final-digit")
+
+          barrelWheel.remove()
+
+          // After removing barrel wheel, do a final pass to ensure the span at THIS index is not still transparent
+          // IMPORTANT: Only check the span at the specific index, not other spans with the same final digit
+          // This prevents conflicts when multiple barrel wheels have the same final digit
+          if (spanRef.current) {
+            const spanAtIndex = spanRef.current.querySelector(
+              `[data-char-index="${index}"]`
+            ) as HTMLElement | null
+
+            if (spanAtIndex) {
+              const isTransparent =
+                spanAtIndex.style.color === "transparent" ||
+                spanAtIndex.style.color === "rgba(0, 0, 0, 0)" ||
+                window.getComputedStyle(spanAtIndex).color ===
+                  "rgba(0, 0, 0, 0)"
+
+              // Check if there's still a barrel wheel for THIS specific index
+              const hasBarrelWheel = parentContainer.querySelector(
+                `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
+              )
+
+              // If no barrel wheel exists for THIS index and span is transparent, restore color
+              // Only check the span at this index, not other spans with the same final digit
+              if (isTransparent && !hasBarrelWheel) {
+                spanAtIndex.style.color = ""
+              }
             }
           }
         }
-      }
-    })
-  }, [styles.barrel_wheel, cleanupWidthAnimation])
+      })
+    },
+    [styles.barrel_wheel, cleanupWidthAnimation]
+  )
 
   const updateValue = useCallback(
     (
@@ -598,29 +634,38 @@ export const NumberFlowInput = ({
               if (!isNaN(oldIndex) && oldIndex >= 0) {
                 // Calculate how many characters were inserted before this index
                 const lengthDiff = cleanedText.length - adjustedOldText.length
-                const hadSelection = adjustedSelectionStart < adjustedSelectionEnd
-                
+                const hadSelection =
+                  adjustedSelectionStart < adjustedSelectionEnd
+
                 // If characters were inserted (not replaced) at or before the barrel wheel's index, shift it
-                if (!hadSelection && lengthDiff > 0 && adjustedSelectionStart <= oldIndex) {
+                if (
+                  !hadSelection &&
+                  lengthDiff > 0 &&
+                  adjustedSelectionStart <= oldIndex
+                ) {
                   // Characters were inserted at or before this index, so shift it
-                  const numInserted = adjustedNewCursorPos - adjustedSelectionStart
+                  const numInserted =
+                    adjustedNewCursorPos - adjustedSelectionStart
                   const newIndex = oldIndex + numInserted
                   wheelEl.setAttribute("data-char-index", newIndex.toString())
-                  
+
                   // Update the ResizeObserver key if it exists
                   const observer = resizeObserversRef.current.get(oldIndex)
                   if (observer) {
                     resizeObserversRef.current.delete(oldIndex)
                     resizeObserversRef.current.set(newIndex, observer)
                   }
-                  
+
                   // Also update the span's data-char-index if it exists and matches the final digit
                   if (finalDigitStr && spanRef.current) {
                     const oldSpan = spanRef.current.querySelector(
                       `[data-char-index="${oldIndex}"]`
                     ) as HTMLElement | null
                     if (oldSpan && oldSpan.textContent === finalDigitStr) {
-                      oldSpan.setAttribute("data-char-index", newIndex.toString())
+                      oldSpan.setAttribute(
+                        "data-char-index",
+                        newIndex.toString()
+                      )
                     }
                   }
                 }
@@ -657,7 +702,11 @@ export const NumberFlowInput = ({
               const oldIndexStr = span.getAttribute("data-char-index")
               if (oldIndexStr !== null) {
                 const oldIndex = parseInt(oldIndexStr, 10)
-                if (!isNaN(oldIndex) && oldIndex >= insertPos && oldIndex < adjustedOldText.length) {
+                if (
+                  !isNaN(oldIndex) &&
+                  oldIndex >= insertPos &&
+                  oldIndex < adjustedOldText.length
+                ) {
                   const newIdx = oldIndex + numInserted
                   if (newIdx < cleanedText.length) {
                     span.setAttribute("data-char-index", newIdx.toString())
@@ -686,9 +735,10 @@ export const NumberFlowInput = ({
               )
               if (index >= 0) {
                 // Check if this is a transparent span (barrel wheel animation)
-                const isTransparent = node.style.color === "transparent" ||
-                                     node.style.color === "rgba(0, 0, 0, 0)" ||
-                                     window.getComputedStyle(node).color === "rgba(0, 0, 0, 0)"
+                const isTransparent =
+                  node.style.color === "transparent" ||
+                  node.style.color === "rgba(0, 0, 0, 0)" ||
+                  window.getComputedStyle(node).color === "rgba(0, 0, 0, 0)"
                 if (isTransparent) {
                   // Track transparent spans separately - they might have shifted indices
                   transparentSpans.set(index, node)
@@ -706,7 +756,7 @@ export const NumberFlowInput = ({
             }
             node = node.nextSibling
           }
-          
+
           // Remove any stray text nodes (from undo/redo or other operations)
           textNodesToRemove.forEach((textNode) => {
             if (textNode.parentNode) {
@@ -722,17 +772,18 @@ export const NumberFlowInput = ({
           // Build new structure, reusing existing spans when possible
           // Get parent container once for barrel wheel checks
           const parentContainer = spanRef.current.parentElement
-          
+
           for (let i = 0; i < cleanedText.length; i++) {
             const char = cleanedText[i]
             const isUnchanged = changes.unchangedIndices.has(i)
             const barrelWheel = changes.barrelWheelIndices.get(i)
-            
+
             // Check if there's a barrel wheel in DOM for this index (indices may have shifted)
             const hasBarrelWheelInDOM = parentContainer?.querySelector(
               `[data-char-index="${i}"].${styles.barrel_wheel || ""}`
             )
-            const hasBarrelWheel = barrelWheel !== undefined || !!hasBarrelWheelInDOM
+            const hasBarrelWheel =
+              barrelWheel !== undefined || !!hasBarrelWheelInDOM
 
             // Try to reuse existing span at this index
             let span = existingSpansByIndex.get(i)
@@ -818,7 +869,9 @@ export const NumberFlowInput = ({
               const isHidden =
                 existingSpan?.style.color === "transparent" ||
                 existingSpan?.style.color === "rgba(0, 0, 0, 0)" ||
-                (existingSpan && window.getComputedStyle(existingSpan).color === "rgba(0, 0, 0, 0)")
+                (existingSpan &&
+                  window.getComputedStyle(existingSpan).color ===
+                    "rgba(0, 0, 0, 0)")
 
               // Don't reuse span if there's a barrel wheel animation for this index
               // The barrel wheel code needs to set up width animation, so let it handle the span
@@ -829,7 +882,7 @@ export const NumberFlowInput = ({
                 !isHidden &&
                 existingSpan &&
                 !usedSpans.has(existingSpan)
-              
+
               // IMPORTANT: If there's a transparent span at this index, it's part of an ongoing barrel wheel
               // We MUST reuse it, even if changes.barrelWheelIndices doesn't have this index
               // (because the barrel wheel's index may have shifted)
@@ -965,7 +1018,11 @@ export const NumberFlowInput = ({
                   // Check if there's a transparent span at this index that should be preserved
                   // This handles the case where a transparent span was shifted from a previous index
                   // when we inserted a character before the animating digit
-                  if (isHidden && existingSpan && !usedSpans.has(existingSpan)) {
+                  if (
+                    isHidden &&
+                    existingSpan &&
+                    !usedSpans.has(existingSpan)
+                  ) {
                     // This is a transparent span - it's part of an ongoing barrel wheel animation
                     // Reuse it instead of creating a new one
                     span = existingSpan
@@ -988,7 +1045,10 @@ export const NumberFlowInput = ({
                     // Ensure it's in the correct position
                     if (referenceNode) {
                       const nextSibling = referenceNode.nextSibling
-                      if (span.previousSibling !== referenceNode && nextSibling) {
+                      if (
+                        span.previousSibling !== referenceNode &&
+                        nextSibling
+                      ) {
                         spanRef.current.insertBefore(span, nextSibling)
                       } else if (!nextSibling) {
                         spanRef.current.appendChild(span)
@@ -1052,15 +1112,17 @@ export const NumberFlowInput = ({
                 span.getAttribute("data-char-index") ?? "-1",
                 10
               )
-              const isHidden = span.style.color === "transparent" ||
-                              span.style.color === "rgba(0, 0, 0, 0)" ||
-                              window.getComputedStyle(span).color === "rgba(0, 0, 0, 0)"
+              const isHidden =
+                span.style.color === "transparent" ||
+                span.style.color === "rgba(0, 0, 0, 0)" ||
+                window.getComputedStyle(span).color === "rgba(0, 0, 0, 0)"
               // Check if there's actually a barrel wheel for this index in the DOM
               // (indices may have shifted, so changes.barrelWheelIndices might not be accurate)
               const hasBarrelWheelInDOM = parentContainer?.querySelector(
                 `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
               )
-              const hasBarrelWheel = changes.barrelWheelIndices.has(index) || !!hasBarrelWheelInDOM
+              const hasBarrelWheel =
+                changes.barrelWheelIndices.has(index) || !!hasBarrelWheelInDOM
               const hasWidthAnimation = span.hasAttribute("data-width-animate")
               const isCurrentlyAnimating =
                 hasBarrelWheel || hasWidthAnimation || isHidden
@@ -1098,7 +1160,7 @@ export const NumberFlowInput = ({
           const allSpans = Array.from(
             spanRef.current.querySelectorAll("[data-char-index]")
           ) as HTMLElement[]
-          
+
           // Track spans by index to detect duplicates
           const spansByIndex = new Map<number, HTMLElement[]>()
           allSpans.forEach((span) => {
@@ -1113,20 +1175,21 @@ export const NumberFlowInput = ({
               spansByIndex.get(index)!.push(span)
             }
           })
-          
+
           // Handle duplicate indices - keep the one that's animating or matches the character, remove others
           spansByIndex.forEach((spans, index) => {
             if (spans.length > 1) {
               // Find the span that should be kept
               let spanToKeep: HTMLElement | null = null
-              
+
               // First, try to find one that matches the expected character
               const expectedChar = cleanedText[index]
               for (const span of spans) {
                 if (span.textContent === expectedChar) {
-                  const isHidden = span.style.color === "transparent" ||
-                                  span.style.color === "rgba(0, 0, 0, 0)" ||
-                                  window.getComputedStyle(span).color === "rgba(0, 0, 0, 0)"
+                  const isHidden =
+                    span.style.color === "transparent" ||
+                    span.style.color === "rgba(0, 0, 0, 0)" ||
+                    window.getComputedStyle(span).color === "rgba(0, 0, 0, 0)"
                   // Prefer non-transparent spans that match the character
                   if (!isHidden) {
                     spanToKeep = span
@@ -1137,24 +1200,26 @@ export const NumberFlowInput = ({
                   }
                 }
               }
-              
+
               // If no matching character found, find the animating one
               if (!spanToKeep) {
                 for (const span of spans) {
-                  const isHidden = span.style.color === "transparent" ||
-                                  span.style.color === "rgba(0, 0, 0, 0)" ||
-                                  window.getComputedStyle(span).color === "rgba(0, 0, 0, 0)"
+                  const isHidden =
+                    span.style.color === "transparent" ||
+                    span.style.color === "rgba(0, 0, 0, 0)" ||
+                    window.getComputedStyle(span).color === "rgba(0, 0, 0, 0)"
                   const hasBarrelWheelInDOM = parentContainer?.querySelector(
                     `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
                   )
-                  const hasWidthAnimation = span.hasAttribute("data-width-animate")
+                  const hasWidthAnimation =
+                    span.hasAttribute("data-width-animate")
                   if (isHidden || hasBarrelWheelInDOM || hasWidthAnimation) {
                     spanToKeep = span
                     break
                   }
                 }
               }
-              
+
               // If still no span found, keep the first one
               if (!spanToKeep && spans.length > 0) {
                 const firstSpan = spans.find(() => true)
@@ -1162,7 +1227,7 @@ export const NumberFlowInput = ({
                   spanToKeep = firstSpan
                 }
               }
-              
+
               // Remove all other spans at this index
               if (spanToKeep) {
                 spans.forEach((span) => {
@@ -1173,7 +1238,7 @@ export const NumberFlowInput = ({
               }
             }
           })
-          
+
           // Now check remaining spans for out-of-bounds or wrong characters
           const remainingSpans = Array.from(
             spanRef.current.querySelectorAll("[data-char-index]")
@@ -1183,14 +1248,16 @@ export const NumberFlowInput = ({
               span.getAttribute("data-char-index") ?? "-1",
               10
             )
-            const isHidden = span.style.color === "transparent" ||
-                            span.style.color === "rgba(0, 0, 0, 0)" ||
-                            window.getComputedStyle(span).color === "rgba(0, 0, 0, 0)"
+            const isHidden =
+              span.style.color === "transparent" ||
+              span.style.color === "rgba(0, 0, 0, 0)" ||
+              window.getComputedStyle(span).color === "rgba(0, 0, 0, 0)"
             // Check if there's actually a barrel wheel for this index in the DOM
             const hasBarrelWheelInDOM = parentContainer?.querySelector(
               `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
             )
-            const hasBarrelWheel = changes.barrelWheelIndices.has(index) || !!hasBarrelWheelInDOM
+            const hasBarrelWheel =
+              changes.barrelWheelIndices.has(index) || !!hasBarrelWheelInDOM
             const hasWidthAnimation = span.hasAttribute("data-width-animate")
             const isCurrentlyAnimating =
               hasBarrelWheel || hasWidthAnimation || isHidden
@@ -1275,48 +1342,100 @@ export const NumberFlowInput = ({
             const parentContainer = spanRef.current?.parentElement
             if (!parentContainer) return
 
+            // Check if a barrel wheel already exists for this index
+            const existingWheel = parentContainer.querySelector(
+              `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
+            ) as HTMLElement | null
+
+            if (existingWheel) {
+              // Reuse existing barrel wheel - update direction and position
+              const existingWrapper = existingWheel.querySelector(
+                `.${styles.barrel_digits_wrapper || ""}`
+              ) as HTMLElement | null
+
+              if (existingWrapper) {
+                // IMPORTANT: Update the character span's textContent to the new digit
+                // This ensures the span has the correct final digit when the animation completes
+                if (charSpan.textContent !== newDigitStr) {
+                  charSpan.textContent = newDigitStr ?? ""
+                }
+
+                existingWheel.setAttribute(
+                  "data-final-digit",
+                  newDigitStr ?? ""
+                )
+
+                requestAnimationFrame(() => {
+                  existingWrapper.style.setProperty(
+                    "--digit-position",
+                    newDigitStr ?? ""
+                  )
+                })
+
+                // Update width animation if needed
+                // Measure the old digit's width (current digit being replaced)
+                let oldDigitWidth = 0
+                if (oldDigitStr && charSpan) {
+                  oldDigitWidth = measureText(oldDigitStr, charSpan)
+                }
+
+                // Measure the new digit's width (final digit)
+                let newDigitWidth = 0
+                if (newDigitStr && charSpan) {
+                  newDigitWidth = measureText(newDigitStr, charSpan)
+                }
+
+                // Update width animation
+                if (oldDigitWidth > 0 && newDigitWidth > 0) {
+                  // Ensure span can have width applied
+                  charSpan.style.display = "inline-block"
+
+                  // Get current width (might be mid-animation)
+                  const currentWidth = charSpan.getBoundingClientRect().width
+
+                  // Set initial width to current width (where we're starting from)
+                  charSpan.style.width = `${currentWidth}px`
+                  charSpan.style.minWidth = `${currentWidth}px`
+                  charSpan.style.maxWidth = `${currentWidth}px`
+
+                  // Add attribute to enable CSS transition
+                  charSpan.setAttribute("data-width-animate", "")
+
+                  // Start width animation in the next frame
+                  requestAnimationFrame(() => {
+                    // Change width - this should trigger the CSS transition
+                    charSpan.style.width = `${newDigitWidth}px`
+                    charSpan.style.minWidth = `${newDigitWidth}px`
+                    charSpan.style.maxWidth = `${newDigitWidth}px`
+                  })
+                }
+
+                // Update barrel wheel position
+                const rect = charSpan.getBoundingClientRect()
+                const parentRect = parentContainer.getBoundingClientRect()
+                existingWheel.style.left = `${rect.left - parentRect.left}px`
+                existingWheel.style.top = `${rect.top - parentRect.top}px`
+                existingWheel.style.width = `${rect.width}px`
+                existingWheel.style.height = `${rect.height}px`
+
+                // Ensure the character span is transparent
+                charSpan.style.color = "transparent"
+
+                // Skip creating a new barrel wheel - we've reused the existing one
+                return
+              }
+            }
+
             // Measure the old digit's width (previous digit) - this will be the initial width
             let oldDigitWidth = 0
             if (oldDigitStr && charSpan) {
-              const computedStyle = window.getComputedStyle(charSpan)
-              const tempMeasure = document.createElement("span")
-              tempMeasure.style.position = "absolute"
-              tempMeasure.style.visibility = "hidden"
-              tempMeasure.style.whiteSpace = "pre"
-              tempMeasure.style.font = computedStyle.font
-              tempMeasure.style.fontSize = computedStyle.fontSize
-              tempMeasure.style.fontFamily = computedStyle.fontFamily
-              tempMeasure.style.fontWeight = computedStyle.fontWeight
-              tempMeasure.style.fontStyle = computedStyle.fontStyle
-              tempMeasure.style.letterSpacing = computedStyle.letterSpacing
-              tempMeasure.style.textTransform = computedStyle.textTransform
-              tempMeasure.style.lineHeight = computedStyle.lineHeight
-              tempMeasure.textContent = oldDigitStr
-              document.body.appendChild(tempMeasure)
-              oldDigitWidth = tempMeasure.getBoundingClientRect().width
-              document.body.removeChild(tempMeasure)
+              oldDigitWidth = measureText(oldDigitStr, charSpan)
             }
 
             // Measure the new digit's width (final digit) - this will be the destination width
             let newDigitWidth = 0
             if (newDigitStr && charSpan) {
-              const computedStyle = window.getComputedStyle(charSpan)
-              const tempMeasure = document.createElement("span")
-              tempMeasure.style.position = "absolute"
-              tempMeasure.style.visibility = "hidden"
-              tempMeasure.style.whiteSpace = "pre"
-              tempMeasure.style.font = computedStyle.font
-              tempMeasure.style.fontSize = computedStyle.fontSize
-              tempMeasure.style.fontFamily = computedStyle.fontFamily
-              tempMeasure.style.fontWeight = computedStyle.fontWeight
-              tempMeasure.style.fontStyle = computedStyle.fontStyle
-              tempMeasure.style.letterSpacing = computedStyle.letterSpacing
-              tempMeasure.style.textTransform = computedStyle.textTransform
-              tempMeasure.style.lineHeight = computedStyle.lineHeight
-              tempMeasure.textContent = newDigitStr
-              document.body.appendChild(tempMeasure)
-              newDigitWidth = tempMeasure.getBoundingClientRect().width
-              document.body.removeChild(tempMeasure)
+              newDigitWidth = measureText(newDigitStr, charSpan)
             }
 
             // Create barrel wheel element
@@ -1401,7 +1520,6 @@ export const NumberFlowInput = ({
               // The sequence contains digits from old to new (inclusive)
               // Position 0 = old digit (first in sequence)
               // Position sequence.length - 1 = new digit (last in sequence)
-              console.log(oldDigitStr, newDigitStr)
               const initialPosition = oldDigitStr
                 ? parseInt(oldDigitStr, 10)
                 : 0 // Start at first digit in sequence (old digit)
@@ -1465,7 +1583,8 @@ export const NumberFlowInput = ({
 
                     // Set up ResizeObserver to update barrel wheel position as digit width animates
                     // Clean up any existing observer for this index
-                    const existingObserver = resizeObserversRef.current.get(index)
+                    const existingObserver =
+                      resizeObserversRef.current.get(index)
                     if (existingObserver) {
                       existingObserver.disconnect()
                       resizeObserversRef.current.delete(index)
@@ -1479,13 +1598,18 @@ export const NumberFlowInput = ({
                       if (!parentContainer) return
 
                       const barrelWheel = parentContainer.querySelector(
-                        `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
+                        `[data-char-index="${index}"].${
+                          styles.barrel_wheel || ""
+                        }`
                       ) as HTMLElement | null
 
                       if (barrelWheel) {
                         const rect = charSpan.getBoundingClientRect()
-                        const parentRect = parentContainer.getBoundingClientRect()
-                        barrelWheel.style.left = `${rect.left - parentRect.left}px`
+                        const parentRect =
+                          parentContainer.getBoundingClientRect()
+                        barrelWheel.style.left = `${
+                          rect.left - parentRect.left
+                        }px`
                         // Also update width to match current digit width
                         barrelWheel.style.width = `${rect.width}px`
                       }
@@ -1521,19 +1645,6 @@ export const NumberFlowInput = ({
                       charSpan.style.minWidth = `${newDigitWidth}px`
                       charSpan.style.maxWidth = `${newDigitWidth}px`
 
-                      console.log({
-                        oldDigitStr,
-                        oldDigitWidth,
-                        newDigitStr,
-                        newDigitWidth,
-                        hasAttribute:
-                          charSpan.hasAttribute("data-width-animate"),
-                        computedWidth: computedStyle.width,
-                        transition: transition,
-                        inlineTransition: charSpan.style.transition,
-                        display: computedStyle.display,
-                      })
-
                       // Listen for width animation completion
                       const handleWidthAnimationEnd = (e: TransitionEvent) => {
                         // Only handle width-related transitions
@@ -1548,7 +1659,7 @@ export const NumberFlowInput = ({
                             "transitionend",
                             handleWidthAnimationEnd
                           )
-                          
+
                           // Clean up ResizeObserver when width animation completes
                           const observer = resizeObserversRef.current.get(index)
                           if (observer) {
@@ -1570,32 +1681,44 @@ export const NumberFlowInput = ({
                     () => {
                       // Get the current index and final digit from the barrel wheel's attributes
                       // (may have changed if chars were inserted before)
-                      const currentIndexStr = wheel.getAttribute("data-char-index")
-                      const currentIndex = currentIndexStr !== null ? parseInt(currentIndexStr, 10) : index
-                      const finalDigitAttr = wheel.getAttribute("data-final-digit")
-                      const finalDigit = finalDigitAttr !== null ? finalDigitAttr : newDigitStr
-                      
+                      const currentIndexStr =
+                        wheel.getAttribute("data-char-index")
+                      const currentIndex =
+                        currentIndexStr !== null
+                          ? parseInt(currentIndexStr, 10)
+                          : index
+                      const finalDigitAttr =
+                        wheel.getAttribute("data-final-digit")
+                      const finalDigit =
+                        finalDigitAttr !== null ? finalDigitAttr : newDigitStr
+
                       // Clean up ResizeObserver when barrel wheel animation completes
                       // Check both old and new index in case it was updated
-                      const observer = resizeObserversRef.current.get(currentIndex) || resizeObserversRef.current.get(index)
+                      const observer =
+                        resizeObserversRef.current.get(currentIndex) ||
+                        resizeObserversRef.current.get(index)
                       if (observer) {
                         observer.disconnect()
                         resizeObserversRef.current.delete(currentIndex)
                         resizeObserversRef.current.delete(index)
                       }
-                      
+
                       // Find the span by the current index AND verify it has the correct character
                       // This handles the case where characters were inserted before the barrel wheel
                       let targetSpan: HTMLElement | null = null
                       if (spanRef.current) {
-                        const spanAtCurrentIndex = spanRef.current.querySelector(
-                          `[data-char-index="${currentIndex}"]`
-                        ) as HTMLElement | null
-                        
+                        const spanAtCurrentIndex =
+                          spanRef.current.querySelector(
+                            `[data-char-index="${currentIndex}"]`
+                          ) as HTMLElement | null
+
                         // Verify the span has the correct character (final digit)
                         // IMPORTANT: Only use the span at currentIndex, not other spans with the same digit
                         // This prevents conflicts when multiple barrel wheels have the same final digit
-                        if (spanAtCurrentIndex && spanAtCurrentIndex.textContent === finalDigit) {
+                        if (
+                          spanAtCurrentIndex &&
+                          spanAtCurrentIndex.textContent === finalDigit
+                        ) {
                           targetSpan = spanAtCurrentIndex
                         } else if (spanAtCurrentIndex) {
                           // Span exists at index but has wrong character - this shouldn't happen, but use it anyway
@@ -1603,32 +1726,44 @@ export const NumberFlowInput = ({
                           targetSpan = spanAtCurrentIndex
                         }
                       }
-                      
+
                       // If we still haven't found the span, use the one from closure as last resort
                       if (!targetSpan && charSpan instanceof HTMLElement) {
                         // Only use it if it hasn't been reused for a different character
                         if (charSpan.textContent === finalDigit) {
                           // Update its index if needed
-                          const spanIndex = charSpan.getAttribute("data-char-index")
+                          const spanIndex =
+                            charSpan.getAttribute("data-char-index")
                           if (spanIndex !== currentIndex.toString()) {
-                            charSpan.setAttribute("data-char-index", currentIndex.toString())
+                            charSpan.setAttribute(
+                              "data-char-index",
+                              currentIndex.toString()
+                            )
                           }
                           targetSpan = charSpan
                         }
                       }
-                      
+
                       // Helper function to remove color: transparent from a span
                       const removeTransparentColor = (span: HTMLElement) => {
-                        if (span.style.color === "transparent" || span.style.color === "rgba(0, 0, 0, 0)" || span.style.color === "") {
+                        if (
+                          span.style.color === "transparent" ||
+                          span.style.color === "rgba(0, 0, 0, 0)" ||
+                          span.style.color === ""
+                        ) {
                           span.style.color = ""
                         }
                         // Also check computed style as a fallback
-                        const computedColor = window.getComputedStyle(span).color
-                        if (computedColor === "rgba(0, 0, 0, 0)" || computedColor === "transparent") {
+                        const computedColor =
+                          window.getComputedStyle(span).color
+                        if (
+                          computedColor === "rgba(0, 0, 0, 0)" ||
+                          computedColor === "transparent"
+                        ) {
                           span.style.color = ""
                         }
                       }
-                      
+
                       // Clean up width animation styles and attributes
                       if (targetSpan instanceof HTMLElement) {
                         cleanupWidthAnimation(targetSpan)
@@ -1638,19 +1773,23 @@ export const NumberFlowInput = ({
                         targetSpan.removeAttribute("data-flow")
                         targetSpan.style.transition = "none"
                       }
-                      
+
                       // Additional safety: Before removing barrel wheel, ensure we've cleaned up the span
                       // at the current index ONLY (not other spans with the same final digit)
                       // This catches edge cases where the span wasn't found above, but only affects THIS barrel wheel's span
                       if (!targetSpan && spanRef.current) {
-                        const spanAtCurrentIndex = spanRef.current.querySelector(
-                          `[data-char-index="${currentIndex}"]`
-                        ) as HTMLElement | null
+                        const spanAtCurrentIndex =
+                          spanRef.current.querySelector(
+                            `[data-char-index="${currentIndex}"]`
+                          ) as HTMLElement | null
                         if (spanAtCurrentIndex) {
                           // Only clean up if this span is actually transparent (indicating it's the one for this barrel wheel)
-                          const isTransparent = spanAtCurrentIndex.style.color === "transparent" || 
-                                               spanAtCurrentIndex.style.color === "rgba(0, 0, 0, 0)" ||
-                                               window.getComputedStyle(spanAtCurrentIndex).color === "rgba(0, 0, 0, 0)"
+                          const isTransparent =
+                            spanAtCurrentIndex.style.color === "transparent" ||
+                            spanAtCurrentIndex.style.color ===
+                              "rgba(0, 0, 0, 0)" ||
+                            window.getComputedStyle(spanAtCurrentIndex)
+                              .color === "rgba(0, 0, 0, 0)"
                           if (isTransparent) {
                             removeTransparentColor(spanAtCurrentIndex)
                             spanAtCurrentIndex.removeAttribute("data-flow")
@@ -1659,30 +1798,39 @@ export const NumberFlowInput = ({
                           }
                         }
                       }
-                      
+
                       // Remove barrel wheel
                       wheel.remove()
-                      
+
                       // Final safety check: After removing barrel wheel, do one more pass to ensure
                       // the span at THIS index (not other spans with the same final digit) is not still transparent
                       // Use requestAnimationFrame to ensure DOM has updated
                       requestAnimationFrame(() => {
                         if (spanRef.current) {
-                          const spanAtCurrentIndex = spanRef.current.querySelector(
-                            `[data-char-index="${currentIndex}"]`
-                          ) as HTMLElement | null
-                          
+                          const spanAtCurrentIndex =
+                            spanRef.current.querySelector(
+                              `[data-char-index="${currentIndex}"]`
+                            ) as HTMLElement | null
+
                           if (spanAtCurrentIndex) {
-                            const isTransparent = spanAtCurrentIndex.style.color === "transparent" || 
-                                                 spanAtCurrentIndex.style.color === "rgba(0, 0, 0, 0)" ||
-                                                 window.getComputedStyle(spanAtCurrentIndex).color === "rgba(0, 0, 0, 0)"
-                            
+                            const isTransparent =
+                              spanAtCurrentIndex.style.color ===
+                                "transparent" ||
+                              spanAtCurrentIndex.style.color ===
+                                "rgba(0, 0, 0, 0)" ||
+                              window.getComputedStyle(spanAtCurrentIndex)
+                                .color === "rgba(0, 0, 0, 0)"
+
                             // Check if there's still a barrel wheel for this specific index
-                            const parentContainer = spanRef.current.parentElement
-                            const hasBarrelWheel = parentContainer?.querySelector(
-                              `[data-char-index="${currentIndex}"].${styles.barrel_wheel || ""}`
-                            )
-                            
+                            const parentContainer =
+                              spanRef.current.parentElement
+                            const hasBarrelWheel =
+                              parentContainer?.querySelector(
+                                `[data-char-index="${currentIndex}"].${
+                                  styles.barrel_wheel || ""
+                                }`
+                              )
+
                             // If no barrel wheel exists for THIS index and span is transparent, restore color
                             // Only check the span at currentIndex, not other spans with the same final digit
                             if (isTransparent && !hasBarrelWheel) {
@@ -2748,8 +2896,6 @@ export const NumberFlowInput = ({
     },
     [displayValue, updateValue]
   )
-
-  console.log({ actualValue })
 
   return (
     <>
