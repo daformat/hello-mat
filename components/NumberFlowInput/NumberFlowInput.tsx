@@ -1190,6 +1190,24 @@ export const NumberFlowInput = ({
                   element.style.width = `${width}px`
                   element.style.minWidth = `${width}px`
                   element.style.maxWidth = `${width}px`
+
+                  // Remove inline width styles after transition completes
+                  const handleTransitionEnd = (e: TransitionEvent) => {
+                    if (
+                      ["width", "min-width", "max-width"].includes(
+                        e.propertyName
+                      )
+                    ) {
+                      element.style.width = ""
+                      element.style.minWidth = ""
+                      element.style.maxWidth = ""
+                      element.removeEventListener(
+                        "transitionend",
+                        handleTransitionEnd
+                      )
+                    }
+                  }
+                  element.addEventListener("transitionend", handleTransitionEnd)
                 }
               }
             })
@@ -2422,7 +2440,8 @@ export const NumberFlowInput = ({
 
       // Truncate pasted text if it would exceed maxLength
       if (maxLength !== undefined) {
-        const availableLength = maxLength - (displayValue.length - (end - start))
+        const availableLength =
+          maxLength - (displayValue.length - (end - start))
         if (availableLength <= 0) return
         if (pastedText.length > availableLength) {
           pastedText = pastedText.slice(0, availableLength)

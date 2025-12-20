@@ -4,7 +4,7 @@
   //box-shadow: 0 1px 12px var(--color-shadow-1),
   //inset 0 0 2px 0.75px var(--color-border-2),
   //inset 0 0 0 0.75px var(--color-border-1);
-  font-size: 2em;
+  font-size: clamp(1.8em, 5vw, 3em);
 
   &:focus-within:has(:focus-visible)  {
     //outline: 2px solid Highlight; /* Uses system accent color */
