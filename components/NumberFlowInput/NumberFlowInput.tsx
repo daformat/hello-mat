@@ -238,6 +238,22 @@ export const NumberFlowInput = ({
   const shouldPreventInputRef = useRef(false)
   const preventInputCursorPosRef = useRef(0)
 
+  // Helper function to remove barrel wheels at specific indices
+  const removeBarrelWheelsAtIndices = useCallback((indices: number[]) => {
+    if (!spanRef.current) return
+    const parentContainer = spanRef.current.parentElement
+    if (!parentContainer) return
+
+    indices.forEach((index) => {
+      const barrelWheel = parentContainer.querySelector(
+        `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
+      ) as HTMLElement | null
+      if (barrelWheel) {
+        barrelWheel.remove()
+      }
+    })
+  }, [styles.barrel_wheel])
+
   const updateValue = useCallback(
     (
       newText: string,
@@ -482,7 +498,11 @@ export const NumberFlowInput = ({
           }
           
           // Remove any stray text nodes (from undo/redo or other operations)
-          textNodesToRemove.forEach((textNode) => textNode.remove())
+          textNodesToRemove.forEach((textNode) => {
+            if (textNode.parentNode) {
+              textNode.parentNode.removeChild(textNode)
+            }
+          })
 
           // Track which spans we've used
           const usedSpans = new Set<HTMLElement>()
@@ -1297,6 +1317,12 @@ export const NumberFlowInput = ({
       // Handle special keys
       if ((event.metaKey || event.ctrlKey) && key === "Backspace") {
         event.preventDefault()
+        // Remove barrel wheels for all indices being deleted (from 0 to end)
+        const indicesToRemove: number[] = []
+        for (let i = 0; i < end; i++) {
+          indicesToRemove.push(i)
+        }
+        removeBarrelWheelsAtIndices(indicesToRemove)
         const newText = currentText.slice(end)
         updateValue(newText, 0, 0, end)
         return
@@ -1593,12 +1619,20 @@ export const NumberFlowInput = ({
           if (start === end) {
             // No selection, delete character before cursor
             if (start > 0) {
+              // Remove barrel wheel at the position being deleted
+              removeBarrelWheelsAtIndices([start - 1])
               const newText =
                 currentText.slice(0, start - 1) + currentText.slice(start)
               updateValue(newText, start - 1, start - 1, start)
             }
           } else {
             // Has selection, delete selected text
+            // Remove barrel wheels for all indices in the selection range
+            const indicesToRemove: number[] = []
+            for (let i = start; i < end; i++) {
+              indicesToRemove.push(i)
+            }
+            removeBarrelWheelsAtIndices(indicesToRemove)
             const newText = currentText.slice(0, start) + currentText.slice(end)
             updateValue(newText, start, start, end)
           }
@@ -1612,12 +1646,20 @@ export const NumberFlowInput = ({
             if (event.metaKey || event.ctrlKey) {
               // Ctrl/Cmd+Delete: delete all characters after cursor
               if (start < currentText.length) {
+                // Remove barrel wheels for all indices being deleted
+                const indicesToRemove: number[] = []
+                for (let i = start; i < currentText.length; i++) {
+                  indicesToRemove.push(i)
+                }
+                removeBarrelWheelsAtIndices(indicesToRemove)
                 const newText = currentText.slice(0, start)
                 updateValue(newText, start, start, currentText.length)
               }
             } else {
               // Delete: delete one character after cursor
               if (start < currentText.length) {
+                // Remove barrel wheel at the position being deleted
+                removeBarrelWheelsAtIndices([start])
                 const newText =
                   currentText.slice(0, start) + currentText.slice(start + 1)
                 updateValue(newText, start, start, start + 1)
@@ -1625,6 +1667,12 @@ export const NumberFlowInput = ({
             }
           } else {
             // Has selection, delete selected text
+            // Remove barrel wheels for all indices in the selection range
+            const indicesToRemove: number[] = []
+            for (let i = start; i < end; i++) {
+              indicesToRemove.push(i)
+            }
+            removeBarrelWheelsAtIndices(indicesToRemove)
             const newText = currentText.slice(0, start) + currentText.slice(end)
             updateValue(newText, start, start, end)
           }
