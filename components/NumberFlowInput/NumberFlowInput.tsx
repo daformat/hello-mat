@@ -950,7 +950,7 @@ export const NumberFlowInput = ({
                     }
                     if (isUnchanged) {
                       span.setAttribute("data-show", "")
-                    } else if (!referenceNode?.nextSibling) {
+                    } else if (referenceNode && !referenceNode.nextSibling) {
                       // Last span: animate width
                       span.style.width = "0px"
                       span.style.minWidth = "0px"
