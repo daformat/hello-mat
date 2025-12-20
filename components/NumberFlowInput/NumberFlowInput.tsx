@@ -2417,6 +2417,11 @@ export const NumberFlowInput = ({
     [displayValue, updateValue]
   )
 
+  useEffect(() => {
+    const span = spanRef.current
+    span?.focus()
+  }, [])
+
   return (
     <>
       <span
@@ -2447,6 +2452,8 @@ export const NumberFlowInput = ({
           <span
             ref={spanRef}
             contentEditable
+            // @ts-expect-error this prop isn't recognized by TS
+            inputmode="numeric"
             suppressContentEditableWarning
             onKeyDown={handleKeyDown}
             onBeforeInput={handleBeforeInput}
