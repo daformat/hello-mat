@@ -241,6 +241,25 @@ export const NumberFlowInput = ({
   // Track ResizeObservers for digits with barrel wheel animations
   const resizeObserversRef = useRef<Map<number, ResizeObserver>>(new Map())
 
+  // Helper function to clean up width animation styles and attributes
+  const cleanupWidthAnimation = useCallback((charSpan: HTMLElement) => {
+    // Remove width animation attribute
+    charSpan.removeAttribute("data-width-animate")
+    // Remove inline width styles
+    charSpan.style.width = ""
+    charSpan.style.minWidth = ""
+    charSpan.style.maxWidth = ""
+    // Remove display style if it was set (it might have been set to inline-block)
+    if (charSpan.style.display === "inline-block") {
+      charSpan.style.display = ""
+    }
+    // Remove inline transition if it was set (check if it contains width-related transitions)
+    const transition = charSpan.style.transition
+    if (transition && (transition.includes("width") || transition.includes("min-width") || transition.includes("max-width"))) {
+      charSpan.style.transition = ""
+    }
+  }, [])
+
   // Helper function to remove barrel wheels at specific indices
   const removeBarrelWheelsAtIndices = useCallback((indices: number[]) => {
     if (!spanRef.current) return
@@ -255,6 +274,14 @@ export const NumberFlowInput = ({
         resizeObserversRef.current.delete(index)
       }
       
+      // Clean up width animation styles and attributes for the digit span
+      const charSpan = spanRef.current?.querySelector(
+        `[data-char-index="${index}"]`
+      ) as HTMLElement | null
+      if (charSpan && charSpan.hasAttribute("data-width-animate")) {
+        cleanupWidthAnimation(charSpan)
+      }
+      
       const barrelWheel = parentContainer.querySelector(
         `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
       ) as HTMLElement | null
@@ -262,7 +289,7 @@ export const NumberFlowInput = ({
         barrelWheel.remove()
       }
     })
-  }, [styles.barrel_wheel])
+  }, [styles.barrel_wheel, cleanupWidthAnimation])
 
   const updateValue = useCallback(
     (
@@ -1148,12 +1175,8 @@ export const NumberFlowInput = ({
                           e.propertyName === "min-width" ||
                           e.propertyName === "max-width"
                         ) {
-                          // Remove width constraints after animation completes
-                          charSpan.style.width = ""
-                          charSpan.style.minWidth = ""
-                          charSpan.style.maxWidth = ""
-                          charSpan.style.display = ""
-                          charSpan.removeAttribute("data-width-animate")
+                          // Clean up width animation styles and attributes
+                          cleanupWidthAnimation(charSpan)
                           charSpan.removeEventListener(
                             "transitionend",
                             handleWidthAnimationEnd
@@ -1183,6 +1206,11 @@ export const NumberFlowInput = ({
                       if (observer) {
                         observer.disconnect()
                         resizeObserversRef.current.delete(index)
+                      }
+                      
+                      // Clean up width animation styles and attributes
+                      if (charSpan instanceof HTMLElement) {
+                        cleanupWidthAnimation(charSpan)
                       }
                       
                       // Remove barrel wheel first
