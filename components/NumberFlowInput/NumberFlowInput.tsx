@@ -225,7 +225,7 @@ export const NumberFlowInput = ({
   const [displayValue, setDisplayValue] = useState(
     actualValue?.toString() ?? ""
   )
-  const [cursorPosition, setCursorPosition] = useState(0)
+  const [_cursorPosition, setCursorPosition] = useState(0)
 
   // Undo/Redo history
   const historyRef = useRef<
@@ -252,7 +252,7 @@ export const NumberFlowInput = ({
       let cleanedText = newText.replace(/[^\d.-]/g, "")
 
       // Track if we're removing leading zeros (for animation fix)
-      const hadLeadingZero =
+      const _hadLeadingZero =
         cleanedText.startsWith("0") &&
         cleanedText.length > 1 &&
         cleanedText[1] !== "."
@@ -824,9 +824,6 @@ export const NumberFlowInput = ({
               barrelWheelData.sequence[barrelWheelData.sequence.length - 1]
             const finalDigit = finalDigitStr ? parseInt(finalDigitStr, 10) : 0
             const initialDigitStr = barrelWheelData.sequence[0]
-            const initialDigit = initialDigitStr
-              ? parseInt(initialDigitStr, 10)
-              : finalDigit
 
             // Determine old and new digits based on direction
             // When direction is "up": sequence = [old, ..., new] so initialDigitStr = old, finalDigitStr = new
@@ -1224,6 +1221,7 @@ export const NumberFlowInput = ({
       })
       historyIndexRef.current = 0
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Sync external changes
@@ -1265,7 +1263,8 @@ export const NumberFlowInput = ({
         spanRef.current.textContent = newDisplay
       }
     }
-  }, [actualValue, displayValue, styles.barrel_wheel])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actualValue, displayValue])
 
   const handleKeyDown = useCallback<KeyboardEventHandler<HTMLSpanElement>>(
     (event) => {
@@ -1575,11 +1574,20 @@ export const NumberFlowInput = ({
         if (key === "Delete") {
           event.preventDefault()
           if (start === end) {
-            // No selection, delete character after cursor
-            if (start < currentText.length) {
-              const newText =
-                currentText.slice(0, start) + currentText.slice(start + 1)
-              updateValue(newText, start, start, start + 1)
+            // No selection
+            if (event.metaKey || event.ctrlKey) {
+              // Ctrl/Cmd+Delete: delete all characters after cursor
+              if (start < currentText.length) {
+                const newText = currentText.slice(0, start)
+                updateValue(newText, start, start, currentText.length)
+              }
+            } else {
+              // Delete: delete one character after cursor
+              if (start < currentText.length) {
+                const newText =
+                  currentText.slice(0, start) + currentText.slice(start + 1)
+                updateValue(newText, start, start, start + 1)
+              }
             }
           } else {
             // Has selection, delete selected text
@@ -1647,7 +1655,6 @@ export const NumberFlowInput = ({
               null
             )
             let anchorNode: Node | null = null
-            let anchorOffset = 0
             let targetNode: Node | null = null
             let targetOffset = 0
 
@@ -1658,7 +1665,7 @@ export const NumberFlowInput = ({
               // Find anchor node
               if (!anchorNode && currentPos + nodeLength >= anchorPos) {
                 anchorNode = node
-                anchorOffset = anchorPos - currentPos
+                const _anchorOffset = anchorPos - currentPos
               }
 
               // Find target node
@@ -1677,7 +1684,7 @@ export const NumberFlowInput = ({
               // This is the proper way to extend selections
               try {
                 selection.extend(targetNode, targetOffset)
-              } catch (e) {
+              } catch {
                 // extend() might not work in all cases, fall back to setting range
                 // Find anchor node for range
                 let anchorNode: Node | null = null
