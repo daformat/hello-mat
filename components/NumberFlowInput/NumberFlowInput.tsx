@@ -43,6 +43,7 @@ export type NumberFlowInputCommonProps = {
   name?: string
   id?: string
   autoAddLeadingZero?: boolean
+  maxLength?: number
 }
 
 export type NumberFlowInputProps = NumberFlowInputCommonProps &
@@ -55,6 +56,7 @@ export const NumberFlowInput = ({
   name,
   id,
   autoAddLeadingZero = false,
+  maxLength,
 }: NumberFlowInputProps) => {
   const spanRef = useRef<HTMLSpanElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -2286,6 +2288,9 @@ export const NumberFlowInput = ({
         }
 
         event.preventDefault()
+        // Check maxLength before inserting
+        const newLength = currentText.length - (end - start) + 1
+        if (maxLength !== undefined && newLength > maxLength) return
         const newText =
           currentText.slice(0, start) + key + currentText.slice(end)
         updateValue(newText, start + 1, start, end)
@@ -2300,6 +2305,9 @@ export const NumberFlowInput = ({
         if (!currentText.includes(".")) {
           // Prevent typing "." when cursor is at position 0 and text starts with "-"
           if (currentText.startsWith("-") && start === 0 && end === 0) return
+          // Check maxLength before inserting
+          const newLength = currentText.length - (end - start) + 1
+          if (maxLength !== undefined && newLength > maxLength) return
           const newText =
             currentText.slice(0, start) + key + currentText.slice(end)
           updateValue(newText, start + 1, start, end)
@@ -2311,6 +2319,9 @@ export const NumberFlowInput = ({
         // Only allow minus at the beginning, and only if there isn't already one
         const hasMinus = currentText.startsWith("-")
         if (start === 0 && !hasMinus) {
+          // Check maxLength before inserting
+          const newLength = currentText.length - (end - start) + 1
+          if (maxLength !== undefined && newLength > maxLength) return
           // Insert minus at the beginning (can replace selection)
           const newText = key + currentText.slice(end)
           updateValue(newText, start + 1, start, end)
@@ -2325,6 +2336,7 @@ export const NumberFlowInput = ({
       removeBarrelWheelsAtIndices,
       applyHistoryItem,
       applyHistoryItemWithCursor,
+      maxLength,
     ]
   )
 
@@ -2397,7 +2409,7 @@ export const NumberFlowInput = ({
   const handlePaste = useCallback<ClipboardEventHandler<HTMLSpanElement>>(
     (event) => {
       event.preventDefault()
-      const pastedText = event.clipboardData.getData("text")
+      let pastedText = event.clipboardData.getData("text")
 
       if (!/^-?\d*\.?\d*$/.test(pastedText)) return
 
@@ -2407,6 +2419,16 @@ export const NumberFlowInput = ({
 
       if (!selection) return
       const { start, end } = getSelectionRange(spanRef.current, selection)
+
+      // Truncate pasted text if it would exceed maxLength
+      if (maxLength !== undefined) {
+        const availableLength = maxLength - (displayValue.length - (end - start))
+        if (availableLength <= 0) return
+        if (pastedText.length > availableLength) {
+          pastedText = pastedText.slice(0, availableLength)
+        }
+      }
+
       const newText =
         displayValue.slice(0, start) + pastedText + displayValue.slice(end)
 
@@ -2414,7 +2436,7 @@ export const NumberFlowInput = ({
         updateValue(newText, start + pastedText.length, start, end)
       }
     },
-    [displayValue, updateValue]
+    [displayValue, updateValue, maxLength]
   )
 
   useEffect(() => {
