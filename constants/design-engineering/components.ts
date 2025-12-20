@@ -204,6 +204,29 @@ export const COMPONENTS = {
       imageHeight: 630,
     },
   },
+  "number-flow-input": {
+    shortTitle: "A Number Flow Input component",
+    video: {
+      dark: {
+        src: "/media/design-engineering/number-flow-input/number-flow-input-overview-dark.mp4",
+        type: "video/mp4",
+      },
+      light: {
+        src: "/media/design-engineering/number-flow-input/number-flow-input-overview-light.mp4",
+        type: "video/mp4",
+      },
+    },
+    metas: {
+      title: "Design engineering: a swipeable cards carousel",
+      description:
+        "Building a swipeable cards stack with React, TypeScript, and SCSS.",
+      url: "/design-engineering/component/number-flow-input",
+      image:
+        "/media/design-engineering/number-flow-input/og-number-flow-input-light.png",
+      imageWidth: 1200,
+      imageHeight: 630,
+    },
+  },
 } as const satisfies Record<
   string,
   {
@@ -250,6 +273,7 @@ export const COMPONENTS_ORDER = createComponentOrder([
   "carousel-component",
   "stacking-cards",
   "swipeable-cards",
+  "number-flow-input",
 ] as const)
 
 export const getNextComponent = (currentComponentId: ComponentId) => {

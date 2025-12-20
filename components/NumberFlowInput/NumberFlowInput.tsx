@@ -212,9 +212,10 @@ export const NumberFlowInput = ({
       }
 
       if (autoAddLeadingZero) {
-        if (cleanedText.startsWith(".")) {
+        // Check rawCleaned (before leading zero was added) to detect if we added a leading zero
+        if (rawCleaned.startsWith(".")) {
           newCursorPos += 1
-        } else if (cleanedText.startsWith("-.")) {
+        } else if (rawCleaned.startsWith("-.")) {
           newCursorPos += 1
         }
       }
