@@ -318,15 +318,52 @@ export const NumberFlowInput = ({
       const charSpan = spanRef.current?.querySelector(
         `[data-char-index="${index}"]`
       ) as HTMLElement | null
-      if (charSpan && charSpan.hasAttribute("data-width-animate")) {
-        cleanupWidthAnimation(charSpan)
+      if (charSpan) {
+        if (charSpan.hasAttribute("data-width-animate")) {
+          cleanupWidthAnimation(charSpan)
+        }
+        // Always remove color: transparent when barrel wheel is removed
+        if (charSpan.style.color === "transparent" || 
+            charSpan.style.color === "rgba(0, 0, 0, 0)" ||
+            window.getComputedStyle(charSpan).color === "rgba(0, 0, 0, 0)") {
+          charSpan.style.color = ""
+        }
       }
       
       const barrelWheel = parentContainer.querySelector(
         `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
       ) as HTMLElement | null
       if (barrelWheel) {
+        // Before removing, get the final digit to do a comprehensive cleanup
+        const finalDigit = barrelWheel.getAttribute("data-final-digit")
+        
         barrelWheel.remove()
+        
+        // After removing barrel wheel, do a final pass to ensure the span at THIS index is not still transparent
+        // IMPORTANT: Only check the span at the specific index, not other spans with the same final digit
+        // This prevents conflicts when multiple barrel wheels have the same final digit
+        if (spanRef.current) {
+          const spanAtIndex = spanRef.current.querySelector(
+            `[data-char-index="${index}"]`
+          ) as HTMLElement | null
+          
+          if (spanAtIndex) {
+            const isTransparent = spanAtIndex.style.color === "transparent" || 
+                                 spanAtIndex.style.color === "rgba(0, 0, 0, 0)" ||
+                                 window.getComputedStyle(spanAtIndex).color === "rgba(0, 0, 0, 0)"
+            
+            // Check if there's still a barrel wheel for THIS specific index
+            const hasBarrelWheel = parentContainer.querySelector(
+              `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
+            )
+            
+            // If no barrel wheel exists for THIS index and span is transparent, restore color
+            // Only check the span at this index, not other spans with the same final digit
+            if (isTransparent && !hasBarrelWheel) {
+              spanAtIndex.style.color = ""
+            }
+          }
+        }
       }
     })
   }, [styles.barrel_wheel, cleanupWidthAnimation])
@@ -1355,24 +1392,14 @@ export const NumberFlowInput = ({
                         ) as HTMLElement | null
                         
                         // Verify the span has the correct character (final digit)
+                        // IMPORTANT: Only use the span at currentIndex, not other spans with the same digit
+                        // This prevents conflicts when multiple barrel wheels have the same final digit
                         if (spanAtCurrentIndex && spanAtCurrentIndex.textContent === finalDigit) {
                           targetSpan = spanAtCurrentIndex
-                        } else {
-                          // Fallback: search all spans for one with the final digit that's not already visible
-                          // This handles edge cases where the span was moved/reused
-                          const allSpans = spanRef.current.querySelectorAll("[data-char-index]")
-                          for (const span of Array.from(allSpans)) {
-                            const spanEl = span as HTMLElement
-                            if (spanEl.textContent === finalDigit && spanEl.style.color === "transparent") {
-                              // Found the span - update its index if needed
-                              const spanIndex = spanEl.getAttribute("data-char-index")
-                              if (spanIndex !== currentIndex.toString()) {
-                                spanEl.setAttribute("data-char-index", currentIndex.toString())
-                              }
-                              targetSpan = spanEl
-                              break
-                            }
-                          }
+                        } else if (spanAtCurrentIndex) {
+                          // Span exists at index but has wrong character - this shouldn't happen, but use it anyway
+                          // since it's at the correct index (the barrel wheel's index)
+                          targetSpan = spanAtCurrentIndex
                         }
                       }
                       
@@ -1389,34 +1416,80 @@ export const NumberFlowInput = ({
                         }
                       }
                       
+                      // Helper function to remove color: transparent from a span
+                      const removeTransparentColor = (span: HTMLElement) => {
+                        if (span.style.color === "transparent" || span.style.color === "rgba(0, 0, 0, 0)" || span.style.color === "") {
+                          span.style.color = ""
+                        }
+                        // Also check computed style as a fallback
+                        const computedColor = window.getComputedStyle(span).color
+                        if (computedColor === "rgba(0, 0, 0, 0)" || computedColor === "transparent") {
+                          span.style.color = ""
+                        }
+                      }
+                      
                       // Clean up width animation styles and attributes
                       if (targetSpan instanceof HTMLElement) {
                         cleanupWidthAnimation(targetSpan)
                         // Always remove color: transparent when barrel wheel completes
-                        targetSpan.style.color = ""
+                        removeTransparentColor(targetSpan)
                         // Ensure the character doesn't have any animation attributes
                         targetSpan.removeAttribute("data-flow")
                         targetSpan.style.transition = "none"
-                      } else {
-                        // Fallback: if we couldn't find the target span, try to find any span with the final digit
-                        // that has color: transparent and remove it
-                        if (spanRef.current) {
-                          const allSpans = spanRef.current.querySelectorAll("[data-char-index]")
-                          for (const span of Array.from(allSpans)) {
-                            const spanEl = span as HTMLElement
-                            if (spanEl.textContent === finalDigit && (spanEl.style.color === "transparent" || spanEl.style.color === "rgba(0, 0, 0, 0)")) {
-                              spanEl.style.color = ""
-                              spanEl.removeAttribute("data-flow")
-                              spanEl.style.transition = "none"
-                              cleanupWidthAnimation(spanEl)
-                              break
-                            }
+                      }
+                      
+                      // Additional safety: Before removing barrel wheel, ensure we've cleaned up the span
+                      // at the current index ONLY (not other spans with the same final digit)
+                      // This catches edge cases where the span wasn't found above, but only affects THIS barrel wheel's span
+                      if (!targetSpan && spanRef.current) {
+                        const spanAtCurrentIndex = spanRef.current.querySelector(
+                          `[data-char-index="${currentIndex}"]`
+                        ) as HTMLElement | null
+                        if (spanAtCurrentIndex) {
+                          // Only clean up if this span is actually transparent (indicating it's the one for this barrel wheel)
+                          const isTransparent = spanAtCurrentIndex.style.color === "transparent" || 
+                                               spanAtCurrentIndex.style.color === "rgba(0, 0, 0, 0)" ||
+                                               window.getComputedStyle(spanAtCurrentIndex).color === "rgba(0, 0, 0, 0)"
+                          if (isTransparent) {
+                            removeTransparentColor(spanAtCurrentIndex)
+                            spanAtCurrentIndex.removeAttribute("data-flow")
+                            spanAtCurrentIndex.style.transition = "none"
+                            cleanupWidthAnimation(spanAtCurrentIndex)
                           }
                         }
                       }
                       
-                      // Remove barrel wheel first
+                      // Remove barrel wheel
                       wheel.remove()
+                      
+                      // Final safety check: After removing barrel wheel, do one more pass to ensure
+                      // the span at THIS index (not other spans with the same final digit) is not still transparent
+                      // Use requestAnimationFrame to ensure DOM has updated
+                      requestAnimationFrame(() => {
+                        if (spanRef.current) {
+                          const spanAtCurrentIndex = spanRef.current.querySelector(
+                            `[data-char-index="${currentIndex}"]`
+                          ) as HTMLElement | null
+                          
+                          if (spanAtCurrentIndex) {
+                            const isTransparent = spanAtCurrentIndex.style.color === "transparent" || 
+                                                 spanAtCurrentIndex.style.color === "rgba(0, 0, 0, 0)" ||
+                                                 window.getComputedStyle(spanAtCurrentIndex).color === "rgba(0, 0, 0, 0)"
+                            
+                            // Check if there's still a barrel wheel for this specific index
+                            const parentContainer = spanRef.current.parentElement
+                            const hasBarrelWheel = parentContainer?.querySelector(
+                              `[data-char-index="${currentIndex}"].${styles.barrel_wheel || ""}`
+                            )
+                            
+                            // If no barrel wheel exists for THIS index and span is transparent, restore color
+                            // Only check the span at currentIndex, not other spans with the same final digit
+                            if (isTransparent && !hasBarrelWheel) {
+                              removeTransparentColor(spanAtCurrentIndex)
+                            }
+                          }
+                        }
+                      })
                     },
                     { once: true }
                   )
