@@ -249,8 +249,10 @@ export const NumberFlowInput = ({
     charSpan.style.width = ""
     charSpan.style.minWidth = ""
     charSpan.style.maxWidth = ""
-    // Remove display style if it was set (it might have been set to inline-block)
-    if (charSpan.style.display === "inline-block") {
+    // Remove display style if it was explicitly set to inline-block (not from CSS)
+    // Only clear if it was set as an inline style (not from CSS classes)
+    const inlineDisplay = charSpan.style.display
+    if (inlineDisplay === "inline-block") {
       charSpan.style.display = ""
     }
     // Remove inline transition if it was set (check if it contains width-related transitions)
