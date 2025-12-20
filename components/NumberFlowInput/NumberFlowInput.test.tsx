@@ -659,17 +659,17 @@ describe("NumberFlowInput", () => {
       await typeText(input, "-123")
       setCursorPosition(input, 0)
 
-      // Try to type another minus
+      // Try to type another minus - should be ignored
       fireEvent.keyDown(input, { key: "-", preventDefault: vi.fn() })
       fireEvent.keyPress(input, { key: "-" })
 
       await waitFor(() => {
-        // Should remove the minus
-        expect(input.textContent).toBe("123")
+        // Should keep the minus (ignore the second one)
+        expect(input.textContent).toBe("-123")
       })
     })
 
-    it("should allow removing minus by typing it again at position 0", async () => {
+    it("should ignore minus when typed at position 0 if already has minus", async () => {
       const onChange = vi.fn()
       render(<NumberFlowInput onChange={onChange} />)
 
@@ -677,14 +677,17 @@ describe("NumberFlowInput", () => {
       input.focus()
 
       await typeText(input, "-123")
+      const lastCallIndex = onChange.mock.calls.length - 1
       setCursorPosition(input, 0)
 
       fireEvent.keyDown(input, { key: "-", preventDefault: vi.fn() })
       fireEvent.keyPress(input, { key: "-" })
 
       await waitFor(() => {
-        expect(input.textContent).toBe("123")
-        expect(onChange).toHaveBeenLastCalledWith(123)
+        // Value should remain unchanged
+        expect(input.textContent).toBe("-123")
+        // onChange should not have been called again
+        expect(onChange.mock.calls.length).toBe(lastCallIndex + 1)
       })
     })
   })

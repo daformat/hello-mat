@@ -2180,12 +2180,8 @@ export const NumberFlowInput = ({
           // Insert minus at the beginning (can replace selection)
           const newText = key + currentText.slice(end)
           updateValue(newText, start + 1, start, end)
-        } else if (hasMinus && start === 0 && end === 0) {
-          // Remove minus if cursor is at position 0 and minus exists (no selection)
-          const newText = currentText.slice(1)
-          updateValue(newText, 0, 0, 1)
         }
-        // If hasMinus is true and start > 0, don't allow inserting minus in the middle
+        // If there's already a minus, ignore the input (don't toggle or insert)
         return
       }
     },
