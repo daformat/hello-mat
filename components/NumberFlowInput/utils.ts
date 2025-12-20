@@ -128,3 +128,69 @@ export const removeTransparentColor = (span: HTMLElement): void => {
   }
 }
 
+export const findNodeAtPosition = (
+  element: HTMLElement,
+  targetPos: number
+): { node: Node; offset: number } | null => {
+  let currentPos = 0
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null)
+  let node: Node | null
+
+  while ((node = walker.nextNode())) {
+    const nodeLength = node.textContent?.length ?? 0
+    if (currentPos + nodeLength >= targetPos) {
+      return { node, offset: Math.min(targetPos - currentPos, nodeLength) }
+    }
+    currentPos += nodeLength
+  }
+  return null
+}
+
+export const setCursorAtPosition = (
+  element: HTMLElement,
+  position: number,
+  selection?: Selection | null
+): void => {
+  const sel = selection ?? window.getSelection()
+  if (!sel) return
+
+  const found = findNodeAtPosition(element, position)
+  if (found) {
+    const range = document.createRange()
+    range.setStart(found.node, found.offset)
+    range.collapse(true)
+    sel.removeAllRanges()
+    sel.addRange(range)
+    return
+  }
+
+  const range = document.createRange()
+  range.selectNodeContents(element)
+  range.collapse(false)
+  sel.removeAllRanges()
+  sel.addRange(range)
+}
+
+export const getPositionFromNode = (
+  container: HTMLElement,
+  node: Node | null,
+  offset: number
+): number => {
+  if (!node || !container.contains(node)) return 0
+  const range = document.createRange()
+  range.setStart(container, 0)
+  range.setEnd(node, offset)
+  return range.toString().length
+}
+
+export const getBarrelWheelSelector = (
+  index: number | null,
+  barrelWheelClass: string
+): string => {
+  const classSelector = barrelWheelClass ? `.${barrelWheelClass}` : ""
+  if (index === null) {
+    return `[data-char-index]${classSelector}`
+  }
+  return `[data-char-index="${index}"]${classSelector}`
+}
+
