@@ -76,7 +76,7 @@ const getCursorPosition = (element: HTMLElement): number => {
 }
 
 // Helper to check if element has data-show attribute
-const hasDataShow = (element: Element): boolean => {
+const _hasDataShow = (element: Element): boolean => {
   return element.hasAttribute("data-show")
 }
 
@@ -1966,7 +1966,7 @@ describe("NumberFlowInput", () => {
       await new Promise((resolve) => setTimeout(resolve, 50))
 
       // Verify there's a hidden span (barrel wheel animation in progress)
-      const hiddenSpans = Array.from(
+      const _hiddenSpans = Array.from(
         input.querySelectorAll("[data-char-index]")
       ).filter(
         (span) =>
@@ -2221,9 +2221,12 @@ describe("NumberFlowInput", () => {
       expect(barrelWheel).toBeTruthy()
 
       // Wait for the replacement to complete
-      await waitFor(() => {
-        expect(input.textContent).toBe("328")
-      }, { timeout: 1000 })
+      await waitFor(
+        () => {
+          expect(input.textContent).toBe("328")
+        },
+        { timeout: 1000 }
+      )
 
       // Select the "8" at position 2 (the digit we just replaced)
       await waitFor(() => {
@@ -2281,10 +2284,10 @@ describe("NumberFlowInput", () => {
         },
         { timeout: 2000 }
       )
-      
+
       // Wait for DOM to sync (the actualValue should be correct even if contentEditable takes time to update)
       await new Promise((resolve) => setTimeout(resolve, 200))
-      
+
       // Verify the barrel wheel is gone and text eventually syncs
       // Note: In test environment, contentEditable might not update immediately, but barrel wheel removal is the key test
       const finalBarrelWheel = parentContainer?.querySelector(
@@ -2359,8 +2362,10 @@ describe("NumberFlowInput", () => {
       const barrelWheel = parentContainer?.querySelector(
         '[data-char-index="0"][data-final-digit]'
       ) as HTMLElement | null
-      
-      const charSpan = input.querySelector('[data-char-index="0"]') as HTMLElement | null
+
+      const charSpan = input.querySelector(
+        '[data-char-index="0"]'
+      ) as HTMLElement | null
       expect(charSpan).toBeTruthy()
       if (charSpan) {
         // If barrel wheel is gone, width animation should be cleaned up
@@ -2443,12 +2448,15 @@ describe("NumberFlowInput", () => {
       ) as HTMLElement | null
       expect(barrelWheel).toBeTruthy()
 
-      const charSpan = input.querySelector('[data-char-index="2"]') as HTMLElement | null
+      const charSpan = input.querySelector(
+        '[data-char-index="2"]'
+      ) as HTMLElement | null
       expect(charSpan).toBeTruthy()
-      
+
       // Check if width animation attribute is set (it might be set asynchronously)
-      const hasWidthAnimation = charSpan?.hasAttribute("data-width-animate") ?? false
-      
+      const _hasWidthAnimation =
+        charSpan?.hasAttribute("data-width-animate") ?? false
+
       // Now move cursor to position 3 and delete the digit
       setCursorPosition(input, 3)
       fireEvent.keyDown(input, {
@@ -2466,18 +2474,21 @@ describe("NumberFlowInput", () => {
         },
         { timeout: 2000 }
       )
-      
+
       // Wait a bit more for DOM to update and barrel wheel to be removed
       await new Promise((resolve) => setTimeout(resolve, 200))
-      
+
       // Verify barrel wheel is removed (this is the key test)
-      await waitFor(() => {
-        const remainingBarrelWheel = parentContainer?.querySelector(
-          '[data-char-index="2"][data-final-digit]'
-        ) as HTMLElement | null
-        expect(remainingBarrelWheel).toBeFalsy()
-      }, { timeout: 1000 })
-      
+      await waitFor(
+        () => {
+          const remainingBarrelWheel = parentContainer?.querySelector(
+            '[data-char-index="2"][data-final-digit]'
+          ) as HTMLElement | null
+          expect(remainingBarrelWheel).toBeFalsy()
+        },
+        { timeout: 1000 }
+      )
+
       // Width animation styles should be cleaned up (if they were set)
       // Note: The charSpan at index 2 should be removed since we deleted that digit
       // But if width animation was active, it should have been cleaned up before removal
@@ -2486,7 +2497,11 @@ describe("NumberFlowInput", () => {
       allSpans.forEach((span) => {
         const spanEl = span as HTMLElement
         expect(spanEl.hasAttribute("data-width-animate")).toBe(false)
-        if (spanEl.style.width || spanEl.style.minWidth || spanEl.style.maxWidth) {
+        if (
+          spanEl.style.width ||
+          spanEl.style.minWidth ||
+          spanEl.style.maxWidth
+        ) {
           // If width styles are set, they should be empty strings (cleaned up)
           expect(spanEl.style.width).toBe("")
           expect(spanEl.style.minWidth).toBe("")
@@ -2638,6 +2653,73 @@ describe("NumberFlowInput", () => {
       input.focus()
       await typeText(input, "4")
       expect(onChange).toHaveBeenCalled()
+    })
+  })
+
+  describe("Props", () => {
+    it("should apply name prop to hidden input", () => {
+      render(<NumberFlowInput name="test-input" />)
+      const hiddenInput = document.querySelector("input[type=\"hidden\"]") as HTMLInputElement
+      expect(hiddenInput).toBeTruthy()
+      expect(hiddenInput.name).toBe("test-input")
+    })
+
+    it("should apply id prop to hidden input", () => {
+      render(<NumberFlowInput id="test-input-id" />)
+      const hiddenInput = document.querySelector("input[type=\"hidden\"]") as HTMLInputElement
+      expect(hiddenInput).toBeTruthy()
+      expect(hiddenInput.id).toBe("test-input-id")
+    })
+
+    it("should handle autoAddLeadingZero prop", async () => {
+      const onChange = vi.fn()
+      render(
+        <NumberFlowInput autoAddLeadingZero value={undefined} onChange={onChange} />
+      )
+
+      const input = getInput()
+      input.focus()
+
+      // Type "." first
+      await typeText(input, ".")
+      await waitFor(() => {
+        // With autoAddLeadingZero, "." should become "0."
+        expect(input.textContent).toBe("0.")
+      })
+
+      // Move cursor to the end
+      const currentLength = input.textContent?.length || 0
+      setCursorPosition(input, currentLength)
+      await new Promise((resolve) => setTimeout(resolve, 50))
+
+      // Then type "5" at the end
+      await typeText(input, "5")
+      await waitFor(() => {
+        expect(input.textContent).toBe("0.5")
+        expect(onChange).toHaveBeenLastCalledWith(0.5)
+      }, { timeout: 2000 })
+    })
+
+    it("should not add leading zero when autoAddLeadingZero is false", async () => {
+      const onChange = vi.fn()
+      render(<NumberFlowInput autoAddLeadingZero={false} onChange={onChange} />)
+
+      const input = getInput()
+      input.focus()
+
+      // Type "." first
+      await typeText(input, ".")
+      await waitFor(() => {
+        // Without autoAddLeadingZero, "." should remain "."
+        expect(input.textContent).toBe(".")
+      })
+
+      // Then type "5"
+      await typeText(input, "5")
+      await waitFor(() => {
+        expect(input.textContent).toBe(".5")
+        expect(onChange).toHaveBeenLastCalledWith(0.5)
+      })
     })
   })
 })

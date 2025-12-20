@@ -9,6 +9,16 @@ import {
 } from "react"
 import { MaybeUndefined } from "@/components/Media/utils/maybe"
 import styles from "./NumberFlowInput.module.scss"
+import {
+  getSelectionRange,
+  isTransparent,
+  measureText,
+  removeTransparentColor,
+  setCursorPositionInElement,
+} from "./utils"
+import { cleanText, parseNumberValue } from "./textCleaning"
+import { getChanges } from "./changes"
+import { cleanupWidthAnimation, repositionBarrelWheel } from "./barrelWheel"
 
 export type NumberFlowInputControlledProps = {
   value: MaybeUndefined<number>
@@ -24,211 +34,11 @@ export type NumberFlowInputCommonProps = {
   onChange?: (value: MaybeUndefined<number>) => void
   name?: string
   id?: string
-  autoAddLeadingZero?: boolean // Whether to automatically add "0" before "." (default: false)
+  autoAddLeadingZero?: boolean
 }
 
 export type NumberFlowInputProps = NumberFlowInputCommonProps &
   (NumberFlowInputControlledProps | NumberFlowInputUncontrolledProps)
-
-interface Changes {
-  addedIndices: Set<number>
-  unchangedIndices: Set<number>
-  barrelWheelIndices: Map<
-    number,
-    { sequence: string[]; direction: "up" | "down" }
-  >
-}
-
-const measureText = (text: string, referenceElement: HTMLElement) => {
-  const computedStyle = window.getComputedStyle(referenceElement)
-  const tempMeasure = document.createElement("span")
-  tempMeasure.style.position = "absolute"
-  tempMeasure.style.visibility = "hidden"
-  tempMeasure.style.whiteSpace = "pre"
-  tempMeasure.style.font = computedStyle.font
-  tempMeasure.style.fontSize = computedStyle.fontSize
-  tempMeasure.style.fontFamily = computedStyle.fontFamily
-  tempMeasure.style.fontWeight = computedStyle.fontWeight
-  tempMeasure.style.fontStyle = computedStyle.fontStyle
-  tempMeasure.style.letterSpacing = computedStyle.letterSpacing
-  tempMeasure.style.textTransform = computedStyle.textTransform
-  tempMeasure.style.lineHeight = computedStyle.lineHeight
-  tempMeasure.textContent = text
-  document.body.appendChild(tempMeasure)
-  const width = tempMeasure.getBoundingClientRect().width
-  document.body.removeChild(tempMeasure)
-  return width
-}
-
-const getChanges = (
-  oldValue: string,
-  newValue: string,
-  selectionStart: number,
-  selectionEnd: number,
-  newCursorPos: number
-): Changes => {
-  const changes: Changes = {
-    addedIndices: new Set(),
-    unchangedIndices: new Set(),
-    barrelWheelIndices: new Map(),
-  }
-
-  if (!oldValue) {
-    for (let i = 0; i < newValue.length; i++) {
-      changes.addedIndices.add(i)
-    }
-    return changes
-  }
-
-  const hadSelection = selectionStart !== selectionEnd
-  const lengthDiff = newValue.length - oldValue.length
-
-  if (hadSelection) {
-    // Text was replaced - all new characters in the replacement range should animate
-    const numReplaced = selectionEnd - selectionStart
-    const numInserted = newCursorPos - selectionStart
-    const insertStart = selectionStart
-
-    // Check for single digit replacement (barrel wheel animation)
-    if (
-      numReplaced === 1 &&
-      numInserted === 1 &&
-      insertStart < oldValue.length &&
-      insertStart < newValue.length
-    ) {
-      const oldChar = oldValue[insertStart]
-      const newChar = newValue[insertStart]
-
-      // Check if both are digits and not undefined
-      if (oldChar && newChar && /^\d$/.test(oldChar) && /^\d$/.test(newChar)) {
-        const oldDigit = parseInt(oldChar, 10)
-        const newDigit = parseInt(newChar, 10)
-
-        if (oldDigit !== newDigit) {
-          // Generate sequence of digits for barrel wheel animation
-          const sequence: string[] = []
-          const direction = newDigit > oldDigit ? "up" : "down"
-
-          if (direction === "up") {
-            for (let i = oldDigit; i <= newDigit; i++) {
-              sequence.push(i.toString())
-            }
-          } else {
-            for (let i = newDigit; i <= oldDigit; i++) {
-              sequence.push(i.toString())
-            }
-          }
-
-          changes.barrelWheelIndices.set(insertStart, { sequence, direction })
-        }
-      }
-    }
-
-    // Mark unchanged before replacement
-    for (let i = 0; i < insertStart; i++) {
-      if (
-        i < oldValue.length &&
-        i < newValue.length &&
-        oldValue[i] === newValue[i]
-      ) {
-        changes.unchangedIndices.add(i)
-      }
-    }
-
-    // Mark all inserted characters as added (unless they're barrel wheel)
-    for (let i = insertStart; i < newCursorPos; i++) {
-      if (!changes.barrelWheelIndices.has(i)) {
-        changes.addedIndices.add(i)
-      }
-    }
-
-    // Mark unchanged after replacement
-    // Need to account for the length difference
-    const oldAfterEnd = selectionEnd
-    const newAfterEnd = newCursorPos
-    const minLength = Math.min(
-      oldValue.length - oldAfterEnd,
-      newValue.length - newAfterEnd
-    )
-
-    for (let i = 0; i < minLength; i++) {
-      const oldIdx = oldAfterEnd + i
-      const newIdx = newAfterEnd + i
-      if (
-        oldIdx < oldValue.length &&
-        newIdx < newValue.length &&
-        oldValue[oldIdx] === newValue[newIdx]
-      ) {
-        changes.unchangedIndices.add(newIdx)
-      }
-    }
-  } else if (lengthDiff > 0) {
-    // Addition without selection
-    const insertPos = newCursorPos - lengthDiff
-
-    // Mark unchanged before insertion
-    for (let i = 0; i < insertPos; i++) {
-      if (
-        i < oldValue.length &&
-        i < newValue.length &&
-        oldValue[i] === newValue[i]
-      ) {
-        changes.unchangedIndices.add(i)
-      }
-    }
-
-    // Mark added
-    for (let i = insertPos; i < newCursorPos; i++) {
-      changes.addedIndices.add(i)
-    }
-
-    // Mark unchanged after insertion
-    for (let i = newCursorPos; i < newValue.length; i++) {
-      const oldIdx = i - lengthDiff
-      if (
-        oldIdx >= 0 &&
-        oldIdx < oldValue.length &&
-        oldValue[oldIdx] === newValue[i]
-      ) {
-        changes.unchangedIndices.add(i)
-      }
-    }
-  } else if (lengthDiff < 0) {
-    // Deletion
-    const deletePos = selectionStart
-    const numDeleted = -lengthDiff
-
-    // Mark unchanged before deletion
-    for (let i = 0; i < deletePos; i++) {
-      if (
-        i < oldValue.length &&
-        i < newValue.length &&
-        oldValue[i] === newValue[i]
-      ) {
-        changes.unchangedIndices.add(i)
-      }
-    }
-
-    // Mark unchanged after deletion
-    // When deleting, characters after the deletion point shift left
-    // So newValue[i] should match oldValue[i + numDeleted]
-    for (let i = deletePos; i < newValue.length; i++) {
-      const oldIdx = i + numDeleted
-      if (oldIdx < oldValue.length && oldValue[oldIdx] === newValue[i]) {
-        changes.unchangedIndices.add(i)
-      }
-    }
-  } else {
-    // No change, mark all as unchanged
-    for (let i = 0; i < newValue.length; i++) {
-      if (i < oldValue.length && oldValue[i] === newValue[i]) {
-        changes.unchangedIndices.add(i)
-      }
-    }
-  }
-
-  return changes
-}
 
 export const NumberFlowInput = ({
   value,
@@ -262,31 +72,6 @@ export const NumberFlowInput = ({
   // Track ResizeObservers for digits with barrel wheel animations
   const resizeObserversRef = useRef<Map<number, ResizeObserver>>(new Map())
 
-  // Helper function to clean up width animation styles and attributes
-  const cleanupWidthAnimation = useCallback((charSpan: HTMLElement) => {
-    // Remove width animation attribute
-    charSpan.removeAttribute("data-width-animate")
-    // Remove inline width styles
-    charSpan.style.width = ""
-    charSpan.style.minWidth = ""
-    charSpan.style.maxWidth = ""
-    // Remove display style if it was explicitly set to inline-block (not from CSS)
-    // Only clear if it was set as an inline style (not from CSS classes)
-    const inlineDisplay = charSpan.style.display
-    if (inlineDisplay === "inline-block") {
-      charSpan.style.display = ""
-    }
-    // Remove inline transition if it was set (check if it contains width-related transitions)
-    const transition = charSpan.style.transition
-    if (
-      transition &&
-      (transition.includes("width") ||
-        transition.includes("min-width") ||
-        transition.includes("max-width"))
-    ) {
-      charSpan.style.transition = ""
-    }
-  }, [])
 
   // Helper function to reposition all existing barrel wheels
   const repositionAllBarrelWheels = useCallback(() => {
@@ -308,26 +93,15 @@ export const NumberFlowInput = ({
           ) as HTMLElement | null
 
           if (charSpan) {
-            // Ensure the digit remains transparent while barrel wheel is animating
-            // This prevents the digit from showing through the barrel wheel
-            if (
-              charSpan.style.color !== "transparent" &&
-              charSpan.style.color !== "rgba(0, 0, 0, 0)"
-            ) {
+            if (!isTransparent(charSpan)) {
               charSpan.style.color = "transparent"
             }
-
-            const rect = charSpan.getBoundingClientRect()
-            const parentRect = parentContainer.getBoundingClientRect()
-            wheelEl.style.left = `${rect.left - parentRect.left}px`
-            wheelEl.style.top = `${rect.top - parentRect.top}px`
-            wheelEl.style.width = `${rect.width}px`
-            wheelEl.style.height = `${rect.height}px`
+            repositionBarrelWheel(wheelEl, charSpan, parentContainer)
           }
         }
       }
     })
-  }, [styles.barrel_wheel])
+  }, [])
 
   // Helper function to remove barrel wheels at specific indices
   const removeBarrelWheelsAtIndices = useCallback(
@@ -344,7 +118,6 @@ export const NumberFlowInput = ({
           resizeObserversRef.current.delete(index)
         }
 
-        // Clean up width animation styles and attributes for the digit span
         const charSpan = spanRef.current?.querySelector(
           `[data-char-index="${index}"]`
         ) as HTMLElement | null
@@ -352,12 +125,7 @@ export const NumberFlowInput = ({
           if (charSpan.hasAttribute("data-width-animate")) {
             cleanupWidthAnimation(charSpan)
           }
-          // Always remove color: transparent when barrel wheel is removed
-          if (
-            charSpan.style.color === "transparent" ||
-            charSpan.style.color === "rgba(0, 0, 0, 0)" ||
-            window.getComputedStyle(charSpan).color === "rgba(0, 0, 0, 0)"
-          ) {
+          if (isTransparent(charSpan)) {
             charSpan.style.color = ""
           }
         }
@@ -366,9 +134,6 @@ export const NumberFlowInput = ({
           `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
         ) as HTMLElement | null
         if (barrelWheel) {
-          // Before removing, get the final digit to do a comprehensive cleanup
-          const finalDigit = barrelWheel.getAttribute("data-final-digit")
-
           barrelWheel.remove()
 
           // After removing barrel wheel, do a final pass to ensure the span at THIS index is not still transparent
@@ -380,20 +145,10 @@ export const NumberFlowInput = ({
             ) as HTMLElement | null
 
             if (spanAtIndex) {
-              const isTransparent =
-                spanAtIndex.style.color === "transparent" ||
-                spanAtIndex.style.color === "rgba(0, 0, 0, 0)" ||
-                window.getComputedStyle(spanAtIndex).color ===
-                  "rgba(0, 0, 0, 0)"
-
-              // Check if there's still a barrel wheel for THIS specific index
               const hasBarrelWheel = parentContainer.querySelector(
                 `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
               )
-
-              // If no barrel wheel exists for THIS index and span is transparent, restore color
-              // Only check the span at this index, not other spans with the same final digit
-              if (isTransparent && !hasBarrelWheel) {
+              if (isTransparent(spanAtIndex) && !hasBarrelWheel) {
                 spanAtIndex.style.color = ""
               }
             }
@@ -401,7 +156,7 @@ export const NumberFlowInput = ({
         }
       })
     },
-    [styles.barrel_wheel, cleanupWidthAnimation]
+    []
   )
 
   const updateValue = useCallback(
@@ -413,106 +168,26 @@ export const NumberFlowInput = ({
       skipHistory = false
     ) => {
       const oldText = displayValue
+      const rawCleaned = newText.replace(/[^\d.-]/g, "")
+      const { cleanedText: baseCleanedText, leadingZerosRemoved } = cleanText(
+        rawCleaned,
+        autoAddLeadingZero
+      )
+      const cleanedText = baseCleanedText
 
-      // Validate and clean
-      let cleanedText = newText.replace(/[^\d.-]/g, "")
-
-      // Track if we're removing leading zeros (for animation fix)
-      const _hadLeadingZero =
-        cleanedText.startsWith("0") &&
-        cleanedText.length > 1 &&
-        cleanedText[1] !== "."
-
-      // Ensure only one minus sign at the beginning
-      const minusCount = (cleanedText.match(/-/g) || []).length
-      if (minusCount > 1) {
-        // Keep only the first minus
-        cleanedText = cleanedText.replace(/-/g, (match, offset) =>
-          offset === 0 ? match : ""
-        )
-      }
-      // Remove minus if it's not at the beginning
-      if (cleanedText.includes("-") && !cleanedText.startsWith("-")) {
-        cleanedText = cleanedText.replace(/-/g, "")
+      if (leadingZerosRemoved > 0 && newCursorPos > 0) {
+        newCursorPos = Math.max(0, newCursorPos - leadingZerosRemoved)
       }
 
-      // Ensure only one decimal point
-      const dotCount = (cleanedText.match(/\./g) || []).length
-      if (dotCount > 1) {
-        // Keep only the first dot
-        const firstDotIndex = cleanedText.indexOf(".")
-        cleanedText =
-          cleanedText.slice(0, firstDotIndex + 1) +
-          cleanedText.slice(firstDotIndex + 1).replace(/\./g, "")
-      }
-
-      // Remove leading zeros (except for "0" itself or "0.")
-      // Match patterns like "000123" -> "123" or "000.5" -> "0.5"
-      let leadingZerosRemoved = 0
-      if (
-        cleanedText.length > 1 &&
-        cleanedText[0] === "0" &&
-        cleanedText[1] !== "."
-      ) {
-        // Count how many leading zeros we'll remove
-        const match = cleanedText.match(/^0+/)
-        leadingZerosRemoved = match ? match[0].length - 1 : 0
-        // Remove leading zeros
-        cleanedText = cleanedText.replace(/^0+/, "")
-        // If we removed everything, keep one zero
-        if (
-          cleanedText === "" ||
-          cleanedText.startsWith(".") ||
-          cleanedText.startsWith("-")
-        ) {
-          cleanedText = "0" + cleanedText
-          leadingZerosRemoved = 0
-        }
-        // Adjust cursor position if we removed leading zeros
-        if (leadingZerosRemoved > 0 && newCursorPos > 0) {
-          newCursorPos = Math.max(0, newCursorPos - leadingZerosRemoved)
-        }
-      }
-
-      // Handle negative numbers with leading zeros
-      if (cleanedText.startsWith("-") && cleanedText.length > 2) {
-        const afterMinus = cleanedText.slice(1)
-        if (afterMinus[0] === "0" && afterMinus[1] !== ".") {
-          const cleaned = afterMinus.replace(/^0+/, "")
-          cleanedText =
-            "-" +
-            (cleaned === "" || cleaned.startsWith(".")
-              ? "0" + cleaned
-              : cleaned)
-        }
-      }
-
-      // Auto-add leading zero if configured
       if (autoAddLeadingZero) {
         if (cleanedText.startsWith(".")) {
-          cleanedText = "0" + cleanedText
           newCursorPos += 1
         } else if (cleanedText.startsWith("-.")) {
-          cleanedText = "-0" + cleanedText.slice(1)
           newCursorPos += 1
         }
       }
 
-      // Handle invalid intermediate states
-      // Note: We preserve trailing dots in displayValue but not in actualValue
-      let numberValue: MaybeUndefined<number>
-      if (
-        cleanedText === "" ||
-        cleanedText === "-" ||
-        cleanedText === "." ||
-        cleanedText === "-."
-      ) {
-        numberValue = undefined
-      } else {
-        // Parse the number (this will ignore trailing dots)
-        const parsed = parseFloat(cleanedText)
-        numberValue = isNaN(parsed) ? undefined : parsed
-      }
+      const numberValue = parseNumberValue(cleanedText)
 
       onChange?.(numberValue)
       setUncontrolledValue(numberValue)
@@ -619,7 +294,7 @@ export const NumberFlowInput = ({
           adjustedNewCursorPos
         )
 
-        // Update barrel wheel indices if characters were inserted before them
+        // Update barrel wheel indices if characters were inserted or deleted before them
         if (spanRef.current?.parentElement) {
           const parentContainer = spanRef.current.parentElement
           const existingBarrelWheels = parentContainer.querySelectorAll(
@@ -632,31 +307,23 @@ export const NumberFlowInput = ({
             if (oldIndexStr !== null) {
               const oldIndex = parseInt(oldIndexStr, 10)
               if (!isNaN(oldIndex) && oldIndex >= 0) {
-                // Calculate how many characters were inserted before this index
                 const lengthDiff = cleanedText.length - adjustedOldText.length
                 const hadSelection =
                   adjustedSelectionStart < adjustedSelectionEnd
 
-                // If characters were inserted (not replaced) at or before the barrel wheel's index, shift it
-                if (
-                  !hadSelection &&
-                  lengthDiff > 0 &&
-                  adjustedSelectionStart <= oldIndex
-                ) {
-                  // Characters were inserted at or before this index, so shift it
+                if (!hadSelection && lengthDiff > 0 && adjustedSelectionStart <= oldIndex) {
+                  // Characters were inserted at or before this index, so shift it forward
                   const numInserted =
                     adjustedNewCursorPos - adjustedSelectionStart
                   const newIndex = oldIndex + numInserted
                   wheelEl.setAttribute("data-char-index", newIndex.toString())
 
-                  // Update the ResizeObserver key if it exists
                   const observer = resizeObserversRef.current.get(oldIndex)
                   if (observer) {
                     resizeObserversRef.current.delete(oldIndex)
                     resizeObserversRef.current.set(newIndex, observer)
                   }
 
-                  // Also update the span's data-char-index if it exists and matches the final digit
                   if (finalDigitStr && spanRef.current) {
                     const oldSpan = spanRef.current.querySelector(
                       `[data-char-index="${oldIndex}"]`
@@ -668,6 +335,69 @@ export const NumberFlowInput = ({
                       )
                     }
                   }
+                } else if (!hadSelection && lengthDiff < 0 && adjustedSelectionStart < oldIndex) {
+                  // Characters were deleted before this index, so shift it backward
+                  const numDeleted = adjustedSelectionEnd - adjustedSelectionStart
+                  const newIndex = Math.max(0, oldIndex - numDeleted)
+
+                  // Only update if the new index is valid and the barrel wheel should still exist
+                  // Also ensure the barrel wheel is not in the deletion range
+                  if (newIndex < cleanedText.length && oldIndex >= adjustedSelectionEnd) {
+                    wheelEl.setAttribute("data-char-index", newIndex.toString())
+
+                    const observer = resizeObserversRef.current.get(oldIndex)
+                    if (observer) {
+                      resizeObserversRef.current.delete(oldIndex)
+                      resizeObserversRef.current.set(newIndex, observer)
+                    }
+
+                    if (finalDigitStr && spanRef.current) {
+                      // Find the span that matches the final digit - it might still be at oldIndex
+                      // or it might have already been shifted
+                      const oldSpan = spanRef.current.querySelector(
+                        `[data-char-index="${oldIndex}"]`
+                      ) as HTMLElement | null
+                      if (oldSpan && oldSpan.textContent === finalDigitStr) {
+                        oldSpan.setAttribute(
+                          "data-char-index",
+                          newIndex.toString()
+                        )
+                      } else {
+                        // Also check if there's a span at the new index that matches
+                        const newSpan = spanRef.current.querySelector(
+                          `[data-char-index="${newIndex}"]`
+                        ) as HTMLElement | null
+                        if (newSpan && newSpan.textContent === finalDigitStr) {
+                          // Span is already at the correct index, just ensure it's marked correctly
+                        } else {
+                          // Search for any transparent span with the final digit
+                          const allSpans = spanRef.current.querySelectorAll(
+                            "[data-char-index]"
+                          )
+                          Array.from(allSpans).forEach((span) => {
+                            const spanEl = span as HTMLElement
+                            if (
+                              spanEl.textContent === finalDigitStr &&
+                              isTransparent(spanEl)
+                            ) {
+                              spanEl.setAttribute(
+                                "data-char-index",
+                                newIndex.toString()
+                              )
+                            }
+                          })
+                        }
+                      }
+                    }
+                  } else {
+                    // Barrel wheel is now out of bounds, remove it
+                    const observer = resizeObserversRef.current.get(oldIndex)
+                    if (observer) {
+                      observer.disconnect()
+                      resizeObserversRef.current.delete(oldIndex)
+                    }
+                    wheelEl.remove()
+                  }
                 }
               }
             }
@@ -676,15 +406,13 @@ export const NumberFlowInput = ({
 
         // Incrementally update DOM instead of full reconstruction
         if (spanRef.current) {
-          // First, update indices of existing spans that need to shift due to insertions
-          // This handles the case where characters are inserted before existing spans
+          // First, update indices of existing spans that need to shift due to insertions or deletions
+          // This handles the case where characters are inserted/deleted before existing spans
           // Do this BEFORE collecting spans by index, so the map is correct
           const lengthDiff = cleanedText.length - adjustedOldText.length
           const hadSelection = adjustedSelectionStart < adjustedSelectionEnd
-          if (!hadSelection && lengthDiff > 0) {
-            // Characters were inserted (not replaced) - shift existing spans at and after the insertion point
-            const insertPos = adjustedSelectionStart
-            const numInserted = adjustedNewCursorPos - adjustedSelectionStart
+          if (!hadSelection && lengthDiff !== 0) {
+            const changePos = adjustedSelectionStart
             // Collect all spans first
             const allSpans: HTMLElement[] = []
             let nodeToUpdate = spanRef.current.firstChild
@@ -702,14 +430,31 @@ export const NumberFlowInput = ({
               const oldIndexStr = span.getAttribute("data-char-index")
               if (oldIndexStr !== null) {
                 const oldIndex = parseInt(oldIndexStr, 10)
-                if (
-                  !isNaN(oldIndex) &&
-                  oldIndex >= insertPos &&
-                  oldIndex < adjustedOldText.length
-                ) {
-                  const newIdx = oldIndex + numInserted
-                  if (newIdx < cleanedText.length) {
-                    span.setAttribute("data-char-index", newIdx.toString())
+                if (!isNaN(oldIndex) && oldIndex >= 0) {
+                  if (lengthDiff > 0) {
+                    // Characters were inserted - shift spans at and after the insertion point
+                    if (
+                      oldIndex >= changePos &&
+                      oldIndex < adjustedOldText.length
+                    ) {
+                      const numInserted = adjustedNewCursorPos - changePos
+                      const newIdx = oldIndex + numInserted
+                      if (newIdx < cleanedText.length) {
+                        span.setAttribute("data-char-index", newIdx.toString())
+                      }
+                    }
+                  } else if (lengthDiff < 0) {
+                    // Characters were deleted - shift spans after the deletion point backward
+                    const numDeleted = adjustedSelectionEnd - changePos
+                    if (oldIndex >= changePos && oldIndex < adjustedSelectionEnd) {
+                      // Span is in the deletion range - it will be removed by cleanup logic
+                    } else if (oldIndex >= adjustedSelectionEnd) {
+                      // Span is after the deletion point, shift it backward
+                      const newIdx = Math.max(0, oldIndex - numDeleted)
+                      if (newIdx < cleanedText.length) {
+                        span.setAttribute("data-char-index", newIdx.toString())
+                      }
+                    }
                   }
                 }
               }
@@ -720,8 +465,8 @@ export const NumberFlowInput = ({
           // Also track transparent spans separately to handle them specially
           const existingSpansByIndex = new Map<number, HTMLElement>()
           const allExistingSpans: HTMLElement[] = []
-          const transparentSpans = new Map<number, HTMLElement>() // Map of index -> transparent span
-          // Also collect any text nodes that shouldn't be there (from undo/redo textContent assignment)
+          const transparentSpans = new Map<number, HTMLElement>()
+          const transparentSpansByContent = new Map<string, HTMLElement>()
           const textNodesToRemove: Node[] = []
           let node = spanRef.current.firstChild
           while (node) {
@@ -734,24 +479,20 @@ export const NumberFlowInput = ({
                 10
               )
               if (index >= 0) {
-                // Check if this is a transparent span (barrel wheel animation)
-                const isTransparent =
-                  node.style.color === "transparent" ||
-                  node.style.color === "rgba(0, 0, 0, 0)" ||
-                  window.getComputedStyle(node).color === "rgba(0, 0, 0, 0)"
-                if (isTransparent) {
-                  // Track transparent spans separately - they might have shifted indices
+                const isTransparentSpan = isTransparent(node)
+                if (isTransparentSpan) {
                   transparentSpans.set(index, node)
+                  const content = node.textContent ?? ""
+                  if (!transparentSpansByContent.has(content)) {
+                    transparentSpansByContent.set(content, node)
+                  }
                 }
-                // Only add to existingSpansByIndex if there isn't already a span at this index
-                // If there's a duplicate, prefer the non-transparent one
-                if (!existingSpansByIndex.has(index) || !isTransparent) {
+                if (!existingSpansByIndex.has(index) || !isTransparentSpan) {
                   existingSpansByIndex.set(index, node)
                 }
                 allExistingSpans.push(node)
               }
             } else if (node.nodeType === Node.TEXT_NODE) {
-              // Collect text nodes that shouldn't be there (they should be inside spans)
               textNodesToRemove.push(node)
             }
             node = node.nextSibling
@@ -782,8 +523,30 @@ export const NumberFlowInput = ({
             const hasBarrelWheelInDOM = parentContainer?.querySelector(
               `[data-char-index="${i}"].${styles.barrel_wheel || ""}`
             )
+
+            // Also check if there's a transparent span at this index that indicates a barrel wheel
+            // (the barrel wheel might have shifted and the span index was updated but barrel wheel query might miss it)
+            let hasTransparentSpanWithBarrelWheel = false
+            const spanAtI = existingSpansByIndex.get(i)
+            if (spanAtI && isTransparent(spanAtI)) {
+              // Check if there's a barrel wheel anywhere that might be associated with this span
+              const allBarrelWheels = parentContainer?.querySelectorAll(
+                `[data-char-index].${styles.barrel_wheel || ""}`
+              )
+              if (allBarrelWheels) {
+                // Check if any barrel wheel's final digit matches this span's content
+                Array.from(allBarrelWheels).forEach((wheel) => {
+                  const wheelEl = wheel as HTMLElement
+                  const finalDigit = wheelEl.getAttribute("data-final-digit")
+                  if (finalDigit === char) {
+                    hasTransparentSpanWithBarrelWheel = true
+                  }
+                })
+              }
+            }
+
             const hasBarrelWheel =
-              barrelWheel !== undefined || !!hasBarrelWheelInDOM
+              barrelWheel !== undefined || !!hasBarrelWheelInDOM || hasTransparentSpanWithBarrelWheel
 
             // Try to reuse existing span at this index
             let span = existingSpansByIndex.get(i)
@@ -863,6 +626,52 @@ export const NumberFlowInput = ({
               if (!existingSpan && transparentSpans.has(i)) {
                 existingSpan = transparentSpans.get(i)!
               }
+              // Also check all transparent spans to see if any match this character and should be at this index
+              // This handles the case where a transparent span shifted but wasn't found in the map
+              if (!existingSpan || !isTransparent(existingSpan)) {
+                // First, check if there's a transparent span with matching content
+                const matchingTransparentSpan = char ? transparentSpansByContent.get(char) : undefined
+                if (
+                  matchingTransparentSpan &&
+                  !usedSpans.has(matchingTransparentSpan) &&
+                  isTransparent(matchingTransparentSpan)
+                ) {
+                  // Check if there's a barrel wheel that matches this span
+                  const allBarrelWheels = parentContainer?.querySelectorAll(
+                    `[data-char-index].${styles.barrel_wheel || ""}`
+                  )
+                  if (allBarrelWheels) {
+                    for (const wheel of Array.from(allBarrelWheels)) {
+                      const wheelEl = wheel as HTMLElement
+                      const wheelIndex = parseInt(
+                        wheelEl.getAttribute("data-char-index") ?? "-1",
+                        10
+                      )
+                      const finalDigit = wheelEl.getAttribute("data-final-digit")
+                      if (finalDigit === char) {
+                        // This transparent span is associated with a barrel wheel
+                        // If the barrel wheel is at index i, or if it should be at i (was shifted)
+                        if (wheelIndex === i) {
+                          existingSpan = matchingTransparentSpan
+                          matchingTransparentSpan.setAttribute("data-char-index", i.toString())
+                          break
+                        } else if (wheelIndex > i && lengthDiff < 0) {
+                          // Barrel wheel was shifted but might not be at i yet - update both
+                          existingSpan = matchingTransparentSpan
+                          matchingTransparentSpan.setAttribute("data-char-index", i.toString())
+                          wheelEl.setAttribute("data-char-index", i.toString())
+                          const observer = resizeObserversRef.current.get(wheelIndex)
+                          if (observer) {
+                            resizeObserversRef.current.delete(wheelIndex)
+                            resizeObserversRef.current.set(i, observer)
+                          }
+                          break
+                        }
+                      }
+                    }
+                  }
+                }
+              }
               const hasWidthAnimation =
                 existingSpan?.hasAttribute("data-width-animate")
               // Check if span is hidden (indicates barrel wheel animation in progress)
@@ -886,11 +695,30 @@ export const NumberFlowInput = ({
               // IMPORTANT: If there's a transparent span at this index, it's part of an ongoing barrel wheel
               // We MUST reuse it, even if changes.barrelWheelIndices doesn't have this index
               // (because the barrel wheel's index may have shifted)
+              // Also check if there's a barrel wheel anywhere that matches this character
+              let hasMatchingBarrelWheel = hasBarrelWheel || hasBarrelWheelInDOM
+              if (!hasMatchingBarrelWheel && isHidden && existingSpan) {
+                // Check all barrel wheels to see if any match this character
+                const allBarrelWheels = parentContainer?.querySelectorAll(
+                  `[data-char-index].${styles.barrel_wheel || ""}`
+                )
+                if (allBarrelWheels) {
+                  for (const wheel of Array.from(allBarrelWheels)) {
+                    const wheelEl = wheel as HTMLElement
+                    const finalDigit = wheelEl.getAttribute("data-final-digit")
+                    if (finalDigit === char) {
+                      hasMatchingBarrelWheel = true
+                      break
+                    }
+                  }
+                }
+              }
+
               const shouldReuseTransparentSpan =
                 isHidden &&
                 existingSpan &&
                 !usedSpans.has(existingSpan) &&
-                (hasBarrelWheel || hasBarrelWheelInDOM)
+                (hasBarrelWheel || hasBarrelWheelInDOM || hasMatchingBarrelWheel)
 
               // If there's a transparent span (barrel wheel animation), reuse it
               if (shouldReuseTransparentSpan && existingSpan) {
@@ -1744,25 +1572,6 @@ export const NumberFlowInput = ({
                         }
                       }
 
-                      // Helper function to remove color: transparent from a span
-                      const removeTransparentColor = (span: HTMLElement) => {
-                        if (
-                          span.style.color === "transparent" ||
-                          span.style.color === "rgba(0, 0, 0, 0)" ||
-                          span.style.color === ""
-                        ) {
-                          span.style.color = ""
-                        }
-                        // Also check computed style as a fallback
-                        const computedColor =
-                          window.getComputedStyle(span).color
-                        if (
-                          computedColor === "rgba(0, 0, 0, 0)" ||
-                          computedColor === "transparent"
-                        ) {
-                          span.style.color = ""
-                        }
-                      }
 
                       // Clean up width animation styles and attributes
                       if (targetSpan instanceof HTMLElement) {
@@ -1932,7 +1741,7 @@ export const NumberFlowInput = ({
         })
       }
     },
-    [displayValue, onChange, autoAddLeadingZero]
+    [displayValue, onChange, autoAddLeadingZero, repositionAllBarrelWheels]
   )
 
   // Initialize
@@ -1997,12 +1806,13 @@ export const NumberFlowInput = ({
 
   // Cleanup ResizeObservers on unmount
   useEffect(() => {
+    const observers = resizeObserversRef.current
     return () => {
       // Disconnect all ResizeObservers when component unmounts
-      resizeObserversRef.current.forEach((observer) => {
+      observers.forEach((observer) => {
         observer.disconnect()
       })
-      resizeObserversRef.current.clear()
+      observers.clear()
     }
   }, [])
 
@@ -2017,14 +1827,8 @@ export const NumberFlowInput = ({
 
       if (!range || !spanRef.current) return
 
-      // Calculate cursor position
-      const preRange = document.createRange()
-      preRange.selectNodeContents(spanRef.current)
-      preRange.setEnd(range.startContainer, range.startOffset)
-      const start = preRange.toString().length
-
-      preRange.setEnd(range.endContainer, range.endOffset)
-      const end = preRange.toString().length
+      if (!selection) return
+      const { start, end } = getSelectionRange(spanRef.current, selection)
 
       // Handle special keys
       if ((event.metaKey || event.ctrlKey) && key === "Backspace") {
@@ -2739,64 +2543,40 @@ export const NumberFlowInput = ({
         return
       }
     },
-    [displayValue, onChange, updateValue]
+    [displayValue, onChange, updateValue, removeBarrelWheelsAtIndices]
   )
 
-  const handleCopy = useCallback<ClipboardEventHandler<HTMLSpanElement>>(
+      const handleCopy = useCallback<ClipboardEventHandler<HTMLSpanElement>>(
     (event) => {
-      // Handle copy to ensure plain text without line breaks
       const selection = window.getSelection()
       const range = selection?.getRangeAt(0)
       if (!range || !spanRef.current) return
 
-      const preRange = document.createRange()
-      preRange.selectNodeContents(spanRef.current)
-      preRange.setEnd(range.startContainer, range.startOffset)
-      const start = preRange.toString().length
+      if (!selection) return
+      const { start, end } = getSelectionRange(spanRef.current, selection)
+      if (start === end) return
 
-      preRange.setEnd(range.endContainer, range.endOffset)
-      const end = preRange.toString().length
-
-      if (start === end) return // No selection, nothing to copy
-
-      const currentText = displayValue
-      const selectedText = currentText.slice(start, end)
-
-      // Copy plain text to clipboard (no HTML, no line breaks)
+      const selectedText = displayValue.slice(start, end)
       event.clipboardData.setData("text/plain", selectedText)
-      event.preventDefault() // Prevent default to avoid copying HTML
+      event.preventDefault()
     },
     [displayValue]
   )
 
   const handleCut = useCallback<ClipboardEventHandler<HTMLSpanElement>>(
     (event) => {
-      // Handle cut from context menu or other sources
       const selection = window.getSelection()
       const range = selection?.getRangeAt(0)
       if (!range || !spanRef.current) return
 
-      const preRange = document.createRange()
-      preRange.selectNodeContents(spanRef.current)
-      preRange.setEnd(range.startContainer, range.startOffset)
-      const start = preRange.toString().length
+      if (!selection) return
+      const { start, end } = getSelectionRange(spanRef.current, selection)
+      if (start === end) return
 
-      preRange.setEnd(range.endContainer, range.endOffset)
-      const end = preRange.toString().length
-
-      if (start === end) return // No selection, nothing to cut
-
-      const currentText = displayValue
-      const selectedText = currentText.slice(start, end)
-
-      // Copy to clipboard
+      const selectedText = displayValue.slice(start, end)
       event.clipboardData.setData("text/plain", selectedText)
 
-      // Delete the selected text
-      const newText = currentText.slice(0, start) + currentText.slice(end)
-
-      // Update value after cut
-      // Use setTimeout to ensure the browser's default cut behavior completes first
+      const newText = displayValue.slice(0, start) + displayValue.slice(end)
       setTimeout(() => {
         updateValue(newText, start, start, end)
       }, 0)
@@ -2807,52 +2587,18 @@ export const NumberFlowInput = ({
   const handleBeforeInput = useCallback<
     CompositionEventHandler<HTMLSpanElement>
   >((event) => {
-    // Prevent input if we're blocking a leading 0
     if (shouldPreventInputRef.current) {
       event.preventDefault()
       const restorePos = preventInputCursorPosRef.current
       shouldPreventInputRef.current = false
 
-      // Restore cursor position immediately and repeatedly
       const restoreCursor = () => {
-        if (!spanRef.current) return
-        const selection = window.getSelection()
-        if (!selection) return
-
-        let currentPos = 0
-        const walker = document.createTreeWalker(
-          spanRef.current,
-          NodeFilter.SHOW_TEXT,
-          null
-        )
-        let node: Node | null
-
-        while ((node = walker.nextNode())) {
-          const nodeLength = node.textContent?.length ?? 0
-          if (currentPos + nodeLength >= restorePos) {
-            const offset = Math.min(restorePos - currentPos, nodeLength)
-            const range = document.createRange()
-            range.setStart(node, offset)
-            range.collapse(true)
-            selection.removeAllRanges()
-            selection.addRange(range)
-            return
-          }
-          currentPos += nodeLength
+        if (spanRef.current) {
+          setCursorPositionInElement(spanRef.current, restorePos)
         }
-
-        // Fallback
-        const range = document.createRange()
-        range.selectNodeContents(spanRef.current)
-        range.collapse(true)
-        selection.removeAllRanges()
-        selection.addRange(range)
       }
 
-      // Restore immediately
       restoreCursor()
-
-      // Also restore after microtask and timeout to catch any delayed browser behavior
       Promise.resolve().then(restoreCursor)
       setTimeout(restoreCursor, 0)
       requestAnimationFrame(restoreCursor)
@@ -2877,19 +2623,11 @@ export const NumberFlowInput = ({
       const range = selection?.getRangeAt(0)
       if (!range || !spanRef.current) return
 
-      const preRange = document.createRange()
-      preRange.selectNodeContents(spanRef.current)
-      preRange.setEnd(range.startContainer, range.startOffset)
-      const start = preRange.toString().length
-
-      preRange.setEnd(range.endContainer, range.endOffset)
-      const end = preRange.toString().length
-
-      const currentText = displayValue
+      if (!selection) return
+      const { start, end } = getSelectionRange(spanRef.current, selection)
       const newText =
-        currentText.slice(0, start) + pastedText + currentText.slice(end)
+        displayValue.slice(0, start) + pastedText + displayValue.slice(end)
 
-      // Validate the pasted text would result in a valid number format
       if (/^-?\d*\.?\d*$/.test(newText)) {
         updateValue(newText, start + pastedText.length, start, end)
       }
