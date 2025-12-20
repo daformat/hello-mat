@@ -1,5 +1,5 @@
 import { TableOfContents } from "@/components/TableOfContents/TocComponent"
-import { useContext, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { NextCard } from "@/components/Navigation/NextCard"
 import Link from "next/link"
 import { PageMetas } from "@/components/PageMetas/PageMetas"
@@ -236,33 +236,34 @@ const SwipeableCardsPageContent = () => {
   )
 }
 
-const EmptyView = () => {
-  const { setStack, cards } = useContext(SwipeableCards.Context)
-  return (
-    <div style={{ padding: 8 }}>
-      <div
-        style={{
-          textAlign: "center",
-          padding: "8px 16px",
-          borderRadius: 8,
-          border: "2px dashed var(--color-border-1)",
-          width: "var(--inline-size)",
-          aspectRatio: "1200 / 630",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexDirection: "column",
-          boxSizing: "border-box",
-          gap: 8,
-        }}
-      >
-        No more cards to show
-        <button className="button" onClick={() => setStack(cards)}>
-          Reset stack
-        </button>
-      </div>
-    </div>
-  )
-}
+// Unused component - kept for potential future use
+// const EmptyView = () => {
+//   const { setStack, cards } = useContext(SwipeableCards.Context)
+//   return (
+//     <div style={{ padding: 8 }}>
+//       <div
+//         style={{
+//           textAlign: "center",
+//           padding: "8px 16px",
+//           borderRadius: 8,
+//           border: "2px dashed var(--color-border-1)",
+//           width: "var(--inline-size)",
+//           aspectRatio: "1200 / 630",
+//           display: "flex",
+//           alignItems: "center",
+//           justifyContent: "center",
+//           flexDirection: "column",
+//           boxSizing: "border-box",
+//           gap: 8,
+//         }}
+//       >
+//         No more cards to show
+//         <button className="button" onClick={() => setStack(cards)}>
+//           Reset stack
+//         </button>
+//       </div>
+//     </div>
+//   )
+// }
 
 export default SwipeableCardsPage
