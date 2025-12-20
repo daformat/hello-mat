@@ -262,6 +262,44 @@ export const NumberFlowInput = ({
     }
   }, [])
 
+  // Helper function to reposition all existing barrel wheels
+  const repositionAllBarrelWheels = useCallback(() => {
+    if (!spanRef.current?.parentElement) return
+    
+    const parentContainer = spanRef.current.parentElement
+    const existingBarrelWheels = parentContainer.querySelectorAll(
+      `[data-char-index].${styles.barrel_wheel || ""}`
+    )
+    
+    existingBarrelWheels.forEach((wheel) => {
+      const wheelEl = wheel as HTMLElement
+      const indexStr = wheelEl.getAttribute("data-char-index")
+      if (indexStr !== null) {
+        const index = parseInt(indexStr, 10)
+        if (!isNaN(index) && index >= 0 && spanRef.current) {
+          const charSpan = spanRef.current.querySelector(
+            `[data-char-index="${index}"]`
+          ) as HTMLElement | null
+          
+          if (charSpan) {
+            // Ensure the digit remains transparent while barrel wheel is animating
+            // This prevents the digit from showing through the barrel wheel
+            if (charSpan.style.color !== "transparent" && charSpan.style.color !== "rgba(0, 0, 0, 0)") {
+              charSpan.style.color = "transparent"
+            }
+            
+            const rect = charSpan.getBoundingClientRect()
+            const parentRect = parentContainer.getBoundingClientRect()
+            wheelEl.style.left = `${rect.left - parentRect.left}px`
+            wheelEl.style.top = `${rect.top - parentRect.top}px`
+            wheelEl.style.width = `${rect.width}px`
+            wheelEl.style.height = `${rect.height}px`
+          }
+        }
+      }
+    })
+  }, [styles.barrel_wheel])
+
   // Helper function to remove barrel wheels at specific indices
   const removeBarrelWheelsAtIndices = useCallback((indices: number[]) => {
     if (!spanRef.current) return
@@ -508,9 +546,91 @@ export const NumberFlowInput = ({
           adjustedNewCursorPos
         )
 
+        // Update barrel wheel indices if characters were inserted before them
+        if (spanRef.current?.parentElement) {
+          const parentContainer = spanRef.current.parentElement
+          const existingBarrelWheels = parentContainer.querySelectorAll(
+            `[data-char-index].${styles.barrel_wheel || ""}`
+          )
+          existingBarrelWheels.forEach((wheel) => {
+            const wheelEl = wheel as HTMLElement
+            const oldIndexStr = wheelEl.getAttribute("data-char-index")
+            const finalDigitStr = wheelEl.getAttribute("data-final-digit")
+            if (oldIndexStr !== null) {
+              const oldIndex = parseInt(oldIndexStr, 10)
+              if (!isNaN(oldIndex) && oldIndex >= 0) {
+                // Calculate how many characters were inserted before this index
+                const lengthDiff = cleanedText.length - adjustedOldText.length
+                const hadSelection = adjustedSelectionStart < adjustedSelectionEnd
+                
+                // If characters were inserted (not replaced) at or before the barrel wheel's index, shift it
+                if (!hadSelection && lengthDiff > 0 && adjustedSelectionStart <= oldIndex) {
+                  // Characters were inserted at or before this index, so shift it
+                  const numInserted = adjustedNewCursorPos - adjustedSelectionStart
+                  const newIndex = oldIndex + numInserted
+                  wheelEl.setAttribute("data-char-index", newIndex.toString())
+                  
+                  // Update the ResizeObserver key if it exists
+                  const observer = resizeObserversRef.current.get(oldIndex)
+                  if (observer) {
+                    resizeObserversRef.current.delete(oldIndex)
+                    resizeObserversRef.current.set(newIndex, observer)
+                  }
+                  
+                  // Also update the span's data-char-index if it exists and matches the final digit
+                  if (finalDigitStr && spanRef.current) {
+                    const oldSpan = spanRef.current.querySelector(
+                      `[data-char-index="${oldIndex}"]`
+                    ) as HTMLElement | null
+                    if (oldSpan && oldSpan.textContent === finalDigitStr) {
+                      oldSpan.setAttribute("data-char-index", newIndex.toString())
+                    }
+                  }
+                }
+              }
+            }
+          })
+        }
+
         // Incrementally update DOM instead of full reconstruction
         if (spanRef.current) {
-          // Get all existing spans mapped by index
+          // First, update indices of existing spans that need to shift due to insertions
+          // This handles the case where characters are inserted before existing spans
+          // Do this BEFORE collecting spans by index, so the map is correct
+          const lengthDiff = cleanedText.length - adjustedOldText.length
+          const hadSelection = adjustedSelectionStart < adjustedSelectionEnd
+          if (!hadSelection && lengthDiff > 0) {
+            // Characters were inserted (not replaced) - shift existing spans at and after the insertion point
+            const insertPos = adjustedSelectionStart
+            const numInserted = adjustedNewCursorPos - adjustedSelectionStart
+            // Collect all spans first
+            const allSpans: HTMLElement[] = []
+            let nodeToUpdate = spanRef.current.firstChild
+            while (nodeToUpdate) {
+              if (
+                nodeToUpdate instanceof HTMLElement &&
+                nodeToUpdate.hasAttribute("data-char-index")
+              ) {
+                allSpans.push(nodeToUpdate)
+              }
+              nodeToUpdate = nodeToUpdate.nextSibling
+            }
+            // Update indices of spans that need to shift
+            allSpans.forEach((span) => {
+              const oldIndexStr = span.getAttribute("data-char-index")
+              if (oldIndexStr !== null) {
+                const oldIndex = parseInt(oldIndexStr, 10)
+                if (!isNaN(oldIndex) && oldIndex >= insertPos && oldIndex < adjustedOldText.length) {
+                  const newIdx = oldIndex + numInserted
+                  if (newIdx < cleanedText.length) {
+                    span.setAttribute("data-char-index", newIdx.toString())
+                  }
+                }
+              }
+            })
+          }
+
+          // Get all existing spans mapped by index (after updating indices)
           const existingSpansByIndex = new Map<number, HTMLElement>()
           const allExistingSpans: HTMLElement[] = []
           // Also collect any text nodes that shouldn't be there (from undo/redo textContent assignment)
@@ -817,6 +937,13 @@ export const NumberFlowInput = ({
               span.textContent = char ?? ""
             }
           }
+
+          // Reposition all barrel wheels after DOM update completes
+          // This ensures barrel wheels stay aligned whenever characters are inserted/deleted
+          // Use requestAnimationFrame to ensure DOM has fully updated
+          requestAnimationFrame(() => {
+            repositionAllBarrelWheels()
+          })
 
           // Remove any remaining spans with invalid indices or wrong characters
           const allSpans = Array.from(
@@ -1203,27 +1330,93 @@ export const NumberFlowInput = ({
                   wrapper.addEventListener(
                     "transitionend",
                     () => {
+                      // Get the current index and final digit from the barrel wheel's attributes
+                      // (may have changed if chars were inserted before)
+                      const currentIndexStr = wheel.getAttribute("data-char-index")
+                      const currentIndex = currentIndexStr !== null ? parseInt(currentIndexStr, 10) : index
+                      const finalDigitAttr = wheel.getAttribute("data-final-digit")
+                      const finalDigit = finalDigitAttr !== null ? finalDigitAttr : newDigitStr
+                      
                       // Clean up ResizeObserver when barrel wheel animation completes
-                      const observer = resizeObserversRef.current.get(index)
+                      // Check both old and new index in case it was updated
+                      const observer = resizeObserversRef.current.get(currentIndex) || resizeObserversRef.current.get(index)
                       if (observer) {
                         observer.disconnect()
+                        resizeObserversRef.current.delete(currentIndex)
                         resizeObserversRef.current.delete(index)
                       }
                       
+                      // Find the span by the current index AND verify it has the correct character
+                      // This handles the case where characters were inserted before the barrel wheel
+                      let targetSpan: HTMLElement | null = null
+                      if (spanRef.current) {
+                        const spanAtCurrentIndex = spanRef.current.querySelector(
+                          `[data-char-index="${currentIndex}"]`
+                        ) as HTMLElement | null
+                        
+                        // Verify the span has the correct character (final digit)
+                        if (spanAtCurrentIndex && spanAtCurrentIndex.textContent === finalDigit) {
+                          targetSpan = spanAtCurrentIndex
+                        } else {
+                          // Fallback: search all spans for one with the final digit that's not already visible
+                          // This handles edge cases where the span was moved/reused
+                          const allSpans = spanRef.current.querySelectorAll("[data-char-index]")
+                          for (const span of Array.from(allSpans)) {
+                            const spanEl = span as HTMLElement
+                            if (spanEl.textContent === finalDigit && spanEl.style.color === "transparent") {
+                              // Found the span - update its index if needed
+                              const spanIndex = spanEl.getAttribute("data-char-index")
+                              if (spanIndex !== currentIndex.toString()) {
+                                spanEl.setAttribute("data-char-index", currentIndex.toString())
+                              }
+                              targetSpan = spanEl
+                              break
+                            }
+                          }
+                        }
+                      }
+                      
+                      // If we still haven't found the span, use the one from closure as last resort
+                      if (!targetSpan && charSpan instanceof HTMLElement) {
+                        // Only use it if it hasn't been reused for a different character
+                        if (charSpan.textContent === finalDigit) {
+                          // Update its index if needed
+                          const spanIndex = charSpan.getAttribute("data-char-index")
+                          if (spanIndex !== currentIndex.toString()) {
+                            charSpan.setAttribute("data-char-index", currentIndex.toString())
+                          }
+                          targetSpan = charSpan
+                        }
+                      }
+                      
                       // Clean up width animation styles and attributes
-                      if (charSpan instanceof HTMLElement) {
-                        cleanupWidthAnimation(charSpan)
+                      if (targetSpan instanceof HTMLElement) {
+                        cleanupWidthAnimation(targetSpan)
+                        // Always remove color: transparent when barrel wheel completes
+                        targetSpan.style.color = ""
+                        // Ensure the character doesn't have any animation attributes
+                        targetSpan.removeAttribute("data-flow")
+                        targetSpan.style.transition = "none"
+                      } else {
+                        // Fallback: if we couldn't find the target span, try to find any span with the final digit
+                        // that has color: transparent and remove it
+                        if (spanRef.current) {
+                          const allSpans = spanRef.current.querySelectorAll("[data-char-index]")
+                          for (const span of Array.from(allSpans)) {
+                            const spanEl = span as HTMLElement
+                            if (spanEl.textContent === finalDigit && (spanEl.style.color === "transparent" || spanEl.style.color === "rgba(0, 0, 0, 0)")) {
+                              spanEl.style.color = ""
+                              spanEl.removeAttribute("data-flow")
+                              spanEl.style.transition = "none"
+                              cleanupWidthAnimation(spanEl)
+                              break
+                            }
+                          }
+                        }
                       }
                       
                       // Remove barrel wheel first
                       wheel.remove()
-                      // Then show the character immediately (no animation)
-                      charSpan.style.color = ""
-                      // Ensure the character doesn't have any animation attributes
-                      if (charSpan instanceof HTMLElement) {
-                        charSpan.removeAttribute("data-flow")
-                        charSpan.style.transition = "none"
-                      }
                     },
                     { once: true }
                   )
