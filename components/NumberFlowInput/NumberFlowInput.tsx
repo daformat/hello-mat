@@ -458,6 +458,8 @@ export const NumberFlowInput = ({
           // Get all existing spans mapped by index
           const existingSpansByIndex = new Map<number, HTMLElement>()
           const allExistingSpans: HTMLElement[] = []
+          // Also collect any text nodes that shouldn't be there (from undo/redo textContent assignment)
+          const textNodesToRemove: Node[] = []
           let node = spanRef.current.firstChild
           while (node) {
             if (
@@ -472,9 +474,15 @@ export const NumberFlowInput = ({
                 existingSpansByIndex.set(index, node)
                 allExistingSpans.push(node)
               }
+            } else if (node.nodeType === Node.TEXT_NODE) {
+              // Collect text nodes that shouldn't be there (they should be inside spans)
+              textNodesToRemove.push(node)
             }
             node = node.nextSibling
           }
+          
+          // Remove any stray text nodes (from undo/redo or other operations)
+          textNodesToRemove.forEach((textNode) => textNode.remove())
 
           // Track which spans we've used
           const usedSpans = new Set<HTMLElement>()
@@ -1312,6 +1320,19 @@ export const NumberFlowInput = ({
               onChange?.(historyItem.value)
               setCursorPosition(historyItem.cursorPos)
               if (spanRef.current) {
+                // Clear ALL child nodes (spans, text nodes, etc.) before setting textContent
+                // This prevents duplicate content when barrel wheel animations are triggered after undo/redo
+                while (spanRef.current.firstChild) {
+                  spanRef.current.removeChild(spanRef.current.firstChild)
+                }
+                // Also remove any barrel wheels
+                const parentContainer = spanRef.current.parentElement
+                if (parentContainer) {
+                  const barrelWheels = parentContainer.querySelectorAll(
+                    `[data-char-index].${styles.barrel_wheel || ""}`
+                  )
+                  barrelWheels.forEach((wheel) => wheel.remove())
+                }
                 spanRef.current.textContent = historyItem.text
                 // Set cursor position
                 requestAnimationFrame(() => {
@@ -1368,6 +1389,19 @@ export const NumberFlowInput = ({
               onChange?.(historyItem.value)
               setCursorPosition(historyItem.cursorPos)
               if (spanRef.current) {
+                // Clear ALL child nodes (spans, text nodes, etc.) before setting textContent
+                // This prevents duplicate content when barrel wheel animations are triggered after undo/redo
+                while (spanRef.current.firstChild) {
+                  spanRef.current.removeChild(spanRef.current.firstChild)
+                }
+                // Also remove any barrel wheels
+                const parentContainer = spanRef.current.parentElement
+                if (parentContainer) {
+                  const barrelWheels = parentContainer.querySelectorAll(
+                    `[data-char-index].${styles.barrel_wheel || ""}`
+                  )
+                  barrelWheels.forEach((wheel) => wheel.remove())
+                }
                 spanRef.current.textContent = historyItem.text
                 // Set cursor position
                 requestAnimationFrame(() => {
