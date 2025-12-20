@@ -1,5 +1,9 @@
 .number_flow_input_root {
-  border: 1px solid #ccc;
+  //background-color: var(--color-toolbar-background);
+  border-radius: 6px;
+  box-shadow: 0 1px 12px var(--color-shadow-1),
+  inset 0 0 2px 0.75px var(--color-border-2),
+  inset 0 0 0 0.75px var(--color-border-1);
   font-size: 2em;
 
   &:focus-within:has(:focus-visible)  {
@@ -12,6 +16,7 @@
 
 // Container that wraps both contentEditable and barrel wheels - applies mask to clip both
 .number_flow_input_wrapper {
+  line-height: 1;
   mask-image: linear-gradient(to bottom, transparent, #000 10px, #000 calc(100% - 10px), transparent);
   padding: 10px;
   position: relative;
@@ -19,7 +24,6 @@
 
 .number_flow_input {
   display: inline-block;
-  line-height: 1;
   outline: none;
 
   span {
@@ -76,7 +80,7 @@
   // Wrapper that contains all digits stacked vertically and moves to show target digit
   .barrel_digits_wrapper {
     --digit-position: 0;
-    --digit-gap: 0.25em;
+    --digit-gap: 5px;
 
     display: flex;
     flex-direction: column;

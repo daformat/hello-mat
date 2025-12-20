@@ -2417,8 +2417,21 @@ export const NumberFlowInput = ({
           className={styles.number_flow_input_wrapper}
           style={{
             display: "inline-flex",
+            overflow: "hidden",
           }}
         >
+          <span style={{ opacity: 0.5 }}>
+            <span
+              style={{
+                scale: 0.75,
+                display: "inline-block",
+                transformOrigin: "top center",
+                translate: "0 0.05em",
+              }}
+            >
+              $
+            </span>
+          </span>
           <span
             ref={spanRef}
             contentEditable
