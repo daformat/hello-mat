@@ -238,6 +238,9 @@ export const NumberFlowInput = ({
   const shouldPreventInputRef = useRef(false)
   const preventInputCursorPosRef = useRef(0)
 
+  // Track ResizeObservers for digits with barrel wheel animations
+  const resizeObserversRef = useRef<Map<number, ResizeObserver>>(new Map())
+
   // Helper function to remove barrel wheels at specific indices
   const removeBarrelWheelsAtIndices = useCallback((indices: number[]) => {
     if (!spanRef.current) return
@@ -245,6 +248,13 @@ export const NumberFlowInput = ({
     if (!parentContainer) return
 
     indices.forEach((index) => {
+      // Clean up ResizeObserver for this index
+      const observer = resizeObserversRef.current.get(index)
+      if (observer) {
+        observer.disconnect()
+        resizeObserversRef.current.delete(index)
+      }
+      
       const barrelWheel = parentContainer.querySelector(
         `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
       ) as HTMLElement | null
@@ -1059,6 +1069,38 @@ export const NumberFlowInput = ({
                     // Force a reflow to ensure initial width and CSS transition are applied
                     void charSpan.offsetWidth
 
+                    // Set up ResizeObserver to update barrel wheel position as digit width animates
+                    // Clean up any existing observer for this index
+                    const existingObserver = resizeObserversRef.current.get(index)
+                    if (existingObserver) {
+                      existingObserver.disconnect()
+                      resizeObserversRef.current.delete(index)
+                    }
+
+                    // Create new ResizeObserver for this digit
+                    const resizeObserver = new ResizeObserver(() => {
+                      // Update barrel wheel position to match digit's current position
+                      if (!spanRef.current || !charSpan) return
+                      const parentContainer = spanRef.current.parentElement
+                      if (!parentContainer) return
+
+                      const barrelWheel = parentContainer.querySelector(
+                        `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
+                      ) as HTMLElement | null
+
+                      if (barrelWheel) {
+                        const rect = charSpan.getBoundingClientRect()
+                        const parentRect = parentContainer.getBoundingClientRect()
+                        barrelWheel.style.left = `${rect.left - parentRect.left}px`
+                        // Also update width to match current digit width
+                        barrelWheel.style.width = `${rect.width}px`
+                      }
+                    })
+
+                    // Start observing the digit span
+                    resizeObserver.observe(charSpan)
+                    resizeObserversRef.current.set(index, resizeObserver)
+
                     // Wait one more frame to ensure CSS transition is fully active
                     requestAnimationFrame(() => {
                       // Force another reflow to ensure CSS transition is applied
@@ -1116,6 +1158,13 @@ export const NumberFlowInput = ({
                             "transitionend",
                             handleWidthAnimationEnd
                           )
+                          
+                          // Clean up ResizeObserver when width animation completes
+                          const observer = resizeObserversRef.current.get(index)
+                          if (observer) {
+                            observer.disconnect()
+                            resizeObserversRef.current.delete(index)
+                          }
                         }
                       }
                       charSpan.addEventListener(
@@ -1129,6 +1178,13 @@ export const NumberFlowInput = ({
                   wrapper.addEventListener(
                     "transitionend",
                     () => {
+                      // Clean up ResizeObserver when barrel wheel animation completes
+                      const observer = resizeObserversRef.current.get(index)
+                      if (observer) {
+                        observer.disconnect()
+                        resizeObserversRef.current.delete(index)
+                      }
+                      
                       // Remove barrel wheel first
                       wheel.remove()
                       // Then show the character immediately (no animation)
@@ -1293,6 +1349,17 @@ export const NumberFlowInput = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actualValue, displayValue])
+
+  // Cleanup ResizeObservers on unmount
+  useEffect(() => {
+    return () => {
+      // Disconnect all ResizeObservers when component unmounts
+      resizeObserversRef.current.forEach((observer) => {
+        observer.disconnect()
+      })
+      resizeObserversRef.current.clear()
+    }
+  }, [])
 
   const handleKeyDown = useCallback<KeyboardEventHandler<HTMLSpanElement>>(
     (event) => {
