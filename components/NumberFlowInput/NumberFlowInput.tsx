@@ -66,9 +66,14 @@ export const NumberFlowInput = ({
   )
   const [_cursorPosition, setCursorPosition] = useState(0)
 
-  // Undo/Redo history
+  // Undo/Redo history - stores cursor position before and after each change
   const historyRef = useRef<
-    Array<{ text: string; cursorPos: number; value: MaybeUndefined<number> }>
+    Array<{ 
+      text: string
+      cursorPosBefore: number  // Cursor position before the change (for undo)
+      cursorPosAfter: number   // Cursor position after the change (for redo)
+      value: MaybeUndefined<number>
+    }>
   >([])
   const historyIndexRef = useRef(-1)
   const isUndoRedoRef = useRef(false)
@@ -81,9 +86,9 @@ export const NumberFlowInput = ({
   const resizeObserversRef = useRef<Map<number, ResizeObserver>>(new Map())
 
   const addToHistory = useCallback(
-    (text: string, cursorPos: number, value: MaybeUndefined<number>) => {
+    (text: string, cursorPosBefore: number, cursorPosAfter: number, value: MaybeUndefined<number>) => {
       historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1)
-      historyRef.current.push({ text, cursorPos, value })
+      historyRef.current.push({ text, cursorPosBefore, cursorPosAfter, value })
       historyIndexRef.current = historyRef.current.length - 1
       if (historyRef.current.length > 50) {
         historyRef.current.shift()
@@ -215,7 +220,7 @@ export const NumberFlowInput = ({
       setCursorPosition(newCursorPos)
 
       if (!skipHistory && !isUndoRedoRef.current) {
-        addToHistory(cleanedText, newCursorPos, numberValue)
+        addToHistory(cleanedText, selectionEnd, newCursorPos, numberValue)
       }
 
       // Update DOM with animation
@@ -1467,7 +1472,8 @@ export const NumberFlowInput = ({
       const initialValue = actualValue
       historyRef.current.push({
         text: displayValue,
-        cursorPos: 0,
+        cursorPosBefore: 0,
+        cursorPosAfter: 0,
         value: initialValue,
       })
       historyIndexRef.current = 0
@@ -1504,15 +1510,21 @@ export const NumberFlowInput = ({
     }
   }, [])
 
-  const applyHistoryItem = useCallback(
-    (historyItem: { text: string; cursorPos: number; value: MaybeUndefined<number> } | undefined) => {
-      if (!historyItem) return
-      
+  const applyHistoryItemWithCursor = useCallback(
+    (
+      historyItem: { 
+        text: string
+        cursorPosBefore: number
+        cursorPosAfter: number
+        value: MaybeUndefined<number>
+      },
+      cursorPos: number
+    ) => {
       isUndoRedoRef.current = true
       setDisplayValue(historyItem.text)
       setUncontrolledValue(historyItem.value)
       onChange?.(historyItem.value)
-      setCursorPosition(historyItem.cursorPos)
+      setCursorPosition(cursorPos)
       
       if (spanRef.current) {
         clearBarrelWheelsAndSpans(
@@ -1522,14 +1534,39 @@ export const NumberFlowInput = ({
         )
         spanRef.current.textContent = historyItem.text
         
-        requestAnimationFrame(() => {
+        spanRef.current.focus()
+        
+        const restoreCursor = () => {
           if (!spanRef.current) return
-          setCursorAtPosition(spanRef.current, historyItem.cursorPos)
+          spanRef.current.focus()
+          setCursorAtPosition(spanRef.current, cursorPos)
           isUndoRedoRef.current = false
-        })
+        }
+        
+        restoreCursor()
+        requestAnimationFrame(restoreCursor)
       }
     },
     [onChange]
+  )
+
+  const applyHistoryItem = useCallback(
+    (
+      historyItem: { 
+        text: string
+        cursorPosBefore: number
+        cursorPosAfter: number
+        value: MaybeUndefined<number>
+      } | undefined,
+      isUndo: boolean
+    ) => {
+      if (!historyItem) return
+      
+      // For redo: use cursorPosAfter from the item
+      const targetCursorPos = isUndo ? historyItem.cursorPosBefore : historyItem.cursorPosAfter
+      applyHistoryItemWithCursor(historyItem, targetCursorPos)
+    },
+    [applyHistoryItemWithCursor]
   )
 
   const handleKeyDown = useCallback<KeyboardEventHandler<HTMLSpanElement>>(
@@ -1569,8 +1606,14 @@ export const NumberFlowInput = ({
         if (key.toLowerCase() === "z" && !event.shiftKey) {
           event.preventDefault()
           if (historyIndexRef.current > 0) {
+            // Get cursor position from current item BEFORE decrementing
+            const cursorPos = historyRef.current[historyIndexRef.current]?.cursorPosBefore ?? 0
             historyIndexRef.current--
-            applyHistoryItem(historyRef.current[historyIndexRef.current])
+            // Restore text from previous item, but use cursor position from current item
+            const prevItem = historyRef.current[historyIndexRef.current]
+            if (prevItem) {
+              applyHistoryItemWithCursor(prevItem, cursorPos)
+            }
           }
           return
         }
@@ -1582,7 +1625,8 @@ export const NumberFlowInput = ({
           event.preventDefault()
           if (historyIndexRef.current < historyRef.current.length - 1) {
             historyIndexRef.current++
-            applyHistoryItem(historyRef.current[historyIndexRef.current])
+            // For redo, use cursorPosAfter from the item we're restoring to
+            applyHistoryItem(historyRef.current[historyIndexRef.current], false)
           }
           return
         }
@@ -2145,7 +2189,7 @@ export const NumberFlowInput = ({
         return
       }
     },
-    [displayValue, updateValue, removeBarrelWheelsAtIndices, applyHistoryItem]
+    [displayValue, updateValue, removeBarrelWheelsAtIndices, applyHistoryItem, applyHistoryItemWithCursor]
   )
 
       const handleCopy = useCallback<ClipboardEventHandler<HTMLSpanElement>>(
