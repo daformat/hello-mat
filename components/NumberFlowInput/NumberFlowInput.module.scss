@@ -31,7 +31,9 @@
   }
 
   :is([data-flow]) {
-    transition: translate 0.2s var(--ease-out-cubic);
+    transition: translate 0.2s var(--ease-out-cubic), width 0.2s var(--ease-out-cubic),
+    min-width 0.2s var(--ease-out-cubic),
+    max-width 0.2s var(--ease-out-cubic);
     translate: 0 100%;
 
     &[data-show] {

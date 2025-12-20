@@ -950,6 +950,11 @@ export const NumberFlowInput = ({
                     }
                     if (isUnchanged) {
                       span.setAttribute("data-show", "")
+                    } else if (!referenceNode?.nextSibling) {
+                      // Last span: animate width
+                      span.style.width = "0px"
+                      span.style.minWidth = "0px"
+                      span.style.maxWidth = "0px"
                     }
 
                     // Insert at correct position
@@ -1177,6 +1182,13 @@ export const NumberFlowInput = ({
                 changes.addedIndices.has(index)
               ) {
                 element.dataset.show = ""
+                const span = spanRef.current
+                if (span) {
+                  const width = measureText(element.textContent, span)
+                  element.style.width = `${width}px`
+                  element.style.minWidth = `${width}px`
+                  element.style.maxWidth = `${width}px`
+                }
               }
             })
           }
