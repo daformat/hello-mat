@@ -1710,11 +1710,23 @@ export const NumberFlowInput = ({
               }
             }
           } else {
-            // Move cursor (no selection)
-            if (key === "ArrowLeft") {
-              targetPos = Math.max(0, start - 1)
+            // Move cursor
+            // If there's a selection, move to start (ArrowLeft) or end (ArrowRight) of selection
+            // Otherwise, move cursor by one character
+            if (start !== end) {
+              // There's a selection - move to start or end based on arrow direction
+              if (key === "ArrowLeft") {
+                targetPos = start
+              } else {
+                targetPos = end
+              }
             } else {
-              targetPos = Math.min(currentText.length, start + 1)
+              // No selection - move cursor by one character
+              if (key === "ArrowLeft") {
+                targetPos = Math.max(0, start - 1)
+              } else {
+                targetPos = Math.min(currentText.length, start + 1)
+              }
             }
 
             // Find target node
