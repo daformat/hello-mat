@@ -1,4 +1,7 @@
 .number_flow_input_root {
+  border: 1px solid #ccc;
+  font-size: 2em;
+
   &:focus-within:has(:focus-visible)  {
     outline: 2px solid Highlight; /* Uses system accent color */
     // stylelint-disable-next-line
@@ -9,8 +12,8 @@
 
 // Container that wraps both contentEditable and barrel wheels - applies mask to clip both
 .number_flow_input_wrapper {
-  display: inline-flex;
   mask-image: linear-gradient(to bottom, transparent, #000 10px, #000 calc(100% - 10px), transparent);
+  padding: 10px;
   position: relative;
 }
 
@@ -72,13 +75,14 @@
 
   // Wrapper that contains all digits stacked vertically and moves to show target digit
   .barrel_digits_wrapper {
-    // Use CSS variable for the digit position
     --digit-position: 0;
+    --digit-gap: 0.25em;
 
     display: flex;
     flex-direction: column;
+    gap: var(--digit-gap);
     position: relative;
-    transform: translateY(calc(var(--digit-position) * -1em));
+    transform: translateY(calc(var(--digit-position) * (-1em - var(--digit-gap))));
     transition: none;
     user-select: none;
     // stylelint-disable property-no-vendor-prefix
@@ -101,7 +105,7 @@
     align-items: flex-end;
 
     .barrel_digits_wrapper {
-      transform: translateY(calc((9 - var(--digit-position)) * 1em));
+      transform: translateY(calc((9 - var(--digit-position)) * (1em + var(--digit-gap))));
     }
   }
 
