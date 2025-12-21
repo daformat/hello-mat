@@ -1,9 +1,10 @@
-import Head from "next/head"
-import Link from "next/link"
-import { ReactNode } from "react"
-import { StartupImages } from "@/components/layout/StartupImages"
+import Head from "next/head";
+import Link from "next/link";
+import { ReactNode } from "react";
 
-import styles from "./Layout.module.scss"
+import { StartupImages } from "@/components/layout/StartupImages";
+
+import styles from "./Layout.module.scss";
 
 export const Layout = ({ children }: { children: ReactNode }) => (
   <>
@@ -54,7 +55,7 @@ export const Layout = ({ children }: { children: ReactNode }) => (
       {children}
     </div>
   </>
-)
+);
 
 export const Header = () => (
   <div className={styles.header}>
@@ -94,7 +95,7 @@ export const Header = () => (
       <LogoMedium />
     </Link>
   </div>
-)
+);
 
 export const Logo = () => (
   <svg
@@ -113,7 +114,7 @@ export const Logo = () => (
       fill="currentColor"
     />
   </svg>
-)
+);
 
 export const LogoObservable = () => (
   <svg
@@ -129,7 +130,7 @@ export const LogoObservable = () => (
       fill="currentColor"
     />
   </svg>
-)
+);
 
 export const LogoTwitter = () => (
   <svg
@@ -145,7 +146,7 @@ export const LogoTwitter = () => (
       fill="currentColor"
     />
   </svg>
-)
+);
 
 export const LogoMedium = () => (
   <svg
@@ -164,7 +165,7 @@ export const LogoMedium = () => (
       fill="currentColor"
     />
   </svg>
-)
+);
 
 export const LogoLinkedin = () => {
   return (
@@ -178,5 +179,5 @@ export const LogoLinkedin = () => {
       <title>Let’s connect on LinkedIn</title>
       <path d="M25.65 9H10.35C9.99196 9 9.64858 9.14223 9.39541 9.39541C9.14223 9.64858 9 9.99196 9 10.35V25.65C9 26.008 9.14223 26.3514 9.39541 26.6046C9.64858 26.8578 9.99196 27 10.35 27H25.65C26.008 27 26.3514 26.8578 26.6046 26.6046C26.8578 26.3514 27 26.008 27 25.65V10.35C27 9.99196 26.8578 9.64858 26.6046 9.39541C26.3514 9.14223 26.008 9 25.65 9ZM14.4 24.3H11.7V16.2H14.4V24.3ZM13.05 14.625C12.7406 14.6162 12.4406 14.5163 12.1876 14.338C11.9346 14.1596 11.7397 13.9107 11.6274 13.6222C11.515 13.3337 11.4902 13.0186 11.5559 12.7161C11.6217 12.4136 11.7751 12.1372 11.9971 11.9214C12.2191 11.7056 12.4997 11.56 12.8039 11.5028C13.1081 11.4456 13.4225 11.4793 13.7077 11.5997C13.9928 11.7201 14.2362 11.9219 14.4074 12.1798C14.5785 12.4378 14.6699 12.7404 14.67 13.05C14.6629 13.4733 14.4885 13.8766 14.1849 14.1717C13.8814 14.4669 13.4733 14.6298 13.05 14.625ZM24.3 24.3H21.6V20.034C21.6 18.756 21.06 18.297 20.358 18.297C20.1522 18.3107 19.9511 18.3649 19.7663 18.4566C19.5815 18.5482 19.4166 18.6755 19.2811 18.831C19.1457 18.9866 19.0422 19.1674 18.9768 19.363C18.9114 19.5586 18.8853 19.7652 18.9 19.971C18.8955 20.0129 18.8955 20.0551 18.9 20.097V24.3H16.2V16.2H18.81V17.37C19.0733 16.9695 19.435 16.6433 19.8605 16.4227C20.286 16.2021 20.761 16.0944 21.24 16.11C22.635 16.11 24.264 16.884 24.264 19.404L24.3 24.3Z" />
     </svg>
-  )
-}
+  );
+};

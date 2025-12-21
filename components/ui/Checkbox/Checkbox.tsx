@@ -1,14 +1,15 @@
-import { ComponentProps, useId } from "react"
+import { ComponentProps, useId } from "react";
 
-import styles from "./Checkbox.module.scss"
-import { isNonNullable } from "@/utils/nullable"
+import { isNonNullable } from "@/utils/nullable";
+
+import styles from "./Checkbox.module.scss";
 
 export const Checkbox = ({
   className,
   id,
   ...props
 }: ComponentProps<"input">) => {
-  const generatedId = useId()
+  const generatedId = useId();
   return (
     <label
       className={styles.checkbox}
@@ -17,9 +18,9 @@ export const Checkbox = ({
       onClick={(event) => {
         const checkbox = event.currentTarget.querySelector(
           "input[type='checkbox']"
-        )
+        );
         if (checkbox instanceof HTMLInputElement && !checkbox.disabled) {
-          checkbox.click()
+          checkbox.click();
         }
       }}
     >
@@ -63,5 +64,5 @@ export const Checkbox = ({
         </svg>
       </span>
     </label>
-  )
-}
+  );
+};

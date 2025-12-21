@@ -1,17 +1,18 @@
-import { useEffect, useRef } from "react"
-import Link from "next/link"
-import { TableOfContents } from "@/components/TableOfContents/TocComponent"
-import { DetailsComponent } from "@/components/Details/DetailsComponent"
-import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer"
-import { NextCard } from "@/components/Navigation/NextCard"
-import { PageMetas } from "@/components/PageMetas/PageMetas"
+import Link from "next/link";
+import { useEffect, useRef } from "react";
+
+import { DetailsComponent } from "@/components/Details/DetailsComponent";
+import { NextCard } from "@/components/Navigation/NextCard";
+import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { TableOfContents } from "@/components/TableOfContents/TocComponent";
+import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer";
 import {
   COMPONENTS,
   getNextComponent,
-} from "@/constants/design-engineering/components"
+} from "@/constants/design-engineering/components";
 
 const TableOfContentsPage = () => {
-  const component = COMPONENTS["toc"]
+  const component = COMPONENTS["toc"];
   return (
     <>
       <PageMetas {...component.metas} />
@@ -19,19 +20,19 @@ const TableOfContentsPage = () => {
         <TableOfContentsPageContent />
       </TableOfContents.Provider>
     </>
-  )
-}
+  );
+};
 
 const TableOfContentsPageContent = () => {
-  const nextComponent = getNextComponent("toc")
-  const tocContext = TableOfContents.useToc()
-  const contentRef = useRef<HTMLDivElement>(null)
+  const nextComponent = getNextComponent("toc");
+  const tocContext = TableOfContents.useToc();
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (contentRef.current) {
-      tocContext.setRootElement(contentRef.current)
+      tocContext.setRootElement(contentRef.current);
     }
-  })
+  });
 
   return (
     <>
@@ -248,7 +249,7 @@ const TableOfContentsPageContent = () => {
         </NextCard>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default TableOfContentsPage
+export default TableOfContentsPage;

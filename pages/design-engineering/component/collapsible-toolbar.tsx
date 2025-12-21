@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import {
   FaAlignCenter,
   FaAlignLeft,
@@ -11,23 +13,22 @@ import {
   FaRegMessage,
   FaScissors,
   FaSliders,
-} from "react-icons/fa6"
-import Link from "next/link"
-import { useEffect, useRef, useState } from "react"
-import { ButtonGroup } from "@/components/ButtonGroup/ButtonGroup"
-import { DropdownItem } from "@/components/ButtonGroup/Dropdown/DropdownItem"
-import { Toolbar } from "@/components/Toolbar/Toolbar"
-import { ToolbarButton } from "@/components/Toolbar/ToolbarButton"
-import { TableOfContents } from "@/components/TableOfContents/TocComponent"
-import { NextCard } from "@/components/Navigation/NextCard"
-import { PageMetas } from "@/components/PageMetas/PageMetas"
+} from "react-icons/fa6";
+
+import { ButtonGroup } from "@/components/ButtonGroup/ButtonGroup";
+import { DropdownItem } from "@/components/ButtonGroup/Dropdown/DropdownItem";
+import { NextCard } from "@/components/Navigation/NextCard";
+import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { TableOfContents } from "@/components/TableOfContents/TocComponent";
+import { Toolbar } from "@/components/Toolbar/Toolbar";
+import { ToolbarButton } from "@/components/Toolbar/ToolbarButton";
 import {
   COMPONENTS,
   getNextComponent,
-} from "@/constants/design-engineering/components"
+} from "@/constants/design-engineering/components";
 
 const CollapsibleToolbarPage = () => {
-  const component = COMPONENTS["collapsible-toolbar"]
+  const component = COMPONENTS["collapsible-toolbar"];
   return (
     <>
       <PageMetas {...component.metas} />
@@ -35,20 +36,20 @@ const CollapsibleToolbarPage = () => {
         <CollapsibleToolbarPageContent />
       </TableOfContents.Provider>
     </>
-  )
-}
+  );
+};
 
 const CollapsibleToolbarPageContent = () => {
-  const nextComponent = getNextComponent("collapsible-toolbar")
-  const tocContext = TableOfContents.useToc()
-  const contentRef = useRef<HTMLDivElement>(null)
-  const [slow, setSlow] = useState(false)
+  const nextComponent = getNextComponent("collapsible-toolbar");
+  const tocContext = TableOfContents.useToc();
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [slow, setSlow] = useState(false);
 
   useEffect(() => {
     if (contentRef.current) {
-      tocContext.setRootElement(contentRef.current)
+      tocContext.setRootElement(contentRef.current);
     }
-  })
+  });
 
   return (
     <>
@@ -124,8 +125,8 @@ const CollapsibleToolbarPageContent = () => {
         </NextCard>
       </div>
     </>
-  )
-}
+  );
+};
 
 const buttons = [
   {
@@ -271,6 +272,6 @@ const buttons = [
       </DropdownItem>
     ),
   },
-]
+];
 
-export default CollapsibleToolbarPage
+export default CollapsibleToolbarPage;

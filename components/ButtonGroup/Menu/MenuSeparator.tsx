@@ -1,5 +1,6 @@
-import styles from "./MenuSeparator.module.scss"
-import React, { ComponentProps } from "react"
+import React, { ComponentProps } from "react";
+
+import styles from "./MenuSeparator.module.scss";
 
 export const MenuSeparator = React.forwardRef<
   HTMLDivElement,
@@ -11,7 +12,7 @@ export const MenuSeparator = React.forwardRef<
       className={[styles.separator, className].filter(Boolean).join(" ")}
       {...props}
     />
-  )
-})
+  );
+});
 
-MenuSeparator.displayName = "MenuSeparator"
+MenuSeparator.displayName = "MenuSeparator";

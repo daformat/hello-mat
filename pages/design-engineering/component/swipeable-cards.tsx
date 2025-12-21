@@ -1,24 +1,25 @@
-import { TableOfContents } from "@/components/TableOfContents/TocComponent"
-import { useEffect, useRef, useState } from "react"
-import { NextCard } from "@/components/Navigation/NextCard"
-import Link from "next/link"
-import { PageMetas } from "@/components/PageMetas/PageMetas"
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { FaCheck, FaXmark } from "react-icons/fa6";
+import { PiStarBold } from "react-icons/pi";
+
+import { NextCard } from "@/components/Navigation/NextCard";
+import { PageMetas } from "@/components/PageMetas/PageMetas";
 import {
   DiscardStyle,
   SwipeableCards,
   SwipeDirection,
-} from "@/components/SwipeableCards/SwipeableCards"
-import { useCssSizeVariables } from "@/hooks/useCssSizeVariables"
-import { PiStarBold } from "react-icons/pi"
-import { FaCheck, FaXmark } from "react-icons/fa6"
-import { Checkbox } from "@/components/ui/Checkbox/Checkbox"
+} from "@/components/SwipeableCards/SwipeableCards";
+import { TableOfContents } from "@/components/TableOfContents/TocComponent";
+import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
 import {
   COMPONENTS,
   getNextComponent,
-} from "@/constants/design-engineering/components"
+} from "@/constants/design-engineering/components";
+import { useCssSizeVariables } from "@/hooks/useCssSizeVariables";
 
 const SwipeableCardsPage = () => {
-  const component = COMPONENTS["swipeable-cards"]
+  const component = COMPONENTS["swipeable-cards"];
   return (
     <>
       <PageMetas {...component.metas} />
@@ -26,16 +27,16 @@ const SwipeableCardsPage = () => {
         <SwipeableCardsPageContent />
       </TableOfContents.Provider>
     </>
-  )
-}
+  );
+};
 
 const SwipeableCardsPageContent = () => {
-  const nextComponent = getNextComponent("swipeable-cards")
-  const tocContext = TableOfContents.useToc()
-  const contentRef = useRef<HTMLDivElement>(null)
-  const demoRef = useRef<HTMLDivElement>(null)
-  const [discardStyle, setDiscardStyle] = useState<DiscardStyle>("sendToBack")
-  useCssSizeVariables(demoRef)
+  const nextComponent = getNextComponent("swipeable-cards");
+  const tocContext = TableOfContents.useToc();
+  const contentRef = useRef<HTMLDivElement>(null);
+  const demoRef = useRef<HTMLDivElement>(null);
+  const [discardStyle, setDiscardStyle] = useState<DiscardStyle>("sendToBack");
+  useCssSizeVariables(demoRef);
   const [_swipedCards, setSwipedCards] = useState<
     Record<SwipeDirection, string[]>
   >({
@@ -43,13 +44,13 @@ const SwipeableCardsPageContent = () => {
     down: [],
     left: [],
     right: [],
-  })
+  });
 
   useEffect(() => {
     if (contentRef.current) {
-      tocContext.setRootElement(contentRef.current)
+      tocContext.setRootElement(contentRef.current);
     }
-  })
+  });
 
   const cardsSources = [
     {
@@ -89,7 +90,7 @@ const SwipeableCardsPageContent = () => {
       dark: "/media/design-engineering/carousel/og-carousel-dark.png",
       light: "/media/design-engineering/carousel/og-carousel-light.png",
     },
-  ]
+  ];
 
   const cards = cardsSources.map(({ id, light, dark }, index) => ({
     id,
@@ -103,7 +104,7 @@ const SwipeableCardsPageContent = () => {
         <img src={light} alt="" style={{ aspectRatio: "1200 / 630" }} />
       </picture>
     ),
-  }))
+  }));
 
   return (
     <>
@@ -135,22 +136,25 @@ const SwipeableCardsPageContent = () => {
             discardStyle={discardStyle}
             onSwipe={(direction, cardId) => {
               setSwipedCards((prev) => {
-                const newSwipedCards = { ...prev }
+                const newSwipedCards = { ...prev };
                 if (newSwipedCards[direction].includes(cardId)) {
-                  return prev
+                  return prev;
                 } else {
                   Object.entries(newSwipedCards).forEach(([key, value]) => {
                     if (key !== direction) {
                       newSwipedCards[key as SwipeDirection] = value.filter(
                         (id) => id !== cardId
-                      )
+                      );
                     } else {
-                      newSwipedCards[key as SwipeDirection] = [...value, cardId]
+                      newSwipedCards[key as SwipeDirection] = [
+                        ...value,
+                        cardId,
+                      ];
                     }
-                  })
+                  });
                 }
-                return newSwipedCards
-              })
+                return newSwipedCards;
+              });
             }}
             loop
             // emptyView={<EmptyView />}
@@ -233,8 +237,8 @@ const SwipeableCardsPageContent = () => {
         </NextCard>
       </div>
     </>
-  )
-}
+  );
+};
 
 // Unused component - kept for potential future use
 // const EmptyView = () => {
@@ -266,4 +270,4 @@ const SwipeableCardsPageContent = () => {
 //   )
 // }
 
-export default SwipeableCardsPage
+export default SwipeableCardsPage;

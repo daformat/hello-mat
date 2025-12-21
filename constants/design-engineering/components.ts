@@ -1,5 +1,5 @@
-import { PageMetasProps } from "@/components/PageMetas/PageMetas"
-import { VideoSourcesWithoutSlowVersions } from "@/components/VideoPlayer/VideoPlayer"
+import { PageMetasProps } from "@/components/PageMetas/PageMetas";
+import { VideoSourcesWithoutSlowVersions } from "@/components/VideoPlayer/VideoPlayer";
 
 export const COMPONENTS = {
   toc: {
@@ -230,17 +230,20 @@ export const COMPONENTS = {
 } as const satisfies Record<
   string,
   {
-    metas: PageMetasProps
-    shortTitle: string
-    video: VideoSourcesWithoutSlowVersions
+    metas: PageMetasProps;
+    shortTitle: string;
+    video: VideoSourcesWithoutSlowVersions;
   }
->
+>;
 
-export type ComponentId = keyof typeof COMPONENTS
+export type ComponentId = keyof typeof COMPONENTS;
 
-type MissingKeys<T extends readonly unknown[]> = Exclude<ComponentId, T[number]>
+type MissingKeys<T extends readonly unknown[]> = Exclude<
+  ComponentId,
+  T[number]
+>;
 
-type ExtraKeys<T extends readonly unknown[]> = Exclude<T[number], ComponentId>
+type ExtraKeys<T extends readonly unknown[]> = Exclude<T[number], ComponentId>;
 
 type HasDuplicates<T extends readonly unknown[]> = T extends readonly [
   infer First,
@@ -249,7 +252,7 @@ type HasDuplicates<T extends readonly unknown[]> = T extends readonly [
   ? First extends Rest[number]
     ? First
     : HasDuplicates<Rest>
-  : never
+  : never;
 
 const createComponentOrder = <T extends readonly ComponentId[] = []>(
   order: MissingKeys<T> extends never
@@ -260,8 +263,8 @@ const createComponentOrder = <T extends readonly ComponentId[] = []>(
       : `Error: Invalid component ID: ${ExtraKeys<T> & string}`
     : `Error: Missing component IDs: ${MissingKeys<T> & string}`
 ): T => {
-  return order as T
-}
+  return order as T;
+};
 
 export const COMPONENTS_ORDER = createComponentOrder([
   "toc",
@@ -274,13 +277,13 @@ export const COMPONENTS_ORDER = createComponentOrder([
   "stacking-cards",
   "swipeable-cards",
   "number-flow-input",
-] as const)
+] as const);
 
 export const getNextComponent = (currentComponentId: ComponentId) => {
   const componentIndex = COMPONENTS_ORDER.findIndex(
     (id) => id === currentComponentId
-  )
+  );
   const nextComponentId =
-    COMPONENTS_ORDER[componentIndex + 1] ?? COMPONENTS_ORDER[0]
-  return COMPONENTS[nextComponentId]
-}
+    COMPONENTS_ORDER[componentIndex + 1] ?? COMPONENTS_ORDER[0];
+  return COMPONENTS[nextComponentId];
+};

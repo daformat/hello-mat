@@ -1,12 +1,17 @@
 {
-  "plugins": ["@typescript-eslint"],
+  "plugins": [
+    "@typescript-eslint",
+    "simple-import-sort"
+  ],
   "extends": [
     "next",
     "next/core-web-vitals",
     "plugin:@typescript-eslint/recommended",
     "prettier"
   ],
-  "ignorePatterns": ["coverage/*"],
+  "ignorePatterns": [
+    "coverage/*"
+  ],
   "rules": {
     "@next/next/no-img-element": "off",
     "@typescript-eslint/no-restricted-types": "warn",
@@ -22,16 +27,36 @@
         "argsIgnorePattern": "^_"
       }
     ],
-    "semi": ["warn", "never"],
-    "quotes": ["warn", "double", { "avoidEscape": true }],
-    "curly": ["error", "all"],
-    "comma-dangle": ["warn", "always-multiline"],
+    "semi": [
+      "error",
+      "always"
+    ],
+    "quotes": [
+      "warn",
+      "double",
+      {
+        "avoidEscape": true
+      }
+    ],
+    "curly": [
+      "error",
+      "all"
+    ],
+    "comma-dangle": [
+      "warn",
+      "always-multiline"
+    ],
     "no-unused-vars": "off",
     "no-irregular-whitespace": [
       "error",
       {
         "skipTemplates": true
       }
-    ]
+    ],
+    "simple-import-sort/imports": "error",
+    "simple-import-sort/exports": "error",
+    "import/first": "error",
+    "import/newline-after-import": "error",
+    "import/no-duplicates": "error"
   }
 }

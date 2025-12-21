@@ -1,17 +1,18 @@
-import { TableOfContents } from "components/TableOfContents/TocComponent"
-import { useEffect, useLayoutEffect, useRef, useState } from "react"
-import Link from "next/link"
-import { EmbedComp, ImageComp } from "@/components/Media/MediaComponent"
-import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer"
-import { NextCard } from "@/components/Navigation/NextCard"
-import { PageMetas } from "@/components/PageMetas/PageMetas"
+import { TableOfContents } from "components/TableOfContents/TocComponent";
+import Link from "next/link";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+
+import { EmbedComp, ImageComp } from "@/components/Media/MediaComponent";
+import { NextCard } from "@/components/Navigation/NextCard";
+import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer";
 import {
   COMPONENTS,
   getNextComponent,
-} from "@/constants/design-engineering/components"
+} from "@/constants/design-engineering/components";
 
 const ImageAndEmbedsPage = () => {
-  const component = COMPONENTS["images-and-embeds"]
+  const component = COMPONENTS["images-and-embeds"];
   return (
     <>
       <PageMetas {...component.metas} />
@@ -19,41 +20,41 @@ const ImageAndEmbedsPage = () => {
         <ImageAndEmbedsContent />
       </TableOfContents.Provider>
     </>
-  )
-}
+  );
+};
 
 const ImageAndEmbedsContent = () => {
-  const nextComponent = getNextComponent("images-and-embeds")
-  const tocContext = TableOfContents.useToc()
-  const contentRef = useRef<HTMLDivElement>(null)
-  const [render, setRender] = useState(0)
-  const [slow, setSlow] = useState(false)
+  const nextComponent = getNextComponent("images-and-embeds");
+  const tocContext = TableOfContents.useToc();
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [render, setRender] = useState(0);
+  const [slow, setSlow] = useState(false);
 
   useEffect(() => {
     if (contentRef.current) {
-      tocContext.setRootElement(contentRef.current)
+      tocContext.setRootElement(contentRef.current);
     }
-  })
+  });
 
   useLayoutEffect(() => {
     const buttons = contentRef.current?.querySelectorAll(
       "button.auto_resize"
-    ) as NodeListOf<HTMLButtonElement>
+    ) as NodeListOf<HTMLButtonElement>;
     if (buttons) {
       buttons.forEach((button) => {
-        const oldWidth = button.style.getPropertyValue("--button-width")
-        button.style.width = "auto"
-        const width = button.offsetWidth
+        const oldWidth = button.style.getPropertyValue("--button-width");
+        button.style.width = "auto";
+        const width = button.offsetWidth;
         if (oldWidth) {
-          button.style.width = "var(--button-width, auto)"
-          button.style.setProperty("--button-width", oldWidth)
+          button.style.width = "var(--button-width, auto)";
+          button.style.setProperty("--button-width", oldWidth);
         }
         setTimeout(() =>
           button.style.setProperty("--button-width", `${width}px`)
-        )
-      })
+        );
+      });
     }
-  }, [slow])
+  }, [slow]);
 
   return (
     <>
@@ -220,7 +221,7 @@ const ImageAndEmbedsContent = () => {
         </NextCard>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default ImageAndEmbedsPage
+export default ImageAndEmbedsPage;

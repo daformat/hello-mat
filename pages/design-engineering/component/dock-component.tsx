@@ -1,22 +1,23 @@
-import { TableOfContents } from "components/TableOfContents/TocComponent"
-import { useEffect, useRef } from "react"
-import Link from "next/link"
-import { NextCard } from "@/components/Navigation/NextCard"
-import { Dock, DockItem } from "@/components/Dock/Dock"
+import { TableOfContents } from "components/TableOfContents/TocComponent";
+import Link from "next/link";
+import { useEffect, useRef } from "react";
+
 import {
   BeamIcon,
   BeamIconBeta,
   BeamIconDev,
   BeamIconNightly,
-} from "@/components/Dock/BeamIcon"
-import { PageMetas } from "@/components/PageMetas/PageMetas"
+} from "@/components/Dock/BeamIcon";
+import { Dock, DockItem } from "@/components/Dock/Dock";
+import { NextCard } from "@/components/Navigation/NextCard";
+import { PageMetas } from "@/components/PageMetas/PageMetas";
 import {
   COMPONENTS,
   getNextComponent,
-} from "@/constants/design-engineering/components"
+} from "@/constants/design-engineering/components";
 
 const DockComponentPage = () => {
-  const component = COMPONENTS["dock-component"]
+  const component = COMPONENTS["dock-component"];
   return (
     <>
       <PageMetas {...component.metas} />
@@ -24,19 +25,19 @@ const DockComponentPage = () => {
         <DockComponentPageContent />
       </TableOfContents.Provider>
     </>
-  )
-}
+  );
+};
 
 const DockComponentPageContent = () => {
-  const nextComponent = getNextComponent("dock-component")
-  const tocContext = TableOfContents.useToc()
-  const contentRef = useRef<HTMLDivElement>(null)
+  const nextComponent = getNextComponent("dock-component");
+  const tocContext = TableOfContents.useToc();
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (contentRef.current) {
-      tocContext.setRootElement(contentRef.current)
+      tocContext.setRootElement(contentRef.current);
     }
-  })
+  });
 
   return (
     <>
@@ -82,7 +83,7 @@ const DockComponentPageContent = () => {
         </NextCard>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default DockComponentPage
+export default DockComponentPage;

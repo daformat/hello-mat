@@ -1,6 +1,6 @@
-import React from "react"
+import React from "react";
 
-import styles from "./MenuLabel.module.scss"
+import styles from "./MenuLabel.module.scss";
 
 export const MenuLabel = React.forwardRef<
   HTMLDivElement,
@@ -10,7 +10,7 @@ export const MenuLabel = React.forwardRef<
     <div className={styles.menu_label} ref={ref}>
       <span className={styles.label}>{children}</span>
     </div>
-  )
-})
+  );
+});
 
-MenuLabel.displayName = "MenuLabel"
+MenuLabel.displayName = "MenuLabel";

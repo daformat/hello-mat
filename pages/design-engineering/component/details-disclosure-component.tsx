@@ -1,17 +1,18 @@
-import { TableOfContents } from "components/TableOfContents/TocComponent"
-import { useEffect, useRef, useState } from "react"
-import Link from "next/link"
-import { DetailsComponent } from "@/components/Details/DetailsComponent"
-import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer"
-import { NextCard } from "@/components/Navigation/NextCard"
-import { PageMetas } from "@/components/PageMetas/PageMetas"
+import { TableOfContents } from "components/TableOfContents/TocComponent";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+
+import { DetailsComponent } from "@/components/Details/DetailsComponent";
+import { NextCard } from "@/components/Navigation/NextCard";
+import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer";
 import {
   COMPONENTS,
   getNextComponent,
-} from "@/constants/design-engineering/components"
+} from "@/constants/design-engineering/components";
 
 const DetailsDisclosureComponent = () => {
-  const component = COMPONENTS.details
+  const component = COMPONENTS.details;
   return (
     <>
       <PageMetas {...component.metas} />
@@ -19,20 +20,20 @@ const DetailsDisclosureComponent = () => {
         <DetailsPageContent />
       </TableOfContents.Provider>
     </>
-  )
-}
+  );
+};
 
 const DetailsPageContent = () => {
-  const nextComponent = getNextComponent("details")
-  const tocContext = TableOfContents.useToc()
-  const contentRef = useRef<HTMLDivElement>(null)
-  const [slow, setSlow] = useState(false)
+  const nextComponent = getNextComponent("details");
+  const tocContext = TableOfContents.useToc();
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [slow, setSlow] = useState(false);
 
   useEffect(() => {
     if (contentRef.current) {
-      tocContext.setRootElement(contentRef.current)
+      tocContext.setRootElement(contentRef.current);
     }
-  })
+  });
 
   return (
     <>
@@ -213,7 +214,7 @@ const DetailsPageContent = () => {
         </NextCard>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default DetailsDisclosureComponent
+export default DetailsDisclosureComponent;

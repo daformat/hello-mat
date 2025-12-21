@@ -1,41 +1,41 @@
-import { NextSeo } from "next-seo"
-import { OpenGraph } from "next-seo/lib/types"
+import { NextSeo } from "next-seo";
+import { OpenGraph } from "next-seo/lib/types";
 
 export type PageMetasBaseProps = {
-  title: string
-  description: string
-  url: string
-}
+  title: string;
+  description: string;
+  url: string;
+};
 
 export type PageMetasImageProps =
   | {
-      image: string
-      imageWidth: number
-      imageHeight: number
+      image: string;
+      imageWidth: number;
+      imageHeight: number;
     }
   | {
-      image: string
-      imageWidth?: never
-      imageHeight?: never
-    }
+      image: string;
+      imageWidth?: never;
+      imageHeight?: never;
+    };
 
 export type PageMetasVideoProps =
   | {
-      video: string
-      videoType: string
-      videoWidth: number
-      videoHeight: number
+      video: string;
+      videoType: string;
+      videoWidth: number;
+      videoHeight: number;
     }
   | {
-      video?: never
-      videoType?: never
-      videoWidth?: never
-      videoHeight?: never
-    }
+      video?: never;
+      videoType?: never;
+      videoWidth?: never;
+      videoHeight?: never;
+    };
 
 export type PageMetasProps = PageMetasBaseProps &
   PageMetasImageProps &
-  PageMetasVideoProps
+  PageMetasVideoProps;
 
 export const PageMetas = ({
   title,
@@ -61,7 +61,7 @@ export const PageMetas = ({
         secureUrl: getAbsoluteUrl(image),
       },
     ],
-  }
+  };
   if (video) {
     openGraph.videos = [
       {
@@ -70,7 +70,7 @@ export const PageMetas = ({
         width: videoWidth,
         height: videoHeight,
       },
-    ]
+    ];
   }
   return (
     <NextSeo
@@ -80,13 +80,13 @@ export const PageMetas = ({
       openGraph={openGraph}
       twitter={{ handle: "@daformat", cardType: "summary_large_image" }}
     />
-  )
-}
+  );
+};
 
 const getAbsoluteUrl = (url: string) => {
-  const base = "https://hello-mat.com"
+  const base = "https://hello-mat.com";
   if (!url.startsWith("http")) {
-    return `${base}${url}`
+    return `${base}${url}`;
   }
-  return url
-}
+  return url;
+};

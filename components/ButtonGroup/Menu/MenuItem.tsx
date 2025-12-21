@@ -1,13 +1,13 @@
-import React, { ReactNode } from "react"
+import React, { ReactNode } from "react";
 
-import styles from "./MenuItem.module.scss"
+import styles from "./MenuItem.module.scss";
 
 export type MenuItemProps = React.PropsWithChildren<{
-  prefix?: ReactNode
-  suffix?: ReactNode
-  displayAction?: boolean
-  className?: string
-}>
+  prefix?: ReactNode;
+  suffix?: ReactNode;
+  displayAction?: boolean;
+  className?: string;
+}>;
 
 export const MenuItem = React.forwardRef<HTMLDivElement, MenuItemProps>(
   ({ children, prefix, suffix, displayAction, className, ...props }, ref) => {
@@ -28,8 +28,8 @@ export const MenuItem = React.forwardRef<HTMLDivElement, MenuItemProps>(
           </span>
         ) : null}
       </div>
-    )
+    );
   }
-)
+);
 
-MenuItem.displayName = "MenuItem"
+MenuItem.displayName = "MenuItem";

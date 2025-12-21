@@ -1,7 +1,7 @@
-import { ComponentProps } from "react"
-import Link from "next/link"
+import Link from "next/link";
+import { ComponentProps } from "react";
 
-import styles from "./NextCard.module.scss"
+import styles from "./NextCard.module.scss";
 
 export const NextCard = ({
   className,
@@ -18,4 +18,4 @@ export const NextCard = ({
     </span>
     <span className={styles.arrow}>--&gt;</span>
   </Link>
-)
+);

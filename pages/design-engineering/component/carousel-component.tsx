@@ -1,20 +1,20 @@
-import { TableOfContents } from "@/components/TableOfContents/TocComponent"
-import { CSSProperties, useEffect, useRef, useState } from "react"
-import { NextCard } from "@/components/Navigation/NextCard"
-import Link from "next/link"
-import { PageMetas } from "@/components/PageMetas/PageMetas"
-import { Carousel } from "@/components/Carousel/Carousel"
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa6"
+import Link from "next/link";
+import { CSSProperties, useEffect, useRef, useState } from "react";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 
-import styles from "@/components/Carousel/Carousel.module.scss"
-import { useCssSizeVariables } from "@/hooks/useCssSizeVariables"
+import { Carousel } from "@/components/Carousel/Carousel";
+import styles from "@/components/Carousel/Carousel.module.scss";
+import { NextCard } from "@/components/Navigation/NextCard";
+import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import {
   COMPONENTS,
   getNextComponent,
-} from "@/constants/design-engineering/components"
+} from "@/constants/design-engineering/components";
+import { useCssSizeVariables } from "@/hooks/useCssSizeVariables";
 
 const CarouselComponentPage = () => {
-  const component = COMPONENTS["carousel-component"]
+  const component = COMPONENTS["carousel-component"];
   return (
     <>
       <PageMetas {...component.metas} />
@@ -22,22 +22,22 @@ const CarouselComponentPage = () => {
         <CarouselComponentPageContent />
       </TableOfContents.Provider>
     </>
-  )
-}
+  );
+};
 
 const CarouselComponentPageContent = () => {
-  const nextComponent = getNextComponent("carousel-component")
-  const tocContext = TableOfContents.useToc()
-  const contentRef = useRef<HTMLDivElement>(null)
-  const [size, setSize] = useState(0.7)
-  const carouselRef = useRef<HTMLDivElement>(null)
-  useCssSizeVariables(carouselRef)
+  const nextComponent = getNextComponent("carousel-component");
+  const tocContext = TableOfContents.useToc();
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState(0.7);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  useCssSizeVariables(carouselRef);
 
   useEffect(() => {
     if (contentRef.current) {
-      tocContext.setRootElement(contentRef.current)
+      tocContext.setRootElement(contentRef.current);
     }
-  })
+  });
 
   return (
     <>
@@ -300,7 +300,7 @@ const CarouselComponentPageContent = () => {
                     value={size}
                     step={0.01}
                     onChange={(e) => {
-                      setSize(Number(e.target.value))
+                      setSize(Number(e.target.value));
                     }}
                     style={
                       {
@@ -380,26 +380,26 @@ const CarouselComponentPageContent = () => {
         </NextCard>
       </div>
     </>
-  )
-}
+  );
+};
 
 const getBoundaryOffset = (container: HTMLElement) => {
-  const viewport = container.querySelector("[data-carousel-viewport]")
+  const viewport = container.querySelector("[data-carousel-viewport]");
   if (viewport) {
-    const computedStyle = getComputedStyle(viewport)
-    const maskSize = computedStyle.getPropertyValue("--mask-size")
-    const temp = document.createElement("div")
-    temp.style.position = "absolute"
-    temp.style.visibility = "hidden"
-    temp.style.setProperty("--mask-size", maskSize)
-    temp.style.width = "var(--mask-size)"
-    document.body.appendChild(temp)
-    const computed = getComputedStyle(temp)
-    const result = { x: parseFloat(computed.getPropertyValue("width")), y: 0 }
-    console.log(result)
-    return result
+    const computedStyle = getComputedStyle(viewport);
+    const maskSize = computedStyle.getPropertyValue("--mask-size");
+    const temp = document.createElement("div");
+    temp.style.position = "absolute";
+    temp.style.visibility = "hidden";
+    temp.style.setProperty("--mask-size", maskSize);
+    temp.style.width = "var(--mask-size)";
+    document.body.appendChild(temp);
+    const computed = getComputedStyle(temp);
+    const result = { x: parseFloat(computed.getPropertyValue("width")), y: 0 };
+    console.log(result);
+    return result;
   }
-  return { x: 0, y: 0 }
-}
+  return { x: 0, y: 0 };
+};
 
-export default CarouselComponentPage
+export default CarouselComponentPage;

@@ -1,5 +1,6 @@
-import { ComponentProps, forwardRef } from "react"
-import styles from "./ToolbarButton.module.scss"
+import { ComponentProps, forwardRef } from "react";
+
+import styles from "./ToolbarButton.module.scss";
 
 export const ToolbarButton = forwardRef<
   HTMLButtonElement,
@@ -13,7 +14,7 @@ export const ToolbarButton = forwardRef<
     >
       {children}
     </button>
-  )
-})
+  );
+});
 
-ToolbarButton.displayName = "ToolbarButton"
+ToolbarButton.displayName = "ToolbarButton";

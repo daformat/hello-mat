@@ -1,14 +1,14 @@
-import React from "react"
-import { DropdownSubContent } from "./DropdownSubContent"
+import { DropdownMenu as DropdownPrimitive } from "radix-ui";
+import React from "react";
 
-import { DropdownMenu as DropdownPrimitive } from "radix-ui"
+import { DropdownSubContent } from "./DropdownSubContent";
 
 export interface ContextMenuSubProps
   extends DropdownPrimitive.DropdownMenuProps,
     React.PropsWithChildren<{
-      trigger: React.ReactNode
-      triggerAsChild?: boolean
-      contentProps?: DropdownPrimitive.DropdownMenuSubContentProps
+      trigger: React.ReactNode;
+      triggerAsChild?: boolean;
+      contentProps?: DropdownPrimitive.DropdownMenuSubContentProps;
     }> {}
 
 export const DropdownSub = ({
@@ -33,4 +33,4 @@ export const DropdownSub = ({
       </DropdownSubContent>
     </DropdownPrimitive.Portal>
   </DropdownPrimitive.Sub>
-)
+);

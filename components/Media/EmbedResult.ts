@@ -1,4 +1,4 @@
-import { MaybeNull } from "@/components/Media/utils/maybe"
+import { MaybeNull } from "@/components/Media/utils/maybe";
 
 export enum RecognizedContentType {
   video = "video",
@@ -17,117 +17,117 @@ export interface EmbedResult {
   /**
    * The content original height in pixels
    */
-  height?: number
+  height?: number;
 
   /**
    * The content original width in pixels
    */
-  width?: number
+  width?: number;
 
   /**
    * Whether the content should be resized proportionally
    */
-  keepAspectRatio?: boolean
+  keepAspectRatio?: boolean;
 
   /**
    * The content minimum height in pixels
    */
-  minHeight?: number
+  minHeight?: number;
 
   /**
    * The content minimum width in pixels
    */
-  minWidth?: number
+  minWidth?: number;
 
   /**
    * The content minimum height in pixels
    */
-  maxHeight?: number
+  maxHeight?: number;
 
   /**
    * The content minimum width in pixels
    */
-  maxWidth?: number
+  maxWidth?: number;
 
   /**
    * In what dimensions can the content be resized
    */
-  responsive?: ResizeType
+  responsive?: ResizeType;
 
   /**
    * The recognized content type
    */
-  type: RecognizedContentType
+  type: RecognizedContentType;
 
   /**
    * The content title
    */
-  title: string
+  title: string;
 
   /**
    * The content URL
    */
-  url: string
+  url: string;
 
   /**
    * The HTML code to embed the content
    */
-  html: string
+  html: string;
 
   /**
    * The content thumbnail URL
    */
-  thumbnail?: string
+  thumbnail?: string;
 
-  provider: string
+  provider: string;
 
-  favicon?: string
+  favicon?: string;
 }
 
 export type OEmbedPhotoPayload = {
-  type: "photo"
-  url: string
-  html?: never
-  width: number | string
-  height: number | string
-}
+  type: "photo";
+  url: string;
+  html?: never;
+  width: number | string;
+  height: number | string;
+};
 
 export type OEmbedVideoPayload = {
-  type: "video"
-  url?: never
-  html: string
-  width: number | string
-  height: number | string
-}
+  type: "video";
+  url?: never;
+  html: string;
+  width: number | string;
+  height: number | string;
+};
 
 export type OEmbedLinkPayload = {
-  type: "link"
-  url?: never
-  html?: never
-  width?: never
-  height?: never
-}
+  type: "link";
+  url?: never;
+  html?: never;
+  width?: never;
+  height?: never;
+};
 
 export type OEmbedRichPayload = {
-  type: "rich"
-  url?: never
-  html: string
-  width: MaybeNull<number | string>
-  height: MaybeNull<number | string>
-}
+  type: "rich";
+  url?: never;
+  html: string;
+  width: MaybeNull<number | string>;
+  height: MaybeNull<number | string>;
+};
 
 export type OEmbedPayload = {
-  version: string
-  title?: string
-  author_name?: string
-  author_url?: string
-  provider_name?: string
-  provider_url?: string
-  cache_age?: number | string
-  thumbnail_url?: string
-  thumbnail_width?: number
-  thumbnail_height?: number
-}
+  version: string;
+  title?: string;
+  author_name?: string;
+  author_url?: string;
+  provider_name?: string;
+  provider_url?: string;
+  cache_age?: number | string;
+  thumbnail_url?: string;
+  thumbnail_width?: number;
+  thumbnail_height?: number;
+};
 
 export type OEmbed = (
   | OEmbedPhotoPayload
@@ -135,8 +135,8 @@ export type OEmbed = (
   | OEmbedLinkPayload
   | OEmbedRichPayload
 ) &
-  OEmbedPayload
+  OEmbedPayload;
 
 export type OEmbedResult = {
-  oEmbed: OEmbed
-}
+  oEmbed: OEmbed;
+};

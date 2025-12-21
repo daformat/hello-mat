@@ -1,9 +1,11 @@
-import { CSSProperties, useCallback, useEffect, useRef, useState } from "react"
-import styles from "./StencilSvg.module.scss"
-import Link from "next/link"
-import { plotCircle, Position, translate, vec, Vector } from "@/utils/geometry"
-import { globalWindowValue } from "@/hooks/useEventListener"
-import { isNonNullable } from "@/utils/nullable"
+import Link from "next/link";
+import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
+
+import { globalWindowValue } from "@/hooks/useEventListener";
+import { plotCircle, Position, translate, vec, Vector } from "@/utils/geometry";
+import { isNonNullable } from "@/utils/nullable";
+
+import styles from "./StencilSvg.module.scss";
 
 const paths = [
   {
@@ -66,20 +68,20 @@ const paths = [
       },
     ],
   },
-]
+];
 
-type StencilSvgPath = { d: string; direction?: string }
+type StencilSvgPath = { d: string; direction?: string };
 
 type StencilSvgProps = {
-  enter: boolean
-  display: boolean
-  transition: "in" | "out"
-  width: number
-  height: number
-  path: { paths: StencilSvgPath[]; name: string }
-}
+  enter: boolean;
+  display: boolean;
+  transition: "in" | "out";
+  width: number;
+  height: number;
+  path: { paths: StencilSvgPath[]; name: string };
+};
 
-const cache = new Map<string, JSX.Element[]>()
+const cache = new Map<string, JSX.Element[]>();
 /**
  * This component is hacky and could definitely be improved.
  */
@@ -91,84 +93,84 @@ export const StencilSvg = ({
   height,
   path,
 }: StencilSvgProps) => {
-  const [points, setPoints] = useState<JSX.Element[]>([])
-  const svgRef = useRef<SVGSVGElement>(null)
-  const boxWidth = width
-  const boxHeight = height
-  const xmlns = "http://www.w3.org/2000/svg"
-  const pathName = useRef<string>()
+  const [points, setPoints] = useState<JSX.Element[]>([]);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const boxWidth = width;
+  const boxHeight = height;
+  const xmlns = "http://www.w3.org/2000/svg";
+  const pathName = useRef<string>();
 
   useEffect(() => {
-    const svg = svgRef.current
-    let circlePumpDistanceMax = -6
+    const svg = svgRef.current;
+    let circlePumpDistanceMax = -6;
 
     if (svg) {
       const refresh = (event: PointerEvent) => {
-        const { clientX: x, clientY: y } = event
-        const dX = globalWindowValue && x ? x - window.innerWidth / 2 : 1
-        const dY = globalWindowValue && y ? y - window.innerHeight / 2 : 1
-        let dist = Math.hypot(dX, dY)
+        const { clientX: x, clientY: y } = event;
+        const dX = globalWindowValue && x ? x - window.innerWidth / 2 : 1;
+        const dY = globalWindowValue && y ? y - window.innerHeight / 2 : 1;
+        let dist = Math.hypot(dX, dY);
         const max = globalWindowValue
           ? Math.hypot(window.innerWidth / 2, window.innerHeight / 2) * 0.35
-          : 1
+          : 1;
         // remove distance effect when hovering controls
         if (isNonNullable(x) && isNonNullable(y)) {
-          const element = document.elementFromPoint(x, y)
+          const element = document.elementFromPoint(x, y);
           if (element?.closest("[data-controls]")) {
-            dist = max
+            dist = max;
           }
         }
-        const ratio = Math.min(1, dist / max) ** 2
-        const t = 1 - ratio
-        const target = -6 * (1 + t * 40)
+        const ratio = Math.min(1, dist / max) ** 2;
+        const t = 1 - ratio;
+        const target = -6 * (1 + t * 40);
         svg.style.setProperty(
           "--circle-pump-distance-max-target",
           `${target}px`
-        )
-        const current = circlePumpDistanceMax
+        );
+        const current = circlePumpDistanceMax;
         if (current && target && Math.abs(target - current) > 2) {
-          circlePumpDistanceMax = current + (target - current) / 4
+          circlePumpDistanceMax = current + (target - current) / 4;
           svg.style.setProperty(
             "--circle-pump-distance-max",
             `${circlePumpDistanceMax}px`
-          )
+          );
         }
-      }
+      };
       const leave = () => {
-        const target = -6 * (1 + 40)
+        const target = -6 * (1 + 40);
         svg.style.setProperty(
           "--circle-pump-distance-max-target",
           `${target}px`
-        )
-        svg.style.setProperty("--circle-pump-distance-max", `${-6}px`)
-      }
-      document.addEventListener("pointermove", refresh)
-      document.addEventListener("pointerleave", leave)
+        );
+        svg.style.setProperty("--circle-pump-distance-max", `${-6}px`);
+      };
+      document.addEventListener("pointermove", refresh);
+      document.addEventListener("pointerleave", leave);
       return () => {
-        document.removeEventListener("pointermove", refresh)
-        document.removeEventListener("pointerleave", leave)
-      }
+        document.removeEventListener("pointermove", refresh);
+        document.removeEventListener("pointerleave", leave);
+      };
     }
-  }, [])
+  }, []);
 
   const pathCallback = useCallback(
     (node: SVGPathElement) => {
       if (!node) {
-        return
+        return;
       }
       requestAnimationFrame(() => {
-        const nodeIndex = node.dataset.index
-        const cacheKey = `${path.name}-${nodeIndex}`
-        const cached = cache.get(cacheKey)
+        const nodeIndex = node.dataset.index;
+        const cacheKey = `${path.name}-${nodeIndex}`;
+        const cached = cache.get(cacheKey);
         if (cached) {
-          setPoints(cached)
-          return
+          setPoints(cached);
+          return;
         }
-        const svg = node?.closest("svg")
-        const g = node?.closest("g")
+        const svg = node?.closest("svg");
+        const g = node?.closest("g");
         if (node && svg && g) {
-          const totalLength = node.getTotalLength()
-          const factor = totalLength > 200 ? 1 : totalLength > 150 ? 0.6 : 0.8
+          const totalLength = node.getTotalLength();
+          const factor = totalLength > 200 ? 1 : totalLength > 150 ? 0.6 : 0.8;
           const settings = [
             {
               intersections: ~~((totalLength / 5) * factor),
@@ -186,11 +188,11 @@ export const StencilSvg = ({
               getRelativeDistance: () =>
                 Math.max(Math.random() * 9 * factor, 1),
             },
-          ]
-          const index = parseInt(node.dataset.index ?? "0")
-          const pathSubPath = path.paths[index]
+          ];
+          const index = parseInt(node.dataset.index ?? "0");
+          const pathSubPath = path.paths[index];
           if (!pathSubPath) {
-            return
+            return;
           }
           const stencilPoints = settings.flatMap((s, i) => {
             return distribute(
@@ -201,24 +203,24 @@ export const StencilSvg = ({
               s.intersections,
               s.getRadius,
               s.getRelativeDistance
-            )
-          })
+            );
+          });
           setPoints((points) => {
             const newPoints = [
               ...(pathName.current && pathName.current === path.name
                 ? points
                 : []),
               ...stencilPoints,
-            ]
-            cache.set(cacheKey, newPoints)
-            return newPoints
-          })
-          pathName.current = path.name
+            ];
+            cache.set(cacheKey, newPoints);
+            return newPoints;
+          });
+          pathName.current = path.name;
         }
-      })
+      });
     },
     [path.name, path.paths]
-  )
+  );
 
   const currentPointsGroup = (
     <g className={transition === "in" ? styles.in : styles.out} key={path.name}>
@@ -233,7 +235,7 @@ export const StencilSvg = ({
       ))}
       {points}
     </g>
-  )
+  );
   // useEffect(() => setPrevPoints(points), [points, setPrevPoints])
 
   // const groups = [prevPointsGroup, currentPointsGroup].filter((p) => p)
@@ -256,53 +258,53 @@ export const StencilSvg = ({
     >
       {currentPointsGroup}
     </svg>
-  )
-}
+  );
+};
 
 export const StencilSvgAnimation = () => {
-  const [index, setIndex] = useState<number>(0)
-  const started = useRef<boolean>(false)
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>()
-  const prevIndexRef = useRef<number>()
-  const nextDirectIndexRef = useRef<number>()
-  const wrapperRef = useRef<HTMLDivElement>(null)
+  const [index, setIndex] = useState<number>(0);
+  const started = useRef<boolean>(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const prevIndexRef = useRef<number>();
+  const nextDirectIndexRef = useRef<number>();
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    started.current = true
-  }, [])
+    started.current = true;
+  }, []);
 
   useEffect(() => {
     timeoutRef.current = setTimeout(() => {
-      const nextIndexInSet = (index + 1) % paths.length
-      const active = document.activeElement
+      const nextIndexInSet = (index + 1) % paths.length;
+      const active = document.activeElement;
       if (active instanceof HTMLButtonElement) {
-        active.blur()
+        active.blur();
       }
-      setIndex(nextIndexInSet)
-    }, 3000)
+      setIndex(nextIndexInSet);
+    }, 3000);
     return () => {
-      clearTimeout(timeoutRef.current)
-    }
-  }, [index, setIndex])
+      clearTimeout(timeoutRef.current);
+    };
+  }, [index, setIndex]);
 
   useEffect(() => {
-    prevIndexRef.current = nextDirectIndexRef.current || index
+    prevIndexRef.current = nextDirectIndexRef.current || index;
     if (nextDirectIndexRef.current === index) {
-      nextDirectIndexRef.current = undefined
+      nextDirectIndexRef.current = undefined;
     }
-  }, [index])
+  }, [index]);
 
-  const prevIndex = prevIndexRef.current
+  const prevIndex = prevIndexRef.current;
 
   const getHandleTargetPath = (i: number) => () => {
     if (index !== i) {
       if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
+        clearTimeout(timeoutRef.current);
       }
-      prevIndexRef.current = index
-      nextDirectIndexRef.current = i
+      prevIndexRef.current = index;
+      nextDirectIndexRef.current = i;
     }
-  }
+  };
 
   const getHandleAnimatePath = (i: number) => () => {
     if (index !== i) {
@@ -311,23 +313,25 @@ export const StencilSvgAnimation = () => {
           if (
             wrapperRef.current?.getAnimations({ subtree: true }).some((a) => {
               /* @ts-expect-error the animationName seems to be there */
-              const name = a.animationName
-              return a.playState === "running" && name !== styles["circle-pump"]
+              const name = a.animationName;
+              return (
+                a.playState === "running" && name !== styles["circle-pump"]
+              );
             })
           ) {
-            requestAnimationFrame(refresh)
+            requestAnimationFrame(refresh);
           } else {
             setTimeout(() => {
-              prevIndexRef.current = index
-              nextDirectIndexRef.current = i
-              setIndex(i)
-            })
+              prevIndexRef.current = index;
+              nextDirectIndexRef.current = i;
+              setIndex(i);
+            });
           }
         }
-      }
-      requestAnimationFrame(refresh)
+      };
+      requestAnimationFrame(refresh);
     }
-  }
+  };
   return (
     <>
       <div className={styles.container}>
@@ -351,13 +355,13 @@ export const StencilSvgAnimation = () => {
             <button
               aria-label={path.name}
               onClick={() => {
-                getHandleTargetPath(i)()
-                getHandleAnimatePath(i)()
+                getHandleTargetPath(i)();
+                getHandleAnimatePath(i)();
               }}
               onMouseMove={() => getHandleTargetPath(i)()}
               onMouseEnter={(event) => {
-                event.currentTarget.focus()
-                getHandleAnimatePath(i)()
+                event.currentTarget.focus();
+                getHandleAnimatePath(i)();
               }}
               style={{
                 color:
@@ -390,8 +394,8 @@ export const StencilSvgAnimation = () => {
         <small>-&gt; &nbsp;&nbsp;Browse design engineering portfolio</small>
       </Link>
     </>
-  )
-}
+  );
+};
 
 function distribute(
   key: string,
@@ -402,51 +406,51 @@ function distribute(
   getRadius: () => number,
   getRelativeDistance = (_radius: number) => 1
 ) {
-  const totalLength = svgPath.getTotalLength()
-  const evenDistance = (1 / intersections) * totalLength
-  const result = []
+  const totalLength = svgPath.getTotalLength();
+  const evenDistance = (1 / intersections) * totalLength;
+  const result = [];
   for (let i = 0; i < intersections; i++) {
-    const distance = i * evenDistance + Math.random() * 0.5 * evenDistance
-    const point = getPointAndVecAtLength(svgPath, distance)
-    let radius = getRadius()
-    const relativeDistance = getRelativeDistance(radius)
-    const opacity = (~~(Math.random() * 6) + 3) / 10
+    const distance = i * evenDistance + Math.random() * 0.5 * evenDistance;
+    const point = getPointAndVecAtLength(svgPath, distance);
+    let radius = getRadius();
+    const relativeDistance = getRelativeDistance(radius);
+    const opacity = (~~(Math.random() * 6) + 3) / 10;
 
     let offsetPoint = translate(
       point,
       point.v.normal,
       radius * relativeDistance,
       1
-    )
-    const svgPoint = parentSvg.createSVGPoint()
-    svgPoint.x = offsetPoint.x
-    svgPoint.y = offsetPoint.y
-    const inFill = svgPath.isPointInFill(svgPoint)
+    );
+    const svgPoint = parentSvg.createSVGPoint();
+    svgPoint.x = offsetPoint.x;
+    svgPoint.y = offsetPoint.y;
+    const inFill = svgPath.isPointInFill(svgPoint);
 
-    const isInside = (path.direction === "inside" && !inFill) || inFill
+    const isInside = (path.direction === "inside" && !inFill) || inFill;
     if (isInside) {
       offsetPoint = translate(
         point,
         point.v.normal,
         radius * relativeDistance,
         -1
-      )
+      );
     }
 
     const isCircleNotOverlapingFill = (circlePoints: Position[]) =>
       circlePoints.some((p) => {
-        const svgPoint = parentSvg.createSVGPoint()
-        svgPoint.x = p.x
-        svgPoint.y = p.y
-        return !svgPath.isPointInFill(svgPoint)
-      })
+        const svgPoint = parentSvg.createSVGPoint();
+        svgPoint.x = p.x;
+        svgPoint.y = p.y;
+        return !svgPath.isPointInFill(svgPoint);
+      });
     const isCircleOverlapingFill = (circlePoints: Position[]) =>
       circlePoints.some((p) => {
-        const svgPoint = parentSvg.createSVGPoint()
-        svgPoint.x = p.x
-        svgPoint.y = p.y
-        return svgPath.isPointInFill(svgPoint)
-      })
+        const svgPoint = parentSvg.createSVGPoint();
+        svgPoint.x = p.x;
+        svgPoint.y = p.y;
+        return svgPath.isPointInFill(svgPoint);
+      });
 
     while (
       radius > 1 &&
@@ -454,11 +458,11 @@ function distribute(
         ? isCircleNotOverlapingFill(plotCircle(offsetPoint, radius))
         : isCircleOverlapingFill(plotCircle(offsetPoint, radius)))
     ) {
-      radius *= 2 / 3
+      radius *= 2 / 3;
     }
 
-    const percentage = i / intersections
-    const color = getColor(percentage)
+    const percentage = i / intersections;
+    const color = getColor(percentage);
     // const loopedPalette = [...palette, ...palette.reverse().slice(1, palette.length - 1)]
     // const color = loopedPalette[Math.round((loopedPalette.length - 1) * percentage)]
     result.push(
@@ -477,19 +481,19 @@ function distribute(
         color={color}
         opacity={opacity}
       />
-    )
+    );
   }
-  return result
+  return result;
 }
 
 type CircleProps = {
-  x: number
-  y: number
-  pointVector: Vector
-  radius: number
-  color: string
-  opacity: number
-}
+  x: number;
+  y: number;
+  pointVector: Vector;
+  radius: number;
+  color: string;
+  opacity: number;
+};
 
 function Circle({
   x,
@@ -516,22 +520,22 @@ function Circle({
     >
       <circle cx={x} cy={y} r={radius} fill={color} />
     </g>
-  )
+  );
 }
 
 function getPointAndVecAtLength(svgPath: SVGPathElement, length: number) {
-  const totalLength = svgPath.getTotalLength()
-  const resolution = 1024
-  const p1 = svgPath.getPointAtLength(length)
+  const totalLength = svgPath.getTotalLength();
+  const resolution = 1024;
+  const p1 = svgPath.getPointAtLength(length);
   const p2 = svgPath.getPointAtLength(
     Math.min(length + totalLength / resolution, totalLength)
-  )
-  const v = vec(p1, p2)
+  );
+  const v = vec(p1, p2);
   return {
     x: p1.x,
     y: p1.y,
     v: v,
-  }
+  };
 }
 
 const presets = {
@@ -541,15 +545,15 @@ const presets = {
   ["Rainbow"]: { range: 300, start: 60, saturation: 84, lightness: 62 },
   ["Autumn"]: { range: 180, start: 300, saturation: 84, lightness: 62 },
   ["Monochromatic"]: { range: 15, start: 300, saturation: 84, lightness: 0 },
-}
+};
 
 function getColor(percentage: number, preset = presets["Trichromatic"]) {
-  const start = preset.start // 55
-  const end = preset.start + preset.range
-  const distance = end - start
+  const start = preset.start; // 55
+  const end = preset.start + preset.range;
+  const distance = end - start;
   const hue =
     percentage < 0.5
       ? start + distance * percentage * 2
-      : end - distance * (percentage - 0.5) * 2
-  return `hsl(${hue}, ${preset.saturation}%, ${preset.lightness}%)`
+      : end - distance * (percentage - 0.5) * 2;
+  return `hsl(${hue}, ${preset.saturation}%, ${preset.lightness}%)`;
 }

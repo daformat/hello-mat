@@ -1,5 +1,6 @@
-import styles from "./svg.module.scss"
-import { SVGProps } from "react"
+import { SVGProps } from "react";
+
+import styles from "./svg.module.scss";
 
 export default function SvgPlaceholderSlideshare({
   className,
@@ -30,5 +31,5 @@ export default function SvgPlaceholderSlideshare({
         fill="currentColor"
       />
     </svg>
-  )
+  );
 }

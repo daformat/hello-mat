@@ -1,5 +1,6 @@
-import styles from "./svg.module.scss"
-import { SVGProps } from "react"
+import { SVGProps } from "react";
+
+import styles from "./svg.module.scss";
 
 export default function SvgPlaceholderError({
   className,
@@ -41,5 +42,5 @@ export default function SvgPlaceholderError({
         <rect x="25" y="26" width="2" height="2" fill="currentColor" />
       </svg>
     </span>
-  )
+  );
 }

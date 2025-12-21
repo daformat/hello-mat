@@ -1,7 +1,7 @@
-import React from "react"
-import { MenuContent } from "../Menu/MenuContent"
+import { DropdownMenu as DropdownPrimitive } from "radix-ui";
+import React from "react";
 
-import { DropdownMenu as DropdownPrimitive } from "radix-ui"
+import { MenuContent } from "../Menu/MenuContent";
 
 export const DropdownContent = React.forwardRef<
   HTMLDivElement,
@@ -19,7 +19,7 @@ export const DropdownContent = React.forwardRef<
         {children}
       </MenuContent>
     </DropdownPrimitive.Content>
-  )
-})
+  );
+});
 
-DropdownContent.displayName = "DropdownContent"
+DropdownContent.displayName = "DropdownContent";

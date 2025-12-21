@@ -1,7 +1,7 @@
-import React from "react"
-import { MenuItem, MenuItemProps } from "../Menu/MenuItem"
+import { DropdownMenu as DropdownPrimitive } from "radix-ui";
+import React from "react";
 
-import { DropdownMenu as DropdownPrimitive } from "radix-ui"
+import { MenuItem, MenuItemProps } from "../Menu/MenuItem";
 
 export interface DropdownItemProps
   extends Omit<DropdownPrimitive.DropdownMenuItemProps, "prefix">,
@@ -15,8 +15,8 @@ export const DropdownItem = React.forwardRef<HTMLDivElement, DropdownItemProps>(
           {children}
         </MenuItem>
       </DropdownPrimitive.Item>
-    )
+    );
   }
-)
+);
 
-DropdownItem.displayName = "DropdownItem"
+DropdownItem.displayName = "DropdownItem";

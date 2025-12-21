@@ -1,5 +1,5 @@
-import Head from "next/head"
-import React from "react"
+import Head from "next/head";
+import React from "react";
 
 enum Theme {
   dark = "dark",
@@ -8,16 +8,16 @@ enum Theme {
 
 export type StartupImage = {
   // the target device width
-  width: number
+  width: number;
   // the target device height
-  height: number
+  height: number;
   // the target device pixel ratio
-  pixel_ratio: number
+  pixel_ratio: number;
   // the portrait image filename
-  portrait: string
+  portrait: string;
   // the landscape image filename
-  landscape: string
-}
+  landscape: string;
+};
 
 // Base list of all the images we need, we use this to compute subsequent variations
 // iOS requires us to have a list of every possible variation and be verbose about the startup images
@@ -134,11 +134,11 @@ export const defaultStartupImages: StartupImage[] = [
     landscape:
       "4__iPhone_SE__iPod_touch_5th_generation_and_later_landscape.png",
   },
-]
+];
 
 // Generate the image path for the given image
 const imagePath = (filename: string, _mode?: Theme): string =>
-  `/splash_screens/${filename}`
+  `/splash_screens/${filename}`;
 
 // Precomputed image variations
 const createThemedStartupImages = (startupImages: StartupImage[]) =>
@@ -153,7 +153,7 @@ const createThemedStartupImages = (startupImages: StartupImage[]) =>
       orientation: "landscape",
       image: imagePath(imageInfos.landscape),
     },
-  ])
+  ]);
 
 /**
  * Create the markup for iOS startup images
@@ -161,14 +161,14 @@ const createThemedStartupImages = (startupImages: StartupImage[]) =>
 export const StartupImages = ({
   startupImages = defaultStartupImages,
 }: {
-  startupImages?: StartupImage[]
+  startupImages?: StartupImage[];
 }) => {
-  const themedImages = createThemedStartupImages(startupImages)
+  const themedImages = createThemedStartupImages(startupImages);
   return (
     <Head>
       {themedImages.map((startupImageInfos) => {
         const { width, height, pixel_ratio, orientation, image } =
-          startupImageInfos
+          startupImageInfos;
         return (
           <link
             key={`${image}`}
@@ -176,8 +176,8 @@ export const StartupImages = ({
             media={`screen and (device-width: ${width}px) and (device-height: ${height}px) and (-webkit-device-pixel-ratio: ${pixel_ratio}) and (orientation: ${orientation})`}
             href={image}
           />
-        )
+        );
       })}
     </Head>
-  )
-}
+  );
+};

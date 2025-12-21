@@ -1,31 +1,31 @@
-import { ComponentProps, useState } from "react"
+import { ComponentProps, useState } from "react";
 
 type BaseVideoSources = {
   light: {
-    src: string
-    type: string
-  }
+    src: string;
+    type: string;
+  };
   dark: {
-    src: string
-    type: string
-  }
-}
+    src: string;
+    type: string;
+  };
+};
 
 export type VideoSourcesWithSlowVersions = BaseVideoSources & {
-  slow: BaseVideoSources
-}
+  slow: BaseVideoSources;
+};
 
 export type VideoSourcesWithoutSlowVersions = BaseVideoSources & {
-  slow?: never
-}
+  slow?: never;
+};
 
 export type VideoSources =
   | VideoSourcesWithSlowVersions
-  | VideoSourcesWithoutSlowVersions
+  | VideoSourcesWithoutSlowVersions;
 
 export type VideoPlayerProps = {
-  sources: VideoSources
-} & ComponentProps<"video">
+  sources: VideoSources;
+} & ComponentProps<"video">;
 
 export const VideoPlayer = ({
   sources,
@@ -33,8 +33,8 @@ export const VideoPlayer = ({
   style,
   ...rest
 }: VideoPlayerProps) => {
-  const [showSlow, setShowSlow] = useState(false)
-  const renderNormal = !showSlow || !sources.slow
+  const [showSlow, setShowSlow] = useState(false);
+  const renderNormal = !showSlow || !sources.slow;
 
   return (
     <section style={{ width: "100%", ...style }}>
@@ -127,5 +127,5 @@ export const VideoPlayer = ({
         </div>
       )}
     </section>
-  )
-}
+  );
+};

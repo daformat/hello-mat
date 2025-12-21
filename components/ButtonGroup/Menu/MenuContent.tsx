@@ -1,5 +1,6 @@
-import { ComponentProps, forwardRef } from "react"
-import styles from "./MenuContent.module.scss"
+import { ComponentProps, forwardRef } from "react";
+
+import styles from "./MenuContent.module.scss";
 
 export const MenuContent = forwardRef<HTMLDivElement, ComponentProps<"div">>(
   ({ children, className, ...props }, ref) => (
@@ -11,6 +12,6 @@ export const MenuContent = forwardRef<HTMLDivElement, ComponentProps<"div">>(
       {children}
     </div>
   )
-)
+);
 
-MenuContent.displayName = "MenuContent"
+MenuContent.displayName = "MenuContent";

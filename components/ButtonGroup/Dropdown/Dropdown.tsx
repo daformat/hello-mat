@@ -1,12 +1,13 @@
-import { DropdownContent } from "./DropdownContent"
-import { DropdownMenu as DropdownPrimitive } from "radix-ui"
-import { PropsWithChildren, ReactNode } from "react"
+import { DropdownMenu as DropdownPrimitive } from "radix-ui";
+import { PropsWithChildren, ReactNode } from "react";
+
+import { DropdownContent } from "./DropdownContent";
 
 export interface DropdownProps
   extends DropdownPrimitive.DropdownMenuProps,
     PropsWithChildren<{
-      trigger: ReactNode
-      contentProps?: DropdownPrimitive.DropdownMenuContentProps
+      trigger: ReactNode;
+      contentProps?: DropdownPrimitive.DropdownMenuContentProps;
     }> {}
 
 export const Dropdown = ({
@@ -28,4 +29,4 @@ export const Dropdown = ({
       </DropdownContent>
     </DropdownPrimitive.Portal>
   </DropdownPrimitive.Root>
-)
+);

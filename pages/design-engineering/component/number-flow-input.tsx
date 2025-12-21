@@ -1,35 +1,36 @@
-import { TableOfContents } from "@/components/TableOfContents/TocComponent"
-import { useEffect, useRef, useState } from "react"
-import { NextCard } from "@/components/Navigation/NextCard"
-import Link from "next/link"
-import { PageMetas } from "@/components/PageMetas/PageMetas"
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+
+import { NextCard } from "@/components/Navigation/NextCard";
+import { NumberFlowInput } from "@/components/NumberFlowInput/NumberFlowInput";
+import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import {
   COMPONENTS,
   getNextComponent,
-} from "@/constants/design-engineering/components"
-import { NumberFlowInput } from "@/components/NumberFlowInput/NumberFlowInput"
+} from "@/constants/design-engineering/components";
 
 const useMaxLength = (
   smallScreen: number,
   largeScreen: number,
   breakpoint = 600
 ) => {
-  const [maxLength, setMaxLength] = useState(smallScreen)
+  const [maxLength, setMaxLength] = useState(smallScreen);
 
   useEffect(() => {
     const updateMaxLength = () => {
-      setMaxLength(window.innerWidth > breakpoint ? largeScreen : smallScreen)
-    }
-    updateMaxLength()
-    window.addEventListener("resize", updateMaxLength)
-    return () => window.removeEventListener("resize", updateMaxLength)
-  }, [smallScreen, largeScreen, breakpoint])
+      setMaxLength(window.innerWidth > breakpoint ? largeScreen : smallScreen);
+    };
+    updateMaxLength();
+    window.addEventListener("resize", updateMaxLength);
+    return () => window.removeEventListener("resize", updateMaxLength);
+  }, [smallScreen, largeScreen, breakpoint]);
 
-  return maxLength
-}
+  return maxLength;
+};
 
 const NumberFlowInputPage = () => {
-  const component = COMPONENTS["swipeable-cards"]
+  const component = COMPONENTS["swipeable-cards"];
   return (
     <>
       <PageMetas {...component.metas} />
@@ -37,20 +38,20 @@ const NumberFlowInputPage = () => {
         <NumberFlowInputPageContent />
       </TableOfContents.Provider>
     </>
-  )
-}
+  );
+};
 
 const NumberFlowInputPageContent = () => {
-  const nextComponent = getNextComponent("swipeable-cards")
-  const tocContext = TableOfContents.useToc()
-  const contentRef = useRef<HTMLDivElement>(null)
-  const maxLength = useMaxLength(10, 16, 600)
+  const nextComponent = getNextComponent("swipeable-cards");
+  const tocContext = TableOfContents.useToc();
+  const contentRef = useRef<HTMLDivElement>(null);
+  const maxLength = useMaxLength(10, 16, 600);
 
   useEffect(() => {
     if (contentRef.current) {
-      tocContext.setRootElement(contentRef.current)
+      tocContext.setRootElement(contentRef.current);
     }
-  })
+  });
 
   return (
     <>
@@ -222,7 +223,7 @@ const NumberFlowInputPageContent = () => {
         </NextCard>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default NumberFlowInputPage
+export default NumberFlowInputPage;

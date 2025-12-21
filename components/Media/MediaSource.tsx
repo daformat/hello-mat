@@ -1,4 +1,4 @@
-import styles from "./MediaSource.module.scss"
+import styles from "./MediaSource.module.scss";
 
 export const MediaSource = ({ source }: { source: string }) => {
   return (
@@ -25,5 +25,5 @@ export const MediaSource = ({ source }: { source: string }) => {
         />
       </svg>
     </a>
-  )
-}
+  );
+};

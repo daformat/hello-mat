@@ -1,7 +1,7 @@
-import React from "react"
-import { MenuItem, MenuItemProps } from "../Menu/MenuItem"
+import { DropdownMenu as DropdownPrimitive } from "radix-ui";
+import React from "react";
 
-import { DropdownMenu as DropdownPrimitive } from "radix-ui"
+import { MenuItem, MenuItemProps } from "../Menu/MenuItem";
 
 export interface DropdownRadioItemProps
   extends Omit<DropdownPrimitive.DropdownMenuRadioItemProps, "prefix">,
@@ -17,7 +17,7 @@ export const DropdownRadioItem = React.forwardRef<
         {children}
       </MenuItem>
     </DropdownPrimitive.RadioItem>
-  )
-})
+  );
+});
 
-DropdownRadioItem.displayName = "DropdownRadioItem"
+DropdownRadioItem.displayName = "DropdownRadioItem";

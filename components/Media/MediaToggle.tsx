@@ -1,8 +1,8 @@
-import styles from "./MediaToggle.module.scss"
+import styles from "./MediaToggle.module.scss";
 
 export type MediaControlsProps = {
-  onClick?: () => void
-}
+  onClick?: () => void;
+};
 
 export const MediaToggle = ({ onClick }: MediaControlsProps) => {
   return (
@@ -62,5 +62,5 @@ export const MediaToggle = ({ onClick }: MediaControlsProps) => {
         </span>
       </button>
     </div>
-  )
-}
+  );
+};

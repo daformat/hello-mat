@@ -1,4 +1,4 @@
-import { Head, Html, Main, NextScript } from "next/document"
+import { Head, Html, Main, NextScript } from "next/document";
 
 // We hard-code the font face definitions so the fonts are loaded asap
 const inter = `
@@ -247,7 +247,7 @@ const inter = `
     U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
     U+FEFF, U+FFFD;
 }
-`.replace(/\n/g, "")
+`.replace(/\n/g, "");
 
 export default function Document() {
   return (
@@ -260,5 +260,5 @@ export default function Document() {
         <NextScript />
       </body>
     </Html>
-  )
+  );
 }

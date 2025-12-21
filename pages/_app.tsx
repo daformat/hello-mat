@@ -1,61 +1,63 @@
-import type { AppProps } from "next/app"
-import { useEffect } from "react"
-import { DefaultSeo } from "next-seo"
-import { Layout } from "@/components/layout/Layout"
-import "../styles/globals.scss"
+import "../styles/globals.scss";
+
+import type { AppProps } from "next/app";
+import { DefaultSeo } from "next-seo";
+import { useEffect } from "react";
+
+import { Layout } from "@/components/layout/Layout";
 
 function HelloMat({ Component, pageProps }: AppProps) {
   // Listen to screen orientation changes
   useEffect(() => {
     const updateOrientation = () => {
-      const body = document.body
+      const body = document.body;
       body.classList.remove(
         "orientation_landscape_primary",
         "orientation_landscape_secondary",
         "orientation_portrait_primary",
         "orientation_portrait_secondary"
-      )
+      );
       if (screen.orientation) {
         body.classList.add(
           `orientation_${screen.orientation.type.replace("-", "_")}`
-        )
+        );
       }
-    }
-    updateOrientation()
+    };
+    updateOrientation();
     if (screen.orientation) {
-      screen.orientation.addEventListener("change", updateOrientation)
+      screen.orientation.addEventListener("change", updateOrientation);
     }
-    window.addEventListener("orientationchange", updateOrientation)
+    window.addEventListener("orientationchange", updateOrientation);
     return () => {
       if (screen.orientation) {
-        screen.orientation.removeEventListener("change", updateOrientation)
+        screen.orientation.removeEventListener("change", updateOrientation);
       }
-      window.removeEventListener("orientationchange", updateOrientation)
-    }
-  }, [])
+      window.removeEventListener("orientationchange", updateOrientation);
+    };
+  }, []);
 
   // Listen to visual viewport changes
   useEffect(() => {
     if (window.visualViewport) {
       const handleViewportChange = () => {
-        const height = window.visualViewport?.height
+        const height = window.visualViewport?.height;
         if (height) {
           document.documentElement.style.setProperty(
             "--viewport-height",
             `${height}px`
-          )
+          );
         }
-      }
-      handleViewportChange()
-      window.visualViewport.addEventListener("resize", handleViewportChange)
+      };
+      handleViewportChange();
+      window.visualViewport.addEventListener("resize", handleViewportChange);
       return () => {
         window.visualViewport?.removeEventListener(
           "resize",
           handleViewportChange
-        )
-      }
+        );
+      };
     }
-  }, [])
+  }, []);
 
   return (
     <Layout>
@@ -72,7 +74,7 @@ function HelloMat({ Component, pageProps }: AppProps) {
       />
       <Component {...pageProps} />
     </Layout>
-  )
+  );
 }
 
-export default HelloMat
+export default HelloMat;

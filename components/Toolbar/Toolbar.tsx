@@ -1,6 +1,6 @@
-import { ComponentProps } from "react"
+import { ComponentProps } from "react";
 
-import styles from "./Toolbar.module.scss"
+import styles from "./Toolbar.module.scss";
 
 export const Toolbar = ({
   children,
@@ -13,4 +13,4 @@ export const Toolbar = ({
   >
     {children}
   </div>
-)
+);

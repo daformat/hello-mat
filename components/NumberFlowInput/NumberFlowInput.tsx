@@ -6,19 +6,10 @@ import {
   useEffect,
   useRef,
   useState,
-} from "react"
-import { MaybeUndefined } from "@/components/Media/utils/maybe"
-import styles from "./NumberFlowInput.module.scss"
-import {
-  getSelectionRange,
-  isTransparent,
-  measureText,
-  removeTransparentColor,
-  setCursorAtPosition,
-  setCursorPositionInElement,
-} from "./utils"
-import { cleanText, parseNumberValue } from "./textCleaning"
-import { getChanges } from "./changes"
+} from "react";
+
+import { MaybeUndefined } from "@/components/Media/utils/maybe";
+
 import {
   cleanupWidthAnimation,
   clearBarrelWheelsAndSpans,
@@ -26,28 +17,39 @@ import {
   getBarrelWheel,
   repositionBarrelWheel,
   setWidthConstraints,
-} from "./barrelWheel"
+} from "./barrelWheel";
+import { getChanges } from "./changes";
+import styles from "./NumberFlowInput.module.scss";
+import { cleanText, parseNumberValue } from "./textCleaning";
+import {
+  getSelectionRange,
+  isTransparent,
+  measureText,
+  removeTransparentColor,
+  setCursorAtPosition,
+  setCursorPositionInElement,
+} from "./utils";
 
 export type NumberFlowInputControlledProps = {
-  value: MaybeUndefined<number>
-  defaultValue?: never
-}
+  value: MaybeUndefined<number>;
+  defaultValue?: never;
+};
 
 export type NumberFlowInputUncontrolledProps = {
-  defaultValue?: number
-  value?: never
-}
+  defaultValue?: number;
+  value?: never;
+};
 
 export type NumberFlowInputCommonProps = {
-  onChange?: (value: MaybeUndefined<number>) => void
-  name?: string
-  id?: string
-  autoAddLeadingZero?: boolean
-  maxLength?: number
-}
+  onChange?: (value: MaybeUndefined<number>) => void;
+  name?: string;
+  id?: string;
+  autoAddLeadingZero?: boolean;
+  maxLength?: number;
+};
 
 export type NumberFlowInputProps = NumberFlowInputCommonProps &
-  (NumberFlowInputControlledProps | NumberFlowInputUncontrolledProps)
+  (NumberFlowInputControlledProps | NumberFlowInputUncontrolledProps);
 
 export const NumberFlowInput = ({
   value,
@@ -58,34 +60,34 @@ export const NumberFlowInput = ({
   autoAddLeadingZero = false,
   maxLength,
 }: NumberFlowInputProps) => {
-  const spanRef = useRef<HTMLSpanElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue)
-  const isControlled = value !== undefined
-  const actualValue = isControlled ? value : uncontrolledValue
+  const spanRef = useRef<HTMLSpanElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue);
+  const isControlled = value !== undefined;
+  const actualValue = isControlled ? value : uncontrolledValue;
   const [displayValue, setDisplayValue] = useState(
     actualValue?.toString() ?? ""
-  )
-  const [_cursorPosition, setCursorPosition] = useState(0)
+  );
+  const [_cursorPosition, setCursorPosition] = useState(0);
 
   // Undo/Redo history - stores cursor position before and after each change
   const historyRef = useRef<
     Array<{
-      text: string
-      cursorPosBefore: number // Cursor position before the change (for undo)
-      cursorPosAfter: number // Cursor position after the change (for redo)
-      value: MaybeUndefined<number>
+      text: string;
+      cursorPosBefore: number; // Cursor position before the change (for undo)
+      cursorPosAfter: number; // Cursor position after the change (for redo)
+      value: MaybeUndefined<number>;
     }>
-  >([])
-  const historyIndexRef = useRef(-1)
-  const isUndoRedoRef = useRef(false)
+  >([]);
+  const historyIndexRef = useRef(-1);
+  const isUndoRedoRef = useRef(false);
 
   // Track if we should prevent the next input event (for leading 0 bug)
-  const shouldPreventInputRef = useRef(false)
-  const preventInputCursorPosRef = useRef(0)
+  const shouldPreventInputRef = useRef(false);
+  const preventInputCursorPosRef = useRef(0);
 
   // Track ResizeObservers for digits with barrel wheel animations
-  const resizeObserversRef = useRef<Map<number, ResizeObserver>>(new Map())
+  const resizeObserversRef = useRef<Map<number, ResizeObserver>>(new Map());
 
   const addToHistory = useCallback(
     (
@@ -97,84 +99,84 @@ export const NumberFlowInput = ({
       historyRef.current = historyRef.current.slice(
         0,
         historyIndexRef.current + 1
-      )
-      historyRef.current.push({ text, cursorPosBefore, cursorPosAfter, value })
-      historyIndexRef.current = historyRef.current.length - 1
+      );
+      historyRef.current.push({ text, cursorPosBefore, cursorPosAfter, value });
+      historyIndexRef.current = historyRef.current.length - 1;
       if (historyRef.current.length > 50) {
-        historyRef.current.shift()
-        historyIndexRef.current--
+        historyRef.current.shift();
+        historyIndexRef.current--;
       }
     },
     []
-  )
+  );
 
   // Helper function to reposition all existing barrel wheels
   const repositionAllBarrelWheels = useCallback(() => {
     if (!spanRef.current?.parentElement) {
-      return
+      return;
     }
 
-    const parentContainer = spanRef.current.parentElement
+    const parentContainer = spanRef.current.parentElement;
     const existingBarrelWheels = parentContainer.querySelectorAll(
       `[data-char-index].${styles.barrel_wheel || ""}`
-    )
+    );
 
     existingBarrelWheels.forEach((wheel) => {
-      const wheelEl = wheel as HTMLElement
-      const indexStr = wheelEl.getAttribute("data-char-index")
+      const wheelEl = wheel as HTMLElement;
+      const indexStr = wheelEl.getAttribute("data-char-index");
       if (indexStr !== null) {
-        const index = parseInt(indexStr, 10)
+        const index = parseInt(indexStr, 10);
         if (!isNaN(index) && index >= 0 && spanRef.current) {
           const charSpan = spanRef.current.querySelector(
             `[data-char-index="${index}"]`
-          ) as HTMLElement | null
+          ) as HTMLElement | null;
 
           if (charSpan) {
             if (!isTransparent(charSpan)) {
-              charSpan.style.color = "transparent"
+              charSpan.style.color = "transparent";
             }
-            repositionBarrelWheel(wheelEl, charSpan, parentContainer)
+            repositionBarrelWheel(wheelEl, charSpan, parentContainer);
           }
         }
       }
-    })
-  }, [])
+    });
+  }, []);
 
   // Helper function to remove barrel wheels at specific indices
   const removeBarrelWheelsAtIndices = useCallback((indices: number[]) => {
     if (!spanRef.current) {
-      return
+      return;
     }
-    const parentContainer = spanRef.current.parentElement
+    const parentContainer = spanRef.current.parentElement;
     if (!parentContainer) {
-      return
+      return;
     }
 
     indices.forEach((index) => {
       // Clean up ResizeObserver for this index
-      const observer = resizeObserversRef.current.get(index)
+      const observer = resizeObserversRef.current.get(index);
       if (observer) {
-        observer.disconnect()
-        resizeObserversRef.current.delete(index)
+        observer.disconnect();
+        resizeObserversRef.current.delete(index);
       }
 
       const charSpan = spanRef.current?.querySelector(
         `[data-char-index="${index}"]`
-      ) as HTMLElement | null
+      ) as HTMLElement | null;
       if (charSpan) {
         if (charSpan.hasAttribute("data-width-animate")) {
-          cleanupWidthAnimation(charSpan)
+          cleanupWidthAnimation(charSpan);
         }
         if (isTransparent(charSpan)) {
-          charSpan.style.color = ""
+          charSpan.style.color = "";
         }
       }
 
       const barrelWheel = parentContainer.querySelector(
         `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
-      ) as HTMLElement | null
+      ) as HTMLElement | null;
       if (barrelWheel) {
-        barrelWheel.remove()
+        barrelWheel.remove();
 
         // After removing barrel wheel, do a final pass to ensure the span at THIS index is not still transparent
         // IMPORTANT: Only check the span at the specific index, not other spans with the same final digit
@@ -182,20 +184,20 @@ export const NumberFlowInput = ({
         if (spanRef.current) {
           const spanAtIndex = spanRef.current.querySelector(
             `[data-char-index="${index}"]`
-          ) as HTMLElement | null
+          ) as HTMLElement | null;
 
           if (spanAtIndex) {
             const hasBarrelWheel = parentContainer.querySelector(
               `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
-            )
+            );
             if (isTransparent(spanAtIndex) && !hasBarrelWheel) {
-              spanAtIndex.style.color = ""
+              spanAtIndex.style.color = "";
             }
           }
         }
       }
-    })
-  }, [])
+    });
+  }, []);
 
   const updateValue = useCallback(
     (
@@ -205,45 +207,45 @@ export const NumberFlowInput = ({
       selectionEnd: number,
       skipHistory = false
     ) => {
-      const oldText = displayValue
-      const rawCleaned = newText.replace(/[^\d.-]/g, "")
+      const oldText = displayValue;
+      const rawCleaned = newText.replace(/[^\d.-]/g, "");
       const { cleanedText: baseCleanedText, leadingZerosRemoved } = cleanText(
         rawCleaned,
         autoAddLeadingZero
-      )
-      const cleanedText = baseCleanedText
+      );
+      const cleanedText = baseCleanedText;
 
       if (leadingZerosRemoved > 0 && newCursorPos > 0) {
-        newCursorPos = Math.max(0, newCursorPos - leadingZerosRemoved)
+        newCursorPos = Math.max(0, newCursorPos - leadingZerosRemoved);
       }
 
       if (autoAddLeadingZero) {
         // Check rawCleaned (before leading zero was added) to detect if we added a leading zero
         if (rawCleaned.startsWith(".")) {
-          newCursorPos += 1
+          newCursorPos += 1;
         } else if (rawCleaned.startsWith("-.")) {
-          newCursorPos += 1
+          newCursorPos += 1;
         }
       }
 
-      const numberValue = parseNumberValue(cleanedText)
+      const numberValue = parseNumberValue(cleanedText);
 
-      onChange?.(numberValue)
-      setUncontrolledValue(numberValue)
-      setDisplayValue(cleanedText)
-      setCursorPosition(newCursorPos)
+      onChange?.(numberValue);
+      setUncontrolledValue(numberValue);
+      setDisplayValue(cleanedText);
+      setCursorPosition(newCursorPos);
 
       if (!skipHistory && !isUndoRedoRef.current) {
-        addToHistory(cleanedText, selectionEnd, newCursorPos, numberValue)
+        addToHistory(cleanedText, selectionEnd, newCursorPos, numberValue);
       }
 
       // Update DOM with animation
       if (spanRef.current) {
         // Special handling for leading zero removal and decimal point deletion
-        let adjustedOldText = oldText
-        let adjustedSelectionStart = selectionStart
-        let adjustedSelectionEnd = selectionEnd
-        let adjustedNewCursorPos = newCursorPos
+        let adjustedOldText = oldText;
+        let adjustedSelectionStart = selectionStart;
+        let adjustedSelectionEnd = selectionEnd;
+        let adjustedNewCursorPos = newCursorPos;
 
         // Check if we deleted a decimal point that was after a leading zero (e.g., "0.122" -> "122")
         const deletedDecimalAfterZero =
@@ -252,29 +254,29 @@ export const NumberFlowInput = ({
           cleanedText.length > 0 &&
           oldText.length > cleanedText.length &&
           oldText.includes(".") &&
-          !cleanedText.includes(".")
+          !cleanedText.includes(".");
 
         // Check if we're replacing a single leading "0" with a non-zero digit (e.g., "0" -> "1")
         const replacedLeadingZero =
           oldText === "0" &&
           cleanedText.length > 0 &&
           cleanedText[0] !== "0" &&
-          !cleanedText.startsWith("0.")
+          !cleanedText.startsWith("0.");
 
         if (deletedDecimalAfterZero) {
           // When deleting "." from "0.122", we get "0122" which becomes "122"
           // We want all digits in "122" to have data-show, so we compare "" with "122"
-          adjustedOldText = ""
-          adjustedSelectionStart = 0
-          adjustedSelectionEnd = 0
-          adjustedNewCursorPos = cleanedText.length
+          adjustedOldText = "";
+          adjustedSelectionStart = 0;
+          adjustedSelectionEnd = 0;
+          adjustedNewCursorPos = cleanedText.length;
         } else if (replacedLeadingZero) {
           // Special case: "0" -> "1" (or any non-zero digit)
           // We want to treat this as if we're starting from scratch
-          adjustedOldText = ""
-          adjustedSelectionStart = 0
-          adjustedSelectionEnd = 0
-          adjustedNewCursorPos = cleanedText.length
+          adjustedOldText = "";
+          adjustedSelectionStart = 0;
+          adjustedSelectionEnd = 0;
+          adjustedNewCursorPos = cleanedText.length;
         } else if (leadingZerosRemoved > 0 && oldText.length > 0) {
           // If we removed leading zeros, adjust the oldText comparison
           if (
@@ -284,27 +286,27 @@ export const NumberFlowInput = ({
           ) {
             // More general case: if oldText was "0123" and we typed "4" to get "01234" which became "1234",
             // we need to adjust the comparison
-            const oldWithoutLeadingZeros = oldText.replace(/^0+/, "")
+            const oldWithoutLeadingZeros = oldText.replace(/^0+/, "");
             if (
               oldWithoutLeadingZeros ===
               cleanedText.slice(0, oldWithoutLeadingZeros.length)
             ) {
               // The old text (without leading zeros) matches the start of new text
               // This means we just added characters at the end
-              adjustedOldText = oldWithoutLeadingZeros
+              adjustedOldText = oldWithoutLeadingZeros;
               // Adjust selection and cursor positions to account for removed leading zeros
               adjustedSelectionStart = Math.max(
                 0,
                 selectionStart - leadingZerosRemoved
-              )
+              );
               adjustedSelectionEnd = Math.max(
                 0,
                 selectionEnd - leadingZerosRemoved
-              )
+              );
               adjustedNewCursorPos = Math.max(
                 0,
                 newCursorPos - leadingZerosRemoved
-              )
+              );
             }
           }
         }
@@ -314,24 +316,24 @@ export const NumberFlowInput = ({
           adjustedSelectionStart,
           adjustedSelectionEnd,
           adjustedNewCursorPos
-        )
+        );
 
         // Update barrel wheel indices if characters were inserted or deleted before them
         if (spanRef.current?.parentElement) {
-          const parentContainer = spanRef.current.parentElement
+          const parentContainer = spanRef.current.parentElement;
           const existingBarrelWheels = parentContainer.querySelectorAll(
             `[data-char-index].${styles.barrel_wheel || ""}`
-          )
+          );
           existingBarrelWheels.forEach((wheel) => {
-            const wheelEl = wheel as HTMLElement
-            const oldIndexStr = wheelEl.getAttribute("data-char-index")
-            const finalDigitStr = wheelEl.getAttribute("data-final-digit")
+            const wheelEl = wheel as HTMLElement;
+            const oldIndexStr = wheelEl.getAttribute("data-char-index");
+            const finalDigitStr = wheelEl.getAttribute("data-final-digit");
             if (oldIndexStr !== null) {
-              const oldIndex = parseInt(oldIndexStr, 10)
+              const oldIndex = parseInt(oldIndexStr, 10);
               if (!isNaN(oldIndex) && oldIndex >= 0) {
-                const lengthDiff = cleanedText.length - adjustedOldText.length
+                const lengthDiff = cleanedText.length - adjustedOldText.length;
                 const hadSelection =
-                  adjustedSelectionStart < adjustedSelectionEnd
+                  adjustedSelectionStart < adjustedSelectionEnd;
 
                 if (
                   !hadSelection &&
@@ -340,25 +342,25 @@ export const NumberFlowInput = ({
                 ) {
                   // Characters were inserted at or before this index, so shift it forward
                   const numInserted =
-                    adjustedNewCursorPos - adjustedSelectionStart
-                  const newIndex = oldIndex + numInserted
-                  wheelEl.setAttribute("data-char-index", newIndex.toString())
+                    adjustedNewCursorPos - adjustedSelectionStart;
+                  const newIndex = oldIndex + numInserted;
+                  wheelEl.setAttribute("data-char-index", newIndex.toString());
 
-                  const observer = resizeObserversRef.current.get(oldIndex)
+                  const observer = resizeObserversRef.current.get(oldIndex);
                   if (observer) {
-                    resizeObserversRef.current.delete(oldIndex)
-                    resizeObserversRef.current.set(newIndex, observer)
+                    resizeObserversRef.current.delete(oldIndex);
+                    resizeObserversRef.current.set(newIndex, observer);
                   }
 
                   if (finalDigitStr && spanRef.current) {
                     const oldSpan = spanRef.current.querySelector(
                       `[data-char-index="${oldIndex}"]`
-                    ) as HTMLElement | null
+                    ) as HTMLElement | null;
                     if (oldSpan && oldSpan.textContent === finalDigitStr) {
                       oldSpan.setAttribute(
                         "data-char-index",
                         newIndex.toString()
-                      )
+                      );
                     }
                   }
                 } else if (
@@ -368,8 +370,8 @@ export const NumberFlowInput = ({
                 ) {
                   // Characters were deleted before this index, so shift it backward
                   const numDeleted =
-                    adjustedSelectionEnd - adjustedSelectionStart
-                  const newIndex = Math.max(0, oldIndex - numDeleted)
+                    adjustedSelectionEnd - adjustedSelectionStart;
+                  const newIndex = Math.max(0, oldIndex - numDeleted);
 
                   // Only update if the new index is valid and the barrel wheel should still exist
                   // Also ensure the barrel wheel is not in the deletion range
@@ -377,12 +379,15 @@ export const NumberFlowInput = ({
                     newIndex < cleanedText.length &&
                     oldIndex >= adjustedSelectionEnd
                   ) {
-                    wheelEl.setAttribute("data-char-index", newIndex.toString())
+                    wheelEl.setAttribute(
+                      "data-char-index",
+                      newIndex.toString()
+                    );
 
-                    const observer = resizeObserversRef.current.get(oldIndex)
+                    const observer = resizeObserversRef.current.get(oldIndex);
                     if (observer) {
-                      resizeObserversRef.current.delete(oldIndex)
-                      resizeObserversRef.current.set(newIndex, observer)
+                      resizeObserversRef.current.delete(oldIndex);
+                      resizeObserversRef.current.set(newIndex, observer);
                     }
 
                     if (finalDigitStr && spanRef.current) {
@@ -390,17 +395,17 @@ export const NumberFlowInput = ({
                       // or it might have already been shifted
                       const oldSpan = spanRef.current.querySelector(
                         `[data-char-index="${oldIndex}"]`
-                      ) as HTMLElement | null
+                      ) as HTMLElement | null;
                       if (oldSpan && oldSpan.textContent === finalDigitStr) {
                         oldSpan.setAttribute(
                           "data-char-index",
                           newIndex.toString()
-                        )
+                        );
                       } else {
                         // Also check if there's a span at the new index that matches
                         const newSpan = spanRef.current.querySelector(
                           `[data-char-index="${newIndex}"]`
-                        ) as HTMLElement | null
+                        ) as HTMLElement | null;
                         if (newSpan && newSpan.textContent === finalDigitStr) {
                           // Span is already at the correct index, just ensure it's marked correctly
                         } else {
@@ -408,9 +413,9 @@ export const NumberFlowInput = ({
                           const allSpans =
                             spanRef.current.querySelectorAll(
                               "[data-char-index]"
-                            )
+                            );
                           Array.from(allSpans).forEach((span) => {
-                            const spanEl = span as HTMLElement
+                            const spanEl = span as HTMLElement;
                             if (
                               spanEl.textContent === finalDigitStr &&
                               isTransparent(spanEl)
@@ -418,25 +423,25 @@ export const NumberFlowInput = ({
                               spanEl.setAttribute(
                                 "data-char-index",
                                 newIndex.toString()
-                              )
+                              );
                             }
-                          })
+                          });
                         }
                       }
                     }
                   } else {
                     // Barrel wheel is now out of bounds, remove it
-                    const observer = resizeObserversRef.current.get(oldIndex)
+                    const observer = resizeObserversRef.current.get(oldIndex);
                     if (observer) {
-                      observer.disconnect()
-                      resizeObserversRef.current.delete(oldIndex)
+                      observer.disconnect();
+                      resizeObserversRef.current.delete(oldIndex);
                     }
-                    wheelEl.remove()
+                    wheelEl.remove();
                   }
                 }
               }
             }
-          })
+          });
         }
 
         // Incrementally update DOM instead of full reconstruction
@@ -444,27 +449,27 @@ export const NumberFlowInput = ({
           // First, update indices of existing spans that need to shift due to insertions or deletions
           // This handles the case where characters are inserted/deleted before existing spans
           // Do this BEFORE collecting spans by index, so the map is correct
-          const lengthDiff = cleanedText.length - adjustedOldText.length
-          const hadSelection = adjustedSelectionStart < adjustedSelectionEnd
+          const lengthDiff = cleanedText.length - adjustedOldText.length;
+          const hadSelection = adjustedSelectionStart < adjustedSelectionEnd;
           if (!hadSelection && lengthDiff !== 0) {
-            const changePos = adjustedSelectionStart
+            const changePos = adjustedSelectionStart;
             // Collect all spans first
-            const allSpans: HTMLElement[] = []
-            let nodeToUpdate = spanRef.current.firstChild
+            const allSpans: HTMLElement[] = [];
+            let nodeToUpdate = spanRef.current.firstChild;
             while (nodeToUpdate) {
               if (
                 nodeToUpdate instanceof HTMLElement &&
                 nodeToUpdate.hasAttribute("data-char-index")
               ) {
-                allSpans.push(nodeToUpdate)
+                allSpans.push(nodeToUpdate);
               }
-              nodeToUpdate = nodeToUpdate.nextSibling
+              nodeToUpdate = nodeToUpdate.nextSibling;
             }
             // Update indices of spans that need to shift
             allSpans.forEach((span) => {
-              const oldIndexStr = span.getAttribute("data-char-index")
+              const oldIndexStr = span.getAttribute("data-char-index");
               if (oldIndexStr !== null) {
-                const oldIndex = parseInt(oldIndexStr, 10)
+                const oldIndex = parseInt(oldIndexStr, 10);
                 if (!isNaN(oldIndex) && oldIndex >= 0) {
                   if (lengthDiff > 0) {
                     // Characters were inserted - shift spans at and after the insertion point
@@ -472,15 +477,15 @@ export const NumberFlowInput = ({
                       oldIndex >= changePos &&
                       oldIndex < adjustedOldText.length
                     ) {
-                      const numInserted = adjustedNewCursorPos - changePos
-                      const newIdx = oldIndex + numInserted
+                      const numInserted = adjustedNewCursorPos - changePos;
+                      const newIdx = oldIndex + numInserted;
                       if (newIdx < cleanedText.length) {
-                        span.setAttribute("data-char-index", newIdx.toString())
+                        span.setAttribute("data-char-index", newIdx.toString());
                       }
                     }
                   } else if (lengthDiff < 0) {
                     // Characters were deleted - shift spans after the deletion point backward
-                    const numDeleted = adjustedSelectionEnd - changePos
+                    const numDeleted = adjustedSelectionEnd - changePos;
                     if (
                       oldIndex >= changePos &&
                       oldIndex < adjustedSelectionEnd
@@ -488,25 +493,25 @@ export const NumberFlowInput = ({
                       // Span is in the deletion range - it will be removed by cleanup logic
                     } else if (oldIndex >= adjustedSelectionEnd) {
                       // Span is after the deletion point, shift it backward
-                      const newIdx = Math.max(0, oldIndex - numDeleted)
+                      const newIdx = Math.max(0, oldIndex - numDeleted);
                       if (newIdx < cleanedText.length) {
-                        span.setAttribute("data-char-index", newIdx.toString())
+                        span.setAttribute("data-char-index", newIdx.toString());
                       }
                     }
                   }
                 }
               }
-            })
+            });
           }
 
           // Get all existing spans mapped by index (after updating indices)
           // Also track transparent spans separately to handle them specially
-          const existingSpansByIndex = new Map<number, HTMLElement>()
-          const allExistingSpans: HTMLElement[] = []
-          const transparentSpans = new Map<number, HTMLElement>()
-          const transparentSpansByContent = new Map<string, HTMLElement>()
-          const textNodesToRemove: Node[] = []
-          let node = spanRef.current.firstChild
+          const existingSpansByIndex = new Map<number, HTMLElement>();
+          const allExistingSpans: HTMLElement[] = [];
+          const transparentSpans = new Map<number, HTMLElement>();
+          const transparentSpansByContent = new Map<string, HTMLElement>();
+          const textNodesToRemove: Node[] = [];
+          let node = spanRef.current.firstChild;
           while (node) {
             if (
               node instanceof HTMLElement &&
@@ -515,87 +520,87 @@ export const NumberFlowInput = ({
               const index = parseInt(
                 node.getAttribute("data-char-index") ?? "-1",
                 10
-              )
+              );
               if (index >= 0) {
-                const isTransparentSpan = isTransparent(node)
+                const isTransparentSpan = isTransparent(node);
                 if (isTransparentSpan) {
-                  transparentSpans.set(index, node)
-                  const content = node.textContent ?? ""
+                  transparentSpans.set(index, node);
+                  const content = node.textContent ?? "";
                   if (!transparentSpansByContent.has(content)) {
-                    transparentSpansByContent.set(content, node)
+                    transparentSpansByContent.set(content, node);
                   }
                 }
                 if (!existingSpansByIndex.has(index) || !isTransparentSpan) {
-                  existingSpansByIndex.set(index, node)
+                  existingSpansByIndex.set(index, node);
                 }
-                allExistingSpans.push(node)
+                allExistingSpans.push(node);
               }
             } else if (node.nodeType === Node.TEXT_NODE) {
-              textNodesToRemove.push(node)
+              textNodesToRemove.push(node);
             }
-            node = node.nextSibling
+            node = node.nextSibling;
           }
 
           // Remove any stray text nodes (from undo/redo or other operations)
           textNodesToRemove.forEach((textNode) => {
             if (textNode.parentNode) {
-              textNode.parentNode.removeChild(textNode)
+              textNode.parentNode.removeChild(textNode);
             }
-          })
+          });
 
           // Track which spans we've used
-          const usedSpans = new Set<HTMLElement>()
-          const newSpans: HTMLElement[] = []
-          let referenceNode: Node | null = null
+          const usedSpans = new Set<HTMLElement>();
+          const newSpans: HTMLElement[] = [];
+          let referenceNode: Node | null = null;
 
           // Build new structure, reusing existing spans when possible
           // Get parent container once for barrel wheel checks
-          const parentContainer = spanRef.current.parentElement
+          const parentContainer = spanRef.current.parentElement;
 
           for (let i = 0; i < cleanedText.length; i++) {
-            const char = cleanedText[i]
-            const isUnchanged = changes.unchangedIndices.has(i)
-            const barrelWheel = changes.barrelWheelIndices.get(i)
+            const char = cleanedText[i];
+            const isUnchanged = changes.unchangedIndices.has(i);
+            const barrelWheel = changes.barrelWheelIndices.get(i);
 
             // Check if there's a barrel wheel in DOM for this index (indices may have shifted)
             const hasBarrelWheelInDOM = parentContainer?.querySelector(
               `[data-char-index="${i}"].${styles.barrel_wheel || ""}`
-            )
+            );
 
             // Also check if there's a transparent span at this index that indicates a barrel wheel
             // (the barrel wheel might have shifted and the span index was updated but barrel wheel query might miss it)
-            let hasTransparentSpanWithBarrelWheel = false
-            const spanAtI = existingSpansByIndex.get(i)
+            let hasTransparentSpanWithBarrelWheel = false;
+            const spanAtI = existingSpansByIndex.get(i);
             if (spanAtI && isTransparent(spanAtI)) {
               // Check if there's a barrel wheel anywhere that might be associated with this span
               const allBarrelWheels = parentContainer?.querySelectorAll(
                 `[data-char-index].${styles.barrel_wheel || ""}`
-              )
+              );
               if (allBarrelWheels) {
                 // Check if any barrel wheel's final digit matches this span's content
                 Array.from(allBarrelWheels).forEach((wheel) => {
-                  const wheelEl = wheel as HTMLElement
-                  const finalDigit = wheelEl.getAttribute("data-final-digit")
+                  const wheelEl = wheel as HTMLElement;
+                  const finalDigit = wheelEl.getAttribute("data-final-digit");
                   if (finalDigit === char) {
-                    hasTransparentSpanWithBarrelWheel = true
+                    hasTransparentSpanWithBarrelWheel = true;
                   }
-                })
+                });
               }
             }
 
             const hasBarrelWheel =
               barrelWheel !== undefined ||
               !!hasBarrelWheelInDOM ||
-              hasTransparentSpanWithBarrelWheel
+              hasTransparentSpanWithBarrelWheel;
 
             // Try to reuse existing span at this index
-            let span = existingSpansByIndex.get(i)
-            let shouldReuse = false
+            let span = existingSpansByIndex.get(i);
+            let shouldReuse = false;
 
             // Only reuse if this index is marked as unchanged (not added)
             // New characters should always get new spans to trigger animations
-            const isAdded = changes.addedIndices.has(i)
-            const isUnchangedIndex = changes.unchangedIndices.has(i)
+            const isAdded = changes.addedIndices.has(i);
+            const isUnchangedIndex = changes.unchangedIndices.has(i);
 
             if (
               span &&
@@ -606,65 +611,65 @@ export const NumberFlowInput = ({
             ) {
               // Check if span is in approximately the right position
               // (within 2 positions is acceptable to avoid unnecessary reordering)
-              let currentPos = 0
-              let node = spanRef.current.firstChild
+              let currentPos = 0;
+              let node = spanRef.current.firstChild;
               while (node && node !== span) {
                 if (
                   node instanceof HTMLElement &&
                   node.hasAttribute("data-char-index")
                 ) {
-                  currentPos++
+                  currentPos++;
                 }
-                node = node.nextSibling
+                node = node.nextSibling;
               }
 
               if (Math.abs(currentPos - i) <= 2) {
-                shouldReuse = true
+                shouldReuse = true;
               }
             }
 
             if (shouldReuse && span) {
               // Reuse existing span - ensure textContent matches (defensive check)
               if (span.textContent !== char) {
-                span.textContent = char ?? ""
+                span.textContent = char ?? "";
               }
 
               // Update attributes if needed
-              const shouldHaveFlow = !barrelWheel
-              const shouldHaveShow = isUnchanged
-              const hasFlow = span.hasAttribute("data-flow")
-              const hasShow = span.hasAttribute("data-show")
+              const shouldHaveFlow = !barrelWheel;
+              const shouldHaveShow = isUnchanged;
+              const hasFlow = span.hasAttribute("data-flow");
+              const hasShow = span.hasAttribute("data-show");
 
               if (shouldHaveFlow && !hasFlow) {
-                span.setAttribute("data-flow", "")
+                span.setAttribute("data-flow", "");
               } else if (!shouldHaveFlow && hasFlow) {
-                span.removeAttribute("data-flow")
+                span.removeAttribute("data-flow");
               }
 
               if (shouldHaveShow && !hasShow) {
-                span.setAttribute("data-show", "")
+                span.setAttribute("data-show", "");
               } else if (!shouldHaveShow && hasShow) {
-                span.removeAttribute("data-show")
+                span.removeAttribute("data-show");
               }
 
-              usedSpans.add(span)
+              usedSpans.add(span);
               // Move to correct position if needed
               if (referenceNode) {
-                const nextSibling = referenceNode.nextSibling
+                const nextSibling = referenceNode.nextSibling;
                 if (span.previousSibling !== referenceNode && nextSibling) {
-                  spanRef.current.insertBefore(span, nextSibling)
+                  spanRef.current.insertBefore(span, nextSibling);
                 } else if (!nextSibling) {
-                  spanRef.current.appendChild(span)
+                  spanRef.current.appendChild(span);
                 }
               }
-              referenceNode = span
+              referenceNode = span;
             } else {
               // Check if there's an existing span that's currently animating (barrel wheel or width)
               // First check if there's a transparent span at this index (might have shifted)
-              let existingSpan = existingSpansByIndex.get(i)
+              let existingSpan = existingSpansByIndex.get(i);
               // If no span at this index, check if there's a transparent span that shifted here
               if (!existingSpan && transparentSpans.has(i)) {
-                existingSpan = transparentSpans.get(i)!
+                existingSpan = transparentSpans.get(i)!;
               }
               // Also check all transparent spans to see if any match this character and should be at this index
               // This handles the case where a transparent span shifted but wasn't found in the map
@@ -672,7 +677,7 @@ export const NumberFlowInput = ({
                 // First, check if there's a transparent span with matching content
                 const matchingTransparentSpan = char
                   ? transparentSpansByContent.get(char)
-                  : undefined
+                  : undefined;
                 if (
                   matchingTransparentSpan &&
                   !usedSpans.has(matchingTransparentSpan) &&
@@ -681,41 +686,41 @@ export const NumberFlowInput = ({
                   // Check if there's a barrel wheel that matches this span
                   const allBarrelWheels = parentContainer?.querySelectorAll(
                     `[data-char-index].${styles.barrel_wheel || ""}`
-                  )
+                  );
                   if (allBarrelWheels) {
                     for (const wheel of Array.from(allBarrelWheels)) {
-                      const wheelEl = wheel as HTMLElement
+                      const wheelEl = wheel as HTMLElement;
                       const wheelIndex = parseInt(
                         wheelEl.getAttribute("data-char-index") ?? "-1",
                         10
-                      )
+                      );
                       const finalDigit =
-                        wheelEl.getAttribute("data-final-digit")
+                        wheelEl.getAttribute("data-final-digit");
                       if (finalDigit === char) {
                         // This transparent span is associated with a barrel wheel
                         // If the barrel wheel is at index i, or if it should be at i (was shifted)
                         if (wheelIndex === i) {
-                          existingSpan = matchingTransparentSpan
+                          existingSpan = matchingTransparentSpan;
                           matchingTransparentSpan.setAttribute(
                             "data-char-index",
                             i.toString()
-                          )
-                          break
+                          );
+                          break;
                         } else if (wheelIndex > i && lengthDiff < 0) {
                           // Barrel wheel was shifted but might not be at i yet - update both
-                          existingSpan = matchingTransparentSpan
+                          existingSpan = matchingTransparentSpan;
                           matchingTransparentSpan.setAttribute(
                             "data-char-index",
                             i.toString()
-                          )
-                          wheelEl.setAttribute("data-char-index", i.toString())
+                          );
+                          wheelEl.setAttribute("data-char-index", i.toString());
                           const observer =
-                            resizeObserversRef.current.get(wheelIndex)
+                            resizeObserversRef.current.get(wheelIndex);
                           if (observer) {
-                            resizeObserversRef.current.delete(wheelIndex)
-                            resizeObserversRef.current.set(i, observer)
+                            resizeObserversRef.current.delete(wheelIndex);
+                            resizeObserversRef.current.set(i, observer);
                           }
-                          break
+                          break;
                         }
                       }
                     }
@@ -723,14 +728,14 @@ export const NumberFlowInput = ({
                 }
               }
               const hasWidthAnimation =
-                existingSpan?.hasAttribute("data-width-animate")
+                existingSpan?.hasAttribute("data-width-animate");
               // Check if span is hidden (indicates barrel wheel animation in progress)
               const isHidden =
                 existingSpan?.style.color === "transparent" ||
                 existingSpan?.style.color === "rgba(0, 0, 0, 0)" ||
                 (existingSpan &&
                   window.getComputedStyle(existingSpan).color ===
-                    "rgba(0, 0, 0, 0)")
+                    "rgba(0, 0, 0, 0)");
 
               // Don't reuse span if there's a barrel wheel animation for this index
               // The barrel wheel code needs to set up width animation, so let it handle the span
@@ -740,25 +745,26 @@ export const NumberFlowInput = ({
                 hasWidthAnimation &&
                 !isHidden &&
                 existingSpan &&
-                !usedSpans.has(existingSpan)
+                !usedSpans.has(existingSpan);
 
               // IMPORTANT: If there's a transparent span at this index, it's part of an ongoing barrel wheel
               // We MUST reuse it, even if changes.barrelWheelIndices doesn't have this index
               // (because the barrel wheel's index may have shifted)
               // Also check if there's a barrel wheel anywhere that matches this character
-              let hasMatchingBarrelWheel = hasBarrelWheel || hasBarrelWheelInDOM
+              let hasMatchingBarrelWheel =
+                hasBarrelWheel || hasBarrelWheelInDOM;
               if (!hasMatchingBarrelWheel && isHidden && existingSpan) {
                 // Check all barrel wheels to see if any match this character
                 const allBarrelWheels = parentContainer?.querySelectorAll(
                   `[data-char-index].${styles.barrel_wheel || ""}`
-                )
+                );
                 if (allBarrelWheels) {
                   for (const wheel of Array.from(allBarrelWheels)) {
-                    const wheelEl = wheel as HTMLElement
-                    const finalDigit = wheelEl.getAttribute("data-final-digit")
+                    const wheelEl = wheel as HTMLElement;
+                    const finalDigit = wheelEl.getAttribute("data-final-digit");
                     if (finalDigit === char) {
-                      hasMatchingBarrelWheel = true
-                      break
+                      hasMatchingBarrelWheel = true;
+                      break;
                     }
                   }
                 }
@@ -770,72 +776,72 @@ export const NumberFlowInput = ({
                 !usedSpans.has(existingSpan) &&
                 (hasBarrelWheel ||
                   hasBarrelWheelInDOM ||
-                  hasMatchingBarrelWheel)
+                  hasMatchingBarrelWheel);
 
               // If there's a transparent span (barrel wheel animation), reuse it
               if (shouldReuseTransparentSpan && existingSpan) {
                 // Reuse the transparent span - it's part of an ongoing barrel wheel animation
-                span = existingSpan
+                span = existingSpan;
                 // Update textContent if needed (should match the final digit)
                 if (span.textContent !== char) {
-                  span.textContent = char ?? ""
+                  span.textContent = char ?? "";
                 }
                 // Ensure data-char-index is correct
-                span.setAttribute("data-char-index", i.toString())
+                span.setAttribute("data-char-index", i.toString());
                 // Keep it transparent (barrel wheel is still animating)
-                span.style.color = "transparent"
+                span.style.color = "transparent";
                 // Don't set data-flow (barrel wheel handles it)
-                span.removeAttribute("data-flow")
+                span.removeAttribute("data-flow");
                 if (isUnchanged) {
-                  span.setAttribute("data-show", "")
+                  span.setAttribute("data-show", "");
                 } else {
-                  span.removeAttribute("data-show")
+                  span.removeAttribute("data-show");
                 }
-                usedSpans.add(span)
+                usedSpans.add(span);
                 // Ensure it's in the correct position
                 if (referenceNode) {
-                  const nextSibling = referenceNode.nextSibling
+                  const nextSibling = referenceNode.nextSibling;
                   if (span.previousSibling !== referenceNode && nextSibling) {
-                    spanRef.current.insertBefore(span, nextSibling)
+                    spanRef.current.insertBefore(span, nextSibling);
                   } else if (!nextSibling) {
-                    spanRef.current.appendChild(span)
+                    spanRef.current.appendChild(span);
                   }
                 }
-                referenceNode = span
+                referenceNode = span;
               } else if (shouldReuseSpan && existingSpan) {
                 // If there's an existing span that's animating width (not barrel wheel), update it
                 // Update the existing animating span
-                span = existingSpan
+                span = existingSpan;
                 // Update textContent if it changed (shouldn't happen during barrel wheel, but defensive)
                 if (span.textContent !== char) {
-                  span.textContent = char ?? ""
+                  span.textContent = char ?? "";
                 }
                 // Update data-char-index to ensure it's correct
-                span.setAttribute("data-char-index", i.toString())
+                span.setAttribute("data-char-index", i.toString());
 
                 // Update attributes
                 if (!barrelWheel) {
-                  span.setAttribute("data-flow", "")
+                  span.setAttribute("data-flow", "");
                 } else {
-                  span.removeAttribute("data-flow")
+                  span.removeAttribute("data-flow");
                 }
                 if (isUnchanged) {
-                  span.setAttribute("data-show", "")
+                  span.setAttribute("data-show", "");
                 } else {
-                  span.removeAttribute("data-show")
+                  span.removeAttribute("data-show");
                 }
 
-                usedSpans.add(span)
+                usedSpans.add(span);
                 // Ensure it's in the correct position
                 if (referenceNode) {
-                  const nextSibling = referenceNode.nextSibling
+                  const nextSibling = referenceNode.nextSibling;
                   if (span.previousSibling !== referenceNode && nextSibling) {
-                    spanRef.current.insertBefore(span, nextSibling)
+                    spanRef.current.insertBefore(span, nextSibling);
                   } else if (!nextSibling) {
-                    spanRef.current.appendChild(span)
+                    spanRef.current.appendChild(span);
                   }
                 }
-                referenceNode = span
+                referenceNode = span;
               } else {
                 // If there's a barrel wheel animation, we need to ensure the span exists
                 // but let the barrel wheel code handle width animation setup
@@ -846,54 +852,54 @@ export const NumberFlowInput = ({
                   !usedSpans.has(existingSpan)
                 ) {
                   // Update existing span for barrel wheel - barrel wheel code will handle width animation
-                  span = existingSpan
+                  span = existingSpan;
 
                   // Preserve old width BEFORE updating textContent to prevent flash
                   // Get the current width (which is the old digit's width)
-                  const oldWidth = span.getBoundingClientRect().width
+                  const oldWidth = span.getBoundingClientRect().width;
 
                   // Ensure display is inline-block so width can be applied
-                  span.style.display = "inline-block"
+                  span.style.display = "inline-block";
 
                   // Constrain to old width IMMEDIATELY before updating textContent
                   // This prevents flash of natural width when textContent changes
                   if (oldWidth > 0) {
-                    span.style.width = `${oldWidth}px`
-                    span.style.minWidth = `${oldWidth}px`
-                    span.style.maxWidth = `${oldWidth}px`
+                    span.style.width = `${oldWidth}px`;
+                    span.style.minWidth = `${oldWidth}px`;
+                    span.style.maxWidth = `${oldWidth}px`;
                     // Force reflow to ensure width constraint is applied
-                    void span.offsetWidth
+                    void span.offsetWidth;
                   }
 
                   // NOW update textContent (span is already constrained, so no flash)
                   if (span.textContent !== char) {
-                    span.textContent = char ?? ""
+                    span.textContent = char ?? "";
                   }
 
                   // Update data-char-index to ensure it's correct
-                  span.setAttribute("data-char-index", i.toString())
+                  span.setAttribute("data-char-index", i.toString());
                   // Don't set data-flow for barrel wheel (barrel wheel code handles it)
-                  span.removeAttribute("data-flow")
+                  span.removeAttribute("data-flow");
                   if (isUnchanged) {
-                    span.setAttribute("data-show", "")
+                    span.setAttribute("data-show", "");
                   } else {
-                    span.removeAttribute("data-show")
+                    span.removeAttribute("data-show");
                   }
                   // Reset color in case it was hidden from previous animation
-                  span.style.color = ""
+                  span.style.color = "";
                   // Remove data-width-animate if present (barrel wheel code will add it)
-                  span.removeAttribute("data-width-animate")
-                  usedSpans.add(span)
+                  span.removeAttribute("data-width-animate");
+                  usedSpans.add(span);
                   // Ensure it's in the correct position
                   if (referenceNode) {
-                    const nextSibling = referenceNode.nextSibling
+                    const nextSibling = referenceNode.nextSibling;
                     if (span.previousSibling !== referenceNode && nextSibling) {
-                      spanRef.current.insertBefore(span, nextSibling)
+                      spanRef.current.insertBefore(span, nextSibling);
                     } else if (!nextSibling) {
-                      spanRef.current.appendChild(span)
+                      spanRef.current.appendChild(span);
                     }
                   }
-                  referenceNode = span
+                  referenceNode = span;
                 } else {
                   // Check if there's a transparent span at this index that should be preserved
                   // This handles the case where a transparent span was shifted from a previous index
@@ -905,65 +911,65 @@ export const NumberFlowInput = ({
                   ) {
                     // This is a transparent span - it's part of an ongoing barrel wheel animation
                     // Reuse it instead of creating a new one
-                    span = existingSpan
+                    span = existingSpan;
                     // Update textContent if needed (should match the final digit)
                     if (span.textContent !== char) {
-                      span.textContent = char ?? ""
+                      span.textContent = char ?? "";
                     }
                     // Ensure data-char-index is correct
-                    span.setAttribute("data-char-index", i.toString())
+                    span.setAttribute("data-char-index", i.toString());
                     // Keep it transparent (barrel wheel is still animating)
-                    span.style.color = "transparent"
+                    span.style.color = "transparent";
                     // Don't set data-flow (barrel wheel handles it)
-                    span.removeAttribute("data-flow")
+                    span.removeAttribute("data-flow");
                     if (isUnchanged) {
-                      span.setAttribute("data-show", "")
+                      span.setAttribute("data-show", "");
                     } else {
-                      span.removeAttribute("data-show")
+                      span.removeAttribute("data-show");
                     }
-                    usedSpans.add(span)
+                    usedSpans.add(span);
                     // Ensure it's in the correct position
                     if (referenceNode) {
-                      const nextSibling = referenceNode.nextSibling
+                      const nextSibling = referenceNode.nextSibling;
                       if (
                         span.previousSibling !== referenceNode &&
                         nextSibling
                       ) {
-                        spanRef.current.insertBefore(span, nextSibling)
+                        spanRef.current.insertBefore(span, nextSibling);
                       } else if (!nextSibling) {
-                        spanRef.current.appendChild(span)
+                        spanRef.current.appendChild(span);
                       }
                     }
-                    referenceNode = span
+                    referenceNode = span;
                   } else {
                     // Remove existing span at this index if it exists and doesn't match
                     if (existingSpan && existingSpan.textContent !== char) {
                       // Only remove if not animating (not hidden and not part of current barrel wheel)
                       const isCurrentlyAnimating =
                         (isHidden && !hasBarrelWheel) ||
-                        (hasWidthAnimation && !hasBarrelWheel)
+                        (hasWidthAnimation && !hasBarrelWheel);
                       if (!isCurrentlyAnimating) {
-                        existingSpan.remove()
-                        existingSpansByIndex.delete(i)
-                        usedSpans.delete(existingSpan)
+                        existingSpan.remove();
+                        existingSpansByIndex.delete(i);
+                        usedSpans.delete(existingSpan);
                       }
                     }
 
                     // Create new span
-                    span = document.createElement("span")
-                    span.setAttribute("data-char-index", i.toString())
-                    span.textContent = char ?? ""
+                    span = document.createElement("span");
+                    span.setAttribute("data-char-index", i.toString());
+                    span.textContent = char ?? "";
 
                     if (!barrelWheel) {
-                      span.setAttribute("data-flow", "")
+                      span.setAttribute("data-flow", "");
                     }
                     if (isUnchanged) {
-                      span.setAttribute("data-show", "")
+                      span.setAttribute("data-show", "");
                     } else if (isAdded) {
                       // Animate width from 0 for newly added digits
-                      span.style.width = "0px"
-                      span.style.minWidth = "0px"
-                      span.style.maxWidth = "0px"
+                      span.style.width = "0px";
+                      span.style.minWidth = "0px";
+                      span.style.maxWidth = "0px";
                     }
 
                     // Insert at correct position
@@ -971,20 +977,20 @@ export const NumberFlowInput = ({
                       spanRef.current.insertBefore(
                         span,
                         referenceNode.nextSibling
-                      )
+                      );
                     } else {
                       spanRef.current.insertBefore(
                         span,
                         spanRef.current.firstChild
-                      )
+                      );
                     }
-                    referenceNode = span
+                    referenceNode = span;
                   }
                 }
               }
             }
 
-            newSpans.push(span)
+            newSpans.push(span);
           }
 
           // Remove unused spans that aren't animating
@@ -996,40 +1002,40 @@ export const NumberFlowInput = ({
               const index = parseInt(
                 span.getAttribute("data-char-index") ?? "-1",
                 10
-              )
+              );
               const isHidden =
                 span.style.color === "transparent" ||
                 span.style.color === "rgba(0, 0, 0, 0)" ||
-                window.getComputedStyle(span).color === "rgba(0, 0, 0, 0)"
+                window.getComputedStyle(span).color === "rgba(0, 0, 0, 0)";
               // Check if there's actually a barrel wheel for this index in the DOM
               // (indices may have shifted, so changes.barrelWheelIndices might not be accurate)
               const hasBarrelWheelInDOM = parentContainer?.querySelector(
                 `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
-              )
+              );
               const hasBarrelWheel =
-                changes.barrelWheelIndices.has(index) || !!hasBarrelWheelInDOM
-              const hasWidthAnimation = span.hasAttribute("data-width-animate")
+                changes.barrelWheelIndices.has(index) || !!hasBarrelWheelInDOM;
+              const hasWidthAnimation = span.hasAttribute("data-width-animate");
               const isCurrentlyAnimating =
-                hasBarrelWheel || hasWidthAnimation || isHidden
+                hasBarrelWheel || hasWidthAnimation || isHidden;
 
               // If text is empty, remove all spans regardless of animation state
               // This handles the case where user selects all and deletes
               if (cleanedText.length === 0) {
-                span.remove()
+                span.remove();
               } else if (!isCurrentlyAnimating) {
                 // Only remove if not currently animating
-                span.remove()
+                span.remove();
               }
             }
-          })
+          });
 
           // Final verification: ensure all spans have correct textContent
           // This catches any cases where spans weren't properly updated
           for (let i = 0; i < cleanedText.length; i++) {
-            const char = cleanedText[i]
-            const span = newSpans[i]
+            const char = cleanedText[i];
+            const span = newSpans[i];
             if (span && span.textContent !== char) {
-              span.textContent = char ?? ""
+              span.textContent = char ?? "";
             }
           }
 
@@ -1037,51 +1043,51 @@ export const NumberFlowInput = ({
           // This ensures barrel wheels stay aligned whenever characters are inserted/deleted
           // Use requestAnimationFrame to ensure DOM has fully updated
           requestAnimationFrame(() => {
-            repositionAllBarrelWheels()
-          })
+            repositionAllBarrelWheels();
+          });
 
           // Remove any remaining spans with invalid indices or wrong characters
           // Also check for duplicate indices and transparent spans that are ghosts
           const allSpans = Array.from(
             spanRef.current.querySelectorAll("[data-char-index]")
-          ) as HTMLElement[]
+          ) as HTMLElement[];
 
           // Track spans by index to detect duplicates
-          const spansByIndex = new Map<number, HTMLElement[]>()
+          const spansByIndex = new Map<number, HTMLElement[]>();
           allSpans.forEach((span) => {
             const index = parseInt(
               span.getAttribute("data-char-index") ?? "-1",
               10
-            )
+            );
             if (index >= 0) {
               if (!spansByIndex.has(index)) {
-                spansByIndex.set(index, [])
+                spansByIndex.set(index, []);
               }
-              spansByIndex.get(index)!.push(span)
+              spansByIndex.get(index)!.push(span);
             }
-          })
+          });
 
           // Handle duplicate indices - keep the one that's animating or matches the character, remove others
           spansByIndex.forEach((spans, index) => {
             if (spans.length > 1) {
               // Find the span that should be kept
-              let spanToKeep: HTMLElement | null = null
+              let spanToKeep: HTMLElement | null = null;
 
               // First, try to find one that matches the expected character
-              const expectedChar = cleanedText[index]
+              const expectedChar = cleanedText[index];
               for (const span of spans) {
                 if (span.textContent === expectedChar) {
                   const isHidden =
                     span.style.color === "transparent" ||
                     span.style.color === "rgba(0, 0, 0, 0)" ||
-                    window.getComputedStyle(span).color === "rgba(0, 0, 0, 0)"
+                    window.getComputedStyle(span).color === "rgba(0, 0, 0, 0)";
                   // Prefer non-transparent spans that match the character
                   if (!isHidden) {
-                    spanToKeep = span
-                    break
+                    spanToKeep = span;
+                    break;
                   } else if (!spanToKeep) {
                     // Keep transparent one as fallback if it matches
-                    spanToKeep = span
+                    spanToKeep = span;
                   }
                 }
               }
@@ -1092,24 +1098,24 @@ export const NumberFlowInput = ({
                   const isHidden =
                     span.style.color === "transparent" ||
                     span.style.color === "rgba(0, 0, 0, 0)" ||
-                    window.getComputedStyle(span).color === "rgba(0, 0, 0, 0)"
+                    window.getComputedStyle(span).color === "rgba(0, 0, 0, 0)";
                   const hasBarrelWheelInDOM = parentContainer?.querySelector(
                     `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
-                  )
+                  );
                   const hasWidthAnimation =
-                    span.hasAttribute("data-width-animate")
+                    span.hasAttribute("data-width-animate");
                   if (isHidden || hasBarrelWheelInDOM || hasWidthAnimation) {
-                    spanToKeep = span
-                    break
+                    spanToKeep = span;
+                    break;
                   }
                 }
               }
 
               // If still no span found, keep the first one
               if (!spanToKeep && spans.length > 0) {
-                const firstSpan = spans.find(() => true)
+                const firstSpan = spans.find(() => true);
                 if (firstSpan) {
-                  spanToKeep = firstSpan
+                  spanToKeep = firstSpan;
                 }
               }
 
@@ -1117,40 +1123,40 @@ export const NumberFlowInput = ({
               if (spanToKeep) {
                 spans.forEach((span) => {
                   if (span !== spanToKeep) {
-                    span.remove()
+                    span.remove();
                   }
-                })
+                });
               }
             }
-          })
+          });
 
           // Now check remaining spans for out-of-bounds or wrong characters
           const remainingSpans = Array.from(
             spanRef.current.querySelectorAll("[data-char-index]")
-          ) as HTMLElement[]
+          ) as HTMLElement[];
           remainingSpans.forEach((span) => {
             const index = parseInt(
               span.getAttribute("data-char-index") ?? "-1",
               10
-            )
+            );
             const isHidden =
               span.style.color === "transparent" ||
               span.style.color === "rgba(0, 0, 0, 0)" ||
-              window.getComputedStyle(span).color === "rgba(0, 0, 0, 0)"
+              window.getComputedStyle(span).color === "rgba(0, 0, 0, 0)";
             // Check if there's actually a barrel wheel for this index in the DOM
             const hasBarrelWheelInDOM = parentContainer?.querySelector(
               `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
-            )
+            );
             const hasBarrelWheel =
-              changes.barrelWheelIndices.has(index) || !!hasBarrelWheelInDOM
-            const hasWidthAnimation = span.hasAttribute("data-width-animate")
+              changes.barrelWheelIndices.has(index) || !!hasBarrelWheelInDOM;
+            const hasWidthAnimation = span.hasAttribute("data-width-animate");
             const isCurrentlyAnimating =
-              hasBarrelWheel || hasWidthAnimation || isHidden
+              hasBarrelWheel || hasWidthAnimation || isHidden;
 
             // If text is empty, remove all spans
             if (cleanedText.length === 0) {
-              span.remove()
-              return
+              span.remove();
+              return;
             }
 
             // Remove if index is out of bounds
@@ -1160,43 +1166,43 @@ export const NumberFlowInput = ({
               // Remove out-of-bounds spans unless they're currently animating AND cleanedText is long enough
               // This prevents ghost characters when cleanedText changes significantly (e.g., "1881" -> "-")
               if (!isCurrentlyAnimating || cleanedText.length <= 1) {
-                span.remove()
+                span.remove();
               }
             } else if (span.textContent !== cleanedText[index]) {
               // Character mismatch - update or remove
               // If it's a transparent span with wrong character and no barrel wheel, it's a ghost - remove it
               if (isHidden && !hasBarrelWheelInDOM && !hasBarrelWheel) {
-                span.remove()
+                span.remove();
               } else if (!isCurrentlyAnimating) {
                 // Update textContent to match
-                span.textContent = cleanedText[index] ?? ""
+                span.textContent = cleanedText[index] ?? "";
               }
             }
-          })
+          });
         }
 
         // Animate new characters and create barrel wheels
         // Use requestAnimationFrame to ensure DOM is updated
         requestAnimationFrame(() => {
-          const flowElements = spanRef.current?.querySelectorAll("[data-flow]")
+          const flowElements = spanRef.current?.querySelectorAll("[data-flow]");
           if (flowElements) {
             Array.from(flowElements).forEach((element) => {
               const index = parseInt(
                 (element as HTMLElement).getAttribute("data-char-index") ??
                   "-1",
                 10
-              )
+              );
               if (
                 element instanceof HTMLElement &&
                 changes.addedIndices.has(index)
               ) {
-                element.dataset.show = ""
-                const span = spanRef.current
+                element.dataset.show = "";
+                const span = spanRef.current;
                 if (span) {
-                  const width = measureText(element.textContent, span)
-                  element.style.width = `${width}px`
-                  element.style.minWidth = `${width}px`
-                  element.style.maxWidth = `${width}px`
+                  const width = measureText(element.textContent, span);
+                  element.style.width = `${width}px`;
+                  element.style.minWidth = `${width}px`;
+                  element.style.maxWidth = `${width}px`;
 
                   // Remove inline width styles after transition completes
                   const handleTransitionEnd = (e: TransitionEvent) => {
@@ -1205,251 +1211,254 @@ export const NumberFlowInput = ({
                         e.propertyName
                       )
                     ) {
-                      element.style.width = ""
-                      element.style.minWidth = ""
-                      element.style.maxWidth = ""
+                      element.style.width = "";
+                      element.style.minWidth = "";
+                      element.style.maxWidth = "";
                       element.removeEventListener(
                         "transitionend",
                         handleTransitionEnd
-                      )
+                      );
                     }
-                  }
-                  element.addEventListener("transitionend", handleTransitionEnd)
+                  };
+                  element.addEventListener(
+                    "transitionend",
+                    handleTransitionEnd
+                  );
                 }
               }
-            })
+            });
           }
 
           // Create barrel wheels as absolutely positioned elements outside contentEditable
           const barrelWheelIndices = Array.from(
             changes.barrelWheelIndices.keys()
-          )
+          );
           barrelWheelIndices.forEach((index) => {
-            const barrelWheelData = changes.barrelWheelIndices.get(index)
+            const barrelWheelData = changes.barrelWheelIndices.get(index);
             if (!barrelWheelData) {
-              return
+              return;
             }
 
-            const direction = barrelWheelData.direction
+            const direction = barrelWheelData.direction;
             const finalDigitStr =
-              barrelWheelData.sequence[barrelWheelData.sequence.length - 1]
-            const finalDigit = finalDigitStr ? parseInt(finalDigitStr, 10) : 0
-            const initialDigitStr = barrelWheelData.sequence[0]
+              barrelWheelData.sequence[barrelWheelData.sequence.length - 1];
+            const finalDigit = finalDigitStr ? parseInt(finalDigitStr, 10) : 0;
+            const initialDigitStr = barrelWheelData.sequence[0];
 
             // Determine old and new digits based on direction
             // When direction is "up": sequence = [old, ..., new] so initialDigitStr = old, finalDigitStr = new
             // When direction is "down": sequence = [new, ..., old] so initialDigitStr = new, finalDigitStr = old
             const oldDigitStr =
-              direction === "up" ? initialDigitStr : finalDigitStr
+              direction === "up" ? initialDigitStr : finalDigitStr;
             const newDigitStr =
-              direction === "up" ? finalDigitStr : initialDigitStr
+              direction === "up" ? finalDigitStr : initialDigitStr;
 
             // Find the span element at this index
             const charSpan = spanRef.current?.querySelector(
               `[data-char-index="${index}"]`
-            )
+            );
             if (!charSpan || !(charSpan instanceof HTMLElement)) {
-              return
+              return;
             }
 
             // Get position of the character span relative to the parent container
-            const parentContainer = spanRef.current?.parentElement
+            const parentContainer = spanRef.current?.parentElement;
             if (!parentContainer) {
-              return
+              return;
             }
 
             // Check if a barrel wheel already exists for this index
             const existingWheel = parentContainer.querySelector(
               `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
-            ) as HTMLElement | null
+            ) as HTMLElement | null;
 
             if (existingWheel) {
               // Reuse existing barrel wheel - update direction and position
               const existingWrapper = existingWheel.querySelector(
                 `.${styles.barrel_digits_wrapper || ""}`
-              ) as HTMLElement | null
+              ) as HTMLElement | null;
 
               if (existingWrapper) {
                 // IMPORTANT: Update the character span's textContent to the new digit
                 // This ensures the span has the correct final digit when the animation completes
                 if (charSpan.textContent !== newDigitStr) {
-                  charSpan.textContent = newDigitStr ?? ""
+                  charSpan.textContent = newDigitStr ?? "";
                 }
 
                 existingWheel.setAttribute(
                   "data-final-digit",
                   newDigitStr ?? ""
-                )
+                );
 
                 requestAnimationFrame(() => {
                   existingWrapper.style.setProperty(
                     "--digit-position",
                     newDigitStr ?? ""
-                  )
-                })
+                  );
+                });
 
                 const oldDigitWidth = oldDigitStr
                   ? measureText(oldDigitStr, charSpan)
-                  : 0
+                  : 0;
                 const newDigitWidth = newDigitStr
                   ? measureText(newDigitStr, charSpan)
-                  : 0
+                  : 0;
 
                 if (oldDigitWidth > 0 && newDigitWidth > 0) {
-                  const currentWidth = charSpan.getBoundingClientRect().width
-                  setWidthConstraints(charSpan, currentWidth)
-                  charSpan.setAttribute("data-width-animate", "")
+                  const currentWidth = charSpan.getBoundingClientRect().width;
+                  setWidthConstraints(charSpan, currentWidth);
+                  charSpan.setAttribute("data-width-animate", "");
 
                   requestAnimationFrame(() => {
-                    setWidthConstraints(charSpan, newDigitWidth)
-                  })
+                    setWidthConstraints(charSpan, newDigitWidth);
+                  });
                 }
 
-                repositionBarrelWheel(existingWheel, charSpan, parentContainer)
-                charSpan.style.color = "transparent"
-                return
+                repositionBarrelWheel(existingWheel, charSpan, parentContainer);
+                charSpan.style.color = "transparent";
+                return;
               }
             }
 
             const oldDigitWidth = oldDigitStr
               ? measureText(oldDigitStr, charSpan)
-              : 0
+              : 0;
             const newDigitWidth = newDigitStr
               ? measureText(newDigitStr, charSpan)
-              : 0
+              : 0;
 
-            const wheel = document.createElement("span")
-            wheel.className = styles.barrel_wheel || ""
-            wheel.setAttribute("data-direction", direction)
-            wheel.setAttribute("data-final-digit", finalDigit.toString())
-            wheel.setAttribute("data-char-index", index.toString())
+            const wheel = document.createElement("span");
+            wheel.className = styles.barrel_wheel || "";
+            wheel.setAttribute("data-direction", direction);
+            wheel.setAttribute("data-final-digit", finalDigit.toString());
+            wheel.setAttribute("data-char-index", index.toString());
 
-            const wrapper = document.createElement("div")
-            wrapper.className = styles.barrel_digits_wrapper || ""
-            wrapper.style.position = "relative"
+            const wrapper = document.createElement("div");
+            wrapper.className = styles.barrel_digits_wrapper || "";
+            wrapper.style.position = "relative";
 
             // Create digits 0-9
             for (let digit = 0; digit <= 9; digit++) {
-              const digitStr = digit.toString()
-              const digitElement = document.createElement("div")
-              digitElement.className = styles.barrel_digit || ""
-              digitElement.setAttribute("data-digit", digitStr)
-              digitElement.textContent = digitStr
-              digitElement.style.position = "relative"
-              digitElement.style.height = "1em"
-              digitElement.style.lineHeight = "1em"
-              wrapper.appendChild(digitElement)
+              const digitStr = digit.toString();
+              const digitElement = document.createElement("div");
+              digitElement.className = styles.barrel_digit || "";
+              digitElement.setAttribute("data-digit", digitStr);
+              digitElement.textContent = digitStr;
+              digitElement.style.position = "relative";
+              digitElement.style.height = "1em";
+              digitElement.style.lineHeight = "1em";
+              wrapper.appendChild(digitElement);
             }
 
-            const rect = charSpan.getBoundingClientRect()
-            const parentRect = parentContainer.getBoundingClientRect()
+            const rect = charSpan.getBoundingClientRect();
+            const parentRect = parentContainer.getBoundingClientRect();
 
-            wheel.style.position = "absolute"
-            wheel.style.left = `${rect.left - parentRect.left}px`
-            wheel.style.top = `${rect.top - parentRect.top}px`
-            wheel.style.width = `${rect.width}px`
-            wheel.style.height = `${rect.height}px`
-            wheel.style.display = "flex"
+            wheel.style.position = "absolute";
+            wheel.style.left = `${rect.left - parentRect.left}px`;
+            wheel.style.top = `${rect.top - parentRect.top}px`;
+            wheel.style.width = `${rect.width}px`;
+            wheel.style.height = `${rect.height}px`;
+            wheel.style.display = "flex";
 
-            charSpan.style.color = "transparent"
-            wheel.appendChild(wrapper)
-            parentContainer.appendChild(wheel)
+            charSpan.style.color = "transparent";
+            wheel.appendChild(wrapper);
+            parentContainer.appendChild(wheel);
 
             // Set initial width synchronously to prevent flash
             if (oldDigitWidth > 0 && newDigitWidth > 0) {
-              setWidthConstraints(charSpan, oldDigitWidth)
-              void charSpan.offsetWidth
-              charSpan.setAttribute("data-width-animate", "")
-              void charSpan.offsetWidth
+              setWidthConstraints(charSpan, oldDigitWidth);
+              void charSpan.offsetWidth;
+              charSpan.setAttribute("data-width-animate", "");
+              void charSpan.offsetWidth;
             }
 
             requestAnimationFrame(() => {
               // Verify width constraints are still set
               if (oldDigitWidth > 0 && newDigitWidth > 0) {
                 if (!charSpan.style.width || charSpan.style.width === "") {
-                  setWidthConstraints(charSpan, oldDigitWidth)
-                  void charSpan.offsetWidth
+                  setWidthConstraints(charSpan, oldDigitWidth);
+                  void charSpan.offsetWidth;
                 }
                 if (!charSpan.hasAttribute("data-width-animate")) {
-                  charSpan.setAttribute("data-width-animate", "")
-                  void charSpan.offsetWidth
+                  charSpan.setAttribute("data-width-animate", "");
+                  void charSpan.offsetWidth;
                 }
               }
 
               const initialPosition = oldDigitStr
                 ? parseInt(oldDigitStr, 10)
-                : 0
-              const finalPosition = newDigitStr ? parseInt(newDigitStr, 10) : 0
+                : 0;
+              const finalPosition = newDigitStr ? parseInt(newDigitStr, 10) : 0;
 
               wrapper.style.setProperty(
                 "--digit-position",
                 initialPosition.toString()
-              )
+              );
 
               requestAnimationFrame(() => {
-                wrapper.classList.add(styles.animating || "")
+                wrapper.classList.add(styles.animating || "");
 
                 requestAnimationFrame(() => {
                   wrapper.style.setProperty(
                     "--digit-position",
                     finalPosition.toString()
-                  )
+                  );
 
                   if (oldDigitWidth > 0 && newDigitWidth > 0) {
                     if (!charSpan.style.width || charSpan.style.width === "") {
-                      setWidthConstraints(charSpan, oldDigitWidth)
-                      void charSpan.offsetWidth
+                      setWidthConstraints(charSpan, oldDigitWidth);
+                      void charSpan.offsetWidth;
                     }
 
                     if (!charSpan.hasAttribute("data-width-animate")) {
-                      charSpan.setAttribute("data-width-animate", "")
+                      charSpan.setAttribute("data-width-animate", "");
                     }
                     if (
                       window.getComputedStyle(charSpan).display !==
                       "inline-block"
                     ) {
-                      charSpan.style.display = "inline-block"
+                      charSpan.style.display = "inline-block";
                     }
-                    void charSpan.offsetWidth
+                    void charSpan.offsetWidth;
 
                     // Set up ResizeObserver to update barrel wheel position during width animation
                     const existingObserver =
-                      resizeObserversRef.current.get(index)
+                      resizeObserversRef.current.get(index);
                     if (existingObserver) {
-                      existingObserver.disconnect()
-                      resizeObserversRef.current.delete(index)
+                      existingObserver.disconnect();
+                      resizeObserversRef.current.delete(index);
                     }
 
                     const resizeObserver = new ResizeObserver(() => {
                       if (!spanRef.current || !charSpan) {
-                        return
+                        return;
                       }
-                      const parent = spanRef.current.parentElement
+                      const parent = spanRef.current.parentElement;
                       if (!parent) {
-                        return
+                        return;
                       }
 
                       const bw = getBarrelWheel(
                         parent,
                         index,
                         styles.barrel_wheel || ""
-                      )
+                      );
                       if (bw) {
-                        const rect = charSpan.getBoundingClientRect()
-                        const parentRect = parent.getBoundingClientRect()
-                        bw.style.left = `${rect.left - parentRect.left}px`
-                        bw.style.width = `${rect.width}px`
+                        const rect = charSpan.getBoundingClientRect();
+                        const parentRect = parent.getBoundingClientRect();
+                        bw.style.left = `${rect.left - parentRect.left}px`;
+                        bw.style.width = `${rect.width}px`;
                       }
-                    })
+                    });
 
-                    resizeObserver.observe(charSpan)
-                    resizeObserversRef.current.set(index, resizeObserver)
+                    resizeObserver.observe(charSpan);
+                    resizeObserversRef.current.set(index, resizeObserver);
 
                     requestAnimationFrame(() => {
-                      void charSpan.offsetWidth
+                      void charSpan.offsetWidth;
 
-                      const computedStyle = window.getComputedStyle(charSpan)
-                      const transition = computedStyle.transition
+                      const computedStyle = window.getComputedStyle(charSpan);
+                      const transition = computedStyle.transition;
 
                       if (
                         !transition ||
@@ -1457,11 +1466,11 @@ export const NumberFlowInput = ({
                         transition === "all 0s ease 0s"
                       ) {
                         charSpan.style.transition =
-                          "width 0.4s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
-                        void charSpan.offsetWidth
+                          "width 0.4s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1)";
+                        void charSpan.offsetWidth;
                       }
 
-                      setWidthConstraints(charSpan, newDigitWidth)
+                      setWidthConstraints(charSpan, newDigitWidth);
 
                       const handleWidthAnimationEnd = (e: TransitionEvent) => {
                         if (
@@ -1469,59 +1478,60 @@ export const NumberFlowInput = ({
                             e.propertyName
                           )
                         ) {
-                          cleanupWidthAnimation(charSpan)
+                          cleanupWidthAnimation(charSpan);
                           charSpan.removeEventListener(
                             "transitionend",
                             handleWidthAnimationEnd
-                          )
+                          );
 
-                          const observer = resizeObserversRef.current.get(index)
+                          const observer =
+                            resizeObserversRef.current.get(index);
                           if (observer) {
-                            observer.disconnect()
-                            resizeObserversRef.current.delete(index)
+                            observer.disconnect();
+                            resizeObserversRef.current.delete(index);
                           }
                         }
-                      }
+                      };
                       charSpan.addEventListener(
                         "transitionend",
                         handleWidthAnimationEnd
-                      )
-                    })
+                      );
+                    });
                   }
 
                   wrapper.addEventListener(
                     "transitionend",
                     () => {
                       const currentIndexStr =
-                        wheel.getAttribute("data-char-index")
+                        wheel.getAttribute("data-char-index");
                       const currentIndex =
                         currentIndexStr !== null
                           ? parseInt(currentIndexStr, 10)
-                          : index
+                          : index;
                       const finalDigitAttr =
-                        wheel.getAttribute("data-final-digit")
+                        wheel.getAttribute("data-final-digit");
                       const finalDigit =
-                        finalDigitAttr !== null ? finalDigitAttr : newDigitStr
+                        finalDigitAttr !== null ? finalDigitAttr : newDigitStr;
 
                       // Clean up ResizeObserver
                       const observer =
                         resizeObserversRef.current.get(currentIndex) ||
-                        resizeObserversRef.current.get(index)
+                        resizeObserversRef.current.get(index);
                       if (observer) {
-                        observer.disconnect()
-                        resizeObserversRef.current.delete(currentIndex)
-                        resizeObserversRef.current.delete(index)
+                        observer.disconnect();
+                        resizeObserversRef.current.delete(currentIndex);
+                        resizeObserversRef.current.delete(index);
                       }
 
                       // Find the target span
-                      let targetSpan: HTMLElement | null = null
+                      let targetSpan: HTMLElement | null = null;
                       if (spanRef.current) {
                         const spanAtCurrentIndex =
                           spanRef.current.querySelector(
                             `[data-char-index="${currentIndex}"]`
-                          ) as HTMLElement | null
+                          ) as HTMLElement | null;
                         if (spanAtCurrentIndex) {
-                          targetSpan = spanAtCurrentIndex
+                          targetSpan = spanAtCurrentIndex;
                         }
                       }
 
@@ -1532,22 +1542,22 @@ export const NumberFlowInput = ({
                         charSpan.textContent === finalDigit
                       ) {
                         const spanIndex =
-                          charSpan.getAttribute("data-char-index")
+                          charSpan.getAttribute("data-char-index");
                         if (spanIndex !== currentIndex.toString()) {
                           charSpan.setAttribute(
                             "data-char-index",
                             currentIndex.toString()
-                          )
+                          );
                         }
-                        targetSpan = charSpan
+                        targetSpan = charSpan;
                       }
 
                       // Clean up target span
                       if (targetSpan instanceof HTMLElement) {
-                        cleanupWidthAnimation(targetSpan)
-                        removeTransparentColor(targetSpan)
-                        targetSpan.removeAttribute("data-flow")
-                        targetSpan.style.transition = "none"
+                        cleanupWidthAnimation(targetSpan);
+                        removeTransparentColor(targetSpan);
+                        targetSpan.removeAttribute("data-flow");
+                        targetSpan.style.transition = "none";
                       }
 
                       // Safety cleanup for transparent span at current index
@@ -1555,68 +1565,68 @@ export const NumberFlowInput = ({
                         const spanAtCurrentIndex =
                           spanRef.current.querySelector(
                             `[data-char-index="${currentIndex}"]`
-                          ) as HTMLElement | null
+                          ) as HTMLElement | null;
                         if (
                           spanAtCurrentIndex &&
                           isTransparent(spanAtCurrentIndex)
                         ) {
-                          removeTransparentColor(spanAtCurrentIndex)
-                          spanAtCurrentIndex.removeAttribute("data-flow")
-                          spanAtCurrentIndex.style.transition = "none"
-                          cleanupWidthAnimation(spanAtCurrentIndex)
+                          removeTransparentColor(spanAtCurrentIndex);
+                          spanAtCurrentIndex.removeAttribute("data-flow");
+                          spanAtCurrentIndex.style.transition = "none";
+                          cleanupWidthAnimation(spanAtCurrentIndex);
                         }
                       }
 
-                      wheel.remove()
+                      wheel.remove();
 
                       // Final safety check after DOM update
                       requestAnimationFrame(() => {
                         if (!spanRef.current) {
-                          return
+                          return;
                         }
                         const spanAtCurrentIndex =
                           spanRef.current.querySelector(
                             `[data-char-index="${currentIndex}"]`
-                          ) as HTMLElement | null
+                          ) as HTMLElement | null;
 
                         if (
                           spanAtCurrentIndex &&
                           isTransparent(spanAtCurrentIndex)
                         ) {
-                          const parent = spanRef.current.parentElement
+                          const parent = spanRef.current.parentElement;
                           const hasBarrelWheel =
                             parent &&
                             getBarrelWheel(
                               parent,
                               currentIndex,
                               styles.barrel_wheel || ""
-                            )
+                            );
                           if (!hasBarrelWheel) {
-                            removeTransparentColor(spanAtCurrentIndex)
+                            removeTransparentColor(spanAtCurrentIndex);
                           }
                         }
-                      })
+                      });
                     },
                     { once: true }
-                  )
-                })
-              })
-            })
-          })
-        })
+                  );
+                });
+              });
+            });
+          });
+        });
 
         const setCursor = () => {
           if (!spanRef.current) {
-            return
+            return;
           }
           setCursorPositionInElement(
             spanRef.current,
             Math.min(newCursorPos, cleanedText.length)
-          )
-        }
+          );
+        };
 
-        setCursor()
-        requestAnimationFrame(setCursor)
+        setCursor();
+        requestAnimationFrame(setCursor);
       }
     },
     [
@@ -1626,199 +1636,202 @@ export const NumberFlowInput = ({
       repositionAllBarrelWheels,
       addToHistory,
     ]
-  )
+  );
 
   // Initialize
   useEffect(() => {
     if (spanRef.current && displayValue) {
-      spanRef.current.textContent = displayValue
+      spanRef.current.textContent = displayValue;
     }
     // Initialize history with initial state
     if (historyRef.current.length === 0) {
-      const initialValue = actualValue
+      const initialValue = actualValue;
       historyRef.current.push({
         text: displayValue,
         cursorPosBefore: 0,
         cursorPosAfter: 0,
         value: initialValue,
-      })
-      historyIndexRef.current = 0
+      });
+      historyIndexRef.current = 0;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []);
 
   useEffect(() => {
-    const newDisplay = actualValue?.toString() ?? ""
+    const newDisplay = actualValue?.toString() ?? "";
     const currentParsed = ["", "-", ".", "-."].includes(displayValue)
       ? undefined
-      : parseFloat(displayValue)
+      : parseFloat(displayValue);
 
     if (currentParsed !== actualValue) {
-      setDisplayValue(newDisplay)
+      setDisplayValue(newDisplay);
       if (spanRef.current) {
         if (actualValue === undefined && displayValue !== newDisplay) {
           spanRef.current
             .querySelectorAll("[data-char-index]")
-            .forEach((span) => span.remove())
+            .forEach((span) => span.remove());
           getAllBarrelWheels(
             spanRef.current.parentElement!,
             styles.barrel_wheel || ""
-          ).forEach((wheel) => wheel.remove())
+          ).forEach((wheel) => wheel.remove());
         }
-        spanRef.current.textContent = newDisplay
+        spanRef.current.textContent = newDisplay;
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actualValue, displayValue])
+  }, [actualValue, displayValue]);
 
   // Cleanup ResizeObservers on unmount
   useEffect(() => {
-    const observers = resizeObserversRef.current
+    const observers = resizeObserversRef.current;
     return () => {
-      observers.forEach((observer) => observer.disconnect())
-      observers.clear()
-    }
-  }, [])
+      observers.forEach((observer) => observer.disconnect());
+      observers.clear();
+    };
+  }, []);
 
   const applyHistoryItemWithCursor = useCallback(
     (
       historyItem: {
-        text: string
-        cursorPosBefore: number
-        cursorPosAfter: number
-        value: MaybeUndefined<number>
+        text: string;
+        cursorPosBefore: number;
+        cursorPosAfter: number;
+        value: MaybeUndefined<number>;
       },
       cursorPos: number
     ) => {
-      isUndoRedoRef.current = true
-      setDisplayValue(historyItem.text)
-      setUncontrolledValue(historyItem.value)
-      onChange?.(historyItem.value)
-      setCursorPosition(cursorPos)
+      isUndoRedoRef.current = true;
+      setDisplayValue(historyItem.text);
+      setUncontrolledValue(historyItem.value);
+      onChange?.(historyItem.value);
+      setCursorPosition(cursorPos);
 
       if (spanRef.current) {
         clearBarrelWheelsAndSpans(
           spanRef.current,
           spanRef.current.parentElement,
           styles.barrel_wheel || ""
-        )
-        spanRef.current.textContent = historyItem.text
+        );
+        spanRef.current.textContent = historyItem.text;
 
-        spanRef.current.focus()
+        spanRef.current.focus();
 
         const restoreCursor = () => {
           if (!spanRef.current) {
-            return
+            return;
           }
-          spanRef.current.focus()
-          setCursorAtPosition(spanRef.current, cursorPos)
-          isUndoRedoRef.current = false
-        }
+          spanRef.current.focus();
+          setCursorAtPosition(spanRef.current, cursorPos);
+          isUndoRedoRef.current = false;
+        };
 
-        restoreCursor()
-        requestAnimationFrame(restoreCursor)
+        restoreCursor();
+        requestAnimationFrame(restoreCursor);
       }
     },
     [onChange]
-  )
+  );
 
   const applyHistoryItem = useCallback(
     (
       historyItem:
         | {
-            text: string
-            cursorPosBefore: number
-            cursorPosAfter: number
-            value: MaybeUndefined<number>
+            text: string;
+            cursorPosBefore: number;
+            cursorPosAfter: number;
+            value: MaybeUndefined<number>;
           }
         | undefined,
       isUndo: boolean
     ) => {
       if (!historyItem) {
-        return
+        return;
       }
 
       // For redo: use cursorPosAfter from the item
       const targetCursorPos = isUndo
         ? historyItem.cursorPosBefore
-        : historyItem.cursorPosAfter
-      applyHistoryItemWithCursor(historyItem, targetCursorPos)
+        : historyItem.cursorPosAfter;
+      applyHistoryItemWithCursor(historyItem, targetCursorPos);
     },
     [applyHistoryItemWithCursor]
-  )
+  );
 
   const handleKeyDown = useCallback<KeyboardEventHandler<HTMLSpanElement>>(
     (event) => {
-      const key = event.key
+      const key = event.key;
 
       // Get current state
-      const currentText = displayValue
-      const selection = window.getSelection()
-      const range = selection?.getRangeAt(0)
+      const currentText = displayValue;
+      const selection = window.getSelection();
+      const range = selection?.getRangeAt(0);
 
       if (!range || !spanRef.current) {
-        return
+        return;
       }
 
       if (!selection) {
-        return
+        return;
       }
-      const { start, end } = getSelectionRange(spanRef.current, selection)
+      const { start, end } = getSelectionRange(spanRef.current, selection);
 
       // Handle special keys
       if ((event.metaKey || event.ctrlKey) && key === "Backspace") {
-        event.preventDefault()
+        event.preventDefault();
         // Remove barrel wheels for all indices being deleted (from 0 to end)
-        const indicesToRemove: number[] = []
+        const indicesToRemove: number[] = [];
         for (let i = 0; i < end; i++) {
-          indicesToRemove.push(i)
+          indicesToRemove.push(i);
         }
-        removeBarrelWheelsAtIndices(indicesToRemove)
-        const newText = currentText.slice(end)
-        updateValue(newText, 0, 0, end)
-        return
+        removeBarrelWheelsAtIndices(indicesToRemove);
+        const newText = currentText.slice(end);
+        updateValue(newText, 0, 0, end);
+        return;
       }
 
       if (event.metaKey || event.ctrlKey) {
         if (["b", "i", "u", "k"].includes(key.toLowerCase())) {
-          event.preventDefault()
-          return
+          event.preventDefault();
+          return;
         }
         // Handle Undo (Cmd+Z / Ctrl+Z)
         if (key.toLowerCase() === "z" && !event.shiftKey) {
-          event.preventDefault()
+          event.preventDefault();
           if (historyIndexRef.current > 0) {
             // Get cursor position from current item BEFORE decrementing
             const cursorPos =
-              historyRef.current[historyIndexRef.current]?.cursorPosBefore ?? 0
-            historyIndexRef.current--
+              historyRef.current[historyIndexRef.current]?.cursorPosBefore ?? 0;
+            historyIndexRef.current--;
             // Restore text from previous item, but use cursor position from current item
-            const prevItem = historyRef.current[historyIndexRef.current]
+            const prevItem = historyRef.current[historyIndexRef.current];
             if (prevItem) {
-              applyHistoryItemWithCursor(prevItem, cursorPos)
+              applyHistoryItemWithCursor(prevItem, cursorPos);
             }
           }
-          return
+          return;
         }
         // Handle Redo (Cmd+Shift+Z / Ctrl+Y or Ctrl+Shift+Z)
         if (
           (key.toLowerCase() === "z" && event.shiftKey) ||
           key.toLowerCase() === "y"
         ) {
-          event.preventDefault()
+          event.preventDefault();
           if (historyIndexRef.current < historyRef.current.length - 1) {
-            historyIndexRef.current++
+            historyIndexRef.current++;
             // For redo, use cursorPosAfter from the item we're restoring to
-            applyHistoryItem(historyRef.current[historyIndexRef.current], false)
+            applyHistoryItem(
+              historyRef.current[historyIndexRef.current],
+              false
+            );
           }
-          return
+          return;
         }
         // Handle Cut (Cmd+X / Ctrl+X)
         if (key.toLowerCase() === "x") {
-          event.preventDefault()
+          event.preventDefault();
           // Copy to clipboard (browser handles this automatically, but we need to handle the deletion)
           if (start !== end) {
-            const selectedText = currentText.slice(start, end)
+            const selectedText = currentText.slice(start, end);
             // Try to copy to clipboard, but don't fail if clipboard API is not available (e.g., in tests)
             if (
               typeof navigator !== "undefined" &&
@@ -1827,13 +1840,14 @@ export const NumberFlowInput = ({
             ) {
               navigator.clipboard.writeText(selectedText).catch(() => {
                 // Fallback if clipboard API fails
-              })
+              });
             }
             // Delete the selected text
-            const newText = currentText.slice(0, start) + currentText.slice(end)
-            updateValue(newText, start, start, end)
+            const newText =
+              currentText.slice(0, start) + currentText.slice(end);
+            updateValue(newText, start, start, end);
           }
-          return
+          return;
         }
       }
 
@@ -1842,116 +1856,116 @@ export const NumberFlowInput = ({
         (event.metaKey || event.ctrlKey || event.altKey) &&
         (key === "ArrowLeft" || key === "ArrowRight")
       ) {
-        event.preventDefault()
+        event.preventDefault();
 
         if (!spanRef.current) {
-          return
+          return;
         }
-        const selection = window.getSelection()
+        const selection = window.getSelection();
         if (!selection) {
-          return
+          return;
         }
 
-        const targetPos = key === "ArrowLeft" ? 0 : currentText.length
+        const targetPos = key === "ArrowLeft" ? 0 : currentText.length;
 
         if (event.shiftKey) {
           // Extend selection to start/end
           // Use the selection's anchor point as the anchor
-          let anchorPos = start
+          let anchorPos = start;
           if (
             selection.anchorNode &&
             spanRef.current.contains(selection.anchorNode)
           ) {
-            const anchorRange = document.createRange()
-            anchorRange.selectNodeContents(spanRef.current)
-            anchorRange.setEnd(selection.anchorNode, selection.anchorOffset)
-            anchorPos = anchorRange.toString().length
+            const anchorRange = document.createRange();
+            anchorRange.selectNodeContents(spanRef.current);
+            anchorRange.setEnd(selection.anchorNode, selection.anchorOffset);
+            anchorPos = anchorRange.toString().length;
           }
 
           // Find both anchor and target nodes/offsets
-          let currentPos = 0
+          let currentPos = 0;
           const walker = document.createTreeWalker(
             spanRef.current,
             NodeFilter.SHOW_TEXT,
             null
-          )
-          let anchorNode: Node | null = null
-          let anchorOffset = 0
-          let targetNode: Node | null = null
-          let targetOffset = 0
+          );
+          let anchorNode: Node | null = null;
+          let anchorOffset = 0;
+          let targetNode: Node | null = null;
+          let targetOffset = 0;
 
-          let node: Node | null
+          let node: Node | null;
           while ((node = walker.nextNode())) {
-            const nodeLength = node.textContent?.length ?? 0
+            const nodeLength = node.textContent?.length ?? 0;
 
             // Find anchor node (selection anchor position)
             if (!anchorNode && currentPos + nodeLength >= anchorPos) {
-              anchorNode = node
-              anchorOffset = anchorPos - currentPos
+              anchorNode = node;
+              anchorOffset = anchorPos - currentPos;
             }
 
             // Find target node
             if (!targetNode && currentPos + nodeLength >= targetPos) {
-              targetNode = node
-              targetOffset = targetPos - currentPos
+              targetNode = node;
+              targetOffset = targetPos - currentPos;
             }
 
             if (anchorNode && targetNode) {
-              break
+              break;
             }
 
-            currentPos += nodeLength
+            currentPos += nodeLength;
           }
 
           if (anchorNode && targetNode) {
-            const range = document.createRange()
+            const range = document.createRange();
 
             // Set range from anchor to target (direction matters for selection direction)
             if (key === "ArrowLeft") {
               // Selecting backwards - anchor stays, extend to start
-              range.setStart(targetNode, targetOffset)
-              range.setEnd(anchorNode, anchorOffset)
+              range.setStart(targetNode, targetOffset);
+              range.setEnd(anchorNode, anchorOffset);
             } else {
               // Selecting forwards - anchor stays, extend to end
-              range.setStart(anchorNode, anchorOffset)
-              range.setEnd(targetNode, targetOffset)
+              range.setStart(anchorNode, anchorOffset);
+              range.setEnd(targetNode, targetOffset);
             }
 
-            selection.removeAllRanges()
-            selection.addRange(range)
+            selection.removeAllRanges();
+            selection.addRange(range);
           }
         } else {
           // Move cursor to start/end
-          let currentPos = 0
+          let currentPos = 0;
           const walker = document.createTreeWalker(
             spanRef.current,
             NodeFilter.SHOW_TEXT,
             null
-          )
-          let node: Node | null
+          );
+          let node: Node | null;
 
           while ((node = walker.nextNode())) {
-            const nodeLength = node.textContent?.length ?? 0
+            const nodeLength = node.textContent?.length ?? 0;
             if (currentPos + nodeLength >= targetPos) {
-              const offset = targetPos - currentPos
-              const range = document.createRange()
-              range.setStart(node, offset)
-              range.collapse(true)
-              selection.removeAllRanges()
-              selection.addRange(range)
-              return
+              const offset = targetPos - currentPos;
+              const range = document.createRange();
+              range.setStart(node, offset);
+              range.collapse(true);
+              selection.removeAllRanges();
+              selection.addRange(range);
+              return;
             }
-            currentPos += nodeLength
+            currentPos += nodeLength;
           }
 
           // Fallback
-          const range = document.createRange()
-          range.selectNodeContents(spanRef.current)
-          range.collapse(key === "ArrowLeft")
-          selection.removeAllRanges()
-          selection.addRange(range)
+          const range = document.createRange();
+          range.selectNodeContents(spanRef.current);
+          range.collapse(key === "ArrowLeft");
+          selection.removeAllRanges();
+          selection.addRange(range);
         }
-        return
+        return;
       }
 
       const allowedKeys = [
@@ -1962,87 +1976,89 @@ export const NumberFlowInput = ({
         "Tab",
         "Home",
         "End",
-      ]
+      ];
       if (allowedKeys.includes(key)) {
         // Handle Backspace and Delete ourselves
         if (key === "Backspace") {
-          event.preventDefault()
+          event.preventDefault();
           if (start === end) {
             // No selection, delete character before cursor
             if (start > 0) {
               // Remove barrel wheel at the position being deleted
-              removeBarrelWheelsAtIndices([start - 1])
+              removeBarrelWheelsAtIndices([start - 1]);
               const newText =
-                currentText.slice(0, start - 1) + currentText.slice(start)
-              updateValue(newText, start - 1, start - 1, start)
+                currentText.slice(0, start - 1) + currentText.slice(start);
+              updateValue(newText, start - 1, start - 1, start);
             }
           } else {
             // Has selection, delete selected text
             // Remove barrel wheels for all indices in the selection range
-            const indicesToRemove: number[] = []
+            const indicesToRemove: number[] = [];
             for (let i = start; i < end; i++) {
-              indicesToRemove.push(i)
+              indicesToRemove.push(i);
             }
-            removeBarrelWheelsAtIndices(indicesToRemove)
-            const newText = currentText.slice(0, start) + currentText.slice(end)
-            updateValue(newText, start, start, end)
+            removeBarrelWheelsAtIndices(indicesToRemove);
+            const newText =
+              currentText.slice(0, start) + currentText.slice(end);
+            updateValue(newText, start, start, end);
           }
-          return
+          return;
         }
 
         if (key === "Delete") {
-          event.preventDefault()
+          event.preventDefault();
           if (start === end) {
             // No selection
             if (event.metaKey || event.ctrlKey) {
               // Ctrl/Cmd+Delete: delete all characters after cursor
               if (start < currentText.length) {
                 // Remove barrel wheels for all indices being deleted
-                const indicesToRemove: number[] = []
+                const indicesToRemove: number[] = [];
                 for (let i = start; i < currentText.length; i++) {
-                  indicesToRemove.push(i)
+                  indicesToRemove.push(i);
                 }
-                removeBarrelWheelsAtIndices(indicesToRemove)
-                const newText = currentText.slice(0, start)
-                updateValue(newText, start, start, currentText.length)
+                removeBarrelWheelsAtIndices(indicesToRemove);
+                const newText = currentText.slice(0, start);
+                updateValue(newText, start, start, currentText.length);
               }
             } else {
               // Delete: delete one character after cursor
               if (start < currentText.length) {
                 // Remove barrel wheel at the position being deleted
-                removeBarrelWheelsAtIndices([start])
+                removeBarrelWheelsAtIndices([start]);
                 const newText =
-                  currentText.slice(0, start) + currentText.slice(start + 1)
-                updateValue(newText, start, start, start + 1)
+                  currentText.slice(0, start) + currentText.slice(start + 1);
+                updateValue(newText, start, start, start + 1);
               }
             }
           } else {
             // Has selection, delete selected text
             // Remove barrel wheels for all indices in the selection range
-            const indicesToRemove: number[] = []
+            const indicesToRemove: number[] = [];
             for (let i = start; i < end; i++) {
-              indicesToRemove.push(i)
+              indicesToRemove.push(i);
             }
-            removeBarrelWheelsAtIndices(indicesToRemove)
-            const newText = currentText.slice(0, start) + currentText.slice(end)
-            updateValue(newText, start, start, end)
+            removeBarrelWheelsAtIndices(indicesToRemove);
+            const newText =
+              currentText.slice(0, start) + currentText.slice(end);
+            updateValue(newText, start, start, end);
           }
-          return
+          return;
         }
 
         // Handle ArrowLeft and ArrowRight to move cursor by one character
         if (key === "ArrowLeft" || key === "ArrowRight") {
-          event.preventDefault()
+          event.preventDefault();
           if (!spanRef.current) {
-            return
+            return;
           }
-          const selection = window.getSelection()
+          const selection = window.getSelection();
           if (!selection) {
-            return
+            return;
           }
 
           // Calculate target position
-          let targetPos: number
+          let targetPos: number;
           if (event.shiftKey) {
             // Extend selection
             // Helper function to get position from node and offset
@@ -2051,107 +2067,107 @@ export const NumberFlowInput = ({
               offset: number
             ): number => {
               if (!node || !spanRef.current?.contains(node)) {
-                return start // Fallback to cursor position
+                return start; // Fallback to cursor position
               }
-              const range = document.createRange()
-              range.setStart(spanRef.current, 0)
-              range.setEnd(node, offset)
-              return range.toString().length
-            }
+              const range = document.createRange();
+              range.setStart(spanRef.current, 0);
+              range.setEnd(node, offset);
+              return range.toString().length;
+            };
 
             // Get anchor and focus positions from Selection API
             let anchorPos = getPositionFromNode(
               selection.anchorNode,
               selection.anchorOffset
-            )
+            );
             let focusPos = getPositionFromNode(
               selection.focusNode,
               selection.focusOffset
-            )
+            );
 
             // If there's no selection (anchor === focus), initialize both to cursor position
             // This happens when starting a new selection
             if (anchorPos === focusPos && start === end) {
-              anchorPos = start
-              focusPos = start
+              anchorPos = start;
+              focusPos = start;
             }
 
             // Extend from focus position (the moving end of selection)
             // Anchor stays fixed, focus moves
             if (key === "ArrowLeft") {
-              targetPos = Math.max(0, focusPos - 1)
+              targetPos = Math.max(0, focusPos - 1);
             } else {
-              targetPos = Math.min(currentText.length, focusPos + 1)
+              targetPos = Math.min(currentText.length, focusPos + 1);
             }
 
             // Find both anchor and target nodes/offsets
-            let currentPos = 0
+            let currentPos = 0;
             const walker = document.createTreeWalker(
               spanRef.current,
               NodeFilter.SHOW_TEXT,
               null
-            )
-            let anchorNode: Node | null = null
-            let targetNode: Node | null = null
-            let targetOffset = 0
+            );
+            let anchorNode: Node | null = null;
+            let targetNode: Node | null = null;
+            let targetOffset = 0;
 
-            let node: Node | null
+            let node: Node | null;
             while ((node = walker.nextNode())) {
-              const nodeLength = node.textContent?.length ?? 0
+              const nodeLength = node.textContent?.length ?? 0;
 
               // Find anchor node
               if (!anchorNode && currentPos + nodeLength >= anchorPos) {
-                anchorNode = node
-                const _anchorOffset = anchorPos - currentPos
+                anchorNode = node;
+                const _anchorOffset = anchorPos - currentPos;
               }
 
               // Find target node
               if (!targetNode && currentPos + nodeLength >= targetPos) {
-                targetNode = node
-                targetOffset = targetPos - currentPos
+                targetNode = node;
+                targetOffset = targetPos - currentPos;
               }
 
               if (anchorNode && targetNode) {
-                break
+                break;
               }
 
-              currentPos += nodeLength
+              currentPos += nodeLength;
             }
 
             if (targetNode) {
               // Use Selection.extend() if available - it keeps anchor fixed and only moves focus
               // This is the proper way to extend selections
               try {
-                selection.extend(targetNode, targetOffset)
+                selection.extend(targetNode, targetOffset);
               } catch {
                 // extend() might not work in all cases, fall back to setting range
                 // Find anchor node for range
-                let anchorNode: Node | null = null
-                let anchorOffset = 0
-                let currentPos = 0
+                let anchorNode: Node | null = null;
+                let anchorOffset = 0;
+                let currentPos = 0;
                 const walker = document.createTreeWalker(
                   spanRef.current,
                   NodeFilter.SHOW_TEXT,
                   null
-                )
-                let node: Node | null
+                );
+                let node: Node | null;
                 while ((node = walker.nextNode())) {
-                  const nodeLength = node.textContent?.length ?? 0
+                  const nodeLength = node.textContent?.length ?? 0;
                   if (!anchorNode && currentPos + nodeLength >= anchorPos) {
-                    anchorNode = node
-                    anchorOffset = anchorPos - currentPos
-                    break
+                    anchorNode = node;
+                    anchorOffset = anchorPos - currentPos;
+                    break;
                   }
-                  currentPos += nodeLength
+                  currentPos += nodeLength;
                 }
 
                 if (anchorNode) {
-                  const range = document.createRange()
+                  const range = document.createRange();
                   // Set range with anchor at start, new focus at end
-                  range.setStart(anchorNode, anchorOffset)
-                  range.setEnd(targetNode, targetOffset)
-                  selection.removeAllRanges()
-                  selection.addRange(range)
+                  range.setStart(anchorNode, anchorOffset);
+                  range.setEnd(targetNode, targetOffset);
+                  selection.removeAllRanges();
+                  selection.addRange(range);
                 }
               }
             }
@@ -2162,86 +2178,86 @@ export const NumberFlowInput = ({
             if (start !== end) {
               // There's a selection - move to start or end based on arrow direction
               if (key === "ArrowLeft") {
-                targetPos = start
+                targetPos = start;
               } else {
-                targetPos = end
+                targetPos = end;
               }
             } else {
               // No selection - move cursor by one character
               if (key === "ArrowLeft") {
-                targetPos = Math.max(0, start - 1)
+                targetPos = Math.max(0, start - 1);
               } else {
-                targetPos = Math.min(currentText.length, start + 1)
+                targetPos = Math.min(currentText.length, start + 1);
               }
             }
 
             // Find target node
-            let currentPos = 0
+            let currentPos = 0;
             const walker = document.createTreeWalker(
               spanRef.current,
               NodeFilter.SHOW_TEXT,
               null
-            )
-            let node: Node | null
+            );
+            let node: Node | null;
 
             while ((node = walker.nextNode())) {
-              const nodeLength = node.textContent?.length ?? 0
+              const nodeLength = node.textContent?.length ?? 0;
               if (currentPos + nodeLength >= targetPos) {
-                const offset = targetPos - currentPos
-                const range = document.createRange()
-                range.setStart(node, offset)
-                range.collapse(true)
-                selection.removeAllRanges()
-                selection.addRange(range)
-                return
+                const offset = targetPos - currentPos;
+                const range = document.createRange();
+                range.setStart(node, offset);
+                range.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(range);
+                return;
               }
-              currentPos += nodeLength
+              currentPos += nodeLength;
             }
 
             // Fallback
-            const range = document.createRange()
-            range.selectNodeContents(spanRef.current)
-            range.collapse(key === "ArrowLeft")
-            selection.removeAllRanges()
-            selection.addRange(range)
+            const range = document.createRange();
+            range.selectNodeContents(spanRef.current);
+            range.collapse(key === "ArrowLeft");
+            selection.removeAllRanges();
+            selection.addRange(range);
           }
-          return
+          return;
         }
 
         // Allow other navigation keys
-        return
+        return;
       }
 
       if (event.ctrlKey || event.metaKey) {
-        return
+        return;
       }
 
       // Handle character input
       if (/^\d$/.test(key)) {
         // Prevent typing digit when cursor is at position 0 and text starts with "-"
         if (currentText.startsWith("-") && start === 0 && end === 0) {
-          event.preventDefault()
-          return
+          event.preventDefault();
+          return;
         }
 
         // Prevent adding 0 when there's already a leading 0 and cursor is before/after it
         // Also prevent adding 0 at the beginning of a number (would create leading zero)
         if (key === "0") {
-          let shouldPrevent = false
-          let restorePos = start
+          let shouldPrevent = false;
+          let restorePos = start;
 
           // Check if text starts with "0" (including "0.")
           if (currentText.startsWith("0") && currentText.length > 0) {
             // Cursor is at position 0 (before the 0) - prevent typing another 0
             if (start === 0) {
-              shouldPrevent = true
-              restorePos = start
+              shouldPrevent = true;
+              restorePos = start;
             }
             // Cursor is at position 1 (right after the 0) - prevent typing another 0
             // This applies even if followed by "." (e.g., "0.1121" should not become "00.1121")
             else if (start === 1 && end === 1) {
-              shouldPrevent = true
-              restorePos = start
+              shouldPrevent = true;
+              restorePos = start;
             }
           }
           // Check if text starts with "-0" (including "-0.")
@@ -2249,13 +2265,13 @@ export const NumberFlowInput = ({
             // Cursor is at position 1 (right after "-") or 2 (right after "-0")
             // Prevent typing 0 at position 1 if we already have "-0" (whether followed by "." or not)
             if (start === 1) {
-              shouldPrevent = true
-              restorePos = start
+              shouldPrevent = true;
+              restorePos = start;
             } else if (start === 2 && end === 2) {
               // Also prevent at position 2 (even if followed by ".")
               // This applies even if followed by "." (e.g., "-0.1121" should not become "-00.1121")
-              shouldPrevent = true
-              restorePos = start
+              shouldPrevent = true;
+              restorePos = start;
             }
           }
           // Prevent adding 0 at the beginning of a number (would create leading zero like "012")
@@ -2269,8 +2285,8 @@ export const NumberFlowInput = ({
           ) {
             // Typing 0 at position 0 of a number like "12" would create "012" which gets cleaned to "12"
             // So we should prevent it (unless text starts with ".")
-            shouldPrevent = true
-            restorePos = start
+            shouldPrevent = true;
+            restorePos = start;
           }
           // Prevent adding 0 after minus in negative number (would create leading zero like "-012")
           // BUT allow it when the next character is "." (e.g., "-.1121" -> "-0.1121")
@@ -2283,122 +2299,125 @@ export const NumberFlowInput = ({
           ) {
             // Typing 0 at position 1 after "-" in a number like "-12" would create "-012" which gets cleaned to "-12"
             // So we should prevent it (unless the next character is ".")
-            shouldPrevent = true
-            restorePos = start
+            shouldPrevent = true;
+            restorePos = start;
           }
 
           if (shouldPrevent) {
-            event.preventDefault()
-            event.stopPropagation()
+            event.preventDefault();
+            event.stopPropagation();
             // Mark that we should prevent the next input event
-            shouldPreventInputRef.current = true
-            preventInputCursorPosRef.current = restorePos
+            shouldPreventInputRef.current = true;
+            preventInputCursorPosRef.current = restorePos;
 
             // Restore cursor to original position - use both immediate and deferred restoration
             // to catch any browser default behavior
             if (spanRef.current) {
               const restoreCursor = () => {
                 if (!spanRef.current) {
-                  return
+                  return;
                 }
-                const selection = window.getSelection()
+                const selection = window.getSelection();
                 if (!selection) {
-                  return
+                  return;
                 }
 
-                let currentPos = 0
+                let currentPos = 0;
                 const walker = document.createTreeWalker(
                   spanRef.current,
                   NodeFilter.SHOW_TEXT,
                   null
-                )
-                let node: Node | null
+                );
+                let node: Node | null;
 
                 while ((node = walker.nextNode())) {
-                  const nodeLength = node.textContent?.length ?? 0
+                  const nodeLength = node.textContent?.length ?? 0;
                   if (currentPos + nodeLength >= restorePos) {
-                    const offset = Math.min(restorePos - currentPos, nodeLength)
-                    const range = document.createRange()
-                    range.setStart(node, offset)
-                    range.collapse(true)
-                    selection.removeAllRanges()
-                    selection.addRange(range)
-                    return
+                    const offset = Math.min(
+                      restorePos - currentPos,
+                      nodeLength
+                    );
+                    const range = document.createRange();
+                    range.setStart(node, offset);
+                    range.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    return;
                   }
-                  currentPos += nodeLength
+                  currentPos += nodeLength;
                 }
 
                 // Fallback
-                const range = document.createRange()
-                range.selectNodeContents(spanRef.current)
-                range.collapse(true)
-                selection.removeAllRanges()
-                selection.addRange(range)
-              }
+                const range = document.createRange();
+                range.selectNodeContents(spanRef.current);
+                range.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(range);
+              };
 
               // Try immediately
-              restoreCursor()
+              restoreCursor();
 
               // Also try after a microtask to catch any delayed browser behavior
-              Promise.resolve().then(restoreCursor)
+              Promise.resolve().then(restoreCursor);
 
               // And after a short timeout as a final safeguard
-              setTimeout(restoreCursor, 0)
-              requestAnimationFrame(restoreCursor)
+              setTimeout(restoreCursor, 0);
+              requestAnimationFrame(restoreCursor);
             }
-            return
+            return;
           }
         }
 
-        event.preventDefault()
+        event.preventDefault();
         // Check maxLength before inserting
-        const newLength = currentText.length - (end - start) + 1
+        const newLength = currentText.length - (end - start) + 1;
         if (maxLength !== undefined && newLength > maxLength) {
-          return
+          return;
         }
         const newText =
-          currentText.slice(0, start) + key + currentText.slice(end)
-        updateValue(newText, start + 1, start, end)
-        return
+          currentText.slice(0, start) + key + currentText.slice(end);
+        updateValue(newText, start + 1, start, end);
+        return;
       }
 
       // Prevent default for other character inputs
-      event.preventDefault()
+      event.preventDefault();
 
       if (key === ".") {
         // Only allow one decimal point
         if (!currentText.includes(".")) {
           // Prevent typing "." when cursor is at position 0 and text starts with "-"
           if (currentText.startsWith("-") && start === 0 && end === 0) {
-            return
+            return;
           }
           // Check maxLength before inserting
-          const newLength = currentText.length - (end - start) + 1
+          const newLength = currentText.length - (end - start) + 1;
           if (maxLength !== undefined && newLength > maxLength) {
-            return
+            return;
           }
           const newText =
-            currentText.slice(0, start) + key + currentText.slice(end)
-          updateValue(newText, start + 1, start, end)
+            currentText.slice(0, start) + key + currentText.slice(end);
+          updateValue(newText, start + 1, start, end);
         }
-        return
+        return;
       }
 
       if (key === "-") {
         // Only allow minus at the beginning, and only if there isn't already one
-        const hasMinus = currentText.startsWith("-")
+        const hasMinus = currentText.startsWith("-");
         if (start === 0 && !hasMinus) {
           // Check maxLength before inserting
-          const newLength = currentText.length - (end - start) + 1
+          const newLength = currentText.length - (end - start) + 1;
           if (maxLength !== undefined && newLength > maxLength) {
-            return
+            return;
           }
           // Insert minus at the beginning (can replace selection)
-          const newText = key + currentText.slice(end)
-          updateValue(newText, start + 1, start, end)
+          const newText = key + currentText.slice(end);
+          updateValue(newText, start + 1, start, end);
         }
         // If there's already a minus, ignore the input (don't toggle or insert)
-        return
+        return;
       }
     },
     [
@@ -2409,132 +2428,132 @@ export const NumberFlowInput = ({
       applyHistoryItemWithCursor,
       maxLength,
     ]
-  )
+  );
 
   const handleCopy = useCallback<ClipboardEventHandler<HTMLSpanElement>>(
     (event) => {
-      const selection = window.getSelection()
-      const range = selection?.getRangeAt(0)
+      const selection = window.getSelection();
+      const range = selection?.getRangeAt(0);
       if (!range || !spanRef.current) {
-        return
+        return;
       }
 
       if (!selection) {
-        return
+        return;
       }
-      const { start, end } = getSelectionRange(spanRef.current, selection)
+      const { start, end } = getSelectionRange(spanRef.current, selection);
       if (start === end) {
-        return
+        return;
       }
 
-      const selectedText = displayValue.slice(start, end)
-      event.clipboardData.setData("text/plain", selectedText)
-      event.preventDefault()
+      const selectedText = displayValue.slice(start, end);
+      event.clipboardData.setData("text/plain", selectedText);
+      event.preventDefault();
     },
     [displayValue]
-  )
+  );
 
   const handleCut = useCallback<ClipboardEventHandler<HTMLSpanElement>>(
     (event) => {
-      const selection = window.getSelection()
-      const range = selection?.getRangeAt(0)
+      const selection = window.getSelection();
+      const range = selection?.getRangeAt(0);
       if (!range || !spanRef.current) {
-        return
+        return;
       }
 
       if (!selection) {
-        return
+        return;
       }
-      const { start, end } = getSelectionRange(spanRef.current, selection)
+      const { start, end } = getSelectionRange(spanRef.current, selection);
       if (start === end) {
-        return
+        return;
       }
 
-      const selectedText = displayValue.slice(start, end)
-      event.clipboardData.setData("text/plain", selectedText)
+      const selectedText = displayValue.slice(start, end);
+      event.clipboardData.setData("text/plain", selectedText);
 
-      const newText = displayValue.slice(0, start) + displayValue.slice(end)
+      const newText = displayValue.slice(0, start) + displayValue.slice(end);
       setTimeout(() => {
-        updateValue(newText, start, start, end)
-      }, 0)
+        updateValue(newText, start, start, end);
+      }, 0);
     },
     [displayValue, updateValue]
-  )
+  );
 
   const handleBeforeInput = useCallback<
     CompositionEventHandler<HTMLSpanElement>
   >((event) => {
     if (shouldPreventInputRef.current) {
-      event.preventDefault()
-      const restorePos = preventInputCursorPosRef.current
-      shouldPreventInputRef.current = false
+      event.preventDefault();
+      const restorePos = preventInputCursorPosRef.current;
+      shouldPreventInputRef.current = false;
 
       const restoreCursor = () => {
         if (spanRef.current) {
-          setCursorPositionInElement(spanRef.current, restorePos)
+          setCursorPositionInElement(spanRef.current, restorePos);
         }
-      }
+      };
 
-      restoreCursor()
-      Promise.resolve().then(restoreCursor)
-      setTimeout(restoreCursor, 0)
-      requestAnimationFrame(restoreCursor)
+      restoreCursor();
+      Promise.resolve().then(restoreCursor);
+      setTimeout(restoreCursor, 0);
+      requestAnimationFrame(restoreCursor);
     }
-  }, [])
+  }, []);
 
   const handleInput = useCallback(() => {
     // Reset the prevent flag after input is processed
     if (shouldPreventInputRef.current) {
-      shouldPreventInputRef.current = false
+      shouldPreventInputRef.current = false;
     }
-  }, [])
+  }, []);
 
   const handlePaste = useCallback<ClipboardEventHandler<HTMLSpanElement>>(
     (event) => {
-      event.preventDefault()
-      let pastedText = event.clipboardData.getData("text")
+      event.preventDefault();
+      let pastedText = event.clipboardData.getData("text");
 
       if (!/^-?\d*\.?\d*$/.test(pastedText)) {
-        return
+        return;
       }
 
-      const selection = window.getSelection()
-      const range = selection?.getRangeAt(0)
+      const selection = window.getSelection();
+      const range = selection?.getRangeAt(0);
       if (!range || !spanRef.current) {
-        return
+        return;
       }
 
       if (!selection) {
-        return
+        return;
       }
-      const { start, end } = getSelectionRange(spanRef.current, selection)
+      const { start, end } = getSelectionRange(spanRef.current, selection);
 
       // Truncate pasted text if it would exceed maxLength
       if (maxLength !== undefined) {
         const availableLength =
-          maxLength - (displayValue.length - (end - start))
+          maxLength - (displayValue.length - (end - start));
         if (availableLength <= 0) {
-          return
+          return;
         }
         if (pastedText.length > availableLength) {
-          pastedText = pastedText.slice(0, availableLength)
+          pastedText = pastedText.slice(0, availableLength);
         }
       }
 
       const newText =
-        displayValue.slice(0, start) + pastedText + displayValue.slice(end)
+        displayValue.slice(0, start) + pastedText + displayValue.slice(end);
 
       if (/^-?\d*\.?\d*$/.test(newText)) {
-        updateValue(newText, start + pastedText.length, start, end)
+        updateValue(newText, start + pastedText.length, start, end);
       }
     },
     [displayValue, updateValue, maxLength]
-  )
+  );
 
   useEffect(() => {
-    const span = spanRef.current
-    span?.focus()
-  }, [])
+    const span = spanRef.current;
+    span?.focus();
+  }, []);
 
   return (
     <>
@@ -2591,5 +2610,5 @@ export const NumberFlowInput = ({
         </span>
       </span>
     </>
-  )
-}
+  );
+};

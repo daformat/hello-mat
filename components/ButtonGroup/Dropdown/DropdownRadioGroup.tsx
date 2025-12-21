@@ -1,3 +1,3 @@
-import { DropdownMenu as DropdownPrimitive } from "radix-ui"
+import { DropdownMenu as DropdownPrimitive } from "radix-ui";
 
-export const DropdownRadioGroup = DropdownPrimitive.RadioGroup
+export const DropdownRadioGroup = DropdownPrimitive.RadioGroup;

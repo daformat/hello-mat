@@ -1,5 +1,6 @@
-import styles from "./svg.module.scss"
-import { SVGProps } from "react"
+import { SVGProps } from "react";
+
+import styles from "./svg.module.scss";
 
 export default function SvgPlaceholderSoundCloud({
   className,
@@ -29,5 +30,5 @@ export default function SvgPlaceholderSoundCloud({
       <path d="M4.5 19V23" stroke="currentColor" strokeLinecap="round" />
       <path d="M2.5 20V22" stroke="currentColor" strokeLinecap="round" />
     </svg>
-  )
+  );
 }

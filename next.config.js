@@ -7,6 +7,6 @@ const nextConfig = {
     defaultLocale: "en",
   },
   reactStrictMode: true,
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

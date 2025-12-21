@@ -1,17 +1,18 @@
-import { TableOfContents } from "@/components/TableOfContents/TocComponent"
-import { useEffect, useRef } from "react"
-import { NextCard } from "@/components/Navigation/NextCard"
-import Link from "next/link"
-import { PageMetas } from "@/components/PageMetas/PageMetas"
-import { RollingStackedCards } from "@/components/RollingStackedCards/RollingStackedCards"
-import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer"
+import Link from "next/link";
+import { useEffect, useRef } from "react";
+
+import { NextCard } from "@/components/Navigation/NextCard";
+import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { RollingStackedCards } from "@/components/RollingStackedCards/RollingStackedCards";
+import { TableOfContents } from "@/components/TableOfContents/TocComponent";
+import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer";
 import {
   COMPONENTS,
   getNextComponent,
-} from "@/constants/design-engineering/components"
+} from "@/constants/design-engineering/components";
 
 const StackingCardsPage = () => {
-  const component = COMPONENTS["stacking-cards"]
+  const component = COMPONENTS["stacking-cards"];
   return (
     <>
       <PageMetas {...component.metas} />
@@ -19,19 +20,19 @@ const StackingCardsPage = () => {
         <StackingCardsPageContent />
       </TableOfContents.Provider>
     </>
-  )
-}
+  );
+};
 
 const StackingCardsPageContent = () => {
-  const nextComponent = getNextComponent("stacking-cards")
-  const tocContext = TableOfContents.useToc()
-  const contentRef = useRef<HTMLDivElement>(null)
+  const nextComponent = getNextComponent("stacking-cards");
+  const tocContext = TableOfContents.useToc();
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (contentRef.current) {
-      tocContext.setRootElement(contentRef.current)
+      tocContext.setRootElement(contentRef.current);
     }
-  })
+  });
 
   const cardsSources = [
     { dark: "/media/hello-mat-dark.png", light: "/media/hello-mat-light.png" },
@@ -61,7 +62,7 @@ const StackingCardsPageContent = () => {
       dark: "/media/design-engineering/carousel/og-carousel-dark.png",
       light: "/media/design-engineering/carousel/og-carousel-light.png",
     },
-  ] as const
+  ] as const;
 
   const cards = cardsSources.map(({ light, dark }, index) => (
     <picture
@@ -72,7 +73,7 @@ const StackingCardsPageContent = () => {
       <source media="(prefers-color-scheme: dark)" srcSet={dark} />
       <img src={light} alt="" style={{ aspectRatio: "1200 / 630" }} />
     </picture>
-  ))
+  ));
 
   return (
     <>
@@ -192,7 +193,7 @@ const StackingCardsPageContent = () => {
         </NextCard>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default StackingCardsPage
+export default StackingCardsPage;

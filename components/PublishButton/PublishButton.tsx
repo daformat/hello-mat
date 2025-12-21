@@ -1,7 +1,3 @@
-import { TbShare2 } from "react-icons/tb"
-import { HiLink } from "react-icons/hi"
-import { IoChevronDownOutline } from "react-icons/io5"
-
 import {
   ComponentProps,
   createContext,
@@ -14,23 +10,26 @@ import {
   useEffect,
   useRef,
   useState,
-} from "react"
+} from "react";
+import { HiLink } from "react-icons/hi";
+import { IoChevronDownOutline } from "react-icons/io5";
+import { TbShare2 } from "react-icons/tb";
 
-import { Dropdown } from "@/components/ButtonGroup/Dropdown/Dropdown"
-import { DropdownItem } from "@/components/ButtonGroup/Dropdown/DropdownItem"
-import { DropdownSeparator } from "@/components/ButtonGroup/Dropdown/DropdownSeparator"
-import { MaybeNull, MaybeUndefined } from "@/components/Media/utils/maybe"
-import { ButtonReveal } from "@/components/PublishButton/ButtonReveal"
+import { Dropdown } from "@/components/ButtonGroup/Dropdown/Dropdown";
+import { DropdownItem } from "@/components/ButtonGroup/Dropdown/DropdownItem";
+import { DropdownSeparator } from "@/components/ButtonGroup/Dropdown/DropdownSeparator";
+import { MaybeNull, MaybeUndefined } from "@/components/Media/utils/maybe";
+import { ButtonReveal } from "@/components/PublishButton/ButtonReveal";
 
-import styles from "./ButtonReveal.module.scss"
+import styles from "./ButtonReveal.module.scss";
 
 const PublishContext = createContext<{
-  published: boolean
-  setPublished: Dispatch<SetStateAction<boolean>>
-}>({ published: false, setPublished: () => undefined })
+  published: boolean;
+  setPublished: Dispatch<SetStateAction<boolean>>;
+}>({ published: false, setPublished: () => undefined });
 
 export const PublishSplitButton = ({ speed }: { speed?: number }) => {
-  const [published, setPublished] = useState(false)
+  const [published, setPublished] = useState(false);
 
   return (
     <PublishContext.Provider value={{ published, setPublished }}>
@@ -50,25 +49,25 @@ export const PublishSplitButton = ({ speed }: { speed?: number }) => {
         <PublishDropdown speed={speed} />
       </div>
     </PublishContext.Provider>
-  )
-}
+  );
+};
 
 const PublishDropdown = ({
   className,
   speed,
   ...props
 }: ComponentProps<"button"> & { speed?: number }) => {
-  const wrapperRef = useRef<HTMLSpanElement>(null)
-  const buttonRef = useRef<HTMLButtonElement>(null)
-  const { published } = useContext(PublishContext)
+  const wrapperRef = useRef<HTMLSpanElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const { published } = useContext(PublishContext);
 
   useEffect(() => {
-    const wrapper = wrapperRef.current
-    const button = buttonRef.current
+    const wrapper = wrapperRef.current;
+    const button = buttonRef.current;
     if (wrapper && button) {
-      wrapper.style.setProperty("--width", `${button.offsetWidth + 1}px`)
+      wrapper.style.setProperty("--width", `${button.offsetWidth + 1}px`);
     }
-  }, [])
+  }, []);
 
   const button = (
     <button
@@ -86,7 +85,7 @@ const PublishDropdown = ({
     >
       <IoChevronDownOutline />
     </button>
-  )
+  );
 
   return (
     <span
@@ -121,90 +120,90 @@ const PublishDropdown = ({
         button
       )}
     </span>
-  )
-}
+  );
+};
 
 const PublishButton = ({
   className,
   speed,
 }: {
-  className?: string
-  speed?: number
+  className?: string;
+  speed?: number;
 }) => {
-  const { published, setPublished } = useContext(PublishContext)
+  const { published, setPublished } = useContext(PublishContext);
   const [buttonContent, setButtonContent] = useState<{
-    icon: ReactNode
-    message: string
-  }>({ icon: <TbShare2 />, message: "Publish…" })
-  const timeoutRef = useRef<MaybeNull<ReturnType<typeof setTimeout>>>(null)
+    icon: ReactNode;
+    message: string;
+  }>({ icon: <TbShare2 />, message: "Publish…" });
+  const timeoutRef = useRef<MaybeNull<ReturnType<typeof setTimeout>>>(null);
   const feedbackTimeoutRef =
-    useRef<MaybeNull<ReturnType<typeof setTimeout>>>(null)
+    useRef<MaybeNull<ReturnType<typeof setTimeout>>>(null);
 
   const handleTogglePublish = useCallback(() => {
-    const timeout = timeoutRef.current
+    const timeout = timeoutRef.current;
     if (!timeout) {
-      let published: MaybeUndefined<boolean>
+      let published: MaybeUndefined<boolean>;
       setPublished((prev) => {
-        published = prev
-        return prev
-      })
+        published = prev;
+        return prev;
+      });
       setButtonContent({
         icon: published ? <HiLink /> : <TbShare2 />,
         message: published ? "Unpublishing…" : "Publishing…",
-      })
+      });
       timeoutRef.current = setTimeout(() => {
-        timeoutRef.current = null
+        timeoutRef.current = null;
         if (feedbackTimeoutRef.current) {
-          clearTimeout(feedbackTimeoutRef.current)
+          clearTimeout(feedbackTimeoutRef.current);
         }
         if (Math.random() <= 0.75) {
-          let published: MaybeUndefined<boolean>
+          let published: MaybeUndefined<boolean>;
           setPublished((prev) => {
-            published = !prev
-            return published
-          })
+            published = !prev;
+            return published;
+          });
           setButtonContent({
             icon: <IconCheckmark />,
             message: published ? "Published!" : "Unpublished!",
-          })
+          });
         } else {
           setButtonContent({
             icon: <IconError />,
             message: published ? "Failed to publish" : "Failed to unpublish",
-          })
+          });
         }
         feedbackTimeoutRef.current = setTimeout(() => {
-          feedbackTimeoutRef.current = null
-          let published: MaybeUndefined<boolean>
+          feedbackTimeoutRef.current = null;
+          let published: MaybeUndefined<boolean>;
           setPublished((prev) => {
-            published = prev
-            return prev
-          })
+            published = prev;
+            return prev;
+          });
           setButtonContent(
             published
               ? { icon: <HiLink />, message: "Unpublish…" }
               : { icon: <TbShare2 />, message: "Publish…" }
-          )
-        }, 2_000)
-      }, Math.random() * 2_000 + 1_500)
+          );
+        }, 2_000);
+      }, Math.random() * 2_000 + 1_500);
     }
-  }, [setPublished])
+  }, [setPublished]);
 
   const handleEnter = () => {
     if (feedbackTimeoutRef.current) {
-      clearTimeout(feedbackTimeoutRef.current)
+      clearTimeout(feedbackTimeoutRef.current);
       feedbackTimeoutRef.current = setTimeout(() => {
         setPublished((published) => {
           setButtonContent(
             published
               ? { icon: <HiLink />, message: "Unpublish…" }
               : { icon: <TbShare2 />, message: "Publish…" }
-          )
-          return published
-        })
-      }, 1_500)
+          );
+          return published;
+        });
+      }, 1_500);
     }
-  }
+  };
 
   return (
     <ButtonReveal
@@ -220,8 +219,8 @@ const PublishButton = ({
         borderRadius: published ? "6px 0 0 6px" : "6px",
       }}
     />
-  )
-}
+  );
+};
 
 const IconCheckmark = () => {
   return (
@@ -246,8 +245,8 @@ const IconCheckmark = () => {
         }}
       />
     </svg>
-  )
-}
+  );
+};
 
 const IconError = () => {
   return (
@@ -282,5 +281,5 @@ const IconError = () => {
         }}
       />
     </svg>
-  )
-}
+  );
+};

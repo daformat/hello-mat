@@ -1,7 +1,7 @@
-import React from "react"
-import { MenuLabel } from "../Menu/MenuLabel"
+import { DropdownMenu as DropdownPrimitive } from "radix-ui";
+import React from "react";
 
-import { DropdownMenu as DropdownPrimitive } from "radix-ui"
+import { MenuLabel } from "../Menu/MenuLabel";
 
 export const DropdownLabel = React.forwardRef<
   HTMLDivElement,
@@ -11,7 +11,7 @@ export const DropdownLabel = React.forwardRef<
     <DropdownPrimitive.Label asChild {...props}>
       <MenuLabel ref={ref}>{children}</MenuLabel>
     </DropdownPrimitive.Label>
-  )
-})
+  );
+});
 
-DropdownLabel.displayName = "DropdownLabel"
+DropdownLabel.displayName = "DropdownLabel";

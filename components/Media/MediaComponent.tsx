@@ -1,5 +1,3 @@
-import { OEmbed, ResizeType } from "./EmbedResult"
-import { EMBED_PROVIDERS } from "./EmbedProvider"
 import {
   CSSProperties,
   PropsWithChildren,
@@ -10,44 +8,46 @@ import {
   useMemo,
   useRef,
   useState,
-} from "react"
+} from "react";
 
-import { MediaType } from "@/components/Media/MediaType"
-import SvgPlaceholderDefault from "@/components/Media/Placeholder/SvgPlaceholderDefault"
-import { MaybeUndefined } from "@/components/Media/utils/maybe"
-import SvgPlaceholderError from "@/components/Media/Placeholder/SvgError"
-import { MediaToggle } from "@/components/Media/MediaToggle"
-import SvgPlaceholderImage from "@/components/Media/Placeholder/SvgPlaceholderImage"
-import { MediaSource } from "@/components/Media/MediaSource"
+import { MediaSource } from "@/components/Media/MediaSource";
+import { MediaToggle } from "@/components/Media/MediaToggle";
+import { MediaType } from "@/components/Media/MediaType";
+import SvgPlaceholderError from "@/components/Media/Placeholder/SvgError";
+import SvgPlaceholderDefault from "@/components/Media/Placeholder/SvgPlaceholderDefault";
+import SvgPlaceholderImage from "@/components/Media/Placeholder/SvgPlaceholderImage";
+import { MaybeUndefined } from "@/components/Media/utils/maybe";
 
-import styles from "./MediaComponent.module.scss"
+import { EMBED_PROVIDERS } from "./EmbedProvider";
+import { OEmbed, ResizeType } from "./EmbedResult";
+import styles from "./MediaComponent.module.scss";
 
 export type SizeInfo = {
-  width?: number
-  height?: number
-  minWidth?: number
-  minHeight?: number
-  maxWidth?: number
-  maxHeight?: number
-}
+  width?: number;
+  height?: number;
+  minWidth?: number;
+  minHeight?: number;
+  maxWidth?: number;
+  maxHeight?: number;
+};
 
 export type MediaComponentProps = PropsWithChildren<{
-  error?: Error
-  icon: string
-  open?: boolean
-  variant: MediaType
-  title?: string
-  source: string
-  minWidth?: number
-  minHeight?: number
-  maxWidth?: number
-  maxHeight?: number
-  keepAspectRatio?: boolean
-  responsive?: ResizeType
-  placeholder?: ReactNode
-  sizeInfo?: SizeInfo
-  speed?: number
-}>
+  error?: Error;
+  icon: string;
+  open?: boolean;
+  variant: MediaType;
+  title?: string;
+  source: string;
+  minWidth?: number;
+  minHeight?: number;
+  maxWidth?: number;
+  maxHeight?: number;
+  keepAspectRatio?: boolean;
+  responsive?: ResizeType;
+  placeholder?: ReactNode;
+  sizeInfo?: SizeInfo;
+  speed?: number;
+}>;
 
 export const Media = ({
   error,
@@ -63,58 +63,58 @@ export const Media = ({
   sizeInfo,
   speed = 1,
 }: MediaComponentProps) => {
-  const [loading, setLoading] = useState(true)
-  const [loadingError, setLoadingError] = useState(false)
+  const [loading, setLoading] = useState(true);
+  const [loadingError, setLoadingError] = useState(false);
   const [size, setSize] =
     useState<
       MaybeUndefined<{ width: number; height: number; aspectRatio: number }>
-    >(undefined)
-  const [collapsed, setCollapsed] = useState(!open)
-  const mediaComponentRef = useRef<HTMLDivElement>(null)
-  const mediaContentWrapperRef = useRef<HTMLDivElement>(null)
-  const mediaContentRef = useRef<HTMLDivElement>(null)
-  const collapsedContentRef = useRef<HTMLDivElement>(null)
-  const startTimeRef = useRef<number>(Date.now())
+    >(undefined);
+  const [collapsed, setCollapsed] = useState(!open);
+  const mediaComponentRef = useRef<HTMLDivElement>(null);
+  const mediaContentWrapperRef = useRef<HTMLDivElement>(null);
+  const mediaContentRef = useRef<HTMLDivElement>(null);
+  const collapsedContentRef = useRef<HTMLDivElement>(null);
+  const startTimeRef = useRef<number>(Date.now());
 
   const handleLoad = useCallback<ReactEventHandler<HTMLDivElement>>(
     (event) => {
-      const target = event.target
+      const target = event.target;
       if (target instanceof HTMLElement) {
-        const tag = target.tagName.toLowerCase()
+        const tag = target.tagName.toLowerCase();
         if (["iframe", "img"].includes(tag)) {
           // handle speed slowdown
-          const loadingTime = Date.now() - startTimeRef.current
+          const loadingTime = Date.now() - startTimeRef.current;
           const timeout = Math.max(
             loadingTime / (loadingTime < 5_000 ? speed : 1),
             3_000
-          )
+          );
           // we want to make sure a resize can happen before loading is set to false
           setTimeout(
             () => {
-              setLoading(false)
+              setLoading(false);
             },
             speed <= 1 ? timeout : 0
-          )
+          );
         }
       }
     },
     [speed]
-  )
+  );
 
   // Reset timer when source changes
   useEffect(() => {
-    startTimeRef.current = Date.now()
-  }, [source])
+    startTimeRef.current = Date.now();
+  }, [source]);
 
   // Listen to resize events for the media content
   useEffect(() => {
-    const mediaComponent = mediaComponentRef.current
-    const mediaContentWrapper = mediaContentWrapperRef.current
-    const mediaContent = mediaContentRef.current
+    const mediaComponent = mediaComponentRef.current;
+    const mediaContentWrapper = mediaContentWrapperRef.current;
+    const mediaContent = mediaContentRef.current;
     const provider = EMBED_PROVIDERS.find((provider) =>
       provider.regexp.test(source)
-    )
-    const isResizingDynamically = provider?.isResizingDynamically
+    );
+    const isResizingDynamically = provider?.isResizingDynamically;
     if (
       mediaComponent &&
       mediaContentWrapper &&
@@ -124,19 +124,19 @@ export const Media = ({
       const observer = new ResizeObserver(() => {
         // we use offsetWidth and offsetHeight instead of contentRect to
         // get the non-transformed dimensions
-        const width = mediaContent.offsetWidth
-        const height = mediaContent.offsetHeight
+        const width = mediaContent.offsetWidth;
+        const height = mediaContent.offsetHeight;
         if (
           width &&
           height > 20 &&
           (size?.width !== width || size?.height !== height)
         ) {
-          const aspectRatio = width / height
-          setSize({ width, height, aspectRatio })
+          const aspectRatio = width / height;
+          setSize({ width, height, aspectRatio });
           if (!provider || !isResizingDynamically) {
-            observer.disconnect()
+            observer.disconnect();
           } else {
-            const transitions = mediaContentWrapper.getAnimations()
+            const transitions = mediaContentWrapper.getAnimations();
             if (
               size &&
               isResizingDynamically &&
@@ -144,136 +144,136 @@ export const Media = ({
               (size.width !== width || size.height !== height)
             ) {
               // re-resizing should be instant in the case of dynamic resizing
-              mediaContentWrapper.style.transition = "none"
+              mediaContentWrapper.style.transition = "none";
               mediaComponent.style.setProperty(
                 "--media-natural-width",
                 `${width}px`
-              )
+              );
               mediaComponent.style.setProperty(
                 "--media-natural-height",
                 `${height}px`
-              )
+              );
               mediaComponent.style.setProperty(
                 "--media-natural-aspect-ratio",
                 `${aspectRatio}`
-              )
-              setTimeout(() => (mediaContentWrapper.style.transition = ""))
+              );
+              setTimeout(() => (mediaContentWrapper.style.transition = ""));
             }
           }
         }
-      })
-      observer.observe(mediaContent)
-      return () => observer.disconnect()
+      });
+      observer.observe(mediaContent);
+      return () => observer.disconnect();
     }
-  }, [size, source])
+  }, [size, source]);
 
   // Make sure cached images trigger the load event
   useEffect(() => {
-    const img = mediaContentRef.current?.querySelector("img")
+    const img = mediaContentRef.current?.querySelector("img");
     if (img?.complete) {
-      img.dispatchEvent(new Event("load"))
+      img.dispatchEvent(new Event("load"));
     }
-  }, [source])
+  }, [source]);
 
   // Measure the collapsed content on resize
   useEffect(() => {
-    const mediaComponent = mediaComponentRef.current
-    const collapsedContent = collapsedContentRef.current
-    const mediaContentWrapper = mediaContentWrapperRef.current
+    const mediaComponent = mediaComponentRef.current;
+    const collapsedContent = collapsedContentRef.current;
+    const mediaContentWrapper = mediaContentWrapperRef.current;
     if (mediaComponent && mediaContentWrapper && collapsedContent) {
       const handleResize = () => {
-        mediaContentWrapper.style.transition = "none"
-        const height = collapsedContent.offsetHeight
+        mediaContentWrapper.style.transition = "none";
+        const height = collapsedContent.offsetHeight;
         mediaComponent.style.setProperty(
           "--collapsed-content-height",
           `${height}px`
-        )
-        mediaComponent.dataset.collapsedContentMeasured = ""
-        setTimeout(() => (mediaContentWrapper.style.transition = ""))
-      }
-      const observer = new ResizeObserver(handleResize)
-      observer.observe(collapsedContent)
-      return () => observer.disconnect()
+        );
+        mediaComponent.dataset.collapsedContentMeasured = "";
+        setTimeout(() => (mediaContentWrapper.style.transition = ""));
+      };
+      const observer = new ResizeObserver(handleResize);
+      observer.observe(collapsedContent);
+      return () => observer.disconnect();
     }
-  }, [])
+  }, []);
 
   // Measure the width of the media component
   useEffect(() => {
-    const mediaComponent = mediaComponentRef.current
+    const mediaComponent = mediaComponentRef.current;
     if (mediaComponent) {
       const observer = new ResizeObserver(() => {
         // const width = collapsedContent.offsetWidth
-        const width = mediaComponent.offsetWidth
+        const width = mediaComponent.offsetWidth;
         mediaComponent.style.setProperty(
           "--media-component-width",
           `${width}px`
-        )
-      })
-      observer.observe(mediaComponent)
-      return () => observer.disconnect()
+        );
+      });
+      observer.observe(mediaComponent);
+      return () => observer.disconnect();
     }
-  }, [])
+  }, []);
 
   // toggle data-animating on content
   useEffect(() => {
-    const content = mediaContentRef.current
-    const img = content?.querySelector("img")
+    const content = mediaContentRef.current;
+    const img = content?.querySelector("img");
     if (content && img) {
       const handleTransitionEnd = (event: TransitionEvent) => {
         if (event.target === img) {
-          delete content.dataset.animating
+          delete content.dataset.animating;
         }
-      }
+      };
       const handleTransitionStart = (event: TransitionEvent) => {
         if (event.target === img) {
-          content.dataset.animating = ""
+          content.dataset.animating = "";
         }
-      }
-      content.addEventListener("transitionstart", handleTransitionStart)
-      content.addEventListener("transitionend", handleTransitionEnd)
+      };
+      content.addEventListener("transitionstart", handleTransitionStart);
+      content.addEventListener("transitionend", handleTransitionEnd);
 
       return () => {
-        content.removeEventListener("transitionstart", handleTransitionStart)
-        content.removeEventListener("transitionend", handleTransitionEnd)
-      }
+        content.removeEventListener("transitionstart", handleTransitionStart);
+        content.removeEventListener("transitionend", handleTransitionEnd);
+      };
     }
-  }, [])
+  }, []);
 
   // HACK around Safari not firing load event for some iframes (ex: Spotify)
   useEffect(() => {
-    const content = mediaContentRef.current
-    const iframe = content?.querySelector("iframe")
-    let timeout: MaybeUndefined<ReturnType<typeof setTimeout>>
+    const content = mediaContentRef.current;
+    const iframe = content?.querySelector("iframe");
+    let timeout: MaybeUndefined<ReturnType<typeof setTimeout>>;
     if (iframe) {
-      let pollCount = 0
-      const maxPolls = 50
+      let pollCount = 0;
+      const maxPolls = 50;
       const checkLoaded = () => {
         try {
           if (iframe.contentWindow?.document && pollCount < maxPolls) {
             // give some time for the iframe to actually load
-            setTimeout(() => iframe.dispatchEvent(new Event("load")), 3000)
-            return
+            setTimeout(() => iframe.dispatchEvent(new Event("load")), 3000);
+            return;
           }
         } catch {
           // cross-origin access denied
           if (pollCount > 10) {
-            setLoadingError(true)
-            return
+            setLoadingError(true);
+            return;
           }
         }
-        pollCount++
+        pollCount++;
         if (pollCount < maxPolls) {
-          timeout = setTimeout(checkLoaded, 100)
+          timeout = setTimeout(checkLoaded, 100);
         } else {
-          setLoadingError(true)
+          setLoadingError(true);
         }
-      }
-      timeout = setTimeout(checkLoaded, 100)
-      return () => clearTimeout(timeout)
+      };
+      timeout = setTimeout(checkLoaded, 100);
+      return () => clearTimeout(timeout);
     }
-  })
+  });
 
-  const sizeProps = getSizeProps(sizeInfo ?? {})
+  const sizeProps = getSizeProps(sizeInfo ?? {});
 
   return (
     <div
@@ -353,8 +353,8 @@ export const Media = ({
         onClick={() => setCollapsed((prevCollapsed) => !prevCollapsed)}
       />
     </div>
-  )
-}
+  );
+};
 
 export const EmbedComp = ({
   source,
@@ -362,59 +362,59 @@ export const EmbedComp = ({
   open = true,
   speed,
 }: {
-  source: string
-  title?: string
-  open?: boolean
-  speed?: number
+  source: string;
+  title?: string;
+  open?: boolean;
+  speed?: number;
 }) => {
-  const [loading, setLoading] = useState(true)
-  const [oEmbed, setOEmbed] = useState<MaybeUndefined<OEmbed>>(undefined)
-  const [error, setError] = useState<MaybeUndefined<Error>>(undefined)
+  const [loading, setLoading] = useState(true);
+  const [oEmbed, setOEmbed] = useState<MaybeUndefined<OEmbed>>(undefined);
+  const [error, setError] = useState<MaybeUndefined<Error>>(undefined);
   const provider = useMemo(
     () => EMBED_PROVIDERS.find((provider) => provider.regexp.test(source)),
     [source]
-  )
-  const { hostname } = new URL(source)
-  const icon = `https://icons.duckduckgo.com/ip3/${hostname}.ico`
-  const embedRef = useRef<HTMLDivElement>(null)
-  const embedRef2 = useRef<HTMLDivElement>(null)
+  );
+  const { hostname } = new URL(source);
+  const icon = `https://icons.duckduckgo.com/ip3/${hostname}.ico`;
+  const embedRef = useRef<HTMLDivElement>(null);
+  const embedRef2 = useRef<HTMLDivElement>(null);
 
   // fetch the oEmbed when provider and/or source changes
   useEffect(() => {
     if (provider) {
-      setError(undefined)
-      setLoading(true)
+      setError(undefined);
+      setLoading(true);
       fetch(provider.getOEmbedUrl(source))
         .then(async (response) => {
           if (response.ok) {
-            const json = await response.json()
-            setOEmbed(json)
+            const json = await response.json();
+            setOEmbed(json);
           } else {
-            setError(new Error("Failed to fetch oEmbed data"))
+            setError(new Error("Failed to fetch oEmbed data"));
           }
         })
         .catch((reason) => {
-          setError(new Error("Failed to fetch oEmbed data", { cause: reason }))
+          setError(new Error("Failed to fetch oEmbed data", { cause: reason }));
         })
-        .finally(() => setLoading(false))
+        .finally(() => setLoading(false));
     } else {
-      setError(new Error("No provider found for this source"))
+      setError(new Error("No provider found for this source"));
     }
-  }, [provider, source])
+  }, [provider, source]);
 
   if (error) {
-    console.error(error)
+    console.error(error);
   }
 
   // Init embeds each time we get a new embed
   useEffect(() => {
     if (embedRef.current && !["flickr"].includes(provider?.name ?? "")) {
-      initEmbeds(embedRef.current)
+      initEmbeds(embedRef.current);
     }
     if (embedRef2.current && !["flickr"].includes(provider?.name ?? "")) {
-      initEmbeds(embedRef2.current)
+      initEmbeds(embedRef2.current);
     }
-  }, [oEmbed?.html, provider?.name])
+  }, [oEmbed?.html, provider?.name]);
 
   return (
     <>
@@ -442,8 +442,8 @@ export const EmbedComp = ({
         />
       </Media>
     </>
-  )
-}
+  );
+};
 
 export const ImageComp = ({
   source,
@@ -451,10 +451,10 @@ export const ImageComp = ({
   open = true,
   speed,
 }: {
-  source: string
-  title?: string
-  open?: boolean
-  speed?: number
+  source: string;
+  title?: string;
+  open?: boolean;
+  speed?: number;
 }) => {
   return (
     <Media
@@ -471,8 +471,8 @@ export const ImageComp = ({
       <img src={source} alt="" />
       <MediaSource source={source} />
     </Media>
-  )
-}
+  );
+};
 
 /**
  * Initialise embeds: execute the contained scripts and refresh
@@ -482,9 +482,9 @@ export const ImageComp = ({
 const initEmbeds = (embedContent: HTMLDivElement | null) => {
   const scripts = embedContent?.querySelectorAll(
     "script"
-  ) as NodeListOf<HTMLScriptElement>
+  ) as NodeListOf<HTMLScriptElement>;
   scripts?.forEach((script) => {
-    const clone = cloneScript(script)
+    const clone = cloneScript(script);
     // instagram needs to be called manually after the script
     // was (re)loaded, otherwise the embeds will never be parsed.
     // Another option would be to `window.instgrm && delete window.instgrm`
@@ -492,10 +492,10 @@ const initEmbeds = (embedContent: HTMLDivElement | null) => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    window.instgrm && window.instgrm.Embeds.process()
-    script.replaceWith(clone)
-  })
-}
+    window.instgrm && window.instgrm.Embeds.process();
+    script.replaceWith(clone);
+  });
+};
 
 /**
  * Clone a script with its content and attributes to make sure it's executed.
@@ -503,13 +503,13 @@ const initEmbeds = (embedContent: HTMLDivElement | null) => {
  * @param node
  */
 const cloneScript = (node: HTMLScriptElement) => {
-  const script = document.createElement("script") as HTMLScriptElement
-  script.text = node.innerHTML
+  const script = document.createElement("script") as HTMLScriptElement;
+  script.text = node.innerHTML;
   for (const attr of Array.from(node.attributes)) {
-    script.setAttribute(attr.name, attr.value)
+    script.setAttribute(attr.name, attr.value);
   }
-  return script
-}
+  return script;
+};
 
 /**
  * Returns the size properties to apply to the media component based on the
@@ -517,10 +517,10 @@ const cloneScript = (node: HTMLScriptElement) => {
  * @param sizeInfo
  */
 const getSizeProps = (sizeInfo: SizeInfo) => {
-  const minWidth = sizeInfo.width || sizeInfo.minWidth
-  const maxWidth = sizeInfo.width || sizeInfo.maxWidth
-  const minHeight = sizeInfo.height || sizeInfo.minHeight
-  const maxHeight = sizeInfo.height || sizeInfo.maxHeight
+  const minWidth = sizeInfo.width || sizeInfo.minWidth;
+  const maxWidth = sizeInfo.width || sizeInfo.maxWidth;
+  const minHeight = sizeInfo.height || sizeInfo.minHeight;
+  const maxHeight = sizeInfo.height || sizeInfo.maxHeight;
 
-  return { minWidth, maxWidth, minHeight, maxHeight }
-}
+  return { minWidth, maxWidth, minHeight, maxHeight };
+};

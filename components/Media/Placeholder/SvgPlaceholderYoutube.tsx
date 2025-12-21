@@ -1,5 +1,6 @@
-import styles from "./svg.module.scss"
-import { SVGProps } from "react"
+import { SVGProps } from "react";
+
+import styles from "./svg.module.scss";
 
 export default function SvgPlaceholderYoutube({
   className,
@@ -22,5 +23,5 @@ export default function SvgPlaceholderYoutube({
         fill="currentColor"
       />
     </svg>
-  )
+  );
 }

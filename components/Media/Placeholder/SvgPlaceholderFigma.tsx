@@ -1,5 +1,6 @@
-import styles from "./svg.module.scss"
-import { SVGProps } from "react"
+import { SVGProps } from "react";
+
+import styles from "./svg.module.scss";
 
 export default function SvgPlaceholderFigma({
   className,
@@ -22,5 +23,5 @@ export default function SvgPlaceholderFigma({
         fill="currentColor"
       />
     </svg>
-  )
+  );
 }

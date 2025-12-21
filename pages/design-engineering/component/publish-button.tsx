@@ -1,16 +1,17 @@
-import { useEffect, useRef, useState } from "react"
-import Link from "next/link"
-import { PublishSplitButton } from "@/components/PublishButton/PublishButton"
-import { TableOfContents } from "@/components/TableOfContents/TocComponent"
-import { NextCard } from "@/components/Navigation/NextCard"
-import { PageMetas } from "@/components/PageMetas/PageMetas"
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+
+import { NextCard } from "@/components/Navigation/NextCard";
+import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { PublishSplitButton } from "@/components/PublishButton/PublishButton";
+import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import {
   COMPONENTS,
   getNextComponent,
-} from "@/constants/design-engineering/components"
+} from "@/constants/design-engineering/components";
 
 const PublishButtonPage = () => {
-  const component = COMPONENTS["publish-button"]
+  const component = COMPONENTS["publish-button"];
   return (
     <>
       <PageMetas {...component.metas} />
@@ -18,20 +19,20 @@ const PublishButtonPage = () => {
         <PublishButtonPageContent />
       </TableOfContents.Provider>
     </>
-  )
-}
+  );
+};
 
 const PublishButtonPageContent = () => {
-  const nextComponent = getNextComponent("publish-button")
-  const tocContext = TableOfContents.useToc()
-  const contentRef = useRef<HTMLDivElement>(null)
-  const [slow, setSlow] = useState(false)
+  const nextComponent = getNextComponent("publish-button");
+  const tocContext = TableOfContents.useToc();
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [slow, setSlow] = useState(false);
 
   useEffect(() => {
     if (contentRef.current) {
-      tocContext.setRootElement(contentRef.current)
+      tocContext.setRootElement(contentRef.current);
     }
-  })
+  });
 
   return (
     <>
@@ -111,7 +112,7 @@ const PublishButtonPageContent = () => {
         </NextCard>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default PublishButtonPage
+export default PublishButtonPage;

@@ -1,12 +1,12 @@
-import Link from "next/link"
-import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer"
-import { PageMetas } from "@/components/PageMetas/PageMetas"
+import Link from "next/link";
 
-import styles from "/styles/DesignEngineeringGallery.module.scss"
+import styles from "/styles/DesignEngineeringGallery.module.scss";
+import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer";
 import {
   COMPONENTS,
   COMPONENTS_ORDER,
-} from "@/constants/design-engineering/components"
+} from "@/constants/design-engineering/components";
 
 const DesignEngineeringIndex = () => (
   <>
@@ -42,7 +42,7 @@ const DesignEngineeringIndex = () => (
       </div>
       <div className={styles.card_list} style={{ marginTop: "1.5em" }}>
         {COMPONENTS_ORDER.map((componentId) => {
-          const component = COMPONENTS[componentId]
+          const component = COMPONENTS[componentId];
           return (
             <Link
               key={componentId}
@@ -55,11 +55,11 @@ const DesignEngineeringIndex = () => (
               />
               {component.shortTitle}
             </Link>
-          )
+          );
         })}
       </div>
     </div>
   </>
-)
+);
 
-export default DesignEngineeringIndex
+export default DesignEngineeringIndex;

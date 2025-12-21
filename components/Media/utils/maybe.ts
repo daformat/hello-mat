@@ -1,5 +1,5 @@
-export type Maybe<T> = T | null | undefined
+export type Maybe<T> = T | null | undefined;
 
-export type MaybeNull<T> = T | null
+export type MaybeNull<T> = T | null;
 
-export type MaybeUndefined<T> = T | undefined
+export type MaybeUndefined<T> = T | undefined;

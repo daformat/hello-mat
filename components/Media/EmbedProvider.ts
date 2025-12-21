@@ -1,21 +1,22 @@
-import { ComponentType } from "react"
-import { ResizeType } from "@/components/Media/EmbedResult"
-import { SizeInfo } from "@/components/Media/MediaComponent"
-import SvgPlaceholderYoutube from "@/components/Media/Placeholder/SvgPlaceholderYoutube"
-import SvgPlaceholderSpotify from "@/components/Media/Placeholder/SvgPlaceholderSpotify"
-import SvgPlaceholderFlickr from "@/components/Media/Placeholder/SvgPlaceholderFlickr"
-import SvgPlaceholderTwitter from "@/components/Media/Placeholder/SvgPlaceholderTwitter"
+import { ComponentType } from "react";
+
+import { ResizeType } from "@/components/Media/EmbedResult";
+import { SizeInfo } from "@/components/Media/MediaComponent";
+import SvgPlaceholderFlickr from "@/components/Media/Placeholder/SvgPlaceholderFlickr";
+import SvgPlaceholderSpotify from "@/components/Media/Placeholder/SvgPlaceholderSpotify";
+import SvgPlaceholderTwitter from "@/components/Media/Placeholder/SvgPlaceholderTwitter";
+import SvgPlaceholderYoutube from "@/components/Media/Placeholder/SvgPlaceholderYoutube";
 
 export type EmbedProvider = {
-  name: string
-  regexp: RegExp
-  Placeholder: ComponentType<{ className?: string }>
-  getOEmbedUrl: (url: string) => string
-  responsive?: ResizeType
-  keepAspectRatio?: boolean
-  sizeInfo?: SizeInfo
-  isResizingDynamically?: boolean
-}
+  name: string;
+  regexp: RegExp;
+  Placeholder: ComponentType<{ className?: string }>;
+  getOEmbedUrl: (url: string) => string;
+  responsive?: ResizeType;
+  keepAspectRatio?: boolean;
+  sizeInfo?: SizeInfo;
+  isResizingDynamically?: boolean;
+};
 
 export const EMBED_PROVIDERS: EmbedProvider[] = [
   {
@@ -57,4 +58,4 @@ export const EMBED_PROVIDERS: EmbedProvider[] = [
     },
     isResizingDynamically: true,
   },
-]
+];

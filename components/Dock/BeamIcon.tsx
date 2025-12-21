@@ -1,4 +1,4 @@
-import { ComponentProps } from "react"
+import { ComponentProps } from "react";
 
 export const BeamIcon = (props: ComponentProps<"svg">) => (
   <svg
@@ -373,7 +373,7 @@ export const BeamIcon = (props: ComponentProps<"svg">) => (
       </linearGradient>
     </defs>
   </svg>
-)
+);
 
 export const BeamIconBeta = (props: ComponentProps<"svg">) => (
   <svg
@@ -688,7 +688,7 @@ export const BeamIconBeta = (props: ComponentProps<"svg">) => (
       </linearGradient>
     </defs>
   </svg>
-)
+);
 
 export const BeamIconDev = (props: ComponentProps<"svg">) => (
   <svg
@@ -1128,7 +1128,7 @@ export const BeamIconDev = (props: ComponentProps<"svg">) => (
       />
     </defs>
   </svg>
-)
+);
 
 export const BeamIconNightly = (props: ComponentProps<"svg">) => (
   <svg
@@ -1674,4 +1674,4 @@ export const BeamIconNightly = (props: ComponentProps<"svg">) => (
       />
     </defs>
   </svg>
-)
+);

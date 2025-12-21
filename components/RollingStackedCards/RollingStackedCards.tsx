@@ -1,7 +1,8 @@
-import { CSSProperties, PropsWithChildren, useEffect, useRef } from "react"
-import { useCssSizeVariables } from "@/hooks/useCssSizeVariables"
+import { CSSProperties, PropsWithChildren, useEffect, useRef } from "react";
 
-import styles from "./RollingStackedCards.module.scss"
+import { useCssSizeVariables } from "@/hooks/useCssSizeVariables";
+
+import styles from "./RollingStackedCards.module.scss";
 
 export const RollingStackedCards = ({
   cards,
@@ -15,89 +16,89 @@ export const RollingStackedCards = ({
   discardAnimationName = styles.discard,
   stackAnimationName = styles.scale,
 }: {
-  cards: JSX.Element[]
-  topDistance: string
-  topOffset: string
-  cardHeight: string
-  cardMargin: string
-  cardPadding: string
-  gap: string
-  rollingCount: number
-  discardAnimationName?: string
-  stackAnimationName?: string
+  cards: JSX.Element[];
+  topDistance: string;
+  topOffset: string;
+  cardHeight: string;
+  cardMargin: string;
+  cardPadding: string;
+  gap: string;
+  rollingCount: number;
+  discardAnimationName?: string;
+  stackAnimationName?: string;
 }) => {
-  const cardsRootRef = useRef<HTMLDivElement>(null)
-  useCssSizeVariables(cardsRootRef)
+  const cardsRootRef = useRef<HTMLDivElement>(null);
+  useCssSizeVariables(cardsRootRef);
 
   useEffect(() => {
-    const root = cardsRootRef.current
+    const root = cardsRootRef.current;
     if (!root) {
-      return
+      return;
     }
 
     const handleScroll = () => {
       if (root) {
-        const cards = Array.from(root.querySelectorAll("[data-card]"))
-        const discardedCards: HTMLElement[] = []
-        const remainingCards: HTMLElement[] = []
-        const discardedScaleMap = new WeakMap<HTMLElement, number>()
+        const cards = Array.from(root.querySelectorAll("[data-card]"));
+        const discardedCards: HTMLElement[] = [];
+        const remainingCards: HTMLElement[] = [];
+        const discardedScaleMap = new WeakMap<HTMLElement, number>();
         cards.forEach((card) => {
           if (card instanceof HTMLElement) {
-            const scale = getComputedStyle(card).scale
-            discardedScaleMap.set(card, parseFloat(scale))
+            const scale = getComputedStyle(card).scale;
+            discardedScaleMap.set(card, parseFloat(scale));
             if (scale !== "none") {
-              discardedCards.push(card)
+              discardedCards.push(card);
             } else {
-              remainingCards.push(card)
+              remainingCards.push(card);
             }
           }
-        })
-        const discardedAmount = discardedCards.length
-        const lastDiscarded = discardedCards[discardedAmount - 1]
+        });
+        const discardedAmount = discardedCards.length;
+        const lastDiscarded = discardedCards[discardedAmount - 1];
         const lastDiscardedScale = lastDiscarded
           ? discardedScaleMap.get(lastDiscarded)
-          : 1
+          : 1;
         const discardedRatio = lastDiscardedScale
           ? 1 - (lastDiscardedScale - 0.78) / 0.22
-          : 0
-        root.style.setProperty("--discarded-amount", `${discardedAmount}`)
-        root.style.setProperty("--discarded-ratio", `${discardedRatio}`)
+          : 0;
+        root.style.setProperty("--discarded-amount", `${discardedAmount}`);
+        root.style.setProperty("--discarded-ratio", `${discardedRatio}`);
         cards.forEach((card) => {
           if (card instanceof HTMLElement) {
-            const prevDiscarded = Math.max(discardedAmount - 1, 0)
+            const prevDiscarded = Math.max(discardedAmount - 1, 0);
             card.style.paddingTop = `calc(var(--card-top-distance) + (var(--index0) - ${prevDiscarded} - ${
               discardedAmount ? discardedRatio : 0
-            }) * var(--card-top-offset))`
+            }) * var(--card-top-offset))`;
           }
-        })
+        });
       }
-    }
+    };
 
     // We need to force reflow to properly trigger the animations when resizing
     const handleResize = () => {
-      const animationElements = root.querySelectorAll("[data-animates]")
+      const animationElements = root.querySelectorAll("[data-animates]");
       animationElements.forEach((element) => {
         if (element instanceof HTMLElement) {
-          const prevAnimation = element.style.animationName
+          const prevAnimation = element.style.animationName;
           if (prevAnimation) {
-            element.style.animationName = "none"
-            const _ = element.offsetHeight
-            element.style.animationName = prevAnimation
-            const __ = element.offsetHeight
+            element.style.animationName = "none";
+            const _ = element.offsetHeight;
+            element.style.animationName = prevAnimation;
+            const __ = element.offsetHeight;
           }
         }
-      })
-      handleScroll()
-    }
+      });
+      handleScroll();
+    };
 
-    const resizeObserver = new ResizeObserver(handleResize)
-    document.addEventListener("scroll", handleScroll)
-    resizeObserver.observe(root)
+    const resizeObserver = new ResizeObserver(handleResize);
+    document.addEventListener("scroll", handleScroll);
+    resizeObserver.observe(root);
     return () => {
-      document.removeEventListener("scroll", handleScroll)
-      resizeObserver.disconnect()
-    }
-  }, [])
+      document.removeEventListener("scroll", handleScroll);
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   const NestedStackContainer = ({
     children,
@@ -105,12 +106,12 @@ export const RollingStackedCards = ({
     depth,
     currentDepth = 1,
   }: PropsWithChildren<{
-    cardIndex: number
-    depth: number
-    currentDepth?: number
+    cardIndex: number;
+    depth: number;
+    currentDepth?: number;
   }>) => {
-    const remainingCards = cards.length - cardIndex - 1
-    const isValid = currentDepth <= remainingCards
+    const remainingCards = cards.length - cardIndex - 1;
+    const isValid = currentDepth <= remainingCards;
 
     const wrapped = (
       <div
@@ -143,7 +144,7 @@ export const RollingStackedCards = ({
       >
         {children}
       </div>
-    )
+    );
 
     return depth > currentDepth ? (
       <NestedStackContainer
@@ -155,8 +156,8 @@ export const RollingStackedCards = ({
       </NestedStackContainer>
     ) : (
       wrapped
-    )
-  }
+    );
+  };
 
   return (
     <div
@@ -202,5 +203,5 @@ export const RollingStackedCards = ({
         ))}
       </div>
     </div>
-  )
-}
+  );
+};

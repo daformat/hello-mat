@@ -1,10 +1,10 @@
-import { StencilSvgAnimation } from "@/components/StencilSvg/StencilSvg"
-import { PageMetas } from "@/components/PageMetas/PageMetas"
+import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { StencilSvgAnimation } from "@/components/StencilSvg/StencilSvg";
 
 const Homepage = () => {
   console.log(
     "Learn how to make this stencil effect with svg and javascript: https://observablehq.com/@daformat/distributing-circles-around-a-shape"
-  )
+  );
   return (
     <>
       <PageMetas
@@ -30,7 +30,7 @@ const Homepage = () => {
         Hello I’m Mat, Mathieu Jouhet
       </div>
     </>
-  )
-}
+  );
+};
 
-export default Homepage
+export default Homepage;
