@@ -110,7 +110,9 @@ export const NumberFlowInput = ({
 
   // Helper function to reposition all existing barrel wheels
   const repositionAllBarrelWheels = useCallback(() => {
-    if (!spanRef.current?.parentElement) return
+    if (!spanRef.current?.parentElement) {
+      return
+    }
 
     const parentContainer = spanRef.current.parentElement
     const existingBarrelWheels = parentContainer.querySelectorAll(
@@ -140,9 +142,13 @@ export const NumberFlowInput = ({
 
   // Helper function to remove barrel wheels at specific indices
   const removeBarrelWheelsAtIndices = useCallback((indices: number[]) => {
-    if (!spanRef.current) return
+    if (!spanRef.current) {
+      return
+    }
     const parentContainer = spanRef.current.parentElement
-    if (!parentContainer) return
+    if (!parentContainer) {
+      return
+    }
 
     indices.forEach((index) => {
       // Clean up ResizeObserver for this index
@@ -1220,7 +1226,9 @@ export const NumberFlowInput = ({
           )
           barrelWheelIndices.forEach((index) => {
             const barrelWheelData = changes.barrelWheelIndices.get(index)
-            if (!barrelWheelData) return
+            if (!barrelWheelData) {
+              return
+            }
 
             const direction = barrelWheelData.direction
             const finalDigitStr =
@@ -1240,11 +1248,15 @@ export const NumberFlowInput = ({
             const charSpan = spanRef.current?.querySelector(
               `[data-char-index="${index}"]`
             )
-            if (!charSpan || !(charSpan instanceof HTMLElement)) return
+            if (!charSpan || !(charSpan instanceof HTMLElement)) {
+              return
+            }
 
             // Get position of the character span relative to the parent container
             const parentContainer = spanRef.current?.parentElement
-            if (!parentContainer) return
+            if (!parentContainer) {
+              return
+            }
 
             // Check if a barrel wheel already exists for this index
             const existingWheel = parentContainer.querySelector(
@@ -1409,9 +1421,13 @@ export const NumberFlowInput = ({
                     }
 
                     const resizeObserver = new ResizeObserver(() => {
-                      if (!spanRef.current || !charSpan) return
+                      if (!spanRef.current || !charSpan) {
+                        return
+                      }
                       const parent = spanRef.current.parentElement
-                      if (!parent) return
+                      if (!parent) {
+                        return
+                      }
 
                       const bw = getBarrelWheel(
                         parent,
@@ -1555,7 +1571,9 @@ export const NumberFlowInput = ({
 
                       // Final safety check after DOM update
                       requestAnimationFrame(() => {
-                        if (!spanRef.current) return
+                        if (!spanRef.current) {
+                          return
+                        }
                         const spanAtCurrentIndex =
                           spanRef.current.querySelector(
                             `[data-char-index="${currentIndex}"]`
@@ -1588,7 +1606,9 @@ export const NumberFlowInput = ({
         })
 
         const setCursor = () => {
-          if (!spanRef.current) return
+          if (!spanRef.current) {
+            return
+          }
           setCursorPositionInElement(
             spanRef.current,
             Math.min(newCursorPos, cleanedText.length)
@@ -1687,7 +1707,9 @@ export const NumberFlowInput = ({
         spanRef.current.focus()
 
         const restoreCursor = () => {
-          if (!spanRef.current) return
+          if (!spanRef.current) {
+            return
+          }
           spanRef.current.focus()
           setCursorAtPosition(spanRef.current, cursorPos)
           isUndoRedoRef.current = false
@@ -1712,7 +1734,9 @@ export const NumberFlowInput = ({
         | undefined,
       isUndo: boolean
     ) => {
-      if (!historyItem) return
+      if (!historyItem) {
+        return
+      }
 
       // For redo: use cursorPosAfter from the item
       const targetCursorPos = isUndo
@@ -1732,9 +1756,13 @@ export const NumberFlowInput = ({
       const selection = window.getSelection()
       const range = selection?.getRangeAt(0)
 
-      if (!range || !spanRef.current) return
+      if (!range || !spanRef.current) {
+        return
+      }
 
-      if (!selection) return
+      if (!selection) {
+        return
+      }
       const { start, end } = getSelectionRange(spanRef.current, selection)
 
       // Handle special keys
@@ -1816,9 +1844,13 @@ export const NumberFlowInput = ({
       ) {
         event.preventDefault()
 
-        if (!spanRef.current) return
+        if (!spanRef.current) {
+          return
+        }
         const selection = window.getSelection()
-        if (!selection) return
+        if (!selection) {
+          return
+        }
 
         const targetPos = key === "ArrowLeft" ? 0 : currentText.length
 
@@ -1864,7 +1896,9 @@ export const NumberFlowInput = ({
               targetOffset = targetPos - currentPos
             }
 
-            if (anchorNode && targetNode) break
+            if (anchorNode && targetNode) {
+              break
+            }
 
             currentPos += nodeLength
           }
@@ -1999,9 +2033,13 @@ export const NumberFlowInput = ({
         // Handle ArrowLeft and ArrowRight to move cursor by one character
         if (key === "ArrowLeft" || key === "ArrowRight") {
           event.preventDefault()
-          if (!spanRef.current) return
+          if (!spanRef.current) {
+            return
+          }
           const selection = window.getSelection()
-          if (!selection) return
+          if (!selection) {
+            return
+          }
 
           // Calculate target position
           let targetPos: number
@@ -2073,7 +2111,9 @@ export const NumberFlowInput = ({
                 targetOffset = targetPos - currentPos
               }
 
-              if (anchorNode && targetNode) break
+              if (anchorNode && targetNode) {
+                break
+              }
 
               currentPos += nodeLength
             }
@@ -2258,9 +2298,13 @@ export const NumberFlowInput = ({
             // to catch any browser default behavior
             if (spanRef.current) {
               const restoreCursor = () => {
-                if (!spanRef.current) return
+                if (!spanRef.current) {
+                  return
+                }
                 const selection = window.getSelection()
-                if (!selection) return
+                if (!selection) {
+                  return
+                }
 
                 let currentPos = 0
                 const walker = document.createTreeWalker(
@@ -2309,7 +2353,9 @@ export const NumberFlowInput = ({
         event.preventDefault()
         // Check maxLength before inserting
         const newLength = currentText.length - (end - start) + 1
-        if (maxLength !== undefined && newLength > maxLength) return
+        if (maxLength !== undefined && newLength > maxLength) {
+          return
+        }
         const newText =
           currentText.slice(0, start) + key + currentText.slice(end)
         updateValue(newText, start + 1, start, end)
@@ -2323,10 +2369,14 @@ export const NumberFlowInput = ({
         // Only allow one decimal point
         if (!currentText.includes(".")) {
           // Prevent typing "." when cursor is at position 0 and text starts with "-"
-          if (currentText.startsWith("-") && start === 0 && end === 0) return
+          if (currentText.startsWith("-") && start === 0 && end === 0) {
+            return
+          }
           // Check maxLength before inserting
           const newLength = currentText.length - (end - start) + 1
-          if (maxLength !== undefined && newLength > maxLength) return
+          if (maxLength !== undefined && newLength > maxLength) {
+            return
+          }
           const newText =
             currentText.slice(0, start) + key + currentText.slice(end)
           updateValue(newText, start + 1, start, end)
@@ -2340,7 +2390,9 @@ export const NumberFlowInput = ({
         if (start === 0 && !hasMinus) {
           // Check maxLength before inserting
           const newLength = currentText.length - (end - start) + 1
-          if (maxLength !== undefined && newLength > maxLength) return
+          if (maxLength !== undefined && newLength > maxLength) {
+            return
+          }
           // Insert minus at the beginning (can replace selection)
           const newText = key + currentText.slice(end)
           updateValue(newText, start + 1, start, end)
@@ -2363,11 +2415,17 @@ export const NumberFlowInput = ({
     (event) => {
       const selection = window.getSelection()
       const range = selection?.getRangeAt(0)
-      if (!range || !spanRef.current) return
+      if (!range || !spanRef.current) {
+        return
+      }
 
-      if (!selection) return
+      if (!selection) {
+        return
+      }
       const { start, end } = getSelectionRange(spanRef.current, selection)
-      if (start === end) return
+      if (start === end) {
+        return
+      }
 
       const selectedText = displayValue.slice(start, end)
       event.clipboardData.setData("text/plain", selectedText)
@@ -2380,11 +2438,17 @@ export const NumberFlowInput = ({
     (event) => {
       const selection = window.getSelection()
       const range = selection?.getRangeAt(0)
-      if (!range || !spanRef.current) return
+      if (!range || !spanRef.current) {
+        return
+      }
 
-      if (!selection) return
+      if (!selection) {
+        return
+      }
       const { start, end } = getSelectionRange(spanRef.current, selection)
-      if (start === end) return
+      if (start === end) {
+        return
+      }
 
       const selectedText = displayValue.slice(start, end)
       event.clipboardData.setData("text/plain", selectedText)
@@ -2430,20 +2494,28 @@ export const NumberFlowInput = ({
       event.preventDefault()
       let pastedText = event.clipboardData.getData("text")
 
-      if (!/^-?\d*\.?\d*$/.test(pastedText)) return
+      if (!/^-?\d*\.?\d*$/.test(pastedText)) {
+        return
+      }
 
       const selection = window.getSelection()
       const range = selection?.getRangeAt(0)
-      if (!range || !spanRef.current) return
+      if (!range || !spanRef.current) {
+        return
+      }
 
-      if (!selection) return
+      if (!selection) {
+        return
+      }
       const { start, end } = getSelectionRange(spanRef.current, selection)
 
       // Truncate pasted text if it would exceed maxLength
       if (maxLength !== undefined) {
         const availableLength =
           maxLength - (displayValue.length - (end - start))
-        if (availableLength <= 0) return
+        if (availableLength <= 0) {
+          return
+        }
         if (pastedText.length > availableLength) {
           pastedText = pastedText.slice(0, availableLength)
         }

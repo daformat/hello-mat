@@ -49,9 +49,7 @@ export const cleanText = (
       const cleaned = afterMinus.replace(/^0+/, "")
       cleanedText =
         "-" +
-        (cleaned === "" || cleaned.startsWith(".")
-          ? "0" + cleaned
-          : cleaned)
+        (cleaned === "" || cleaned.startsWith(".") ? "0" + cleaned : cleaned)
     }
   }
 
@@ -80,4 +78,3 @@ export const parseNumberValue = (
   const parsed = parseFloat(cleanedText)
   return isNaN(parsed) ? undefined : parsed
 }
-

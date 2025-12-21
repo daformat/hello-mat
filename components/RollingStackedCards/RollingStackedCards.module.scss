@@ -23,14 +23,20 @@
   view-timeline-name: --cards-scrolling;
 
   .card_root {
-    --start-range: calc((var(--index0) + var(--rolling-count) - 1) * (var(--card-height) + var(--card-margin)) /
-    var(--block-size) * 100%);
-    --end-range: calc((var(--index) + var(--rolling-count) - 1) * (var(--card-height) + var(--card-margin)) /
-    var(--block-size) * 100%);
+    --start-range: calc(
+      (var(--index0) + var(--rolling-count) - 1) *
+        (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%
+    );
+    --end-range: calc(
+      (var(--index) + var(--rolling-count) - 1) *
+        (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%
+    );
     animation-range: exit-crossing var(--start-range) exit-crossing
       var(--end-range);
     animation-timeline: --cards-scrolling;
-    padding-top: calc(var(--card-top-distance) + var(--index0) * var(--card-top-offset));
+    padding-top: calc(
+      var(--card-top-distance) + var(--index0) * var(--card-top-offset)
+    );
     position: sticky;
     top: 0;
     transform-origin: center 200%;

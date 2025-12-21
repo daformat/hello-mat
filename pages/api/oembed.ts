@@ -63,7 +63,9 @@ function isValidOrigin(origin: string, allowedDomain: AllowedDomain): boolean {
 }
 
 function isValidUrl(str: unknown): str is string {
-  if (typeof str !== "string") return false
+  if (typeof str !== "string") {
+    return false
+  }
   try {
     new URL(str)
     return true

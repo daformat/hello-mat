@@ -4,8 +4,8 @@
   --size: 18px;
   border-radius: 3px;
   box-shadow: 0 1px 12px var(--color-shadow-1),
-  inset 0 0 2px 0.75px var(--color-border-2),
-  inset 0 0 0 0.75px var(--color-border-1-hover);
+    inset 0 0 2px 0.75px var(--color-border-2),
+    inset 0 0 0 0.75px var(--color-border-1-hover);
   display: grid;
   height: var(--size);
   place-items: center;
@@ -24,33 +24,34 @@
     width: 1px;
   }
 
-
   .checkmark {
     display: grid;
     grid-area: 1 / 1;
     place-items: center;
 
-    .full, .partial {
+    .full,
+    .partial {
       grid-area: 1 /1;
       height: calc(var(--size) * 0.9);
       opacity: 0;
       scale: 0.6;
-      transition: opacity 0.15s var(--ease-out-cubic), scale 0.15s var(--ease-out-cubic);
+      transition: opacity 0.15s var(--ease-out-cubic),
+        scale 0.15s var(--ease-out-cubic);
       width: calc(var(--size) * 0.9);
 
       path {
         stroke-dasharray: 100%;
         stroke-dashoffset: 100%;
         stroke-width: 0;
-        transition: stroke-dashoffset 0.15s var(--ease-in-out-cubic), stroke-width 0.15s var(--ease-out-cubic);
+        transition: stroke-dashoffset 0.15s var(--ease-in-out-cubic),
+          stroke-width 0.15s var(--ease-out-cubic);
 
-        @include mixins.remove-transition
+        @include mixins.remove-transition;
       }
 
-      @include mixins.remove-transition
+      @include mixins.remove-transition;
     }
   }
-
 
   .input:checked + .checkmark .full {
     opacity: 1;

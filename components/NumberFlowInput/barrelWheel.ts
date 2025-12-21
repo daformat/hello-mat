@@ -41,7 +41,9 @@ export const getBarrelWheel = (
   index: number,
   barrelWheelClass: string
 ): HTMLElement | null => {
-  const selector = `[data-char-index="${index}"]${barrelWheelClass ? `.${barrelWheelClass}` : ""}`
+  const selector = `[data-char-index="${index}"]${
+    barrelWheelClass ? `.${barrelWheelClass}` : ""
+  }`
   return container.querySelector(selector) as HTMLElement | null
 }
 
@@ -49,14 +51,13 @@ export const getAllBarrelWheels = (
   container: HTMLElement,
   barrelWheelClass: string
 ): HTMLElement[] => {
-  const selector = `[data-char-index]${barrelWheelClass ? `.${barrelWheelClass}` : ""}`
+  const selector = `[data-char-index]${
+    barrelWheelClass ? `.${barrelWheelClass}` : ""
+  }`
   return Array.from(container.querySelectorAll(selector)) as HTMLElement[]
 }
 
-export const setWidthConstraints = (
-  span: HTMLElement,
-  width: number
-): void => {
+export const setWidthConstraints = (span: HTMLElement, width: number): void => {
   span.style.display = "inline-block"
   span.style.width = `${width}px`
   span.style.minWidth = `${width}px`
@@ -72,7 +73,11 @@ export const clearBarrelWheelsAndSpans = (
     spanElement.removeChild(spanElement.firstChild)
   }
   if (parentContainer) {
-    const selector = `[data-char-index]${barrelWheelClass ? `.${barrelWheelClass}` : ""}`
-    parentContainer.querySelectorAll(selector).forEach((wheel) => wheel.remove())
+    const selector = `[data-char-index]${
+      barrelWheelClass ? `.${barrelWheelClass}` : ""
+    }`
+    parentContainer
+      .querySelectorAll(selector)
+      .forEach((wheel) => wheel.remove())
   }
 }

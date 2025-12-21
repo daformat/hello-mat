@@ -102,7 +102,7 @@ const NumberFlowInputPageContent = () => {
           <li>
             <strong>Numbers are animated as they get inserted</strong>, we
             animate them up and animate their width at the same time so the
-            input smoothly resizes as the user types
+            input smoothly resizes as the user types.
           </li>
           <li>
             <strong>
@@ -117,7 +117,7 @@ const NumberFlowInputPageContent = () => {
               Replacing a digit that is already in a barrel wheel animation
               smoothly interrupts and restart the barrel wheel
             </strong>{" "}
-            so that it animates to the latest digit
+            so that it animates to the latest digit.
           </li>
           <h3>Accepted characters</h3>
           <ul>

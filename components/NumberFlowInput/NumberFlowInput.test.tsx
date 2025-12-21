@@ -36,7 +36,9 @@ const typeText = async (element: HTMLElement, text: string) => {
 // Helper to set cursor position
 const setCursorPosition = (element: HTMLElement, position: number) => {
   const selection = window.getSelection()
-  if (!selection) return
+  if (!selection) {
+    return
+  }
 
   const range = document.createRange()
   const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null)
@@ -66,7 +68,9 @@ const setCursorPosition = (element: HTMLElement, position: number) => {
 // Helper to get cursor position
 const getCursorPosition = (element: HTMLElement): number => {
   const selection = window.getSelection()
-  if (!selection || selection.rangeCount === 0) return 0
+  if (!selection || selection.rangeCount === 0) {
+    return 0
+  }
 
   const range = selection.getRangeAt(0)
   const preRange = document.createRange()
@@ -2654,14 +2658,18 @@ describe("NumberFlowInput", () => {
   describe("Props", () => {
     it("should apply name prop to hidden input", () => {
       render(<NumberFlowInput name="test-input" />)
-      const hiddenInput = document.querySelector("input[type=\"hidden\"]") as HTMLInputElement
+      const hiddenInput = document.querySelector(
+        'input[type="hidden"]'
+      ) as HTMLInputElement
       expect(hiddenInput).toBeTruthy()
       expect(hiddenInput.name).toBe("test-input")
     })
 
     it("should apply id prop to hidden input", () => {
       render(<NumberFlowInput id="test-input-id" />)
-      const hiddenInput = document.querySelector("input[type=\"hidden\"]") as HTMLInputElement
+      const hiddenInput = document.querySelector(
+        'input[type="hidden"]'
+      ) as HTMLInputElement
       expect(hiddenInput).toBeTruthy()
       expect(hiddenInput.id).toBe("test-input-id")
     })
@@ -2669,7 +2677,11 @@ describe("NumberFlowInput", () => {
     it("should handle autoAddLeadingZero prop", async () => {
       const onChange = vi.fn()
       render(
-        <NumberFlowInput autoAddLeadingZero value={undefined} onChange={onChange} />
+        <NumberFlowInput
+          autoAddLeadingZero
+          value={undefined}
+          onChange={onChange}
+        />
       )
 
       const input = getInput()
@@ -2689,10 +2701,13 @@ describe("NumberFlowInput", () => {
 
       // Then type "5" at the end
       await typeText(input, "5")
-      await waitFor(() => {
-        expect(input.textContent).toBe("0.5")
-        expect(onChange).toHaveBeenLastCalledWith(0.5)
-      }, { timeout: 2000 })
+      await waitFor(
+        () => {
+          expect(input.textContent).toBe("0.5")
+          expect(onChange).toHaveBeenLastCalledWith(0.5)
+        },
+        { timeout: 2000 }
+      )
     })
 
     it("should not add leading zero when autoAddLeadingZero is false", async () => {

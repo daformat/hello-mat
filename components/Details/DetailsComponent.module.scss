@@ -10,7 +10,8 @@
   > .summary {
     list-style: none;
 
-    &::marker, &::-webkit-details-marker {
+    &::marker,
+    &::-webkit-details-marker {
       display: none;
     }
 
@@ -30,12 +31,12 @@
       top: calc((var(--single-line-height) - var(--size)) / 2 - 1px);
       transform: rotate(90deg);
       transition: mixins.theme-transition(background-color),
-      transform calc(0.15s / var(--animation-speed, 1)) ease-in-out;
+        transform calc(0.15s / var(--animation-speed, 1)) ease-in-out;
       -webkit-user-select: none; // stylelint-disable-line
       width: var(--size);
 
       @include mixins.mask-image(
-          url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8.62476 6.87524L11.3753 9.87526L8.62476 12.8752' stroke='%234D4D4D' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E%0A")
+        url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8.62476 6.87524L11.3753 9.87526L8.62476 12.8752' stroke='%234D4D4D' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E%0A")
       );
 
       @include mixins.remove-transition;
@@ -66,7 +67,8 @@
   }
 
   // When the details is collapsed (= not `open`)
-  &:not([open]), &[data-closing] {
+  &:not([open]),
+  &[data-closing] {
     > .summary {
       > .chevron {
         transform: rotate(0deg);

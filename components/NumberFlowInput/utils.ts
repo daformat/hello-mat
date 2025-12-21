@@ -38,12 +38,12 @@ export const setCursorPositionInElement = (
   position: number
 ): void => {
   const selection = window.getSelection()
-  if (!selection) return
+  if (!selection) {
+    return
+  }
 
   const targetPos = Math.min(position, element.textContent?.length ?? 0)
-  const targetSpan = element.querySelector(
-    `[data-char-index="${targetPos}"]`
-  )
+  const targetSpan = element.querySelector(`[data-char-index="${targetPos}"]`)
 
   if (targetSpan) {
     const textNode = targetSpan.firstChild
@@ -57,7 +57,10 @@ export const setCursorPositionInElement = (
     }
   }
 
-  if (targetPos === element.textContent?.length && element.textContent.length > 0) {
+  if (
+    targetPos === element.textContent?.length &&
+    element.textContent.length > 0
+  ) {
     const lastSpan = element.querySelector(
       `[data-char-index="${element.textContent.length - 1}"]`
     )
@@ -75,11 +78,7 @@ export const setCursorPositionInElement = (
   }
 
   let currentPos = 0
-  const walker = document.createTreeWalker(
-    element,
-    NodeFilter.SHOW_TEXT,
-    null
-  )
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null)
   let node: Node | null
 
   while ((node = walker.nextNode())) {
@@ -120,10 +119,7 @@ export const removeTransparentColor = (span: HTMLElement): void => {
     span.style.color = ""
   }
   const computedColor = window.getComputedStyle(span).color
-  if (
-    computedColor === "rgba(0, 0, 0, 0)" ||
-    computedColor === "transparent"
-  ) {
+  if (computedColor === "rgba(0, 0, 0, 0)" || computedColor === "transparent") {
     span.style.color = ""
   }
 }
@@ -152,7 +148,9 @@ export const setCursorAtPosition = (
   selection?: Selection | null
 ): void => {
   const sel = selection ?? window.getSelection()
-  if (!sel) return
+  if (!sel) {
+    return
+  }
 
   const found = findNodeAtPosition(element, position)
   if (found) {
@@ -176,7 +174,9 @@ export const getPositionFromNode = (
   node: Node | null,
   offset: number
 ): number => {
-  if (!node || !container.contains(node)) return 0
+  if (!node || !container.contains(node)) {
+    return 0
+  }
   const range = document.createRange()
   range.setStart(container, 0)
   range.setEnd(node, offset)
@@ -193,4 +193,3 @@ export const getBarrelWheelSelector = (
   }
   return `[data-char-index="${index}"]${classSelector}`
 }
-

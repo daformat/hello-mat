@@ -24,6 +24,7 @@
     ],
     "semi": ["warn", "never"],
     "quotes": ["warn", "double", { "avoidEscape": true }],
+    "curly": ["error", "all"],
     "comma-dangle": ["warn", "always-multiline"],
     "no-unused-vars": "off",
     "no-irregular-whitespace": [

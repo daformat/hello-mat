@@ -32,7 +32,9 @@ type HeadingWithChildren = {
 function buildTopographicalMap(
   headings: HTMLHeadingElement[]
 ): HeadingWithChildren[] {
-  if (headings.length === 0) return []
+  if (headings.length === 0) {
+    return []
+  }
 
   const result: HeadingWithChildren[] = []
   const stack: HeadingWithChildren[] = []
@@ -49,7 +51,9 @@ function buildTopographicalMap(
     // until we find a heading with a level less than current heading
     while (stack.length > 0) {
       const lastInStack = stack[stack.length - 1]
-      const lastHeadingLevel = lastInStack ? parseInt(lastInStack.heading.tagName.charAt(1)) : 1
+      const lastHeadingLevel = lastInStack
+        ? parseInt(lastInStack.heading.tagName.charAt(1))
+        : 1
 
       if (lastHeadingLevel < headingLevel) {
         // Found the parent
