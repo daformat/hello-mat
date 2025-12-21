@@ -169,7 +169,7 @@ const PublishButton = ({
         } else {
           setButtonContent({
             icon: <IconError />,
-            message: published ? "Failed to publish" : "Failed to unpublish",
+            message: published ? "Failed to unpublish" : "Failed to publish",
           });
         }
         feedbackTimeoutRef.current = setTimeout(() => {
