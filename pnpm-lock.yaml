@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      eslint-plugin-simple-import-sort:
-        specifier: ^12.1.1
-        version: 12.1.1(eslint@9.37.0)
       next:
         specifier: 15.3.6
         version: 15.3.6(@babel/core@7.28.5)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(sass@1.93.2)
@@ -84,6 +81,9 @@ importers:
       eslint-config-prettier:
         specifier: ^8.5.0
         version: 8.10.2(eslint@9.37.0)
+      eslint-plugin-simple-import-sort:
+        specifier: ^12.1.1
+        version: 12.1.1(eslint@9.37.0)
       eslint-plugin-testing-library:
         specifier: ^5.7.0
         version: 5.11.1(eslint@9.37.0)(typescript@5.9.3)
