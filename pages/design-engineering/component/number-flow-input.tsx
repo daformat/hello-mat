@@ -93,7 +93,11 @@ const NumberFlowInputPageContent = () => {
             backgroundColor: "transparent",
           }}
         >
-          <NumberFlowInput maxLength={maxLength} autoAddLeadingZero />
+          <NumberFlowInput
+            maxLength={maxLength}
+            autoAddLeadingZero
+            placeholder="0"
+          />
           <p style={{ opacity: 0.5 }}>Type in a value above</p>
         </div>
 

@@ -36,6 +36,11 @@
     display: inline-block;
   }
 
+  &:empty::before {
+    content: attr(data-placeholder);
+    opacity: 0.3;
+  }
+
   :is([data-flow]) {
     transition: translate 0.2s var(--ease-out-cubic),
     width 0.2s var(--ease-out-cubic), min-width 0.2s var(--ease-out-cubic),

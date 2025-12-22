@@ -55,6 +55,7 @@ export type NumberFlowInputCommonProps = {
   | "required"
   | "name"
   | "id"
+  | "placeholder"
 >;
 
 export type NumberFlowInputProps = NumberFlowInputCommonProps &
@@ -65,7 +66,7 @@ export const NumberFlowInput = ({
   defaultValue,
   onChange,
   autoAddLeadingZero = false,
-  maxLength,
+  placeholder,
   ...inputProps
 }: NumberFlowInputProps) => {
   const spanRef = useRef<HTMLSpanElement>(null);
@@ -77,6 +78,7 @@ export const NumberFlowInput = ({
     actualValue?.toString() ?? ""
   );
   const [_cursorPosition, setCursorPosition] = useState(0);
+  const { maxLength } = inputProps;
 
   // Undo/Redo history - stores cursor position before and after each change
   const historyRef = useRef<
@@ -2606,6 +2608,7 @@ export const NumberFlowInput = ({
               minWidth: "1ch",
               padding: "0",
             }}
+            data-placeholder={placeholder}
           />
           <input
             ref={inputRef}
