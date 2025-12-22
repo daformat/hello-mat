@@ -1,5 +1,6 @@
 import {
   ClipboardEventHandler,
+  ComponentPropsWithoutRef,
   CompositionEventHandler,
   KeyboardEventHandler,
   useCallback,
@@ -42,11 +43,19 @@ export type NumberFlowInputUncontrolledProps = {
 
 export type NumberFlowInputCommonProps = {
   onChange?: (value: MaybeUndefined<number>) => void;
-  name?: string;
-  id?: string;
   autoAddLeadingZero?: boolean;
   maxLength?: number;
-};
+} & Pick<
+  ComponentPropsWithoutRef<"input">,
+  | "min"
+  | "max"
+  | "minLength"
+  | "maxLength"
+  | "form"
+  | "required"
+  | "name"
+  | "id"
+>;
 
 export type NumberFlowInputProps = NumberFlowInputCommonProps &
   (NumberFlowInputControlledProps | NumberFlowInputUncontrolledProps);
@@ -55,10 +64,9 @@ export const NumberFlowInput = ({
   value,
   defaultValue,
   onChange,
-  name,
-  id,
   autoAddLeadingZero = false,
   maxLength,
+  ...inputProps
 }: NumberFlowInputProps) => {
   const spanRef = useRef<HTMLSpanElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -2601,11 +2609,12 @@ export const NumberFlowInput = ({
           />
           <input
             ref={inputRef}
-            type="hidden"
-            name={name}
-            id={id}
-            value={actualValue?.toString() ?? ""}
+            {...inputProps}
+            type="number"
             readOnly
+            tabIndex={-1}
+            className={styles.real_input}
+            value={actualValue?.toString() ?? ""}
           />
         </span>
       </span>

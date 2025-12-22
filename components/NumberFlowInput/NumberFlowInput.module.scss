@@ -18,11 +18,11 @@
 .number_flow_input_wrapper {
   line-height: 1;
   mask-image: linear-gradient(
-    to bottom,
-    transparent,
-    #000 10px,
-    #000 calc(100% - 10px),
-    transparent
+      to bottom,
+      transparent,
+      #000 10px,
+      #000 calc(100% - 10px),
+      transparent
   );
   padding: 10px;
   position: relative;
@@ -38,8 +38,8 @@
 
   :is([data-flow]) {
     transition: translate 0.2s var(--ease-out-cubic),
-      width 0.2s var(--ease-out-cubic), min-width 0.2s var(--ease-out-cubic),
-      max-width 0.2s var(--ease-out-cubic);
+    width 0.2s var(--ease-out-cubic), min-width 0.2s var(--ease-out-cubic),
+    max-width 0.2s var(--ease-out-cubic);
     translate: 0 100%;
 
     &[data-show] {
@@ -54,7 +54,7 @@
   // Width animation for replaced digits (barrel wheel animation)
   :is([data-width-animate]) {
     transition: width 0.4s var(--ease-out-cubic),
-      min-width 0.4s var(--ease-out-cubic), max-width 0.4s var(--ease-out-cubic);
+    min-width 0.4s var(--ease-out-cubic), max-width 0.4s var(--ease-out-cubic);
   }
 }
 
@@ -93,7 +93,7 @@
     gap: var(--digit-gap);
     position: relative;
     transform: translateY(
-      calc(var(--digit-position) * (-1em - var(--digit-gap)))
+        calc(var(--digit-position) * (-1em - var(--digit-gap)))
     );
     transition: none;
     user-select: none;
@@ -118,7 +118,7 @@
 
     .barrel_digits_wrapper {
       transform: translateY(
-        calc((9 - var(--digit-position)) * (1em + var(--digit-gap)))
+          calc((9 - var(--digit-position)) * (1em + var(--digit-gap)))
       );
     }
   }
@@ -140,4 +140,13 @@
     // stylelint-enable order/properties-alphabetical-order
     width: 100%;
   }
+}
+
+.real_input {
+  height: 1px;
+  left: -9999px;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  width: 1px;
 }
