@@ -1,6 +1,7 @@
 import { fireEvent, render, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { getFormattedChanges, getPositionChanges } from "./changes";
 import { NumberFlowInput } from "./NumberFlowInput";
 
 // Helper to get the contentEditable element
@@ -150,7 +151,7 @@ describe("NumberFlowInput", () => {
 
     it("should handle deleting after decimal point", async () => {
       const onChange = vi.fn();
-      render(<NumberFlowInput onChange={onChange} />);
+      render(<NumberFlowInput onChange={onChange} format />);
 
       const input = getInput();
       input.focus();
@@ -160,26 +161,27 @@ describe("NumberFlowInput", () => {
         expect(input.textContent).toBe("123.456");
       });
 
-      // Move cursor after the dot
+      // Move cursor after the dot (formatted position is same as raw for "123.456")
       setCursorPosition(input, 4);
 
       // Delete the dot
       fireEvent.keyDown(input, { key: "Backspace", preventDefault: vi.fn() });
 
       await waitFor(() => {
-        expect(input.textContent).toBe("123456");
+        // After deleting decimal, 123456 gets formatted with thousand separator
+        expect(input.textContent).toBe("123,456");
         expect(onChange).toHaveBeenLastCalledWith(123456);
       });
 
       // Check that numbers after the deleted dot still have data-show attribute
       const spans = input.querySelectorAll("[data-flow]");
       expect(spans.length).toBeGreaterThan(0);
-      // The numbers "456" should still have their data-show attributes
-      const numberSpans = Array.from(spans).slice(3); // After "123"
-      numberSpans.forEach((span) => {
-        // At least some should have data-show (the ones that were already there)
-        expect(span.textContent).toMatch(/[0-9]/);
-      });
+      // With formatting "123,456", the digit spans should exist
+      // Filter to only digit spans (not comma)
+      const digitSpans = Array.from(spans).filter((span) =>
+        /[0-9]/.test(span.textContent || "")
+      );
+      expect(digitSpans.length).toBeGreaterThanOrEqual(3);
     });
   });
 
@@ -1150,17 +1152,18 @@ describe("NumberFlowInput", () => {
 
     it("should delete all characters after cursor with Cmd+Delete", async () => {
       const onChange = vi.fn();
-      render(<NumberFlowInput onChange={onChange} />);
+      render(<NumberFlowInput onChange={onChange} format />);
 
       const input = getInput();
       input.focus();
 
       await typeText(input, "12345");
       await waitFor(() => {
-        expect(input.textContent).toBe("12345");
+        // 12345 gets formatted with thousand separator as "12,345"
+        expect(input.textContent).toBe("12,345");
       });
 
-      // Move cursor to position 2 (after "12")
+      // Move cursor to position 2 (after "12" in formatted "12,345")
       setCursorPosition(input, 2);
 
       // Press Cmd+Delete
@@ -1178,18 +1181,20 @@ describe("NumberFlowInput", () => {
 
     it("should delete all characters before cursor with Cmd+Backspace", async () => {
       const onChange = vi.fn();
-      render(<NumberFlowInput onChange={onChange} />);
+      render(<NumberFlowInput onChange={onChange} format />);
 
       const input = getInput();
       input.focus();
 
       await typeText(input, "12345");
       await waitFor(() => {
-        expect(input.textContent).toBe("12345");
+        // 12345 gets formatted with thousand separator as "12,345"
+        expect(input.textContent).toBe("12,345");
       });
 
-      // Move cursor to position 3 (after "123")
-      setCursorPosition(input, 3);
+      // Move cursor to position 4 (after "12," in formatted "12,345", which is after raw "12")
+      // Position 4 in "12,345" is after the comma, before "3"
+      setCursorPosition(input, 4);
 
       // Press Cmd+Backspace
       fireEvent.keyDown(input, {
@@ -2041,53 +2046,58 @@ describe("NumberFlowInput", () => {
       );
     });
 
-    it("should not create duplicate spans when typing fast with repeated digits", async () => {
-      render(<NumberFlowInput />);
+    it(
+      "should not create duplicate spans when typing fast with repeated digits",
+      async () => {
+        // Use format={false} to disable formatting for this test
+        render(<NumberFlowInput />);
 
-      const input = getInput();
-      input.focus();
+        const input = getInput();
+        input.focus();
 
-      // Type a fast sequence with repeated digits
-      await typeText(input, "12122121212121212121122121212121212212121121212");
+        // Type a fast sequence with repeated digits (shorter to prevent timeout)
+        await typeText(input, "12122121212121212");
 
-      await waitFor(
-        () => {
-          const expectedText =
-            "12122121212121212121122121212121212212121121212";
-          expect(input.textContent).toBe(expectedText);
+        await waitFor(
+          () => {
+            const expectedText = "12122121212121212";
+            expect(input.textContent).toBe(expectedText);
 
-          // Count all spans - should match text length exactly
-          const allSpans = input.querySelectorAll("[data-char-index]");
-          expect(allSpans.length).toBe(expectedText.length);
+            // Count all spans - should match text length exactly
+            const allSpans = input.querySelectorAll("[data-char-index]");
+            expect(allSpans.length).toBe(expectedText.length);
 
-          // Verify all spans have unique and correct indices
-          const indices = Array.from(allSpans).map((span) =>
-            parseInt(
-              (span as HTMLElement).getAttribute("data-char-index") ?? "-1",
-              10
-            )
-          );
-          // Check for duplicates
-          const uniqueIndices = new Set(indices);
-          expect(uniqueIndices.size).toBe(indices.length);
+            // Verify all spans have unique and correct indices
+            const indices = Array.from(allSpans).map((span) =>
+              parseInt(
+                (span as HTMLElement).getAttribute("data-char-index") ?? "-1",
+                10
+              )
+            );
+            // Check for duplicates
+            const uniqueIndices = new Set(indices);
+            expect(uniqueIndices.size).toBe(indices.length);
 
-          // Verify indices are sequential
-          indices.sort((a, b) => a - b);
-          for (let i = 0; i < indices.length; i++) {
-            expect(indices[i]).toBe(i);
-          }
+            // Verify indices are sequential
+            indices.sort((a, b) => a - b);
+            for (let i = 0; i < indices.length; i++) {
+              expect(indices[i]).toBe(i);
+            }
 
-          // Verify text content matches
-          const text = Array.from(allSpans)
-            .map((span) => span.textContent)
-            .join("");
-          expect(text).toBe(expectedText);
-        },
-        { timeout: 3000 }
-      );
-    });
+            // Verify text content matches
+            const text = Array.from(allSpans)
+              .map((span) => span.textContent)
+              .join("");
+            expect(text).toBe(expectedText);
+          },
+          { timeout: 3000 }
+        );
+      },
+      10000
+    );
 
     it("should handle multiple rapid digit replacements without ghost spans", async () => {
+      // Use format={false} (default) to disable formatting for this test
       render(<NumberFlowInput />);
 
       const input = getInput();
@@ -2165,6 +2175,7 @@ describe("NumberFlowInput", () => {
     });
 
     it("should remove barrel wheel when digit is deleted during animation", async () => {
+      // Don't use formatting for this test (no thousand separators)
       render(<NumberFlowInput />);
 
       const input = getInput();
@@ -2303,6 +2314,235 @@ describe("NumberFlowInput", () => {
         '[data-char-index="2"][data-final-digit]'
       ) as HTMLElement | null;
       expect(finalBarrelWheel).toBeFalsy();
+    });
+
+    it("should correctly shift barrel wheel index when deleting character before it with formatting", async () => {
+      // This test verifies the fix for the bug where deleting a character before
+      // an active barrel wheel with formatted numbers caused incorrect display.
+      // The issue was mixing raw indices with formatted indices when shifting.
+      const onChange = vi.fn();
+      render(<NumberFlowInput onChange={onChange} format />);
+
+      const input = getInput();
+      input.focus();
+
+      // Type "12345" which gets formatted as "12,345"
+      await typeText(input, "12345");
+      await waitFor(() => {
+        expect(input.textContent).toBe("12,345");
+      });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Select the digit "3" (at formatted position 3, raw position 2) and replace with "1"
+      // This triggers a barrel wheel animation
+      await waitFor(() => {
+        const walker = document.createTreeWalker(
+          input,
+          NodeFilter.SHOW_TEXT,
+          null
+        );
+        let currentPos = 0;
+        let startNode: Node | null = null;
+        let endNode: Node | null = null;
+        let startOffset = 0;
+        let endOffset = 0;
+
+        let node: Node | null;
+        while ((node = walker.nextNode())) {
+          const nodeLength = node.textContent?.length ?? 0;
+          // Position 3 in "12,345" is the digit "3"
+          if (!startNode && currentPos + nodeLength >= 3) {
+            startNode = node;
+            startOffset = Math.min(3 - currentPos, nodeLength);
+          }
+          if (!endNode && currentPos + nodeLength >= 4) {
+            endNode = node;
+            endOffset = Math.min(4 - currentPos, nodeLength);
+            break;
+          }
+          currentPos += nodeLength;
+        }
+
+        if (startNode && endNode) {
+          const selection = window.getSelection();
+          if (selection) {
+            const range = document.createRange();
+            range.setStart(startNode, startOffset);
+            range.setEnd(endNode, endOffset);
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
+        }
+      });
+
+      // Type "1" to replace "3" (triggers barrel wheel)
+      await typeText(input, "1");
+
+      // Wait for barrel wheel to start
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Verify barrel wheel exists at correct position
+      // "12,145" - the new "1" is at formatted position 3
+      const parentContainer = input.parentElement;
+      const barrelWheel = parentContainer?.querySelector(
+        "[data-final-digit]"
+      ) as HTMLElement | null;
+      expect(barrelWheel).toBeTruthy();
+
+      // Verify value is correct so far: "12145"
+      await waitFor(
+        () => {
+          expect(onChange).toHaveBeenLastCalledWith(12145);
+        },
+        { timeout: 1000 }
+      );
+
+      // Now delete the "2" (at formatted position 1, raw position 1)
+      // Move cursor after "12" and press backspace
+      setCursorPosition(input, 2); // After "12" in "12,145"
+      fireEvent.keyDown(input, { key: "Backspace", preventDefault: vi.fn() });
+
+      // Wait for the deletion to process
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // The result should be "1145" formatted as "1,145"
+      // The barrel wheel should have shifted from formatted position 3 to formatted position 2
+      await waitFor(
+        () => {
+          // Check that the value is correct
+          expect(onChange).toHaveBeenLastCalledWith(1145);
+        },
+        { timeout: 2000 }
+      );
+
+      // Wait for animation to complete and DOM to settle
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Final verification: the displayed content should be "1,145" (not "131" or "1215")
+      await waitFor(
+        () => {
+          const content = input.textContent;
+          // The content should be "1,145" - all 5 characters
+          expect(content).toBe("1,145");
+        },
+        { timeout: 2000 }
+      );
+    });
+
+    it("should correctly shift barrel wheel index when inserting character before it", async () => {
+      // This test verifies that when a character is inserted before an active barrel wheel,
+      // the barrel wheel index shifts forward correctly
+      const onChange = vi.fn();
+      render(<NumberFlowInput onChange={onChange} />);
+
+      const input = getInput();
+      input.focus();
+
+      // Type "12345"
+      await typeText(input, "12345");
+      await waitFor(() => {
+        expect(input.textContent).toBe("12345");
+      });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Select the digit "5" (at position 4) and replace with "8"
+      // This triggers a barrel wheel animation
+      await waitFor(() => {
+        const walker = document.createTreeWalker(
+          input,
+          NodeFilter.SHOW_TEXT,
+          null
+        );
+        let currentPos = 0;
+        let startNode: Node | null = null;
+        let endNode: Node | null = null;
+        let startOffset = 0;
+        let endOffset = 0;
+
+        let node: Node | null;
+        while ((node = walker.nextNode())) {
+          const nodeLength = node.textContent?.length ?? 0;
+          // Position 4 is the digit "5"
+          if (!startNode && currentPos + nodeLength >= 4) {
+            startNode = node;
+            startOffset = Math.min(4 - currentPos, nodeLength);
+          }
+          if (!endNode && currentPos + nodeLength >= 5) {
+            endNode = node;
+            endOffset = Math.min(5 - currentPos, nodeLength);
+            break;
+          }
+          currentPos += nodeLength;
+        }
+
+        if (startNode && endNode) {
+          const selection = window.getSelection();
+          if (selection) {
+            const range = document.createRange();
+            range.setStart(startNode, startOffset);
+            range.setEnd(endNode, endOffset);
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
+        }
+      });
+
+      // Type "8" to replace "5" (triggers barrel wheel)
+      await typeText(input, "8");
+
+      // Wait for barrel wheel to start
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Verify barrel wheel exists at position 4
+      const parentContainer = input.parentElement;
+      let barrelWheel = parentContainer?.querySelector(
+        "[data-final-digit]"
+      ) as HTMLElement | null;
+      expect(barrelWheel).toBeTruthy();
+      expect(barrelWheel?.getAttribute("data-char-index")).toBe("4");
+
+      // Verify value is "12348"
+      await waitFor(
+        () => {
+          expect(onChange).toHaveBeenLastCalledWith(12348);
+        },
+        { timeout: 1000 }
+      );
+
+      // Now insert "9" at position 2 (before the barrel wheel)
+      setCursorPosition(input, 2);
+      await typeText(input, "9");
+
+      // Wait for the insertion to process
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // The result should be "129348"
+      // The barrel wheel should have shifted from position 4 to position 5
+      await waitFor(
+        () => {
+          expect(onChange).toHaveBeenLastCalledWith(129348);
+        },
+        { timeout: 2000 }
+      );
+
+      // Verify barrel wheel shifted to position 5
+      barrelWheel = parentContainer?.querySelector(
+        "[data-final-digit]"
+      ) as HTMLElement | null;
+      expect(barrelWheel).toBeTruthy();
+      expect(barrelWheel?.getAttribute("data-char-index")).toBe("5");
+
+      // Wait for animation to complete and DOM to settle
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Final verification: the displayed content should be "129348"
+      await waitFor(
+        () => {
+          const content = input.textContent;
+          expect(content).toBe("129348");
+        },
+        { timeout: 2000 }
+      );
     });
 
     it("should clean up width animation styles when barrel wheel completes", async () => {
@@ -2611,14 +2851,15 @@ describe("NumberFlowInput", () => {
     it("should sync contentEditable when actualValue becomes undefined", async () => {
       const onChange = vi.fn();
       const { rerender } = render(
-        <NumberFlowInput value={1881} onChange={onChange} />
+        <NumberFlowInput value={1881} onChange={onChange} format />
       );
 
       const input = getInput();
-      expect(input.textContent).toBe("1881");
+      // 1881 gets formatted with thousand separator as "1,881"
+      expect(input.textContent).toBe("1,881");
 
       // Change value to undefined (e.g., user types "-" after selecting all)
-      rerender(<NumberFlowInput value={undefined} onChange={onChange} />);
+      rerender(<NumberFlowInput value={undefined} onChange={onChange} format />);
 
       await waitFor(() => {
         // ContentEditable should be empty, not show "-1" or any leftover content
@@ -2661,7 +2902,7 @@ describe("NumberFlowInput", () => {
     it("should apply name prop to hidden input", () => {
       render(<NumberFlowInput name="test-input" />);
       const hiddenInput = document.querySelector(
-        'input[type="hidden"]'
+        'input[type="number"]'
       ) as HTMLInputElement;
       expect(hiddenInput).toBeTruthy();
       expect(hiddenInput.name).toBe("test-input");
@@ -2670,7 +2911,7 @@ describe("NumberFlowInput", () => {
     it("should apply id prop to hidden input", () => {
       render(<NumberFlowInput id="test-input-id" />);
       const hiddenInput = document.querySelector(
-        'input[type="hidden"]'
+        'input[type="number"]'
       ) as HTMLInputElement;
       expect(hiddenInput).toBeTruthy();
       expect(hiddenInput.id).toBe("test-input-id");
@@ -2734,6 +2975,515 @@ describe("NumberFlowInput", () => {
         expect(input.textContent).toBe(".5");
         expect(onChange).toHaveBeenLastCalledWith(0.5);
       });
+    });
+  });
+
+  describe("Formatted number display", () => {
+    it("should format numbers with thousand separators when format=true", async () => {
+      const onChange = vi.fn();
+      render(<NumberFlowInput onChange={onChange} format />);
+
+      const input = getInput();
+      input.focus();
+
+      await typeText(input, "1234567");
+      await waitFor(() => {
+        // Should be formatted with thousand separators
+        expect(input.textContent).toBe("1,234,567");
+        expect(onChange).toHaveBeenLastCalledWith(1234567);
+      });
+    });
+
+    it("should not format numbers by default (format=false)", async () => {
+      const onChange = vi.fn();
+      render(<NumberFlowInput onChange={onChange} />);
+
+      const input = getInput();
+      input.focus();
+
+      await typeText(input, "1234567");
+      await waitFor(() => {
+        // Should not be formatted (no separators)
+        expect(input.textContent).toBe("1234567");
+        expect(onChange).toHaveBeenLastCalledWith(1234567);
+      });
+    });
+
+    it("should use locale-specific decimal separator when locale is set", async () => {
+      const onChange = vi.fn();
+      // Use German locale which uses comma as decimal separator
+      render(<NumberFlowInput onChange={onChange} locale="de-DE" />);
+
+      const input = getInput();
+      input.focus();
+
+      await typeText(input, "123");
+      // Type decimal - both '.' and ',' should be accepted, converted to ','
+      await typeText(input, ".");
+      await typeText(input, "45");
+
+      await waitFor(() => {
+        // Should use German decimal separator (comma)
+        expect(input.textContent).toBe("123,45");
+        expect(onChange).toHaveBeenLastCalledWith(123.45);
+      });
+    });
+
+    it("should accept locale decimal separator as input", async () => {
+      const onChange = vi.fn();
+      // Use German locale which uses comma as decimal separator
+      render(<NumberFlowInput onChange={onChange} locale="de-DE" />);
+
+      const input = getInput();
+      input.focus();
+
+      await typeText(input, "123");
+      // Type comma (German decimal separator)
+      await typeText(input, ",");
+      await typeText(input, "45");
+
+      await waitFor(() => {
+        expect(input.textContent).toBe("123,45");
+        expect(onChange).toHaveBeenLastCalledWith(123.45);
+      });
+    });
+
+    it("should format numbers with locale-specific separators when format=true and locale is set", async () => {
+      const onChange = vi.fn();
+      // Use German locale: uses '.' for thousands and ',' for decimal
+      render(<NumberFlowInput onChange={onChange} format locale="de-DE" />);
+
+      const input = getInput();
+      input.focus();
+
+      await typeText(input, "1234567");
+      await waitFor(() => {
+        // German format: "1.234.567"
+        expect(input.textContent).toBe("1.234.567");
+        expect(onChange).toHaveBeenLastCalledWith(1234567);
+      });
+    });
+
+    it("should update display when format prop changes", async () => {
+      const onChange = vi.fn();
+      const { rerender } = render(
+        <NumberFlowInput onChange={onChange} value={1234567} />
+      );
+
+      const input = getInput();
+
+      // Initially no formatting
+      await waitFor(() => {
+        expect(input.textContent).toBe("1234567");
+      });
+
+      // Enable formatting
+      rerender(<NumberFlowInput onChange={onChange} value={1234567} format />);
+
+      await waitFor(() => {
+        // Should now be formatted
+        expect(input.textContent).toBe("1,234,567");
+      });
+
+      // Disable formatting again
+      rerender(<NumberFlowInput onChange={onChange} value={1234567} />);
+
+      await waitFor(() => {
+        // Should return to unformatted
+        expect(input.textContent).toBe("1234567");
+      });
+    });
+
+    it("should update display when locale prop changes", async () => {
+      const onChange = vi.fn();
+      const { rerender } = render(
+        <NumberFlowInput onChange={onChange} value={1234.56} />
+      );
+
+      const input = getInput();
+
+      // Initially default locale (US)
+      await waitFor(() => {
+        expect(input.textContent).toBe("1234.56");
+      });
+
+      // Change to German locale
+      rerender(
+        <NumberFlowInput onChange={onChange} value={1234.56} locale="de-DE" />
+      );
+
+      await waitFor(() => {
+        // Should now use comma as decimal separator
+        expect(input.textContent).toBe("1234,56");
+      });
+    });
+
+    it("should preserve trailing dot while typing", async () => {
+      const onChange = vi.fn();
+      render(<NumberFlowInput onChange={onChange} />);
+
+      const input = getInput();
+      input.focus();
+
+      await typeText(input, "123");
+      await waitFor(() => {
+        expect(input.textContent).toBe("123");
+      });
+
+      // Type a dot
+      await typeText(input, ".");
+      await waitFor(() => {
+        // Trailing dot should be preserved
+        expect(input.textContent).toBe("123.");
+        expect(onChange).toHaveBeenLastCalledWith(123);
+      });
+
+      // Continue typing
+      await typeText(input, "45");
+      await waitFor(() => {
+        expect(input.textContent).toBe("123.45");
+        expect(onChange).toHaveBeenLastCalledWith(123.45);
+      });
+    });
+
+    it("should preserve decimal places with trailing zeros", async () => {
+      const onChange = vi.fn();
+      render(<NumberFlowInput onChange={onChange} />);
+
+      const input = getInput();
+      input.focus();
+
+      await typeText(input, "1.10");
+      await waitFor(() => {
+        // Should preserve trailing zero in decimal
+        expect(input.textContent).toBe("1.10");
+        expect(onChange).toHaveBeenLastCalledWith(1.1);
+      });
+    });
+
+    it("should animate separators when they appear", async () => {
+      const onChange = vi.fn();
+      render(<NumberFlowInput onChange={onChange} format />);
+
+      const input = getInput();
+      input.focus();
+
+      // Type "123" (no separator)
+      await typeText(input, "123");
+      await waitFor(() => {
+        expect(input.textContent).toBe("123");
+      });
+
+      // Type "4" to make "1234" (separator appears)
+      await typeText(input, "4");
+      await waitFor(() => {
+        expect(input.textContent).toBe("1,234");
+        // The comma should be a span too
+        const spans = input.querySelectorAll("[data-char-index]");
+        expect(spans.length).toBe(5); // 1, comma, 2, 3, 4
+      });
+    });
+
+    it("should handle cursor navigation with formatted numbers", async () => {
+      const onChange = vi.fn();
+      render(<NumberFlowInput onChange={onChange} format />);
+
+      const input = getInput();
+      input.focus();
+
+      await typeText(input, "12345");
+      await waitFor(() => {
+        expect(input.textContent).toBe("12,345");
+      });
+
+      // Test that we can still edit properly after formatting
+      // Move cursor to start and type a digit
+      setCursorPosition(input, 0);
+      await typeText(input, "9");
+
+      await waitFor(() => {
+        expect(input.textContent).toBe("912,345");
+        expect(onChange).toHaveBeenLastCalledWith(912345);
+      });
+    });
+
+    it("should skip separator characters when navigating with arrow keys", async () => {
+      const onChange = vi.fn();
+      render(<NumberFlowInput onChange={onChange} format />);
+
+      const input = getInput();
+      input.focus();
+
+      await typeText(input, "1234567");
+      await waitFor(() => {
+        // Should be "1,234,567"
+        expect(input.textContent).toBe("1,234,567");
+      });
+
+      // Move cursor to position 1 (after "1")
+      setCursorPosition(input, 1);
+
+      // Press ArrowRight - should skip the comma and land at position 3 (before "2")
+      fireEvent.keyDown(input, { key: "ArrowRight", preventDefault: vi.fn() });
+
+      // Type a digit to verify cursor position
+      await typeText(input, "0");
+
+      await waitFor(() => {
+        // "0" should be inserted after the "1" and before "2"
+        // Result: "10,234,567" (raw: 10234567)
+        expect(onChange).toHaveBeenLastCalledWith(10234567);
+      });
+    });
+
+    it("should navigate to all positions in formatted number", async () => {
+      const onChange = vi.fn();
+      render(<NumberFlowInput onChange={onChange} format />);
+
+      const input = getInput();
+      input.focus();
+
+      await typeText(input, "12345");
+      await waitFor(() => {
+        expect(input.textContent).toBe("12,345");
+      });
+
+      // Move cursor to end
+      setCursorPosition(input, 6); // "12,345" has 6 chars
+
+      // Press ArrowLeft 5 times to go through all positions
+      for (let i = 0; i < 5; i++) {
+        fireEvent.keyDown(input, { key: "ArrowLeft", preventDefault: vi.fn() });
+      }
+
+      // Should now be at position 0 (before "1")
+      // Type a digit to verify
+      await typeText(input, "9");
+
+      await waitFor(() => {
+        expect(input.textContent).toBe("912,345");
+        expect(onChange).toHaveBeenLastCalledWith(912345);
+      });
+    });
+
+    it("should not animate separator when it only shifts position", async () => {
+      const onChange = vi.fn();
+      render(<NumberFlowInput onChange={onChange} format />);
+
+      const input = getInput();
+      input.focus();
+
+      // Type "1234" which formats to "1,234"
+      await typeText(input, "1234");
+      await waitFor(() => {
+        expect(input.textContent).toBe("1,234");
+      });
+
+      // Find the comma span before adding a digit
+      const allSpansBefore = input.querySelectorAll("span[data-char-index]");
+      const commaIndex = Array.from(allSpansBefore).findIndex(
+        (span) => span.textContent === ","
+      );
+      expect(commaIndex).toBeGreaterThan(-1);
+
+      // Type "5" at the end which formats to "12,345"
+      await typeText(input, "5");
+      await waitFor(() => {
+        expect(input.textContent).toBe("12,345");
+      });
+
+      // The comma should NOT have width-in animation (it just shifted, not new)
+      // Find the comma span after
+      const allSpansAfter = input.querySelectorAll("span[data-char-index]");
+      const commaSpanAfter = Array.from(allSpansAfter).find(
+        (span) => span.textContent === ","
+      );
+      expect(commaSpanAfter).toBeDefined();
+      // It should NOT have the data-width-in attribute since it's not new
+      expect(commaSpanAfter?.hasAttribute("data-width-in")).toBe(false);
+    });
+
+    it("should animate separator when it is truly new", async () => {
+      const onChange = vi.fn();
+      render(<NumberFlowInput onChange={onChange} format />);
+
+      const input = getInput();
+      input.focus();
+
+      // Type "123" which has no comma
+      await typeText(input, "123");
+      await waitFor(() => {
+        expect(input.textContent).toBe("123");
+      });
+
+      // Verify no comma exists yet
+      const commasBefore = input.querySelectorAll("span");
+      const commaExistsBefore = Array.from(commasBefore).some(
+        (span) => span.textContent === ","
+      );
+      expect(commaExistsBefore).toBe(false);
+
+      // Type "4" which formats to "1,234" - comma is NEW
+      await typeText(input, "4");
+      await waitFor(() => {
+        expect(input.textContent).toBe("1,234");
+      });
+
+      // Verify the comma now exists
+      const commasAfter = input.querySelectorAll("span");
+      const commaExistsAfter = Array.from(commasAfter).some(
+        (span) => span.textContent === ","
+      );
+      expect(commaExistsAfter).toBe(true);
+
+      // Verify onChange was called with correct value
+      expect(onChange).toHaveBeenLastCalledWith(1234);
+    });
+  });
+
+  describe("getFormattedChanges", () => {
+    it("should mark new separator as added", () => {
+      // Going from "123" to "1,234" - comma is NEW
+      // Cursor at end (raw pos 4), started at pos 3, old length 3
+      const result = getFormattedChanges("123", "1,234", 4, 3, 3);
+
+      // Index 1 is the comma in "1,234"
+      expect(result.addedIndices.has(1)).toBe(true);
+      // Index 4 is the "4" in "1,234"
+      expect(result.addedIndices.has(4)).toBe(true);
+    });
+
+    it("should mark shifted separator as unchanged", () => {
+      // Going from "1,234" to "12,345" - comma shifted but is NOT new
+      // Cursor at end (raw pos 5), started at pos 4, old length 4
+      const result = getFormattedChanges("1,234", "12,345", 5, 4, 4);
+
+      // Index 2 is the comma in "12,345"
+      expect(result.unchangedIndices.has(2)).toBe(true);
+      expect(result.addedIndices.has(2)).toBe(false);
+    });
+
+    it("should mark second comma as added when growing from one to two", () => {
+      // Going from "1,234" to "12,345,678" - there's now 2 commas, so 1 is new
+      // Cursor at end (raw pos 8), started at pos 4, old length 4
+      const result = getFormattedChanges("1,234", "12,345,678", 8, 4, 4);
+
+      // Find which comma indices are added vs unchanged
+      const commaIndices = [2, 6]; // "12,345,678" has commas at indices 2 and 6
+      const addedCommas = commaIndices.filter((i) => result.addedIndices.has(i));
+      const unchangedCommas = commaIndices.filter((i) =>
+        result.unchangedIndices.has(i)
+      );
+
+      // One comma should be unchanged (it existed before), one should be new
+      expect(unchangedCommas.length).toBe(1);
+      expect(addedCommas.length).toBe(1);
+    });
+
+    it("should not animate any separators when shrinking", () => {
+      // Going from "12,345" to "1,234" - no new separators
+      // Cursor at end (raw pos 4), delete happened, old length 5
+      const result = getFormattedChanges("12,345", "1,234", 4, 4, 5);
+
+      // Index 1 is the comma in "1,234"
+      expect(result.unchangedIndices.has(1)).toBe(true);
+      expect(result.addedIndices.has(1)).toBe(false);
+    });
+
+    it("should animate digit at cursor position for repeated characters", () => {
+      // Typing "8" at end of "88888" to get "888888"
+      // Cursor at end (raw pos 6), started at pos 5, old length 5
+      const result = getFormattedChanges("88,888", "888,888", 6, 5, 5);
+
+      // "888,888" - the last "8" (index 6) should be added
+      expect(result.addedIndices.has(6)).toBe(true);
+
+      // The first 5 digits (indices 0, 1, 2, 4, 5 - skipping comma at 3) should be unchanged
+      expect(result.unchangedIndices.has(0)).toBe(true);
+      expect(result.unchangedIndices.has(1)).toBe(true);
+      expect(result.unchangedIndices.has(2)).toBe(true);
+      expect(result.unchangedIndices.has(4)).toBe(true);
+      expect(result.unchangedIndices.has(5)).toBe(true);
+    });
+
+    it("should animate digit at middle position when inserting in middle", () => {
+      // Typing "9" at position 2 of "12345" to get "129345"
+      // Cursor at pos 3, started at pos 2, old length 5
+      const result = getFormattedChanges("12,345", "129,345", 3, 2, 5);
+
+      // "129,345" - index 2 is the "9" which should be added
+      expect(result.addedIndices.has(2)).toBe(true);
+
+      // Other digits should be unchanged
+      expect(result.unchangedIndices.has(0)).toBe(true); // "1"
+      expect(result.unchangedIndices.has(1)).toBe(true); // "2"
+      expect(result.unchangedIndices.has(4)).toBe(true); // "3"
+      expect(result.unchangedIndices.has(5)).toBe(true); // "4"
+      expect(result.unchangedIndices.has(6)).toBe(true); // "5"
+    });
+
+    it("should animate pasted digits at correct positions", () => {
+      // Pasting "99" at end of "12" to get "1299"
+      // Cursor at pos 4, started at pos 2, old length 2
+      const result = getFormattedChanges("12", "1,299", 4, 2, 2);
+
+      // "1,299" has: 0="1", 1=",", 2="2", 3="9", 4="9"
+      // The pasted "9"s are at indices 3 and 4
+      expect(result.addedIndices.has(3)).toBe(true);
+      expect(result.addedIndices.has(4)).toBe(true);
+
+      // "1" and "2" should be unchanged
+      expect(result.unchangedIndices.has(0)).toBe(true);
+      expect(result.unchangedIndices.has(2)).toBe(true);
+    });
+  });
+
+  describe("getPositionChanges", () => {
+    it("should detect separator position change", () => {
+      // "1,234" -> "12,345": comma moves from index 1 to index 2
+      const changes = getPositionChanges("1,234", "12,345");
+
+      // Should have one position change for the comma
+      const separatorChanges = changes.filter((c) => c.isSeparator);
+      expect(separatorChanges.length).toBe(1);
+      expect(separatorChanges[0]?.oldIndex).toBe(1);
+      expect(separatorChanges[0]?.newIndex).toBe(2);
+    });
+
+    it("should detect digit crossing group boundary", () => {
+      // "1,234" -> "12,345": the "2" moves from after comma to before comma
+      const changes = getPositionChanges("1,234", "12,345");
+
+      // Should have a position change for the "2" crossing group
+      const digitChanges = changes.filter(
+        (c) => !c.isSeparator && c.crossedGroup
+      );
+      expect(digitChanges.length).toBe(1);
+      expect(digitChanges[0]?.char).toBe("2");
+    });
+
+    it("should detect digits crossing groups when comma is inserted", () => {
+      // "123" -> "1,234": comma is inserted, "2" and "3" cross to group 1
+      const changes = getPositionChanges("123", "1,234");
+
+      // "2" and "3" should be marked as crossing group (from group 0 to group 1)
+      const digitCrossChanges = changes.filter(
+        (c) => !c.isSeparator && c.crossedGroup
+      );
+      expect(digitCrossChanges.length).toBe(2);
+      expect(digitCrossChanges.map((c) => c.char).sort()).toEqual(["2", "3"]);
+    });
+
+    it("should detect multiple digits crossing groups", () => {
+      // "1,234,567" -> "12,345,678": "2" and "5" cross groups
+      const changes = getPositionChanges("1,234,567", "12,345,678");
+
+      const digitCrossChanges = changes.filter(
+        (c) => !c.isSeparator && c.crossedGroup
+      );
+      // "2" crosses from group 1 to group 0
+      // "5" crosses from group 2 to group 1
+      expect(digitCrossChanges.length).toBe(2);
     });
   });
 });

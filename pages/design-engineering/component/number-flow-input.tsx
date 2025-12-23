@@ -5,6 +5,7 @@ import { NextCard } from "@/components/Navigation/NextCard";
 import { NumberFlowInput } from "@/components/NumberFlowInput/NumberFlowInput";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
+import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
 import {
   COMPONENTS,
   getNextComponent,
@@ -46,6 +47,7 @@ const NumberFlowInputPageContent = () => {
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const maxLength = useMaxLength(10, 16, 600);
+  const [format, setFormat] = useState(false);
 
   useEffect(() => {
     if (contentRef.current) {
@@ -97,8 +99,21 @@ const NumberFlowInputPageContent = () => {
             maxLength={maxLength}
             autoAddLeadingZero
             placeholder="0"
+            format={format}
           />
-          <p style={{ opacity: 0.5 }}>Type in a value above</p>
+          <p style={{ textAlign: "center" }}>
+            <span style={{ opacity: 0.5 }}>Type in a value above</span>
+            <br />
+            <label
+              style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+            >
+              <Checkbox
+                defaultChecked={format}
+                onChange={(event) => setFormat(event.target.checked)}
+              />
+              <small style={{ opacity: 0.8 }}>format</small>
+            </label>
+          </p>
         </div>
 
         <h2 id="features">Features</h2>

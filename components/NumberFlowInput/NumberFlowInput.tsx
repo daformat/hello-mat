@@ -5,6 +5,7 @@ import {
   KeyboardEventHandler,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -19,7 +20,7 @@ import {
   repositionBarrelWheel,
   setWidthConstraints,
 } from "./barrelWheel";
-import { getChanges } from "./changes";
+import { getChanges, getFormattedChanges, getPositionChanges } from "./changes";
 import styles from "./NumberFlowInput.module.scss";
 import { cleanText, parseNumberValue } from "./textCleaning";
 import {
@@ -31,6 +32,81 @@ import {
   setCursorPositionInElement,
 } from "./utils";
 
+/**
+ * Move an element in the DOM while preserving any ongoing CSS translate animation.
+ * CSS transitions are cancelled when elements are moved in DOM, so we use
+ * Web Animations API to continue the animation from where it left off.
+ */
+const moveElementPreservingAnimation = (
+  element: HTMLElement,
+  parent: HTMLElement,
+  referenceNode: Node | null
+): void => {
+  // Check if element has ongoing translate animation (data-flow attribute)
+  const hasFlowAnimation = element.hasAttribute("data-flow");
+  const hasShowAttribute = element.hasAttribute("data-show");
+
+  // Only need to preserve animation if it's a flow element that's still animating
+  // (has data-flow but hasn't reached final state with data-show, or just got data-show)
+  let translateState: { from: string; progress: number } | null = null;
+
+  if (hasFlowAnimation) {
+    // Get the current computed translate value
+    const computedStyle = window.getComputedStyle(element);
+    const currentTranslate = computedStyle.translate;
+
+    // Parse the translate value to determine animation progress
+    // data-flow starts at "0 100%" and ends at "0 0" when data-show is added
+    if (currentTranslate && currentTranslate !== "none") {
+      // Parse "0px Ypx" or "0 Y%" format
+      const match = currentTranslate.match(/^0(?:px)?\s+(-?[\d.]+)(px|%)$/);
+      if (match && match[1] && match[2]) {
+        const value = parseFloat(match[1]);
+        const unit = match[2];
+        // If not at final position (0), animation is in progress
+        if (Math.abs(value) > 0.1) {
+          translateState = {
+            from: currentTranslate,
+            progress: unit === "%" ? (100 - Math.abs(value)) / 100 : 0,
+          };
+        }
+      }
+    }
+  }
+
+  // Perform the move
+  if (referenceNode) {
+    parent.insertBefore(element, referenceNode);
+  } else {
+    parent.appendChild(element);
+  }
+
+  // If element was mid-animation, continue it using Web Animations API
+  if (translateState && hasShowAttribute) {
+    // Cancel any existing CSS transition by setting inline style
+    element.style.translate = translateState.from;
+
+    // Force reflow to apply the inline style
+    void element.offsetWidth;
+
+    // Calculate remaining duration based on progress (original duration is 200ms)
+    const remainingDuration = Math.max(50, 200 * (1 - translateState.progress));
+
+    // Use Web Animations API to animate from current position to final
+    element.animate(
+      [{ translate: translateState.from }, { translate: "0 0" }],
+      {
+        duration: remainingDuration,
+        easing: "cubic-bezier(0.33, 1, 0.68, 1)", // --ease-out-cubic
+        fill: "forwards",
+      }
+    ).onfinish = () => {
+      // Clean up inline style after animation completes
+      element.style.translate = "";
+    };
+  }
+};
+
 export type NumberFlowInputControlledProps = {
   value: MaybeUndefined<number>;
   defaultValue?: never;
@@ -41,10 +117,36 @@ export type NumberFlowInputUncontrolledProps = {
   value?: never;
 };
 
+/**
+ * Helper to get decimal and group separators for a given locale.
+ */
+const getLocaleSeparators = (
+  locale?: Intl.UnicodeBCP47LocaleIdentifier | Intl.Locale
+): { decimal: string; group: string } => {
+  const formatter = new Intl.NumberFormat(locale);
+  const parts = formatter.formatToParts(1234.5);
+  const decimal = parts.find((p) => p.type === "decimal")?.value ?? ".";
+  const group = parts.find((p) => p.type === "group")?.value ?? ",";
+  return { decimal, group };
+};
+
 export type NumberFlowInputCommonProps = {
   onChange?: (value: MaybeUndefined<number>) => void;
   autoAddLeadingZero?: boolean;
   maxLength?: number;
+  /**
+   * Locale for number formatting.
+   * If provided, decimal and group separators will be inferred from this locale.
+   * The input will accept both '.' and the locale-specific decimal separator.
+   */
+  locale?: Intl.UnicodeBCP47LocaleIdentifier | Intl.Locale;
+  /**
+   * Whether to format the display using Intl.NumberFormat.
+   * If true with locale, uses Intl.NumberFormat(locale).format().
+   * If true without locale, uses Intl.NumberFormat().format().
+   * Default: false (no formatting)
+   */
+  format?: boolean;
 } & Pick<
   ComponentPropsWithoutRef<"input">,
   | "min"
@@ -67,6 +169,8 @@ export const NumberFlowInput = ({
   onChange,
   autoAddLeadingZero = false,
   placeholder,
+  locale,
+  format = false,
   ...inputProps
 }: NumberFlowInputProps) => {
   const spanRef = useRef<HTMLSpanElement>(null);
@@ -74,11 +178,101 @@ export const NumberFlowInput = ({
   const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue);
   const isControlled = value !== undefined;
   const actualValue = isControlled ? value : uncontrolledValue;
+  // Raw display value (unformatted, e.g., "1234.56")
   const [displayValue, setDisplayValue] = useState(
     actualValue?.toString() ?? ""
   );
   const [_cursorPosition, setCursorPosition] = useState(0);
   const { maxLength } = inputProps;
+
+  // Get separators for the locale (or default locale if format is true)
+  const separators = useMemo(() => {
+    if (locale || format) {
+      return getLocaleSeparators(locale);
+    }
+    // Default: standard separators
+    return { decimal: ".", group: "," };
+  }, [locale, format]);
+
+  // Compute the formatted display value
+  const formattedDisplayValue = useMemo(() => {
+    const { decimal } = separators;
+
+    // Handle intermediate states where we need to preserve user input
+    // Convert internal '.' to locale decimal separator for display
+    if (displayValue === "") {
+      return "";
+    }
+    if (displayValue === "-") {
+      return "-";
+    }
+    if (displayValue === ".") {
+      return decimal;
+    }
+    if (displayValue === "-.") {
+      return "-" + decimal;
+    }
+
+    // Parse the number
+    const numericValue = parseFloat(displayValue);
+    if (isNaN(numericValue)) {
+      // Replace internal '.' with locale decimal for display
+      return displayValue.replace(".", decimal);
+    }
+
+    // Check for trailing dot or decimal portion being typed
+    const hasTrailingDot = displayValue.endsWith(".");
+    const dotIndex = displayValue.indexOf(".");
+    const decimalPart = dotIndex >= 0 ? displayValue.slice(dotIndex + 1) : "";
+
+    // Check if user typed a leading decimal (e.g., ".5" or "-.5")
+    // Only apply formatting if autoAddLeadingZero would convert it
+    const hasLeadingDecimal =
+      displayValue.startsWith(".") || displayValue.startsWith("-.");
+    if (hasLeadingDecimal && !autoAddLeadingZero) {
+      // User explicitly typed .5 without autoAddLeadingZero - preserve it
+      // Replace internal '.' with locale decimal for display
+      return displayValue.replace(".", decimal);
+    }
+
+    // If format is false, just convert internal '.' to locale decimal
+    if (!format) {
+      return displayValue.replace(".", decimal);
+    }
+
+    // Format the number using Intl.NumberFormat
+    let formatted: string;
+    try {
+      const formatter = new Intl.NumberFormat(locale);
+      formatted = formatter.format(numericValue);
+
+      // If there's a decimal part, we need to preserve the exact decimal digits the user typed
+      // The format function may truncate or round decimals, so we restore them
+      if (dotIndex >= 0 && decimalPart.length > 0) {
+        const formattedDotIndex = formatted.indexOf(decimal);
+        if (formattedDotIndex >= 0) {
+          // Replace the formatted decimal part with the user's original decimal part
+          formatted = formatted.slice(0, formattedDotIndex + 1) + decimalPart;
+        } else {
+          // Format result has no decimal point but we need one
+          formatted += decimal + decimalPart;
+        }
+      }
+    } catch {
+      // On error, just convert internal '.' to locale decimal
+      formatted = displayValue.replace(".", decimal);
+    }
+
+    // Add trailing decimal back if user is typing it
+    if (hasTrailingDot && !formatted.includes(decimal)) {
+      formatted += decimal;
+    }
+
+    return formatted;
+  }, [displayValue, format, autoAddLeadingZero, separators, locale]);
+
+  // Track previous formatted value for change detection
+  const prevFormattedValueRef = useRef(formattedDisplayValue);
 
   // Undo/Redo history - stores cursor position before and after each change
   const historyRef = useRef<
@@ -98,6 +292,172 @@ export const NumberFlowInput = ({
 
   // Track ResizeObservers for digits with barrel wheel animations
   const resizeObserversRef = useRef<Map<number, ResizeObserver>>(new Map());
+
+  // Helper to check if a character is a "raw" character (digit, decimal, or minus)
+  const isRawChar = useCallback(
+    (char: string | undefined): boolean => {
+      if (!char) {
+        return false;
+      }
+      const { decimal } = separators;
+      // Include locale decimal separator as a raw character
+      return /[\d.\-]/.test(char) || char === decimal;
+    },
+    [separators]
+  );
+
+  // Helper to map a raw index to a formatted index
+  // Raw: "1234.56" -> Formatted: "1,234.56"
+  // Raw index 0 (1) -> Formatted index 0
+  // Raw index 1 (2) -> Formatted index 2 (after comma)
+  const mapRawToFormattedIndex = useCallback(
+    (rawValue: string, formattedValue: string, rawIndex: number): number => {
+      if (rawIndex <= 0) {
+        return 0;
+      }
+      if (rawIndex >= rawValue.length) {
+        return formattedValue.length;
+      }
+
+      // Count how many raw characters we've seen to find the rawIndex'th one
+      let rawCount = 0;
+
+      for (
+        let formattedIndex = 0;
+        formattedIndex < formattedValue.length;
+        formattedIndex++
+      ) {
+        const formattedChar = formattedValue[formattedIndex];
+        // Check if this is a raw character (digit, decimal, minus) vs format character (comma, space, etc.)
+        if (isRawChar(formattedChar)) {
+          if (rawCount === rawIndex) {
+            // Found the rawIndex'th raw character
+            return formattedIndex;
+          }
+          rawCount++;
+        }
+      }
+
+      return formattedValue.length;
+    },
+    [isRawChar]
+  );
+
+  // Helper to map a formatted index to a raw index
+  const mapFormattedToRawIndex = useCallback(
+    (
+      rawValue: string,
+      formattedValue: string,
+      formattedIndex: number
+    ): number => {
+      if (formattedIndex <= 0) {
+        return 0;
+      }
+      if (formattedIndex >= formattedValue.length) {
+        return rawValue.length;
+      }
+
+      let rawIndex = 0;
+      for (let i = 0; i < formattedIndex && i < formattedValue.length; i++) {
+        const char = formattedValue[i];
+        if (isRawChar(char)) {
+          rawIndex++;
+        }
+      }
+      return Math.min(rawIndex, rawValue.length);
+    },
+    [isRawChar]
+  );
+
+  // Helper to check if a character at a formatted index is a separator (not digit, decimal, or minus)
+  const _isSeparatorChar = useCallback(
+    (char: string | undefined): boolean => {
+      if (!char) {
+        return false;
+      }
+      // Check against locale decimal separator and standard characters
+      const { decimal } = separators;
+      if (char === decimal || char === "." || char === "-" || /\d/.test(char)) {
+        return false;
+      }
+      return true;
+    },
+    [separators]
+  );
+
+  // Helper to format a raw value string (raw always uses '.' as decimal)
+  const formatRawValue = useCallback(
+    (rawValue: string): string => {
+      const { decimal } = separators;
+
+      // Handle intermediate states
+      if (rawValue === "") {
+        return "";
+      }
+      if (rawValue === "-") {
+        return "-";
+      }
+      if (rawValue === ".") {
+        return decimal;
+      }
+      if (rawValue === "-.") {
+        return "-" + decimal;
+      }
+
+      const numericValue = parseFloat(rawValue);
+      if (isNaN(numericValue)) {
+        // Replace internal '.' with locale decimal for display
+        return rawValue.replace(".", decimal);
+      }
+
+      // Check if user typed a leading decimal (e.g., ".5" or "-.5")
+      // Only apply formatting if autoAddLeadingZero would convert it
+      const hasLeadingDecimal =
+        rawValue.startsWith(".") || rawValue.startsWith("-.");
+      if (hasLeadingDecimal && !autoAddLeadingZero) {
+        // User explicitly typed .5 without autoAddLeadingZero - preserve it
+        return rawValue.replace(".", decimal);
+      }
+
+      // If format is false, just convert internal '.' to locale decimal
+      if (!format) {
+        return rawValue.replace(".", decimal);
+      }
+
+      const hasTrailingDot = rawValue.endsWith(".");
+      const dotIndex = rawValue.indexOf(".");
+      const decimalPart = dotIndex >= 0 ? rawValue.slice(dotIndex + 1) : "";
+
+      let formatted: string;
+      try {
+        const formatter = new Intl.NumberFormat(locale);
+        formatted = formatter.format(numericValue);
+
+        // If there's a decimal part, we need to preserve the exact decimal digits the user typed
+        // The format function may truncate or round decimals, so we restore them
+        if (dotIndex >= 0 && decimalPart.length > 0) {
+          const formattedDotIndex = formatted.indexOf(decimal);
+          if (formattedDotIndex >= 0) {
+            // Replace the formatted decimal part with the user's original decimal part
+            formatted = formatted.slice(0, formattedDotIndex + 1) + decimalPart;
+          } else {
+            // Format result has no decimal point but we need one
+            formatted += decimal + decimalPart;
+          }
+        }
+      } catch {
+        // On error, just convert internal '.' to locale decimal
+        formatted = rawValue.replace(".", decimal);
+      }
+
+      if (hasTrailingDot && !formatted.includes(decimal)) {
+        formatted += decimal;
+      }
+
+      return formatted;
+    },
+    [format, autoAddLeadingZero, separators, locale]
+  );
 
   const addToHistory = useCallback(
     (
@@ -131,21 +491,71 @@ export const NumberFlowInput = ({
       `[data-char-index].${styles.barrel_wheel || ""}`
     );
 
+    if (existingBarrelWheels.length === 0) {
+      return;
+    }
+
+    // Get all spans in DOM order and calculate their FINAL widths using measureText
+    // This is needed because some spans may be animating their width from 0
+    const allSpans = Array.from(
+      spanRef.current.querySelectorAll("[data-char-index]")
+    ) as HTMLElement[];
+
+    // Sort by data-char-index to ensure correct order
+    allSpans.sort((a, b) => {
+      const aIndex = parseInt(a.getAttribute("data-char-index") ?? "0", 10);
+      const bIndex = parseInt(b.getAttribute("data-char-index") ?? "0", 10);
+      return aIndex - bIndex;
+    });
+
+    // Calculate final widths for all spans using measureText
+    const spanWidths = new Map<number, number>();
+    allSpans.forEach((span) => {
+      const index = parseInt(span.getAttribute("data-char-index") ?? "-1", 10);
+      if (index >= 0 && span.textContent) {
+        // Use measureText to get the accurate final width
+        const finalWidth = measureText(span.textContent, span);
+        spanWidths.set(index, finalWidth);
+      }
+    });
+
+    // Get the container's position for relative positioning
+    const containerRect = spanRef.current.getBoundingClientRect();
+    const parentRect = parentContainer.getBoundingClientRect();
+
     existingBarrelWheels.forEach((wheel) => {
       const wheelEl = wheel as HTMLElement;
       const indexStr = wheelEl.getAttribute("data-char-index");
       if (indexStr !== null) {
-        const index = parseInt(indexStr, 10);
-        if (!isNaN(index) && index >= 0 && spanRef.current) {
+        const barrelIndex = parseInt(indexStr, 10);
+        if (!isNaN(barrelIndex) && barrelIndex >= 0 && spanRef.current) {
           const charSpan = spanRef.current.querySelector(
-            `[data-char-index="${index}"]`
+            `[data-char-index="${barrelIndex}"]`
           ) as HTMLElement | null;
 
           if (charSpan) {
             if (!isTransparent(charSpan)) {
               charSpan.style.color = "transparent";
             }
-            repositionBarrelWheel(wheelEl, charSpan, parentContainer);
+
+            // Calculate the left position by summing widths of all preceding spans
+            let leftPosition = containerRect.left - parentRect.left;
+            for (let i = 0; i < barrelIndex; i++) {
+              const width = spanWidths.get(i);
+              if (width !== undefined) {
+                leftPosition += width;
+              }
+            }
+
+            // Get the barrel wheel span's dimensions
+            const barrelSpanWidth = spanWidths.get(barrelIndex) ?? 0;
+            const barrelSpanHeight = charSpan.getBoundingClientRect().height;
+
+            // Position the barrel wheel
+            wheelEl.style.left = `${leftPosition}px`;
+            wheelEl.style.top = `${containerRect.top - parentRect.top}px`;
+            wheelEl.style.width = `${barrelSpanWidth}px`;
+            wheelEl.style.height = `${barrelSpanHeight}px`;
           }
         }
       }
@@ -328,93 +738,179 @@ export const NumberFlowInput = ({
           adjustedNewCursorPos
         );
 
+        // Compute formatted versions for display
+        const oldFormattedText = prevFormattedValueRef.current;
+        const newFormattedText = formatRawValue(cleanedText);
+        const formattedChanges = getFormattedChanges(
+          oldFormattedText,
+          newFormattedText,
+          adjustedNewCursorPos,
+          adjustedSelectionStart,
+          adjustedOldText.length
+        );
+
+        // Detect position changes for x-position animation (used later)
+        const positionChanges = getPositionChanges(
+          oldFormattedText,
+          newFormattedText
+        );
+
+        // For FLIP animation: capture old positions BEFORE any DOM changes
+        // Store by character + formatted index
+        const oldPositions = new Map<string, { x: number; width: number }>();
+        if (spanRef.current) {
+          const containerRect = spanRef.current.getBoundingClientRect();
+          for (let i = 0; i < oldFormattedText.length; i++) {
+            const char = oldFormattedText[i];
+            // Find the span for this index
+            const span = spanRef.current.querySelector(
+              `[data-char-index="${i}"]`
+            ) as HTMLElement | null;
+            // Verify span exists and content matches (DOM might be out of sync)
+            if (span && char !== undefined && span.textContent === char) {
+              const rect = span.getBoundingClientRect();
+              // Key: char + its position in the old formatted string
+              const key = `${char}@${i}`;
+              oldPositions.set(key, {
+                x: rect.left - containerRect.left,
+                width: rect.width,
+              });
+            }
+          }
+        }
+
+        // Update the previous formatted value ref for next comparison
+        // Note: oldFormattedText was captured at line ~692 BEFORE this update,
+        // so barrel wheel and span shifting logic will use the correct old value
+        prevFormattedValueRef.current = newFormattedText;
+
         // Update barrel wheel indices if characters were inserted or deleted before them
+        // IMPORTANT: Barrel wheel indices are FORMATTED indices (include separators)
+        // We need to map raw selection positions to formatted positions for correct comparison
         if (spanRef.current?.parentElement) {
           const parentContainer = spanRef.current.parentElement;
           const existingBarrelWheels = parentContainer.querySelectorAll(
             `[data-char-index].${styles.barrel_wheel || ""}`
           );
+          // Note: oldFormattedText is captured above before updating prevFormattedValueRef
+
           existingBarrelWheels.forEach((wheel) => {
             const wheelEl = wheel as HTMLElement;
-            const oldIndexStr = wheelEl.getAttribute("data-char-index");
+            const oldFormattedIndexStr = wheelEl.getAttribute("data-char-index");
             const finalDigitStr = wheelEl.getAttribute("data-final-digit");
-            if (oldIndexStr !== null) {
-              const oldIndex = parseInt(oldIndexStr, 10);
-              if (!isNaN(oldIndex) && oldIndex >= 0) {
+            if (oldFormattedIndexStr !== null) {
+              const oldFormattedIndex = parseInt(oldFormattedIndexStr, 10);
+              if (!isNaN(oldFormattedIndex) && oldFormattedIndex >= 0) {
+                // Convert barrel wheel's formatted index to raw index
+                const barrelWheelRawIndex = mapFormattedToRawIndex(
+                  adjustedOldText,
+                  oldFormattedText,
+                  oldFormattedIndex
+                );
+
                 const lengthDiff = cleanedText.length - adjustedOldText.length;
-                const hadSelection =
-                  adjustedSelectionStart < adjustedSelectionEnd;
+                // hadSelection is true when user had text selected (replacement creates barrel wheel at new position)
+                // For single-char insertions, adjustedSelectionStart === adjustedSelectionEnd
+                const hadUserSelection =
+                  adjustedSelectionStart < adjustedSelectionEnd &&
+                  lengthDiff >= 0; // Only for insertions/replacements, not deletions
 
                 if (
-                  !hadSelection &&
+                  !hadUserSelection &&
                   lengthDiff > 0 &&
-                  adjustedSelectionStart <= oldIndex
+                  adjustedSelectionStart <= barrelWheelRawIndex
                 ) {
                   // Characters were inserted at or before this index, so shift it forward
+                  // Calculate new raw index
                   const numInserted =
                     adjustedNewCursorPos - adjustedSelectionStart;
-                  const newIndex = oldIndex + numInserted;
-                  wheelEl.setAttribute("data-char-index", newIndex.toString());
+                  const newRawIndex = barrelWheelRawIndex + numInserted;
+                  // Map back to formatted index
+                  const newFormattedIndex = mapRawToFormattedIndex(
+                    cleanedText,
+                    newFormattedText,
+                    newRawIndex
+                  );
 
-                  const observer = resizeObserversRef.current.get(oldIndex);
+                  wheelEl.setAttribute(
+                    "data-char-index",
+                    newFormattedIndex.toString()
+                  );
+
+                  const observer =
+                    resizeObserversRef.current.get(oldFormattedIndex);
                   if (observer) {
-                    resizeObserversRef.current.delete(oldIndex);
-                    resizeObserversRef.current.set(newIndex, observer);
+                    resizeObserversRef.current.delete(oldFormattedIndex);
+                    resizeObserversRef.current.set(newFormattedIndex, observer);
                   }
 
                   if (finalDigitStr && spanRef.current) {
                     const oldSpan = spanRef.current.querySelector(
-                      `[data-char-index="${oldIndex}"]`
+                      `[data-char-index="${oldFormattedIndex}"]`
                     ) as HTMLElement | null;
                     if (oldSpan && oldSpan.textContent === finalDigitStr) {
                       oldSpan.setAttribute(
                         "data-char-index",
-                        newIndex.toString()
+                        newFormattedIndex.toString()
                       );
                     }
                   }
                 } else if (
-                  !hadSelection &&
                   lengthDiff < 0 &&
-                  adjustedSelectionStart < oldIndex
+                  adjustedSelectionStart < barrelWheelRawIndex
                 ) {
                   // Characters were deleted before this index, so shift it backward
+                  // Note: No hadUserSelection check for deletions - always shift barrel wheels after deletion point
                   const numDeleted =
                     adjustedSelectionEnd - adjustedSelectionStart;
-                  const newIndex = Math.max(0, oldIndex - numDeleted);
+                  const newRawIndex = Math.max(
+                    0,
+                    barrelWheelRawIndex - numDeleted
+                  );
 
                   // Only update if the new index is valid and the barrel wheel should still exist
                   // Also ensure the barrel wheel is not in the deletion range
                   if (
-                    newIndex < cleanedText.length &&
-                    oldIndex >= adjustedSelectionEnd
+                    newRawIndex < cleanedText.length &&
+                    barrelWheelRawIndex >= adjustedSelectionEnd
                   ) {
-                    wheelEl.setAttribute(
-                      "data-char-index",
-                      newIndex.toString()
+                    // Map back to formatted index
+                    const newFormattedIndex = mapRawToFormattedIndex(
+                      cleanedText,
+                      newFormattedText,
+                      newRawIndex
                     );
 
-                    const observer = resizeObserversRef.current.get(oldIndex);
+                    wheelEl.setAttribute(
+                      "data-char-index",
+                      newFormattedIndex.toString()
+                    );
+
+                    const observer =
+                      resizeObserversRef.current.get(oldFormattedIndex);
                     if (observer) {
-                      resizeObserversRef.current.delete(oldIndex);
-                      resizeObserversRef.current.set(newIndex, observer);
+                      resizeObserversRef.current.delete(oldFormattedIndex);
+                      resizeObserversRef.current.set(
+                        newFormattedIndex,
+                        observer
+                      );
                     }
 
                     if (finalDigitStr && spanRef.current) {
                       // Find the span that matches the final digit - it might still be at oldIndex
                       // or it might have already been shifted
                       const oldSpan = spanRef.current.querySelector(
-                        `[data-char-index="${oldIndex}"]`
+                        `[data-char-index="${oldFormattedIndex}"]`
                       ) as HTMLElement | null;
                       if (oldSpan && oldSpan.textContent === finalDigitStr) {
                         oldSpan.setAttribute(
                           "data-char-index",
-                          newIndex.toString()
+                          newFormattedIndex.toString()
                         );
                       } else {
                         // Also check if there's a span at the new index that matches
                         const newSpan = spanRef.current.querySelector(
-                          `[data-char-index="${newIndex}"]`
+                          `[data-char-index="${newFormattedIndex}"]`
                         ) as HTMLElement | null;
                         if (newSpan && newSpan.textContent === finalDigitStr) {
                           // Span is already at the correct index, just ensure it's marked correctly
@@ -432,7 +928,7 @@ export const NumberFlowInput = ({
                             ) {
                               spanEl.setAttribute(
                                 "data-char-index",
-                                newIndex.toString()
+                                newFormattedIndex.toString()
                               );
                             }
                           });
@@ -441,10 +937,11 @@ export const NumberFlowInput = ({
                     }
                   } else {
                     // Barrel wheel is now out of bounds, remove it
-                    const observer = resizeObserversRef.current.get(oldIndex);
+                    const observer =
+                      resizeObserversRef.current.get(oldFormattedIndex);
                     if (observer) {
                       observer.disconnect();
-                      resizeObserversRef.current.delete(oldIndex);
+                      resizeObserversRef.current.delete(oldFormattedIndex);
                     }
                     wheelEl.remove();
                   }
@@ -459,10 +956,16 @@ export const NumberFlowInput = ({
           // First, update indices of existing spans that need to shift due to insertions or deletions
           // This handles the case where characters are inserted/deleted before existing spans
           // Do this BEFORE collecting spans by index, so the map is correct
+          // IMPORTANT: Span indices are FORMATTED (include separators), but selection positions are RAW
+          // We need to map between them correctly
+          // Note: oldFormattedText is captured at the start of updateValue, before prevFormattedValueRef update
           const lengthDiff = cleanedText.length - adjustedOldText.length;
-          const hadSelection = adjustedSelectionStart < adjustedSelectionEnd;
-          if (!hadSelection && lengthDiff !== 0) {
-            const changePos = adjustedSelectionStart;
+          // For insertions, hadSelection means user had text selected (replacement scenario)
+          // For deletions, we always want to shift spans, so don't check hadSelection
+          const hadSelectionForInsert =
+            adjustedSelectionStart < adjustedSelectionEnd && lengthDiff > 0;
+
+          if (lengthDiff !== 0 && (lengthDiff < 0 || !hadSelectionForInsert)) {
             // Collect all spans first
             const allSpans: HTMLElement[] = [];
             let nodeToUpdate = spanRef.current.firstChild;
@@ -477,35 +980,60 @@ export const NumberFlowInput = ({
             }
             // Update indices of spans that need to shift
             allSpans.forEach((span) => {
-              const oldIndexStr = span.getAttribute("data-char-index");
-              if (oldIndexStr !== null) {
-                const oldIndex = parseInt(oldIndexStr, 10);
-                if (!isNaN(oldIndex) && oldIndex >= 0) {
+              const oldFormattedIndexStr = span.getAttribute("data-char-index");
+              if (oldFormattedIndexStr !== null) {
+                const oldFormattedIndex = parseInt(oldFormattedIndexStr, 10);
+                if (!isNaN(oldFormattedIndex) && oldFormattedIndex >= 0) {
+                  // Convert span's formatted index to raw index
+                  const spanRawIndex = mapFormattedToRawIndex(
+                    adjustedOldText,
+                    oldFormattedText,
+                    oldFormattedIndex
+                  );
+
                   if (lengthDiff > 0) {
                     // Characters were inserted - shift spans at and after the insertion point
                     if (
-                      oldIndex >= changePos &&
-                      oldIndex < adjustedOldText.length
+                      spanRawIndex >= adjustedSelectionStart &&
+                      spanRawIndex < adjustedOldText.length
                     ) {
-                      const numInserted = adjustedNewCursorPos - changePos;
-                      const newIdx = oldIndex + numInserted;
-                      if (newIdx < cleanedText.length) {
-                        span.setAttribute("data-char-index", newIdx.toString());
+                      const numInserted =
+                        adjustedNewCursorPos - adjustedSelectionStart;
+                      const newRawIndex = spanRawIndex + numInserted;
+                      if (newRawIndex < cleanedText.length) {
+                        const newFormattedIndex = mapRawToFormattedIndex(
+                          cleanedText,
+                          newFormattedText,
+                          newRawIndex
+                        );
+                        span.setAttribute(
+                          "data-char-index",
+                          newFormattedIndex.toString()
+                        );
                       }
                     }
                   } else if (lengthDiff < 0) {
                     // Characters were deleted - shift spans after the deletion point backward
-                    const numDeleted = adjustedSelectionEnd - changePos;
+                    const numDeleted =
+                      adjustedSelectionEnd - adjustedSelectionStart;
                     if (
-                      oldIndex >= changePos &&
-                      oldIndex < adjustedSelectionEnd
+                      spanRawIndex >= adjustedSelectionStart &&
+                      spanRawIndex < adjustedSelectionEnd
                     ) {
                       // Span is in the deletion range - it will be removed by cleanup logic
-                    } else if (oldIndex >= adjustedSelectionEnd) {
+                    } else if (spanRawIndex >= adjustedSelectionEnd) {
                       // Span is after the deletion point, shift it backward
-                      const newIdx = Math.max(0, oldIndex - numDeleted);
-                      if (newIdx < cleanedText.length) {
-                        span.setAttribute("data-char-index", newIdx.toString());
+                      const newRawIndex = Math.max(0, spanRawIndex - numDeleted);
+                      if (newRawIndex < cleanedText.length) {
+                        const newFormattedIndex = mapRawToFormattedIndex(
+                          cleanedText,
+                          newFormattedText,
+                          newRawIndex
+                        );
+                        span.setAttribute(
+                          "data-char-index",
+                          newFormattedIndex.toString()
+                        );
                       }
                     }
                   }
@@ -516,10 +1044,12 @@ export const NumberFlowInput = ({
 
           // Get all existing spans mapped by index (after updating indices)
           // Also track transparent spans separately to handle them specially
+          // Track visible spans by content to find them when indices shift
           const existingSpansByIndex = new Map<number, HTMLElement>();
           const allExistingSpans: HTMLElement[] = [];
           const transparentSpans = new Map<number, HTMLElement>();
           const transparentSpansByContent = new Map<string, HTMLElement>();
+          const visibleSpansByContent = new Map<string, HTMLElement[]>();
           const textNodesToRemove: Node[] = [];
           let node = spanRef.current.firstChild;
           while (node) {
@@ -539,6 +1069,13 @@ export const NumberFlowInput = ({
                   if (!transparentSpansByContent.has(content)) {
                     transparentSpansByContent.set(content, node);
                   }
+                } else {
+                  // Track visible spans by content for fallback lookup
+                  const content = node.textContent ?? "";
+                  if (!visibleSpansByContent.has(content)) {
+                    visibleSpansByContent.set(content, []);
+                  }
+                  visibleSpansByContent.get(content)!.push(node);
                 }
                 if (!existingSpansByIndex.has(index) || !isTransparentSpan) {
                   existingSpansByIndex.set(index, node);
@@ -567,10 +1104,17 @@ export const NumberFlowInput = ({
           // Get parent container once for barrel wheel checks
           const parentContainer = spanRef.current.parentElement;
 
-          for (let i = 0; i < cleanedText.length; i++) {
-            const char = cleanedText[i];
-            const isUnchanged = changes.unchangedIndices.has(i);
-            const barrelWheel = changes.barrelWheelIndices.get(i);
+          // Use formatted text for display (includes thousand separators, etc.)
+          for (let i = 0; i < newFormattedText.length; i++) {
+            const char = newFormattedText[i];
+            const isUnchanged = formattedChanges.unchangedIndices.has(i);
+            // For barrel wheel, we need to map from formatted index to raw index
+            const rawIndex = mapFormattedToRawIndex(
+              cleanedText,
+              newFormattedText,
+              i
+            );
+            const barrelWheel = changes.barrelWheelIndices.get(rawIndex);
 
             // Check if there's a barrel wheel in DOM for this index (indices may have shifted)
             const hasBarrelWheelInDOM = parentContainer?.querySelector(
@@ -609,8 +1153,28 @@ export const NumberFlowInput = ({
 
             // Only reuse if this index is marked as unchanged (not added)
             // New characters should always get new spans to trigger animations
-            const isAdded = changes.addedIndices.has(i);
-            const isUnchangedIndex = changes.unchangedIndices.has(i);
+            const isAdded = formattedChanges.addedIndices.has(i);
+            const isUnchangedIndex = formattedChanges.unchangedIndices.has(i);
+
+            // If no exact index match, try to find by content for unchanged characters
+            // This handles the case where indices shifted due to separator insertion
+            if (
+              (!span || span.textContent !== char) &&
+              char &&
+              !isAdded &&
+              isUnchangedIndex
+            ) {
+              const candidates = visibleSpansByContent.get(char) ?? [];
+              for (const candidate of candidates) {
+                if (
+                  !usedSpans.has(candidate) &&
+                  candidate.textContent === char
+                ) {
+                  span = candidate;
+                  break;
+                }
+              }
+            }
 
             if (
               span &&
@@ -622,7 +1186,7 @@ export const NumberFlowInput = ({
               // Check if span is in approximately the right position
               // (within 2 positions is acceptable to avoid unnecessary reordering)
               let currentPos = 0;
-              let node = spanRef.current.firstChild;
+              let node: ChildNode | null = spanRef.current.firstChild;
               while (node && node !== span) {
                 if (
                   node instanceof HTMLElement &&
@@ -644,6 +1208,9 @@ export const NumberFlowInput = ({
                 span.textContent = char ?? "";
               }
 
+              // Update data-char-index to new position
+              span.setAttribute("data-char-index", i.toString());
+
               // Update attributes if needed
               const shouldHaveFlow = !barrelWheel;
               const shouldHaveShow = isUnchanged;
@@ -663,13 +1230,20 @@ export const NumberFlowInput = ({
               }
 
               usedSpans.add(span);
-              // Move to correct position if needed
+              // Move to correct position if needed, preserving any ongoing animations
               if (referenceNode) {
                 const nextSibling = referenceNode.nextSibling;
                 if (span.previousSibling !== referenceNode && nextSibling) {
-                  spanRef.current.insertBefore(span, nextSibling);
-                } else if (!nextSibling) {
-                  spanRef.current.appendChild(span);
+                  moveElementPreservingAnimation(
+                    span,
+                    spanRef.current,
+                    nextSibling
+                  );
+                } else if (
+                  !nextSibling &&
+                  span.parentNode !== spanRef.current
+                ) {
+                  moveElementPreservingAnimation(span, spanRef.current, null);
                 }
               }
               referenceNode = span;
@@ -808,13 +1382,20 @@ export const NumberFlowInput = ({
                   span.removeAttribute("data-show");
                 }
                 usedSpans.add(span);
-                // Ensure it's in the correct position
+                // Ensure it's in the correct position, preserving any ongoing animations
                 if (referenceNode) {
                   const nextSibling = referenceNode.nextSibling;
                   if (span.previousSibling !== referenceNode && nextSibling) {
-                    spanRef.current.insertBefore(span, nextSibling);
-                  } else if (!nextSibling) {
-                    spanRef.current.appendChild(span);
+                    moveElementPreservingAnimation(
+                      span,
+                      spanRef.current,
+                      nextSibling
+                    );
+                  } else if (
+                    !nextSibling &&
+                    span.parentNode !== spanRef.current
+                  ) {
+                    moveElementPreservingAnimation(span, spanRef.current, null);
                   }
                 }
                 referenceNode = span;
@@ -842,13 +1423,20 @@ export const NumberFlowInput = ({
                 }
 
                 usedSpans.add(span);
-                // Ensure it's in the correct position
+                // Ensure it's in the correct position, preserving any ongoing animations
                 if (referenceNode) {
                   const nextSibling = referenceNode.nextSibling;
                   if (span.previousSibling !== referenceNode && nextSibling) {
-                    spanRef.current.insertBefore(span, nextSibling);
-                  } else if (!nextSibling) {
-                    spanRef.current.appendChild(span);
+                    moveElementPreservingAnimation(
+                      span,
+                      spanRef.current,
+                      nextSibling
+                    );
+                  } else if (
+                    !nextSibling &&
+                    span.parentNode !== spanRef.current
+                  ) {
+                    moveElementPreservingAnimation(span, spanRef.current, null);
                   }
                 }
                 referenceNode = span;
@@ -900,13 +1488,24 @@ export const NumberFlowInput = ({
                   // Remove data-width-animate if present (barrel wheel code will add it)
                   span.removeAttribute("data-width-animate");
                   usedSpans.add(span);
-                  // Ensure it's in the correct position
+                  // Ensure it's in the correct position, preserving any ongoing animations
                   if (referenceNode) {
                     const nextSibling = referenceNode.nextSibling;
                     if (span.previousSibling !== referenceNode && nextSibling) {
-                      spanRef.current.insertBefore(span, nextSibling);
-                    } else if (!nextSibling) {
-                      spanRef.current.appendChild(span);
+                      moveElementPreservingAnimation(
+                        span,
+                        spanRef.current,
+                        nextSibling
+                      );
+                    } else if (
+                      !nextSibling &&
+                      span.parentNode !== spanRef.current
+                    ) {
+                      moveElementPreservingAnimation(
+                        span,
+                        spanRef.current,
+                        null
+                      );
                     }
                   }
                   referenceNode = span;
@@ -938,27 +1537,46 @@ export const NumberFlowInput = ({
                       span.removeAttribute("data-show");
                     }
                     usedSpans.add(span);
-                    // Ensure it's in the correct position
+                    // Ensure it's in the correct position, preserving any ongoing animations
                     if (referenceNode) {
                       const nextSibling = referenceNode.nextSibling;
                       if (
                         span.previousSibling !== referenceNode &&
                         nextSibling
                       ) {
-                        spanRef.current.insertBefore(span, nextSibling);
-                      } else if (!nextSibling) {
-                        spanRef.current.appendChild(span);
+                        moveElementPreservingAnimation(
+                          span,
+                          spanRef.current,
+                          nextSibling
+                        );
+                      } else if (
+                        !nextSibling &&
+                        span.parentNode !== spanRef.current
+                      ) {
+                        moveElementPreservingAnimation(
+                          span,
+                          spanRef.current,
+                          null
+                        );
                       }
                     }
                     referenceNode = span;
                   } else {
                     // Remove existing span at this index if it exists and doesn't match
                     if (existingSpan && existingSpan.textContent !== char) {
-                      // Only remove if not animating (not hidden and not part of current barrel wheel)
+                      // Only remove if not animating (not hidden, not part of barrel wheel, and not in flow animation)
+                      // Also don't remove if the span's content appears elsewhere in the new text
+                      // (it might be reused at a different index when separators shift things)
+                      const hasFlowAnimation =
+                        existingSpan.hasAttribute("data-flow");
+                      const contentWillBeReused =
+                        existingSpan.textContent &&
+                        newFormattedText.includes(existingSpan.textContent);
                       const isCurrentlyAnimating =
+                        hasFlowAnimation ||
                         (isHidden && !hasBarrelWheel) ||
                         (hasWidthAnimation && !hasBarrelWheel);
-                      if (!isCurrentlyAnimating) {
+                      if (!isCurrentlyAnimating && !contentWillBeReused) {
                         existingSpan.remove();
                         existingSpansByIndex.delete(i);
                         usedSpans.delete(existingSpan);
@@ -1005,7 +1623,7 @@ export const NumberFlowInput = ({
 
           // Remove unused spans that aren't animating
           // Also check for spans that are hidden (color: transparent) which indicates barrel wheel animation
-          // IMPORTANT: Check for barrel wheels in DOM, not just changes.barrelWheelIndices,
+          // IMPORTANT: Check for barrel wheels in DOM, not just formattedChanges.barrelWheelIndices,
           // because indices may have shifted when characters were inserted before animating digits
           allExistingSpans.forEach((span) => {
             if (!usedSpans.has(span)) {
@@ -1018,19 +1636,25 @@ export const NumberFlowInput = ({
                 span.style.color === "rgba(0, 0, 0, 0)" ||
                 window.getComputedStyle(span).color === "rgba(0, 0, 0, 0)";
               // Check if there's actually a barrel wheel for this index in the DOM
-              // (indices may have shifted, so changes.barrelWheelIndices might not be accurate)
+              // (indices may have shifted, so formattedChanges.barrelWheelIndices might not be accurate)
               const hasBarrelWheelInDOM = parentContainer?.querySelector(
                 `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
               );
+              // Map formatted index to raw index for barrel wheel check
+              const rawIdx = mapFormattedToRawIndex(
+                cleanedText,
+                newFormattedText,
+                index
+              );
               const hasBarrelWheel =
-                changes.barrelWheelIndices.has(index) || !!hasBarrelWheelInDOM;
+                changes.barrelWheelIndices.has(rawIdx) || !!hasBarrelWheelInDOM;
               const hasWidthAnimation = span.hasAttribute("data-width-animate");
               const isCurrentlyAnimating =
                 hasBarrelWheel || hasWidthAnimation || isHidden;
 
               // If text is empty, remove all spans regardless of animation state
               // This handles the case where user selects all and deletes
-              if (cleanedText.length === 0) {
+              if (newFormattedText.length === 0) {
                 span.remove();
               } else if (!isCurrentlyAnimating) {
                 // Only remove if not currently animating
@@ -1041,8 +1665,8 @@ export const NumberFlowInput = ({
 
           // Final verification: ensure all spans have correct textContent
           // This catches any cases where spans weren't properly updated
-          for (let i = 0; i < cleanedText.length; i++) {
-            const char = cleanedText[i];
+          for (let i = 0; i < newFormattedText.length; i++) {
+            const char = newFormattedText[i];
             const span = newSpans[i];
             if (span && span.textContent !== char) {
               span.textContent = char ?? "";
@@ -1157,35 +1781,41 @@ export const NumberFlowInput = ({
             const hasBarrelWheelInDOM = parentContainer?.querySelector(
               `[data-char-index="${index}"].${styles.barrel_wheel || ""}`
             );
+            // Map formatted index to raw index for barrel wheel check
+            const rawIdx = mapFormattedToRawIndex(
+              cleanedText,
+              newFormattedText,
+              index
+            );
             const hasBarrelWheel =
-              changes.barrelWheelIndices.has(index) || !!hasBarrelWheelInDOM;
+              changes.barrelWheelIndices.has(rawIdx) || !!hasBarrelWheelInDOM;
             const hasWidthAnimation = span.hasAttribute("data-width-animate");
             const isCurrentlyAnimating =
               hasBarrelWheel || hasWidthAnimation || isHidden;
 
             // If text is empty, remove all spans
-            if (cleanedText.length === 0) {
+            if (newFormattedText.length === 0) {
               span.remove();
               return;
             }
 
             // Remove if index is out of bounds
-            // For short cleanedText (like "-"), we should be more aggressive about removing out-of-bounds spans
+            // For short newFormattedText (like "-"), we should be more aggressive about removing out-of-bounds spans
             // to prevent ghost characters
-            if (index < 0 || index >= cleanedText.length) {
-              // Remove out-of-bounds spans unless they're currently animating AND cleanedText is long enough
-              // This prevents ghost characters when cleanedText changes significantly (e.g., "1881" -> "-")
-              if (!isCurrentlyAnimating || cleanedText.length <= 1) {
+            if (index < 0 || index >= newFormattedText.length) {
+              // Remove out-of-bounds spans unless they're currently animating AND newFormattedText is long enough
+              // This prevents ghost characters when newFormattedText changes significantly (e.g., "1881" -> "-")
+              if (!isCurrentlyAnimating || newFormattedText.length <= 1) {
                 span.remove();
               }
-            } else if (span.textContent !== cleanedText[index]) {
+            } else if (span.textContent !== newFormattedText[index]) {
               // Character mismatch - update or remove
               // If it's a transparent span with wrong character and no barrel wheel, it's a ghost - remove it
               if (isHidden && !hasBarrelWheelInDOM && !hasBarrelWheel) {
                 span.remove();
               } else if (!isCurrentlyAnimating) {
                 // Update textContent to match
-                span.textContent = cleanedText[index] ?? "";
+                span.textContent = newFormattedText[index] ?? "";
               }
             }
           });
@@ -1204,7 +1834,7 @@ export const NumberFlowInput = ({
               );
               if (
                 element instanceof HTMLElement &&
-                changes.addedIndices.has(index)
+                formattedChanges.addedIndices.has(index)
               ) {
                 element.dataset.show = "";
                 const span = spanRef.current;
@@ -1240,11 +1870,18 @@ export const NumberFlowInput = ({
           }
 
           // Create barrel wheels as absolutely positioned elements outside contentEditable
+          // Map raw indices to formatted indices for barrel wheel positioning
           const barrelWheelIndices = Array.from(
             changes.barrelWheelIndices.keys()
           );
-          barrelWheelIndices.forEach((index) => {
-            const barrelWheelData = changes.barrelWheelIndices.get(index);
+          barrelWheelIndices.forEach((rawIndex) => {
+            const barrelWheelData = changes.barrelWheelIndices.get(rawIndex);
+            // Map raw index to formatted index
+            const index = mapRawToFormattedIndex(
+              cleanedText,
+              newFormattedText,
+              rawIndex
+            );
             if (!barrelWheelData) {
               return;
             }
@@ -1623,16 +2260,59 @@ export const NumberFlowInput = ({
               });
             });
           });
+
+          // Apply x-position animations for characters that moved
+          // (separators and digits that crossed group boundaries)
+          if (positionChanges.length > 0 && spanRef.current) {
+            const containerRect = spanRef.current.getBoundingClientRect();
+
+            positionChanges.forEach((change) => {
+              const span = spanRef.current?.querySelector(
+                `[data-char-index="${change.newIndex}"]`
+              ) as HTMLElement | null;
+
+              if (span && span.textContent === change.char) {
+                // Look up old position using the character and its old index
+                const oldKey = `${change.char}@${change.oldIndex}`;
+                const oldPos = oldPositions.get(oldKey);
+
+                if (oldPos) {
+                  const newRect = span.getBoundingClientRect();
+                  const newX = newRect.left - containerRect.left;
+                  const offsetX = oldPos.x - newX;
+
+                  // Only animate if there's a significant position change
+                  if (Math.abs(offsetX) > 1) {
+                    // Use Web Animations API for smooth x-position animation
+                    span.animate(
+                      [
+                        { transform: `translateX(${offsetX}px)` },
+                        { transform: "translateX(0)" },
+                      ],
+                      {
+                        duration: 250,
+                        easing: "cubic-bezier(0.33, 1, 0.68, 1)", // ease-out-cubic
+                        fill: "forwards",
+                      }
+                    );
+                  }
+                }
+              }
+            });
+          }
         });
 
         const setCursor = () => {
           if (!spanRef.current) {
             return;
           }
-          setCursorPositionInElement(
-            spanRef.current,
+          // Map raw cursor position to formatted position
+          const formattedCursorPos = mapRawToFormattedIndex(
+            cleanedText,
+            newFormattedText,
             Math.min(newCursorPos, cleanedText.length)
           );
+          setCursorPositionInElement(spanRef.current, formattedCursorPos);
         };
 
         setCursor();
@@ -1645,13 +2325,16 @@ export const NumberFlowInput = ({
       autoAddLeadingZero,
       repositionAllBarrelWheels,
       addToHistory,
+      formatRawValue,
+      mapRawToFormattedIndex,
+      mapFormattedToRawIndex,
     ]
   );
 
   // Initialize
   useEffect(() => {
-    if (spanRef.current && displayValue) {
-      spanRef.current.textContent = displayValue;
+    if (spanRef.current && formattedDisplayValue) {
+      spanRef.current.textContent = formattedDisplayValue;
     }
     // Initialize history with initial state
     if (historyRef.current.length === 0) {
@@ -1668,15 +2351,15 @@ export const NumberFlowInput = ({
   }, []);
 
   useEffect(() => {
-    const newDisplay = actualValue?.toString() ?? "";
+    const newRawDisplay = actualValue?.toString() ?? "";
     const currentParsed = ["", "-", ".", "-."].includes(displayValue)
       ? undefined
       : parseFloat(displayValue);
 
     if (currentParsed !== actualValue) {
-      setDisplayValue(newDisplay);
+      setDisplayValue(newRawDisplay);
       if (spanRef.current) {
-        if (actualValue === undefined && displayValue !== newDisplay) {
+        if (actualValue === undefined && displayValue !== newRawDisplay) {
           spanRef.current
             .querySelectorAll("[data-char-index]")
             .forEach((span) => span.remove());
@@ -1685,11 +2368,39 @@ export const NumberFlowInput = ({
             styles.barrel_wheel || ""
           ).forEach((wheel) => wheel.remove());
         }
-        spanRef.current.textContent = newDisplay;
+        // Format the new value for display
+        const newFormattedDisplay = formatRawValue(newRawDisplay);
+        spanRef.current.textContent = newFormattedDisplay;
+        prevFormattedValueRef.current = newFormattedDisplay;
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actualValue, displayValue]);
+  }, [actualValue, displayValue, formatRawValue]);
+
+  // Handle format or locale prop changes - update refs and DOM
+  useEffect(() => {
+    if (spanRef.current) {
+      // Clear any ongoing barrel wheel animations since indices may have changed
+      const parentContainer = spanRef.current.parentElement;
+      if (parentContainer) {
+        getAllBarrelWheels(parentContainer, styles.barrel_wheel || "").forEach(
+          (wheel) => wheel.remove()
+        );
+      }
+
+      // Clear ResizeObservers
+      resizeObserversRef.current.forEach((observer) => observer.disconnect());
+      resizeObserversRef.current.clear();
+
+      // Update the displayed content with new formatting
+      spanRef.current.textContent = formattedDisplayValue;
+
+      // Update the ref to match current formatted value
+      prevFormattedValueRef.current = formattedDisplayValue;
+    }
+    // Only run when format or locale changes, not on initial mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [format, locale]);
 
   // Cleanup ResizeObservers on unmount
   useEffect(() => {
@@ -1771,8 +2482,9 @@ export const NumberFlowInput = ({
     (event) => {
       const key = event.key;
 
-      // Get current state
+      // Get current state (raw, unformatted)
       const currentText = displayValue;
+      const currentFormattedText = formattedDisplayValue;
       const selection = window.getSelection();
       const range = selection?.getRangeAt(0);
 
@@ -1783,7 +2495,22 @@ export const NumberFlowInput = ({
       if (!selection) {
         return;
       }
-      const { start, end } = getSelectionRange(spanRef.current, selection);
+      // Get selection range in formatted positions
+      const { start: formattedStart, end: formattedEnd } = getSelectionRange(
+        spanRef.current,
+        selection
+      );
+      // Convert to raw positions for working with displayValue
+      const start = mapFormattedToRawIndex(
+        currentText,
+        currentFormattedText,
+        formattedStart
+      );
+      const end = mapFormattedToRawIndex(
+        currentText,
+        currentFormattedText,
+        formattedEnd
+      );
 
       // Handle special keys
       if ((event.metaKey || event.ctrlKey) && key === "Backspace") {
@@ -1876,12 +2603,13 @@ export const NumberFlowInput = ({
           return;
         }
 
-        const targetPos = key === "ArrowLeft" ? 0 : currentText.length;
+        // Use formatted text length for target position
+        const targetPos = key === "ArrowLeft" ? 0 : currentFormattedText.length;
 
         if (event.shiftKey) {
           // Extend selection to start/end
-          // Use the selection's anchor point as the anchor
-          let anchorPos = start;
+          // Use the selection's anchor point as the anchor (formatted position)
+          let anchorPos = formattedStart;
           if (
             selection.anchorNode &&
             spanRef.current.contains(selection.anchorNode)
@@ -2057,6 +2785,7 @@ export const NumberFlowInput = ({
         }
 
         // Handle ArrowLeft and ArrowRight to move cursor by one character
+        // For formatted numbers, we need to work with formatted positions and skip separators
         if (key === "ArrowLeft" || key === "ArrowRight") {
           event.preventDefault();
           if (!spanRef.current) {
@@ -2067,17 +2796,28 @@ export const NumberFlowInput = ({
             return;
           }
 
-          // Calculate target position
-          let targetPos: number;
+          // Helper to check if a character is a separator (not digit, dot, or minus)
+          const isSeparator = (char: string | undefined): boolean => {
+            if (!char) {
+              return false;
+            }
+            return !/[\d.\-]/.test(char);
+          };
+
+          // Get current cursor position in formatted text
+          const { start: formattedCursorStart, end: formattedCursorEnd } =
+            getSelectionRange(spanRef.current, selection);
+
+          // Calculate target position in formatted text
+          let targetFormattedPos: number;
           if (event.shiftKey) {
-            // Extend selection
-            // Helper function to get position from node and offset
+            // Extend selection - use formatted positions directly
             const getPositionFromNode = (
               node: Node | null,
               offset: number
             ): number => {
               if (!node || !spanRef.current?.contains(node)) {
-                return start; // Fallback to cursor position
+                return formattedCursorStart;
               }
               const range = document.createRange();
               range.setStart(spanRef.current, 0);
@@ -2085,7 +2825,6 @@ export const NumberFlowInput = ({
               return range.toString().length;
             };
 
-            // Get anchor and focus positions from Selection API
             let anchorPos = getPositionFromNode(
               selection.anchorNode,
               selection.anchorOffset
@@ -2095,22 +2834,39 @@ export const NumberFlowInput = ({
               selection.focusOffset
             );
 
-            // If there's no selection (anchor === focus), initialize both to cursor position
-            // This happens when starting a new selection
-            if (anchorPos === focusPos && start === end) {
-              anchorPos = start;
-              focusPos = start;
+            if (
+              anchorPos === focusPos &&
+              formattedCursorStart === formattedCursorEnd
+            ) {
+              anchorPos = formattedCursorStart;
+              focusPos = formattedCursorStart;
             }
 
-            // Extend from focus position (the moving end of selection)
-            // Anchor stays fixed, focus moves
+            // Move focus, skipping separators
             if (key === "ArrowLeft") {
-              targetPos = Math.max(0, focusPos - 1);
+              targetFormattedPos = Math.max(0, focusPos - 1);
+              // Skip over separators when moving left
+              while (
+                targetFormattedPos > 0 &&
+                isSeparator(currentFormattedText[targetFormattedPos])
+              ) {
+                targetFormattedPos--;
+              }
             } else {
-              targetPos = Math.min(currentText.length, focusPos + 1);
+              targetFormattedPos = Math.min(
+                currentFormattedText.length,
+                focusPos + 1
+              );
+              // Skip over separators when moving right
+              while (
+                targetFormattedPos < currentFormattedText.length &&
+                isSeparator(currentFormattedText[targetFormattedPos])
+              ) {
+                targetFormattedPos++;
+              }
             }
 
-            // Find both anchor and target nodes/offsets
+            // Find nodes for selection
             let currentPos = 0;
             const walker = document.createTreeWalker(
               spanRef.current,
@@ -2118,6 +2874,7 @@ export const NumberFlowInput = ({
               null
             );
             let anchorNode: Node | null = null;
+            let anchorOffset = 0;
             let targetNode: Node | null = null;
             let targetOffset = 0;
 
@@ -2125,16 +2882,17 @@ export const NumberFlowInput = ({
             while ((node = walker.nextNode())) {
               const nodeLength = node.textContent?.length ?? 0;
 
-              // Find anchor node
               if (!anchorNode && currentPos + nodeLength >= anchorPos) {
                 anchorNode = node;
-                const _anchorOffset = anchorPos - currentPos;
+                anchorOffset = anchorPos - currentPos;
               }
 
-              // Find target node
-              if (!targetNode && currentPos + nodeLength >= targetPos) {
+              if (
+                !targetNode &&
+                currentPos + nodeLength >= targetFormattedPos
+              ) {
                 targetNode = node;
-                targetOffset = targetPos - currentPos;
+                targetOffset = targetFormattedPos - currentPos;
               }
 
               if (anchorNode && targetNode) {
@@ -2145,35 +2903,11 @@ export const NumberFlowInput = ({
             }
 
             if (targetNode) {
-              // Use Selection.extend() if available - it keeps anchor fixed and only moves focus
-              // This is the proper way to extend selections
               try {
                 selection.extend(targetNode, targetOffset);
               } catch {
-                // extend() might not work in all cases, fall back to setting range
-                // Find anchor node for range
-                let anchorNode: Node | null = null;
-                let anchorOffset = 0;
-                let currentPos = 0;
-                const walker = document.createTreeWalker(
-                  spanRef.current,
-                  NodeFilter.SHOW_TEXT,
-                  null
-                );
-                let node: Node | null;
-                while ((node = walker.nextNode())) {
-                  const nodeLength = node.textContent?.length ?? 0;
-                  if (!anchorNode && currentPos + nodeLength >= anchorPos) {
-                    anchorNode = node;
-                    anchorOffset = anchorPos - currentPos;
-                    break;
-                  }
-                  currentPos += nodeLength;
-                }
-
                 if (anchorNode) {
                   const range = document.createRange();
-                  // Set range with anchor at start, new focus at end
                   range.setStart(anchorNode, anchorOffset);
                   range.setEnd(targetNode, targetOffset);
                   selection.removeAllRanges();
@@ -2182,26 +2916,38 @@ export const NumberFlowInput = ({
               }
             }
           } else {
-            // Move cursor
-            // If there's a selection, move to start (ArrowLeft) or end (ArrowRight) of selection
-            // Otherwise, move cursor by one character
-            if (start !== end) {
+            // Move cursor (no shift key)
+            if (formattedCursorStart !== formattedCursorEnd) {
               // There's a selection - move to start or end based on arrow direction
-              if (key === "ArrowLeft") {
-                targetPos = start;
-              } else {
-                targetPos = end;
-              }
+              targetFormattedPos =
+                key === "ArrowLeft" ? formattedCursorStart : formattedCursorEnd;
             } else {
-              // No selection - move cursor by one character
+              // No selection - move cursor by one position, skipping separators
               if (key === "ArrowLeft") {
-                targetPos = Math.max(0, start - 1);
+                targetFormattedPos = Math.max(0, formattedCursorStart - 1);
+                // Skip over separators when moving left
+                while (
+                  targetFormattedPos > 0 &&
+                  isSeparator(currentFormattedText[targetFormattedPos])
+                ) {
+                  targetFormattedPos--;
+                }
               } else {
-                targetPos = Math.min(currentText.length, start + 1);
+                targetFormattedPos = Math.min(
+                  currentFormattedText.length,
+                  formattedCursorStart + 1
+                );
+                // Skip over separators when moving right
+                while (
+                  targetFormattedPos < currentFormattedText.length &&
+                  isSeparator(currentFormattedText[targetFormattedPos])
+                ) {
+                  targetFormattedPos++;
+                }
               }
             }
 
-            // Find target node
+            // Find target node using formatted position
             let currentPos = 0;
             const walker = document.createTreeWalker(
               spanRef.current,
@@ -2212,8 +2958,8 @@ export const NumberFlowInput = ({
 
             while ((node = walker.nextNode())) {
               const nodeLength = node.textContent?.length ?? 0;
-              if (currentPos + nodeLength >= targetPos) {
-                const offset = targetPos - currentPos;
+              if (currentPos + nodeLength >= targetFormattedPos) {
+                const offset = targetFormattedPos - currentPos;
                 const range = document.createRange();
                 range.setStart(node, offset);
                 range.collapse(true);
@@ -2224,7 +2970,7 @@ export const NumberFlowInput = ({
               currentPos += nodeLength;
             }
 
-            // Fallback
+            // Fallback to start/end
             const range = document.createRange();
             range.selectNodeContents(spanRef.current);
             range.collapse(key === "ArrowLeft");
@@ -2394,10 +3140,12 @@ export const NumberFlowInput = ({
       // Prevent default for other character inputs
       event.preventDefault();
 
-      if (key === ".") {
-        // Only allow one decimal point
+      // Handle decimal point input - accept both '.' and locale decimal separator
+      const { decimal } = separators;
+      if (key === "." || key === decimal) {
+        // Only allow one decimal point (internally stored as '.')
         if (!currentText.includes(".")) {
-          // Prevent typing "." when cursor is at position 0 and text starts with "-"
+          // Prevent typing decimal when cursor is at position 0 and text starts with "-"
           if (currentText.startsWith("-") && start === 0 && end === 0) {
             return;
           }
@@ -2406,8 +3154,9 @@ export const NumberFlowInput = ({
           if (maxLength !== undefined && newLength > maxLength) {
             return;
           }
+          // Always insert '.' internally (will be displayed as locale decimal)
           const newText =
-            currentText.slice(0, start) + key + currentText.slice(end);
+            currentText.slice(0, start) + "." + currentText.slice(end);
           updateValue(newText, start + 1, start, end);
         }
         return;
@@ -2432,11 +3181,14 @@ export const NumberFlowInput = ({
     },
     [
       displayValue,
+      formattedDisplayValue,
+      mapFormattedToRawIndex,
       updateValue,
       removeBarrelWheelsAtIndices,
       applyHistoryItem,
       applyHistoryItemWithCursor,
       maxLength,
+      separators,
     ]
   );
 
@@ -2451,7 +3203,20 @@ export const NumberFlowInput = ({
       if (!selection) {
         return;
       }
-      const { start, end } = getSelectionRange(spanRef.current, selection);
+      const { start: formattedStart, end: formattedEnd } = getSelectionRange(
+        spanRef.current,
+        selection
+      );
+      const start = mapFormattedToRawIndex(
+        displayValue,
+        formattedDisplayValue,
+        formattedStart
+      );
+      const end = mapFormattedToRawIndex(
+        displayValue,
+        formattedDisplayValue,
+        formattedEnd
+      );
       if (start === end) {
         return;
       }
@@ -2460,7 +3225,7 @@ export const NumberFlowInput = ({
       event.clipboardData.setData("text/plain", selectedText);
       event.preventDefault();
     },
-    [displayValue]
+    [displayValue, formattedDisplayValue, mapFormattedToRawIndex]
   );
 
   const handleCut = useCallback<ClipboardEventHandler<HTMLSpanElement>>(
@@ -2474,7 +3239,20 @@ export const NumberFlowInput = ({
       if (!selection) {
         return;
       }
-      const { start, end } = getSelectionRange(spanRef.current, selection);
+      const { start: formattedStart, end: formattedEnd } = getSelectionRange(
+        spanRef.current,
+        selection
+      );
+      const start = mapFormattedToRawIndex(
+        displayValue,
+        formattedDisplayValue,
+        formattedStart
+      );
+      const end = mapFormattedToRawIndex(
+        displayValue,
+        formattedDisplayValue,
+        formattedEnd
+      );
       if (start === end) {
         return;
       }
@@ -2487,7 +3265,7 @@ export const NumberFlowInput = ({
         updateValue(newText, start, start, end);
       }, 0);
     },
-    [displayValue, updateValue]
+    [displayValue, formattedDisplayValue, mapFormattedToRawIndex, updateValue]
   );
 
   const handleBeforeInput = useCallback<
@@ -2523,6 +3301,14 @@ export const NumberFlowInput = ({
       event.preventDefault();
       let pastedText = event.clipboardData.getData("text");
 
+      // Convert locale decimal separator to '.' for internal storage
+      const { decimal } = separators;
+      if (decimal !== ".") {
+        // Replace locale decimal with '.' and also accept '.' as-is
+        pastedText = pastedText.replace(new RegExp(`\\${decimal}`, "g"), ".");
+      }
+
+      // Validate: only allow digits, optional minus at start, optional single decimal
       if (!/^-?\d*\.?\d*$/.test(pastedText)) {
         return;
       }
@@ -2536,7 +3322,20 @@ export const NumberFlowInput = ({
       if (!selection) {
         return;
       }
-      const { start, end } = getSelectionRange(spanRef.current, selection);
+      const { start: formattedStart, end: formattedEnd } = getSelectionRange(
+        spanRef.current,
+        selection
+      );
+      const start = mapFormattedToRawIndex(
+        displayValue,
+        formattedDisplayValue,
+        formattedStart
+      );
+      const end = mapFormattedToRawIndex(
+        displayValue,
+        formattedDisplayValue,
+        formattedEnd
+      );
 
       // Truncate pasted text if it would exceed maxLength
       if (maxLength !== undefined) {
@@ -2557,7 +3356,14 @@ export const NumberFlowInput = ({
         updateValue(newText, start + pastedText.length, start, end);
       }
     },
-    [displayValue, updateValue, maxLength]
+    [
+      displayValue,
+      formattedDisplayValue,
+      mapFormattedToRawIndex,
+      updateValue,
+      maxLength,
+      separators,
+    ]
   );
 
   useEffect(() => {
