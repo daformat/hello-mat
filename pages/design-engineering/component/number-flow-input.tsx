@@ -46,8 +46,8 @@ const NumberFlowInputPageContent = () => {
   const nextComponent = getNextComponent("swipeable-cards");
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
-  const maxLength = useMaxLength(10, 16, 600);
-  const [format, setFormat] = useState(false);
+  const maxLength = useMaxLength(8, 15, 800);
+  const [format, setFormat] = useState(true);
 
   useEffect(() => {
     if (contentRef.current) {
@@ -86,7 +86,7 @@ const NumberFlowInputPageContent = () => {
           className="demo card alt"
           style={{
             marginBlock: 32,
-            paddingBlock: "clamp(16px, 5vw, 128px)",
+            padding: 0,
             // maxWidth: 650,
             marginInline: "auto",
             display: "flex",
@@ -95,17 +95,44 @@ const NumberFlowInputPageContent = () => {
             backgroundColor: "transparent",
           }}
         >
-          <NumberFlowInput
-            maxLength={maxLength}
-            autoAddLeadingZero
-            placeholder="0"
-            format={format}
-          />
-          <p style={{ textAlign: "center" }}>
-            <span style={{ opacity: 0.5 }}>Type in a value above</span>
-            <br />
+          <div
+            style={{
+              padding: "clamp(16px, 5vw, 128px) 8px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              flexGrow: 1,
+            }}
+          >
+            <NumberFlowInput
+              maxLength={maxLength}
+              autoAddLeadingZero
+              placeholder="0"
+              format={format}
+            />
+            <p style={{ textAlign: "center" }}>
+              <span style={{ opacity: 0.5 }}>Type in a value above</span>
+            </p>
+          </div>
+          <footer
+            style={{
+              padding: "8px 12px",
+              backgroundColor: "var(--color-card-background)",
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              borderBottomLeftRadius: "inherit",
+              borderBottomRightRadius: "inherit",
+              boxShadow:
+                "inset 0 0 2px 0.75px var(--color-border-2), inset 0 0 0 0.75px var(--color-border-3)",
+            }}
+          >
             <label
-              style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+              }}
             >
               <Checkbox
                 defaultChecked={format}
@@ -113,7 +140,7 @@ const NumberFlowInputPageContent = () => {
               />
               <small style={{ opacity: 0.8 }}>format</small>
             </label>
-          </p>
+          </footer>
         </div>
 
         <h2 id="features">Features</h2>

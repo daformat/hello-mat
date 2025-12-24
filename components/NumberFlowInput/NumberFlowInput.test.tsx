@@ -10,6 +10,26 @@ const getInput = () => {
   return span as HTMLElement;
 };
 
+// Helper to fire transitionend events on elements that are animating
+// This is needed because JSDOM doesn't fire CSS transition events
+const fireTransitionEndEvents = (container: HTMLElement) => {
+  // Fire on elements that are being removed (data-removing attribute)
+  const removingElements = container.querySelectorAll("[data-removing]");
+  removingElements.forEach((el) => {
+    fireEvent.transitionEnd(el, { propertyName: "width" });
+    fireEvent.transitionEnd(el, { propertyName: "translate" });
+  });
+
+  // Fire on elements with data-flow that have inline width styles
+  const flowElements = container.querySelectorAll("[data-flow]");
+  flowElements.forEach((el) => {
+    const htmlEl = el as HTMLElement;
+    if (htmlEl.style.width) {
+      fireEvent.transitionEnd(el, { propertyName: "width" });
+    }
+  });
+};
+
 // Helper to type text character by character (simulating real typing)
 const typeText = async (element: HTMLElement, text: string) => {
   for (const char of text) {
@@ -3087,6 +3107,10 @@ describe("NumberFlowInput", () => {
 
       // Disable formatting again
       rerender(<NumberFlowInput onChange={onChange} value={1234567} />);
+
+      // Wait for requestAnimationFrame to set up animations, then fire transitionend events
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      fireTransitionEndEvents(input);
 
       await waitFor(() => {
         // Should return to unformatted

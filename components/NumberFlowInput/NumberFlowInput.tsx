@@ -627,6 +627,26 @@ export const NumberFlowInput = ({
       selectionEnd: number,
       skipHistory = false
     ) => {
+      // Clean up any stale width animations from fast typing
+      // If a span has data-show and inline width styles, the animation should be complete
+      if (spanRef.current) {
+        const spansWithWidth = spanRef.current.querySelectorAll(
+          "[data-char-index][data-show]"
+        );
+        spansWithWidth.forEach((span) => {
+          const el = span as HTMLElement;
+          if (el.style.width || el.style.minWidth || el.style.maxWidth) {
+            // Check if the span doesn't have data-width-animate (barrel wheel animation)
+            if (!el.hasAttribute("data-width-animate")) {
+              el.style.width = "";
+              el.style.minWidth = "";
+              el.style.maxWidth = "";
+              el.style.display = "";
+            }
+          }
+        });
+      }
+
       const oldText = displayValue;
       const rawCleaned = newText.replace(/[^\d.-]/g, "");
       const { cleanedText: baseCleanedText, leadingZerosRemoved } = cleanText(
@@ -2655,10 +2675,28 @@ export const NumberFlowInput = ({
             span.style.minWidth = "";
             span.style.maxWidth = "";
             span.style.overflow = "";
+            span.style.display = "";
             span.removeEventListener("transitionend", handleTransitionEnd);
           }
         };
         span.addEventListener("transitionend", handleTransitionEnd);
+      });
+
+      // Clean up any digits that might have width styles (from previous animations)
+      newSpans.forEach((span) => {
+        const isSeparator = !isRawChar(span.textContent ?? "");
+        if (!isSeparator && span.style.width) {
+          const handleTransitionEnd = (e: TransitionEvent) => {
+            if (e.propertyName === "width") {
+              span.style.width = "";
+              span.style.minWidth = "";
+              span.style.maxWidth = "";
+              span.style.display = "";
+              span.removeEventListener("transitionend", handleTransitionEnd);
+            }
+          };
+          span.addEventListener("transitionend", handleTransitionEnd);
+        }
       });
 
       // Animate out removed separators (width to 0 + slide down)

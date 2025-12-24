@@ -2,10 +2,11 @@
 
 .checkbox {
   --size: 18px;
+  background-color: var(--color-background);
   border-radius: 3px;
   box-shadow: 0 1px 12px var(--color-shadow-1),
     inset 0 0 2px 0.75px var(--color-border-2),
-    inset 0 0 0 0.75px var(--color-border-1-hover);
+    inset 0 0 0 0.75px var(--color-border-3);
   display: grid;
   height: var(--size);
   place-items: center;
