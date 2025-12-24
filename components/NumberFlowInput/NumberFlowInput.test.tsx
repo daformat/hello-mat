@@ -2058,39 +2058,39 @@ describe("NumberFlowInput", () => {
         // Type a fast sequence with repeated digits (shorter to prevent timeout)
         await typeText(input, "12122121212121212");
 
-        await waitFor(
-          () => {
+      await waitFor(
+        () => {
             const expectedText = "12122121212121212";
             expect(input.textContent).toBe(expectedText);
 
-            // Count all spans - should match text length exactly
+          // Count all spans - should match text length exactly
             const allSpans = input.querySelectorAll("[data-char-index]");
             expect(allSpans.length).toBe(expectedText.length);
 
-            // Verify all spans have unique and correct indices
-            const indices = Array.from(allSpans).map((span) =>
-              parseInt(
-                (span as HTMLElement).getAttribute("data-char-index") ?? "-1",
-                10
-              )
+          // Verify all spans have unique and correct indices
+          const indices = Array.from(allSpans).map((span) =>
+            parseInt(
+              (span as HTMLElement).getAttribute("data-char-index") ?? "-1",
+              10
+            )
             );
-            // Check for duplicates
+          // Check for duplicates
             const uniqueIndices = new Set(indices);
             expect(uniqueIndices.size).toBe(indices.length);
 
-            // Verify indices are sequential
+          // Verify indices are sequential
             indices.sort((a, b) => a - b);
-            for (let i = 0; i < indices.length; i++) {
+          for (let i = 0; i < indices.length; i++) {
               expect(indices[i]).toBe(i);
-            }
+          }
 
-            // Verify text content matches
-            const text = Array.from(allSpans)
-              .map((span) => span.textContent)
+          // Verify text content matches
+          const text = Array.from(allSpans)
+            .map((span) => span.textContent)
               .join("");
             expect(text).toBe(expectedText);
-          },
-          { timeout: 3000 }
+        },
+        { timeout: 3000 }
         );
       },
       10000
@@ -2304,10 +2304,10 @@ describe("NumberFlowInput", () => {
         },
         { timeout: 2000 }
       );
-
+      
       // Wait for DOM to sync (the actualValue should be correct even if contentEditable takes time to update)
       await new Promise((resolve) => setTimeout(resolve, 200));
-
+      
       // Verify the barrel wheel is gone and text eventually syncs
       // Note: In test environment, contentEditable might not update immediately, but barrel wheel removal is the key test
       const finalBarrelWheel = parentContainer?.querySelector(
@@ -2611,7 +2611,7 @@ describe("NumberFlowInput", () => {
       const barrelWheel = parentContainer?.querySelector(
         '[data-char-index="0"][data-final-digit]'
       ) as HTMLElement | null;
-
+      
       const charSpan = input.querySelector(
         '[data-char-index="0"]'
       ) as HTMLElement | null;
@@ -2701,11 +2701,11 @@ describe("NumberFlowInput", () => {
         '[data-char-index="2"]'
       ) as HTMLElement | null;
       expect(charSpan).toBeTruthy();
-
+      
       // Check if width animation attribute is set (it might be set asynchronously)
       const _hasWidthAnimation =
         charSpan?.hasAttribute("data-width-animate") ?? false;
-
+      
       // Now move cursor to position 3 and delete the digit
       setCursorPosition(input, 3);
       fireEvent.keyDown(input, {
@@ -2723,21 +2723,21 @@ describe("NumberFlowInput", () => {
         },
         { timeout: 2000 }
       );
-
+      
       // Wait a bit more for DOM to update and barrel wheel to be removed
       await new Promise((resolve) => setTimeout(resolve, 200));
-
+      
       // Verify barrel wheel is removed (this is the key test)
       await waitFor(
         () => {
-          const remainingBarrelWheel = parentContainer?.querySelector(
-            '[data-char-index="2"][data-final-digit]'
+        const remainingBarrelWheel = parentContainer?.querySelector(
+          '[data-char-index="2"][data-final-digit]'
           ) as HTMLElement | null;
           expect(remainingBarrelWheel).toBeFalsy();
         },
         { timeout: 1000 }
       );
-
+      
       // Barrel wheel width animation attribute should be cleaned up
       // Note: The charSpan at index 2 should be removed since we deleted that digit
       // But if width animation was active, it should have been cleaned up before removal

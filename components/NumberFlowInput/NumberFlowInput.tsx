@@ -796,7 +796,8 @@ export const NumberFlowInput = ({
 
           existingBarrelWheels.forEach((wheel) => {
             const wheelEl = wheel as HTMLElement;
-            const oldFormattedIndexStr = wheelEl.getAttribute("data-char-index");
+            const oldFormattedIndexStr =
+              wheelEl.getAttribute("data-char-index");
             const finalDigitStr = wheelEl.getAttribute("data-final-digit");
             if (oldFormattedIndexStr !== null) {
               const oldFormattedIndex = parseInt(oldFormattedIndexStr, 10);
@@ -1023,7 +1024,10 @@ export const NumberFlowInput = ({
                       // Span is in the deletion range - it will be removed by cleanup logic
                     } else if (spanRawIndex >= adjustedSelectionEnd) {
                       // Span is after the deletion point, shift it backward
-                      const newRawIndex = Math.max(0, spanRawIndex - numDeleted);
+                      const newRawIndex = Math.max(
+                        0,
+                        spanRawIndex - numDeleted
+                      );
                       if (newRawIndex < cleanedText.length) {
                         const newFormattedIndex = mapRawToFormattedIndex(
                           cleanedText,
@@ -2377,30 +2381,317 @@ export const NumberFlowInput = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actualValue, displayValue, formatRawValue]);
 
-  // Handle format or locale prop changes - update refs and DOM
+  // Handle format or locale prop changes - animate the transition
   useEffect(() => {
-    if (spanRef.current) {
-      // Clear any ongoing barrel wheel animations since indices may have changed
-      const parentContainer = spanRef.current.parentElement;
-      if (parentContainer) {
-        getAllBarrelWheels(parentContainer, styles.barrel_wheel || "").forEach(
-          (wheel) => wheel.remove()
-        );
+    if (!spanRef.current) {
+      return;
+    }
+
+    const oldFormattedText = prevFormattedValueRef.current;
+    const newFormattedText = formattedDisplayValue;
+
+    // Skip if no actual change
+    if (oldFormattedText === newFormattedText) {
+      return;
+    }
+
+    // Clear any ongoing barrel wheel animations since indices may have changed
+    const parentContainer = spanRef.current.parentElement;
+    if (parentContainer) {
+      getAllBarrelWheels(parentContainer, styles.barrel_wheel || "").forEach(
+        (wheel) => wheel.remove()
+      );
+    }
+
+    // Clear ResizeObservers
+    resizeObserversRef.current.forEach((observer) => observer.disconnect());
+    resizeObserversRef.current.clear();
+
+    // Capture old positions BEFORE updating DOM
+    const oldPositions = new Map<string, { x: number; width: number }>();
+    const containerRect = spanRef.current.getBoundingClientRect();
+    const existingSpans = spanRef.current.querySelectorAll("[data-char-index]");
+    existingSpans.forEach((span) => {
+      const el = span as HTMLElement;
+      const index = parseInt(el.getAttribute("data-char-index") ?? "-1", 10);
+      const char = el.textContent ?? "";
+      if (index >= 0 && char) {
+        const rect = el.getBoundingClientRect();
+        oldPositions.set(`${char}@${index}`, {
+          x: rect.left - containerRect.left,
+          width: rect.width,
+        });
+      }
+    });
+
+    // Build maps of character positions for matching old -> new
+    const oldDigitPositions = new Map<string, number[]>();
+    const oldSeparatorPositions = new Map<string, number[]>();
+    for (let i = 0; i < oldFormattedText.length; i++) {
+      const char = oldFormattedText[i] ?? "";
+      if (!char) {
+        continue;
+      }
+      const isSep = !isRawChar(char);
+      const map = isSep ? oldSeparatorPositions : oldDigitPositions;
+      if (!map.has(char)) {
+        map.set(char, []);
+      }
+      map.get(char)!.push(i);
+    }
+
+    // Track which old positions have been matched
+    const usedOldPositions = new Set<number>();
+
+    // First pass: match old characters to new characters
+    const oldToNewMapping = new Map<number, number>(); // oldIndex -> newIndex
+    const newToOldMapping = new Map<number, number>(); // newIndex -> oldIndex
+
+    for (let newIdx = 0; newIdx < newFormattedText.length; newIdx++) {
+      const char = newFormattedText[newIdx] ?? "";
+      if (!char) {
+        continue;
       }
 
-      // Clear ResizeObservers
-      resizeObserversRef.current.forEach((observer) => observer.disconnect());
-      resizeObserversRef.current.clear();
+      const isSeparator = !isRawChar(char);
+      const posMap = isSeparator ? oldSeparatorPositions : oldDigitPositions;
+      const oldIndices = posMap.get(char) ?? [];
 
-      // Update the displayed content with new formatting
-      spanRef.current.textContent = formattedDisplayValue;
-
-      // Update the ref to match current formatted value
-      prevFormattedValueRef.current = formattedDisplayValue;
+      for (const oldIdx of oldIndices) {
+        if (!usedOldPositions.has(oldIdx)) {
+          usedOldPositions.add(oldIdx);
+          oldToNewMapping.set(oldIdx, newIdx);
+          newToOldMapping.set(newIdx, oldIdx);
+          break;
+        }
+      }
     }
+
+    // Find separators that need to be removed (in old but not matched)
+    const separatorsToRemove: { char: string; oldIndex: number }[] = [];
+    for (let i = 0; i < oldFormattedText.length; i++) {
+      const char = oldFormattedText[i] ?? "";
+      if (!char) {
+        continue;
+      }
+
+      const isSeparator = !isRawChar(char);
+      if (isSeparator && !usedOldPositions.has(i)) {
+        separatorsToRemove.push({ char, oldIndex: i });
+      }
+    }
+
+    // Build merged sequence: new characters + old separators to remove (in correct positions)
+    // The merged sequence maintains visual order during animation
+    type MergedItem =
+      | { type: "new"; char: string; newIndex: number; isNewSeparator: boolean }
+      | { type: "removing"; char: string; oldIndex: number };
+
+    const mergedItems: MergedItem[] = [];
+
+    // Add new characters
+    for (let i = 0; i < newFormattedText.length; i++) {
+      const char = newFormattedText[i] ?? "";
+      if (!char) {
+        continue;
+      }
+
+      const isSeparator = !isRawChar(char);
+      const isNewSeparator = isSeparator && !newToOldMapping.has(i);
+
+      mergedItems.push({
+        type: "new",
+        char,
+        newIndex: i,
+        isNewSeparator: isNewSeparator && oldFormattedText.length > 0,
+      });
+    }
+
+    // Insert removing separators at their visual positions
+    // We need to figure out where they should go based on surrounding characters
+    separatorsToRemove.forEach(({ char, oldIndex }) => {
+      // Find the position in the merged array where this separator should go
+      // It should be after any new characters that come from old positions before it
+      // and before any new characters that come from old positions after it
+
+      let insertPosition = 0;
+      for (let i = 0; i < mergedItems.length; i++) {
+        const item = mergedItems[i];
+        if (item?.type === "new") {
+          const oldIdx = newToOldMapping.get(item.newIndex);
+          if (oldIdx !== undefined && oldIdx < oldIndex) {
+            insertPosition = i + 1;
+          }
+        }
+      }
+
+      mergedItems.splice(insertPosition, 0, {
+        type: "removing",
+        char,
+        oldIndex,
+      });
+    });
+
+    // Clear the container
+    spanRef.current.innerHTML = "";
+
+    // Create spans based on merged sequence
+    const newSpans: HTMLElement[] = [];
+    const addedSeparatorSpans: { span: HTMLElement; finalWidth: number }[] = [];
+    const removingSpans: HTMLElement[] = [];
+
+    let newCharIndex = 0;
+    mergedItems.forEach((item) => {
+      if (!item) {
+        return;
+      }
+
+      const span = document.createElement("span");
+      span.textContent = item.char;
+
+      if (item.type === "new") {
+        span.setAttribute("data-char-index", item.newIndex.toString());
+
+        if (item.isNewSeparator) {
+          // New separator - animate in with width from 0 and slide up
+          span.setAttribute("data-flow", "");
+          spanRef.current!.appendChild(span);
+          const finalWidth = span.getBoundingClientRect().width;
+          span.style.width = "0px";
+          span.style.minWidth = "0px";
+          span.style.maxWidth = "0px";
+          addedSeparatorSpans.push({ span, finalWidth });
+        } else {
+          // Existing character or digit - show immediately
+          span.setAttribute("data-flow", "");
+          span.setAttribute("data-show", "");
+          spanRef.current!.appendChild(span);
+        }
+        newSpans.push(span);
+        newCharIndex++;
+      } else {
+        // Removing separator - keep in flow, will animate out
+        const oldKey = `${item.char}@${item.oldIndex}`;
+        const oldPos = oldPositions.get(oldKey);
+
+        span.setAttribute("data-flow", "");
+        span.setAttribute("data-show", "");
+        span.setAttribute("data-removing", "");
+        span.style.overflow = "visible";
+        span.style.display = "inline-block"; // Required for width animation on inline elements
+        if (oldPos) {
+          span.style.width = `${oldPos.width}px`;
+          span.style.minWidth = `${oldPos.width}px`;
+          span.style.maxWidth = `${oldPos.width}px`;
+        }
+        spanRef.current!.appendChild(span);
+        removingSpans.push(span);
+      }
+    });
+
+    // Force reflow
+    void spanRef.current.offsetWidth;
+
+    // Get new container rect for position calculations
+    const newContainerRect = spanRef.current.getBoundingClientRect();
+
+    // Apply x-position animations for digits that moved
+    newSpans.forEach((span) => {
+      const char = span.textContent ?? "";
+      if (!char) {
+        return;
+      }
+
+      const isSeparator = !isRawChar(char);
+      if (isSeparator) {
+        return;
+      } // Don't animate x for separators, they use width animation
+
+      // Find the old position for this character using the mapping
+      const newIndex = parseInt(
+        span.getAttribute("data-char-index") ?? "-1",
+        10
+      );
+      const oldIndex = newToOldMapping.get(newIndex);
+
+      if (oldIndex !== undefined) {
+        const oldKey = `${char}@${oldIndex}`;
+        const oldPos = oldPositions.get(oldKey);
+        if (oldPos) {
+          const newRect = span.getBoundingClientRect();
+          const newX = newRect.left - newContainerRect.left;
+          const offsetX = oldPos.x - newX;
+
+          if (Math.abs(offsetX) > 1) {
+            span.animate(
+              [
+                { transform: `translateX(${offsetX}px)` },
+                { transform: "translateX(0)" },
+              ],
+              {
+                duration: 200,
+                easing: "cubic-bezier(0.33, 1, 0.68, 1)",
+                fill: "forwards",
+              }
+            );
+          }
+        }
+      }
+    });
+
+    // Trigger animations in next frame
+    requestAnimationFrame(() => {
+      // Animate in new separators (width from 0 to final + slide up)
+      addedSeparatorSpans.forEach(({ span, finalWidth }) => {
+        span.setAttribute("data-show", "");
+        span.style.width = `${finalWidth}px`;
+        span.style.minWidth = `${finalWidth}px`;
+        span.style.maxWidth = `${finalWidth}px`;
+
+        // Clean up inline styles after transition
+        const handleTransitionEnd = (e: TransitionEvent) => {
+          if (e.propertyName === "width") {
+            span.style.width = "";
+            span.style.minWidth = "";
+            span.style.maxWidth = "";
+            span.style.overflow = "";
+            span.removeEventListener("transitionend", handleTransitionEnd);
+          }
+        };
+        span.addEventListener("transitionend", handleTransitionEnd);
+      });
+
+      // Animate out removed separators (width to 0 + slide down)
+      removingSpans.forEach((span) => {
+        span.removeAttribute("data-show");
+        span.setAttribute("data-hide", "");
+        span.style.width = "0px";
+        span.style.minWidth = "0px";
+        span.style.maxWidth = "0px";
+
+        // Remove after animation completes
+        const handleTransitionEnd = (e: TransitionEvent) => {
+          if (e.propertyName === "translate" || e.propertyName === "width") {
+            span.removeEventListener("transitionend", handleTransitionEnd);
+            // Only remove when both animations are done
+            if (
+              span.style.width === "0px" &&
+              span.getAttribute("data-hide") !== null
+            ) {
+              span.remove();
+            }
+          }
+        };
+        span.addEventListener("transitionend", handleTransitionEnd);
+      });
+    });
+
+    // Update the ref to match current formatted value
+    prevFormattedValueRef.current = formattedDisplayValue;
+
     // Only run when format or locale changes, not on initial mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [format, locale]);
+  }, [format, locale, formattedDisplayValue, isRawChar]);
 
   // Cleanup ResizeObservers on unmount
   useEffect(() => {
