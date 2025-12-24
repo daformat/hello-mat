@@ -31,7 +31,7 @@ const useMaxLength = (
 };
 
 const NumberFlowInputPage = () => {
-  const component = COMPONENTS["swipeable-cards"];
+  const component = COMPONENTS["number-flow-input"];
   return (
     <>
       <PageMetas {...component.metas} />
@@ -43,7 +43,7 @@ const NumberFlowInputPage = () => {
 };
 
 const NumberFlowInputPageContent = () => {
-  const nextComponent = getNextComponent("swipeable-cards");
+  const nextComponent = getNextComponent("number-flow-input");
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const maxLength = useMaxLength(8, 15, 800);
