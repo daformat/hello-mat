@@ -217,9 +217,9 @@ export const COMPONENTS = {
       },
     },
     metas: {
-      title: "Design engineering: a swipeable cards carousel",
+      title: "Design engineering: a number flow input component",
       description:
-        "Building a swipeable cards stack with React, TypeScript, and SCSS.",
+        "Building a number flow input component with React, TypeScript, and SCSS. Inspired by Number Flow and the Family wallet",
       url: "/design-engineering/component/number-flow-input",
       image:
         "/media/design-engineering/number-flow-input/og-number-flow-input-light.png",
