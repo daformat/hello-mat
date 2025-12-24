@@ -110,9 +110,9 @@ const NumberFlowInputPageContent = () => {
               placeholder="0"
               format={format}
             />
-            <p style={{ textAlign: "center" }}>
+            <div style={{ textAlign: "center" }}>
               <span style={{ opacity: 0.5 }}>Type in a value above</span>
-            </p>
+            </div>
           </div>
           <footer
             style={{
