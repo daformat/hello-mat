@@ -3730,7 +3730,7 @@ export const NumberFlowInput = ({
           <span
             ref={spanRef}
             contentEditable
-            inputMode="numeric"
+            inputMode="decimal"
             suppressContentEditableWarning
             onKeyDown={handleKeyDown}
             onBeforeInput={handleBeforeInput}
