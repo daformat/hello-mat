@@ -22,21 +22,39 @@ export interface PositionChange {
 
 /**
  * Check if a character is a separator (not a digit, decimal point, or minus)
+ * @param char - The character to check
+ * @param localeDecimal - Optional locale-specific decimal separator (e.g., "," for fr-FR)
  */
-const isSeparator = (char: string | undefined): boolean => {
+const isSeparator = (
+  char: string | undefined,
+  localeDecimal?: string
+): boolean => {
   if (!char) {
     return false;
   }
-  return !/[\d.\-]/.test(char);
+  // Check against standard raw characters
+  if (/[\d.\-]/.test(char)) {
+    return false;
+  }
+  // Also check against locale decimal separator
+  if (localeDecimal && char === localeDecimal) {
+    return false;
+  }
+  return true;
 };
 
 /**
  * Count separators in a string, returning a map of char -> count
+ * @param str - The string to count separators in
+ * @param localeDecimal - Optional locale-specific decimal separator
  */
-const countSeparators = (str: string): Map<string, number> => {
+const countSeparators = (
+  str: string,
+  localeDecimal?: string
+): Map<string, number> => {
   const counts = new Map<string, number>();
   for (const char of str) {
-    if (isSeparator(char)) {
+    if (isSeparator(char, localeDecimal)) {
       counts.set(char, (counts.get(char) ?? 0) + 1);
     }
   }
@@ -46,17 +64,21 @@ const countSeparators = (str: string): Map<string, number> => {
 /**
  * Maps a raw (unformatted) cursor position to a formatted cursor position.
  * Counts non-separator characters up to the raw position.
+ * @param rawPos - Position in raw (unformatted) string
+ * @param formattedStr - The formatted string
+ * @param localeDecimal - Optional locale-specific decimal separator
  */
 const mapRawPosToFormattedPos = (
   rawPos: number,
-  formattedStr: string
+  formattedStr: string,
+  localeDecimal?: string
 ): number => {
   let rawCount = 0;
   for (let i = 0; i < formattedStr.length; i++) {
     if (rawCount === rawPos) {
       return i;
     }
-    if (!isSeparator(formattedStr[i])) {
+    if (!isSeparator(formattedStr[i], localeDecimal)) {
       rawCount++;
     }
   }
@@ -75,13 +97,15 @@ const mapRawPosToFormattedPos = (
  * @param rawCursorPos - Cursor position in raw (unformatted) text after the change
  * @param rawSelectionStart - Selection start in raw text before the change
  * @param rawOldLength - Length of old raw text
+ * @param localeDecimal - Optional locale-specific decimal separator (e.g., "," for fr-FR)
  */
 export const getFormattedChanges = (
   oldFormatted: string,
   newFormatted: string,
   rawCursorPos?: number,
   rawSelectionStart?: number,
-  rawOldLength?: number
+  rawOldLength?: number,
+  localeDecimal?: string
 ): { addedIndices: Set<number>; unchangedIndices: Set<number> } => {
   const addedIndices = new Set<number>();
   const unchangedIndices = new Set<number>();
@@ -94,8 +118,8 @@ export const getFormattedChanges = (
   }
 
   // Count separators to determine which are truly new
-  const oldSeparatorCounts = countSeparators(oldFormatted);
-  const newSeparatorCounts = countSeparators(newFormatted);
+  const oldSeparatorCounts = countSeparators(oldFormatted, localeDecimal);
+  const newSeparatorCounts = countSeparators(newFormatted, localeDecimal);
 
   const newSeparatorAmounts = new Map<string, number>();
   for (const [char, newCount] of newSeparatorCounts) {
@@ -104,9 +128,18 @@ export const getFormattedChanges = (
     newSeparatorAmounts.set(char, trulyNew);
   }
 
-  // Extract non-separator characters
-  const oldNonSep = oldFormatted.replace(/[^\d.\-]/g, "");
-  const newNonSep = newFormatted.replace(/[^\d.\-]/g, "");
+  // Extract non-separator characters (keeping locale decimal as a raw char)
+  const extractNonSep = (str: string): string => {
+    let result = "";
+    for (const char of str) {
+      if (!isSeparator(char, localeDecimal)) {
+        result += char;
+      }
+    }
+    return result;
+  };
+  const oldNonSep = extractNonSep(oldFormatted);
+  const newNonSep = extractNonSep(newFormatted);
 
   // If cursor info is provided, use position-based diff
   // This correctly handles repeated identical characters
@@ -125,11 +158,13 @@ export const getFormattedChanges = (
     // Map raw positions to formatted positions
     const insertStartFormatted = mapRawPosToFormattedPos(
       insertStartRaw,
-      newFormatted
+      newFormatted,
+      localeDecimal
     );
     const insertEndFormatted = mapRawPosToFormattedPos(
       insertEndRaw,
-      newFormatted
+      newFormatted,
+      localeDecimal
     );
 
     // Track separators that should animate (truly new ones)
@@ -139,7 +174,7 @@ export const getFormattedChanges = (
     for (let idx = 0; idx < newFormatted.length; idx++) {
       const char = newFormatted[idx];
 
-      if (isSeparator(char)) {
+      if (isSeparator(char, localeDecimal)) {
         // For separators: animate if truly new AND in/near the insertion region
         const remaining = remainingNewSeparators.get(char ?? "") ?? 0;
         if (remaining > 0 && idx >= insertStartFormatted && idx < insertEndFormatted) {
@@ -215,7 +250,7 @@ export const getFormattedChanges = (
   const nonSepIndexToFormattedIndex = new Map<number, number>();
   let nonSepIdx = 0;
   for (let idx = 0; idx < newFormatted.length; idx++) {
-    if (!isSeparator(newFormatted[idx])) {
+    if (!isSeparator(newFormatted[idx], localeDecimal)) {
       nonSepIndexToFormattedIndex.set(nonSepIdx, idx);
       nonSepIdx++;
     }
@@ -225,7 +260,7 @@ export const getFormattedChanges = (
 
   for (let idx = 0; idx < newFormatted.length; idx++) {
     const char = newFormatted[idx];
-    if (isSeparator(char)) {
+    if (isSeparator(char, localeDecimal)) {
       const remaining = remainingNewSeparators.get(char ?? "") ?? 0;
       if (remaining > 0) {
         addedIndices.add(idx);
@@ -409,11 +444,16 @@ export const getChanges = (
  * Get the group number for a character at a given index.
  * Groups are separated by separator characters (commas, spaces, etc.).
  * Group 0 is before the first separator, group 1 is after, etc.
+ * @param localeDecimal - Optional locale-specific decimal separator
  */
-const getGroupNumber = (str: string, index: number): number => {
+const getGroupNumber = (
+  str: string,
+  index: number,
+  localeDecimal?: string
+): number => {
   let group = 0;
   for (let i = 0; i < index && i < str.length; i++) {
-    if (isSeparator(str[i])) {
+    if (isSeparator(str[i], localeDecimal)) {
       group++;
     }
   }
@@ -426,11 +466,13 @@ const getGroupNumber = (str: string, index: number): number => {
  * - Separators that moved positions
  * - Digits that crossed group boundaries (moved past a separator)
  *
+ * @param localeDecimal - Optional locale-specific decimal separator
  * @returns Array of indices in the new formatted string that should animate
  */
 export const getPositionChanges = (
   oldFormatted: string,
-  newFormatted: string
+  newFormatted: string,
+  localeDecimal?: string
 ): PositionChange[] => {
   const changes: PositionChange[] = [];
 
@@ -438,9 +480,20 @@ export const getPositionChanges = (
     return changes;
   }
 
+  // Helper to extract non-separator characters
+  const extractNonSep = (str: string): string => {
+    let result = "";
+    for (const char of str) {
+      if (!isSeparator(char, localeDecimal)) {
+        result += char;
+      }
+    }
+    return result;
+  };
+
   // Extract non-separator characters from both strings
-  const oldNonSep = oldFormatted.replace(/[^\d.\-]/g, "");
-  const newNonSep = newFormatted.replace(/[^\d.\-]/g, "");
+  const oldNonSep = extractNonSep(oldFormatted);
+  const newNonSep = extractNonSep(newFormatted);
 
   // Map each non-separator character in the new string to its position in old string
   // We use a simple matching algorithm: match from left to right for unchanged chars
@@ -496,7 +549,7 @@ export const getPositionChanges = (
   const oldNonSepToFormatted = new Map<number, number>();
   let nonSepIdx = 0;
   for (let idx = 0; idx < oldFormatted.length; idx++) {
-    if (!isSeparator(oldFormatted[idx])) {
+    if (!isSeparator(oldFormatted[idx], localeDecimal)) {
       oldNonSepToFormatted.set(nonSepIdx, idx);
       nonSepIdx++;
     }
@@ -505,7 +558,7 @@ export const getPositionChanges = (
   const newNonSepToFormatted = new Map<number, number>();
   nonSepIdx = 0;
   for (let idx = 0; idx < newFormatted.length; idx++) {
-    if (!isSeparator(newFormatted[idx])) {
+    if (!isSeparator(newFormatted[idx], localeDecimal)) {
       newNonSepToFormatted.set(nonSepIdx, idx);
       nonSepIdx++;
     }
@@ -515,7 +568,7 @@ export const getPositionChanges = (
   for (let newIdx = 0; newIdx < newFormatted.length; newIdx++) {
     const char = newFormatted[newIdx];
 
-    if (isSeparator(char)) {
+    if (isSeparator(char, localeDecimal)) {
       // For separators, check if there was a separator at a different position
       // We need to find if this separator "moved" from somewhere
 
@@ -567,8 +620,12 @@ export const getPositionChanges = (
           const oldFormattedIdx = oldNonSepToFormatted.get(oldNonSepIdx);
           if (oldFormattedIdx !== undefined && char !== undefined) {
             // Character existed before - check if it crossed a group boundary
-            const oldGroup = getGroupNumber(oldFormatted, oldFormattedIdx);
-            const newGroup = getGroupNumber(newFormatted, newIdx);
+            const oldGroup = getGroupNumber(
+              oldFormatted,
+              oldFormattedIdx,
+              localeDecimal
+            );
+            const newGroup = getGroupNumber(newFormatted, newIdx, localeDecimal);
 
             if (oldGroup !== newGroup) {
               changes.push({

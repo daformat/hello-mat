@@ -766,13 +766,15 @@ export const NumberFlowInput = ({
           newFormattedText,
           adjustedNewCursorPos,
           adjustedSelectionStart,
-          adjustedOldText.length
+          adjustedOldText.length,
+          separators.decimal
         );
 
         // Detect position changes for x-position animation (used later)
         const positionChanges = getPositionChanges(
           oldFormattedText,
-          newFormattedText
+          newFormattedText,
+          separators.decimal
         );
 
         // For FLIP animation: capture old positions BEFORE any DOM changes
@@ -2352,6 +2354,7 @@ export const NumberFlowInput = ({
       formatRawValue,
       mapRawToFormattedIndex,
       mapFormattedToRawIndex,
+      separators,
     ]
   );
 
@@ -2415,17 +2418,48 @@ export const NumberFlowInput = ({
       return;
     }
 
-    // Clear any ongoing barrel wheel animations since indices may have changed
     const parentContainer = spanRef.current.parentElement;
+
+    // Collect existing barrel wheels and their associated spans BEFORE any DOM changes
+    // We'll update their indices and reposition them after the DOM is rebuilt
+    const existingBarrelWheels: {
+      wheel: HTMLElement;
+      oldIndex: number;
+      finalDigit: string;
+      span: HTMLElement | null;
+      oldX: number; // Capture old x position for animation
+    }[] = [];
+
     if (parentContainer) {
-      getAllBarrelWheels(parentContainer, styles.barrel_wheel || "").forEach(
-        (wheel) => wheel.remove()
+      const parentRect = parentContainer.getBoundingClientRect();
+      const barrelWheels = getAllBarrelWheels(
+        parentContainer,
+        styles.barrel_wheel || ""
       );
+      barrelWheels.forEach((wheel) => {
+        const oldIndexStr = wheel.getAttribute("data-char-index");
+        const finalDigit = wheel.getAttribute("data-final-digit") ?? "";
+        if (oldIndexStr !== null) {
+          const oldIndex = parseInt(oldIndexStr, 10);
+          // Find the associated transparent span
+          const span = spanRef.current?.querySelector(
+            `[data-char-index="${oldIndex}"]`
+          ) as HTMLElement | null;
+          // Capture old x position relative to parent
+          const wheelRect = wheel.getBoundingClientRect();
+          const oldX = wheelRect.left - parentRect.left;
+          existingBarrelWheels.push({
+            wheel,
+            oldIndex,
+            finalDigit,
+            span,
+            oldX,
+          });
+        }
+      });
     }
 
-    // Clear ResizeObservers
-    resizeObserversRef.current.forEach((observer) => observer.disconnect());
-    resizeObserversRef.current.clear();
+    // Don't clear ResizeObservers - they'll be updated with new indices
 
     // Capture old positions BEFORE updating DOM
     const oldPositions = new Map<string, { x: number; width: number }>();
@@ -2447,17 +2481,121 @@ export const NumberFlowInput = ({
     // Build maps of character positions for matching old -> new
     const oldDigitPositions = new Map<string, number[]>();
     const oldSeparatorPositions = new Map<string, number[]>();
+    const { decimal: localeDecimal } = separators;
+
+    // Helper to check if a char is "raw" (digit, decimal, or minus) for matching purposes
+    // This is different from the component's isRawChar because we need to consider
+    // both the old and new decimal separators
+    const isRawCharForMatching = (
+      char: string,
+      text: string,
+      textDecimal: string | null
+    ): boolean => {
+      if (!char) {
+        return false;
+      }
+      if (/[\d\-]/.test(char)) {
+        return true;
+      }
+      if (char === ".") {
+        return true;
+      }
+      if (char === localeDecimal) {
+        return true;
+      }
+      // If the text uses this char as its decimal
+      if (textDecimal && char === textDecimal) {
+        return true;
+      }
+      return false;
+    };
+
+    // Detect which decimal is used in each text
+    const detectDecimal = (text: string): string | null => {
+      // Count occurrences of possible decimals
+      let dotCount = 0;
+      let commaCount = 0;
+      for (const char of text) {
+        if (char === ".") {
+          dotCount++;
+        }
+        if (char === ",") {
+          commaCount++;
+        }
+      }
+      // A decimal separator appears at most once
+      // Group separators appear multiple times
+      if (dotCount === 1 && commaCount > 1) {
+        return ".";
+      } // e.g., "1,234.56"
+      if (commaCount === 1 && dotCount > 1) {
+        return ",";
+      } // e.g., "1.234,56" (German)
+      if (dotCount === 1 && commaCount === 0) {
+        return ".";
+      } // e.g., "1.56"
+      if (commaCount === 1 && dotCount === 0) {
+        return ",";
+      } // e.g., "1,56"
+      if (dotCount === 0 && commaCount === 0) {
+        return null;
+      } // no decimal
+      // If both appear once, assume the last one is decimal
+      const lastDot = text.lastIndexOf(".");
+      const lastComma = text.lastIndexOf(",");
+      if (lastDot > lastComma) {
+        return ".";
+      }
+      if (lastComma > lastDot) {
+        return ",";
+      }
+      return null;
+    };
+
+    const oldTextDecimal = detectDecimal(oldFormattedText);
+    const newTextDecimal = detectDecimal(newFormattedText);
+
+    // Helper to normalize decimal separators for matching
+    // Both "." and "," (when used as decimal) should be treated as the same character
+    const normalizeForMatching = (
+      char: string,
+      textDecimal: string | null
+    ): string => {
+      // If this char is the decimal for its text, normalize to "DECIMAL"
+      if (char === "." || char === textDecimal) {
+        // Check if it's actually a decimal (not a group separator)
+        if (char === "." && textDecimal === ".") {
+          return "DECIMAL";
+        }
+        if (char === "," && textDecimal === ",") {
+          return "DECIMAL";
+        }
+        if (char === "." && textDecimal === null) {
+          return "DECIMAL";
+        } // assume it's decimal
+        if (char === localeDecimal) {
+          return "DECIMAL";
+        }
+      }
+      return char;
+    };
+
     for (let i = 0; i < oldFormattedText.length; i++) {
       const char = oldFormattedText[i] ?? "";
       if (!char) {
         continue;
       }
-      const isSep = !isRawChar(char);
-      const map = isSep ? oldSeparatorPositions : oldDigitPositions;
-      if (!map.has(char)) {
-        map.set(char, []);
+      const isRaw = isRawCharForMatching(
+        char,
+        oldFormattedText,
+        oldTextDecimal
+      );
+      const map = isRaw ? oldDigitPositions : oldSeparatorPositions;
+      const normalizedChar = normalizeForMatching(char, oldTextDecimal);
+      if (!map.has(normalizedChar)) {
+        map.set(normalizedChar, []);
       }
-      map.get(char)!.push(i);
+      map.get(normalizedChar)!.push(i);
     }
 
     // Track which old positions have been matched
@@ -2473,9 +2611,14 @@ export const NumberFlowInput = ({
         continue;
       }
 
-      const isSeparator = !isRawChar(char);
-      const posMap = isSeparator ? oldSeparatorPositions : oldDigitPositions;
-      const oldIndices = posMap.get(char) ?? [];
+      const isRaw = isRawCharForMatching(
+        char,
+        newFormattedText,
+        newTextDecimal
+      );
+      const posMap = isRaw ? oldDigitPositions : oldSeparatorPositions;
+      const normalizedChar = normalizeForMatching(char, newTextDecimal);
+      const oldIndices = posMap.get(normalizedChar) ?? [];
 
       for (const oldIdx of oldIndices) {
         if (!usedOldPositions.has(oldIdx)) {
@@ -2495,8 +2638,12 @@ export const NumberFlowInput = ({
         continue;
       }
 
-      const isSeparator = !isRawChar(char);
-      if (isSeparator && !usedOldPositions.has(i)) {
+      const isRaw = isRawCharForMatching(
+        char,
+        oldFormattedText,
+        oldTextDecimal
+      );
+      if (!isRaw && !usedOldPositions.has(i)) {
         separatorsToRemove.push({ char, oldIndex: i });
       }
     }
@@ -2516,8 +2663,12 @@ export const NumberFlowInput = ({
         continue;
       }
 
-      const isSeparator = !isRawChar(char);
-      const isNewSeparator = isSeparator && !newToOldMapping.has(i);
+      const isRaw = isRawCharForMatching(
+        char,
+        newFormattedText,
+        newTextDecimal
+      );
+      const isNewSeparator = !isRaw && !newToOldMapping.has(i);
 
       mergedItems.push({
         type: "new",
@@ -2552,8 +2703,56 @@ export const NumberFlowInput = ({
       });
     });
 
-    // Clear the container
-    spanRef.current.innerHTML = "";
+    // Update barrel wheel indices using the mapping BEFORE clearing the container
+    const barrelWheelNewIndices = new Map<HTMLElement, number>();
+    const barrelWheelSpansToPreserve = new Set<HTMLElement>();
+
+    existingBarrelWheels.forEach(({ wheel, oldIndex, span }) => {
+      const newIndex = oldToNewMapping.get(oldIndex);
+      if (newIndex !== undefined) {
+        // Update the barrel wheel's index
+        wheel.setAttribute("data-char-index", newIndex.toString());
+        barrelWheelNewIndices.set(wheel, newIndex);
+
+        // Update ResizeObserver mapping
+        const observer = resizeObserversRef.current.get(oldIndex);
+        if (observer) {
+          resizeObserversRef.current.delete(oldIndex);
+          resizeObserversRef.current.set(newIndex, observer);
+        }
+
+        // Mark span to preserve
+        if (span) {
+          barrelWheelSpansToPreserve.add(span);
+        }
+      } else {
+        // Barrel wheel's character was removed - clean up
+        const observer = resizeObserversRef.current.get(oldIndex);
+        if (observer) {
+          observer.disconnect();
+          resizeObserversRef.current.delete(oldIndex);
+        }
+        wheel.remove();
+      }
+    });
+
+    // Clear the container but preserve barrel wheel spans (we'll update them)
+    const allChildren = Array.from(spanRef.current.childNodes);
+    allChildren.forEach((child) => {
+      if (
+        child instanceof HTMLElement &&
+        barrelWheelSpansToPreserve.has(child)
+      ) {
+        // Keep this span - it's associated with an active barrel wheel
+        // But temporarily remove it so we can reinsert at correct position
+        child.remove();
+      } else {
+        // Remove this span
+        if (child.parentNode) {
+          child.parentNode.removeChild(child);
+        }
+      }
+    });
 
     // Create spans based on merged sequence
     const newSpans: HTMLElement[] = [];
@@ -2566,11 +2765,34 @@ export const NumberFlowInput = ({
         return;
       }
 
-      const span = document.createElement("span");
-      span.textContent = item.char;
-
       if (item.type === "new") {
-        span.setAttribute("data-char-index", item.newIndex.toString());
+        // Check if there's a barrel wheel span that should be at this index
+        let span: HTMLElement | null = null;
+        for (const {
+          wheel,
+          span: bwSpan,
+          finalDigit,
+        } of existingBarrelWheels) {
+          const newIndex = barrelWheelNewIndices.get(wheel);
+          if (newIndex === item.newIndex && bwSpan) {
+            // Reuse the barrel wheel span
+            span = bwSpan;
+            span.setAttribute("data-char-index", item.newIndex.toString());
+            // Update text content to match the new character (decimal separator might have changed)
+            if (span.textContent !== item.char && item.char !== finalDigit) {
+              // Only update if not the final digit (barrel wheel is still animating)
+              span.textContent = item.char;
+            }
+            break;
+          }
+        }
+
+        if (!span) {
+          // Create new span
+          span = document.createElement("span");
+          span.textContent = item.char;
+          span.setAttribute("data-char-index", item.newIndex.toString());
+        }
 
         if (item.isNewSeparator) {
           // New separator - animate in with width from 0 and slide up
@@ -2582,15 +2804,19 @@ export const NumberFlowInput = ({
           span.style.maxWidth = "0px";
           addedSeparatorSpans.push({ span, finalWidth });
         } else {
-          // Existing character or digit - show immediately
-          span.setAttribute("data-flow", "");
-          span.setAttribute("data-show", "");
+          // Existing character or digit - show immediately (unless it's a barrel wheel span)
+          if (!barrelWheelSpansToPreserve.has(span)) {
+            span.setAttribute("data-flow", "");
+            span.setAttribute("data-show", "");
+          }
           spanRef.current!.appendChild(span);
         }
         newSpans.push(span);
         newCharIndex++;
       } else {
         // Removing separator - keep in flow, will animate out
+        const span = document.createElement("span");
+        span.textContent = item.char;
         const oldKey = `${item.char}@${item.oldIndex}`;
         const oldPos = oldPositions.get(oldKey);
 
@@ -2722,6 +2948,107 @@ export const NumberFlowInput = ({
         };
         span.addEventListener("transitionend", handleTransitionEnd);
       });
+
+      // Reposition existing barrel wheels after DOM changes with x-position animation
+      // We need to calculate the FINAL x position (after all width animations complete)
+      if (parentContainer && existingBarrelWheels.length > 0) {
+        // Create a set of removing span indices for quick lookup
+        const removingSpanSet = new Set(removingSpans.map((s) => s));
+        // Create a map of new separator spans to their final widths
+        const separatorFinalWidths = new Map<HTMLElement, number>();
+        addedSeparatorSpans.forEach(({ span, finalWidth }) => {
+          separatorFinalWidths.set(span, finalWidth);
+        });
+
+        existingBarrelWheels.forEach(({ wheel, oldX }) => {
+          const newIndex = barrelWheelNewIndices.get(wheel);
+          if (newIndex === undefined) {
+            return; // Was removed
+          }
+
+          // Find the span at the new index
+          const span = spanRef.current?.querySelector(
+            `[data-char-index="${newIndex}"]`
+          ) as HTMLElement | null;
+
+          if (span && spanRef.current) {
+            const parentRect = parentContainer.getBoundingClientRect();
+            const containerRect = spanRef.current.getBoundingClientRect();
+
+            // Calculate final x position by summing final widths of all elements before this span
+            let finalX = containerRect.left - parentRect.left;
+            let foundSpan = false;
+
+            // Iterate through all children in order
+            for (const child of Array.from(spanRef.current.children)) {
+              if (child === span) {
+                foundSpan = true;
+                break;
+              }
+
+              const childEl = child as HTMLElement;
+
+              // Determine the final width of this element
+              let elementFinalWidth: number;
+
+              if (removingSpanSet.has(childEl)) {
+                // Removing separator - final width is 0
+                elementFinalWidth = 0;
+              } else if (separatorFinalWidths.has(childEl)) {
+                // New separator - use the final width (after animation)
+                elementFinalWidth = separatorFinalWidths.get(childEl)!;
+              } else {
+                // Regular span - use measureText to get natural width
+                const text = childEl.textContent ?? "";
+                if (text) {
+                  elementFinalWidth = measureText(text, childEl);
+                } else {
+                  elementFinalWidth = childEl.getBoundingClientRect().width;
+                }
+              }
+
+              finalX += elementFinalWidth;
+            }
+
+            if (!foundSpan) {
+              // Fallback to current position
+              const spanRect = span.getBoundingClientRect();
+              finalX = spanRect.left - parentRect.left;
+            }
+
+            // Get span dimensions
+            const spanRect = span.getBoundingClientRect();
+            const spanWidth = measureText(span.textContent ?? "", span);
+
+            // Calculate x offset for animation (from old position to final position)
+            const offsetX = oldX - finalX;
+
+            // Set final position immediately
+            wheel.style.left = `${finalX}px`;
+            wheel.style.top = `${spanRect.top - parentRect.top}px`;
+            wheel.style.width = `${spanWidth}px`;
+            wheel.style.height = `${spanRect.height}px`;
+
+            // Animate x position if there's a significant change
+            if (Math.abs(offsetX) > 1) {
+              wheel.animate(
+                [
+                  { transform: `translateX(${offsetX}px)` },
+                  { transform: "translateX(0)" },
+                ],
+                {
+                  duration: 200,
+                  easing: "cubic-bezier(0.33, 1, 0.68, 1)", // ease-out-cubic
+                  fill: "forwards",
+                }
+              );
+            }
+
+            // Ensure the span is transparent (barrel wheel is visible)
+            span.style.color = "transparent";
+          }
+        });
+      }
     });
 
     // Update the ref to match current formatted value
