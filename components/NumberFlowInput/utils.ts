@@ -193,3 +193,19 @@ export const getBarrelWheelSelector = (
   }
   return `[data-char-index="${index}"]${classSelector}`;
 };
+
+/**
+ * Clean up width animation styles from an element.
+ */
+export const clearWidthStyles = (element: HTMLElement): void => {
+  element.style.width = "";
+  element.style.minWidth = "";
+  element.style.maxWidth = "";
+  element.style.display = "";
+};
+
+/**
+ * Check if an element has width animation styles.
+ */
+export const hasWidthStyles = (element: HTMLElement): boolean =>
+  !!(element.style.width || element.style.minWidth || element.style.maxWidth);

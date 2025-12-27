@@ -21,10 +21,18 @@ import {
   setWidthConstraints,
 } from "./barrelWheel";
 import { getChanges, getFormattedChanges, getPositionChanges } from "./changes";
+import {
+  formatValue,
+  getLocaleSeparators,
+  isRawCharacter,
+  type Separators,
+} from "./formatting";
 import styles from "./NumberFlowInput.module.scss";
 import { cleanText, parseNumberValue } from "./textCleaning";
 import {
+  clearWidthStyles,
   getSelectionRange,
+  hasWidthStyles,
   isTransparent,
   measureText,
   removeTransparentColor,
@@ -117,19 +125,6 @@ export type NumberFlowInputUncontrolledProps = {
   value?: never;
 };
 
-/**
- * Helper to get decimal and group separators for a given locale.
- */
-const getLocaleSeparators = (
-  locale?: Intl.UnicodeBCP47LocaleIdentifier | Intl.Locale
-): { decimal: string; group: string } => {
-  const formatter = new Intl.NumberFormat(locale);
-  const parts = formatter.formatToParts(1234.5);
-  const decimal = parts.find((p) => p.type === "decimal")?.value ?? ".";
-  const group = parts.find((p) => p.type === "group")?.value ?? ",";
-  return { decimal, group };
-};
-
 export type NumberFlowInputCommonProps = {
   onChange?: (value: MaybeUndefined<number>) => void;
   autoAddLeadingZero?: boolean;
@@ -186,90 +181,24 @@ export const NumberFlowInput = ({
   const { maxLength } = inputProps;
 
   // Get separators for the locale (or default locale if format is true)
-  const separators = useMemo(() => {
+  const separators: Separators = useMemo(() => {
     if (locale || format) {
       return getLocaleSeparators(locale);
     }
-    // Default: standard separators
     return { decimal: ".", group: "," };
   }, [locale, format]);
 
+  // Format options for the formatValue function
+  const formatOptions = useMemo(
+    () => ({ locale, format, autoAddLeadingZero, separators }),
+    [locale, format, autoAddLeadingZero, separators]
+  );
+
   // Compute the formatted display value
-  const formattedDisplayValue = useMemo(() => {
-    const { decimal } = separators;
-
-    // Handle intermediate states where we need to preserve user input
-    // Convert internal '.' to locale decimal separator for display
-    if (displayValue === "") {
-      return "";
-    }
-    if (displayValue === "-") {
-      return "-";
-    }
-    if (displayValue === ".") {
-      return decimal;
-    }
-    if (displayValue === "-.") {
-      return "-" + decimal;
-    }
-
-    // Parse the number
-    const numericValue = parseFloat(displayValue);
-    if (isNaN(numericValue)) {
-      // Replace internal '.' with locale decimal for display
-      return displayValue.replace(".", decimal);
-    }
-
-    // Check for trailing dot or decimal portion being typed
-    const hasTrailingDot = displayValue.endsWith(".");
-    const dotIndex = displayValue.indexOf(".");
-    const decimalPart = dotIndex >= 0 ? displayValue.slice(dotIndex + 1) : "";
-
-    // Check if user typed a leading decimal (e.g., ".5" or "-.5")
-    // Only apply formatting if autoAddLeadingZero would convert it
-    const hasLeadingDecimal =
-      displayValue.startsWith(".") || displayValue.startsWith("-.");
-    if (hasLeadingDecimal && !autoAddLeadingZero) {
-      // User explicitly typed .5 without autoAddLeadingZero - preserve it
-      // Replace internal '.' with locale decimal for display
-      return displayValue.replace(".", decimal);
-    }
-
-    // If format is false, just convert internal '.' to locale decimal
-    if (!format) {
-      return displayValue.replace(".", decimal);
-    }
-
-    // Format the number using Intl.NumberFormat
-    let formatted: string;
-    try {
-      const formatter = new Intl.NumberFormat(locale);
-      formatted = formatter.format(numericValue);
-
-      // If there's a decimal part, we need to preserve the exact decimal digits the user typed
-      // The format function may truncate or round decimals, so we restore them
-      if (dotIndex >= 0 && decimalPart.length > 0) {
-        const formattedDotIndex = formatted.indexOf(decimal);
-        if (formattedDotIndex >= 0) {
-          // Replace the formatted decimal part with the user's original decimal part
-          formatted = formatted.slice(0, formattedDotIndex + 1) + decimalPart;
-        } else {
-          // Format result has no decimal point but we need one
-          formatted += decimal + decimalPart;
-        }
-      }
-    } catch {
-      // On error, just convert internal '.' to locale decimal
-      formatted = displayValue.replace(".", decimal);
-    }
-
-    // Add trailing decimal back if user is typing it
-    if (hasTrailingDot && !formatted.includes(decimal)) {
-      formatted += decimal;
-    }
-
-    return formatted;
-  }, [displayValue, format, autoAddLeadingZero, separators, locale]);
+  const formattedDisplayValue = useMemo(
+    () => formatValue(displayValue, formatOptions),
+    [displayValue, formatOptions]
+  );
 
   // Track previous formatted value for change detection
   const prevFormattedValueRef = useRef(formattedDisplayValue);
@@ -295,14 +224,8 @@ export const NumberFlowInput = ({
 
   // Helper to check if a character is a "raw" character (digit, decimal, or minus)
   const isRawChar = useCallback(
-    (char: string | undefined): boolean => {
-      if (!char) {
-        return false;
-      }
-      const { decimal } = separators;
-      // Include locale decimal separator as a raw character
-      return /[\d.\-]/.test(char) || char === decimal;
-    },
+    (char: string | undefined): boolean =>
+      isRawCharacter(char, separators.decimal),
     [separators]
   );
 
@@ -369,94 +292,10 @@ export const NumberFlowInput = ({
     [isRawChar]
   );
 
-  // Helper to check if a character at a formatted index is a separator (not digit, decimal, or minus)
-  const _isSeparatorChar = useCallback(
-    (char: string | undefined): boolean => {
-      if (!char) {
-        return false;
-      }
-      // Check against locale decimal separator and standard characters
-      const { decimal } = separators;
-      if (char === decimal || char === "." || char === "-" || /\d/.test(char)) {
-        return false;
-      }
-      return true;
-    },
-    [separators]
-  );
-
   // Helper to format a raw value string (raw always uses '.' as decimal)
   const formatRawValue = useCallback(
-    (rawValue: string): string => {
-      const { decimal } = separators;
-
-      // Handle intermediate states
-      if (rawValue === "") {
-        return "";
-      }
-      if (rawValue === "-") {
-        return "-";
-      }
-      if (rawValue === ".") {
-        return decimal;
-      }
-      if (rawValue === "-.") {
-        return "-" + decimal;
-      }
-
-      const numericValue = parseFloat(rawValue);
-      if (isNaN(numericValue)) {
-        // Replace internal '.' with locale decimal for display
-        return rawValue.replace(".", decimal);
-      }
-
-      // Check if user typed a leading decimal (e.g., ".5" or "-.5")
-      // Only apply formatting if autoAddLeadingZero would convert it
-      const hasLeadingDecimal =
-        rawValue.startsWith(".") || rawValue.startsWith("-.");
-      if (hasLeadingDecimal && !autoAddLeadingZero) {
-        // User explicitly typed .5 without autoAddLeadingZero - preserve it
-        return rawValue.replace(".", decimal);
-      }
-
-      // If format is false, just convert internal '.' to locale decimal
-      if (!format) {
-        return rawValue.replace(".", decimal);
-      }
-
-      const hasTrailingDot = rawValue.endsWith(".");
-      const dotIndex = rawValue.indexOf(".");
-      const decimalPart = dotIndex >= 0 ? rawValue.slice(dotIndex + 1) : "";
-
-      let formatted: string;
-      try {
-        const formatter = new Intl.NumberFormat(locale);
-        formatted = formatter.format(numericValue);
-
-        // If there's a decimal part, we need to preserve the exact decimal digits the user typed
-        // The format function may truncate or round decimals, so we restore them
-        if (dotIndex >= 0 && decimalPart.length > 0) {
-          const formattedDotIndex = formatted.indexOf(decimal);
-          if (formattedDotIndex >= 0) {
-            // Replace the formatted decimal part with the user's original decimal part
-            formatted = formatted.slice(0, formattedDotIndex + 1) + decimalPart;
-          } else {
-            // Format result has no decimal point but we need one
-            formatted += decimal + decimalPart;
-          }
-        }
-      } catch {
-        // On error, just convert internal '.' to locale decimal
-        formatted = rawValue.replace(".", decimal);
-      }
-
-      if (hasTrailingDot && !formatted.includes(decimal)) {
-        formatted += decimal;
-      }
-
-      return formatted;
-    },
-    [format, autoAddLeadingZero, separators, locale]
+    (rawValue: string): string => formatValue(rawValue, formatOptions),
+    [formatOptions]
   );
 
   const addToHistory = useCallback(
@@ -627,24 +466,16 @@ export const NumberFlowInput = ({
       selectionEnd: number,
       skipHistory = false
     ) => {
-      // Clean up any stale width animations from fast typing
-      // If a span has data-show and inline width styles, the animation should be complete
+      // Clean up stale width animations from fast typing
       if (spanRef.current) {
-        const spansWithWidth = spanRef.current.querySelectorAll(
-          "[data-char-index][data-show]"
-        );
-        spansWithWidth.forEach((span) => {
-          const el = span as HTMLElement;
-          if (el.style.width || el.style.minWidth || el.style.maxWidth) {
-            // Check if the span doesn't have data-width-animate (barrel wheel animation)
-            if (!el.hasAttribute("data-width-animate")) {
-              el.style.width = "";
-              el.style.minWidth = "";
-              el.style.maxWidth = "";
-              el.style.display = "";
+        spanRef.current
+          .querySelectorAll("[data-char-index][data-show]")
+          .forEach((span) => {
+            const el = span as HTMLElement;
+            if (hasWidthStyles(el) && !el.hasAttribute("data-width-animate")) {
+              clearWidthStyles(el);
             }
-          }
-        });
+          });
       }
 
       const oldText = displayValue;
@@ -2759,7 +2590,6 @@ export const NumberFlowInput = ({
     const addedSeparatorSpans: { span: HTMLElement; finalWidth: number }[] = [];
     const removingSpans: HTMLElement[] = [];
 
-    let newCharIndex = 0;
     mergedItems.forEach((item) => {
       if (!item) {
         return;
@@ -2812,7 +2642,6 @@ export const NumberFlowInput = ({
           spanRef.current!.appendChild(span);
         }
         newSpans.push(span);
-        newCharIndex++;
       } else {
         // Removing separator - keep in flow, will animate out
         const span = document.createElement("span");
