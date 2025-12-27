@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { NextCard } from "@/components/Navigation/NextCard";
 import { SplitFlapDisplay } from "@/components/SplitFlapDisplay/SplitFlapDisplay";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
-import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
 import {
   COMPONENTS,
   getNextComponent,
@@ -22,11 +21,28 @@ const SplitFlapDisplayPage = () => {
   );
 };
 
+const formatSeconds = (totalSeconds: number) => {
+  const hours = Math.floor(totalSeconds / 3600) % 24;
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${hours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+};
+
+// 13:37:42 = 13*3600 + 37*60 + 42 = 49062 seconds
+const INITIAL_TIME = 13 * 3600 + 37 * 60 + 42;
+
 const SplitFlapDisplayPageContent = () => {
   const nextComponent = getNextComponent("split-flap-display") ?? {};
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const [format, setFormat] = useState(true);
+  const [timeInSeconds, setTimeInSeconds] = useState(INITIAL_TIME);
+
+  const incrementTime = () => {
+    setTimeInSeconds((prev) => prev + 1);
+  };
 
   useEffect(() => {
     if (contentRef.current) {
@@ -81,16 +97,14 @@ const SplitFlapDisplayPageContent = () => {
               flexDirection: "column",
               alignItems: "center",
               flexGrow: 1,
+              perspective: "550px",
             }}
           >
             <SplitFlapDisplay
               length={8}
               characters="0123456789:"
-              value="13:37:42"
+              value={formatSeconds(timeInSeconds)}
             />
-            <div style={{ textAlign: "center" }}>
-              <span style={{ opacity: 0.5 }}>Type in a value above</span>
-            </div>
           </div>
           <footer
             style={{
@@ -105,19 +119,20 @@ const SplitFlapDisplayPageContent = () => {
                 "inset 0 0 2px 0.75px var(--color-border-2), inset 0 0 0 0.75px var(--color-border-3)",
             }}
           >
-            <label
+            <button
+              onClick={incrementTime}
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
+                padding: "4px 12px",
+                borderRadius: 4,
+                border: "1px solid var(--color-border-2)",
+                background: "var(--color-background)",
+                color: "inherit",
+                cursor: "pointer",
+                fontSize: "0.875rem",
               }}
             >
-              <Checkbox
-                defaultChecked={format}
-                onChange={(event) => setFormat(event.target.checked)}
-              />
-              <small style={{ opacity: 0.8 }}>format</small>
-            </label>
+              +1 second
+            </button>
           </footer>
         </div>
 

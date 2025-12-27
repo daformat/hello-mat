@@ -51,27 +51,33 @@ const SplitFlapDisplayChar = ({
   const currentCharacterIndex = characters.indexOf(value);
 
   return (
-    <span className={styles.slot}>
+    <div
+      className={styles.slot}
+      style={
+        {
+          "--current-character-index": currentCharacterIndex,
+          "--total": characters.length,
+        } as CSSProperties
+      }
+    >
       {characters.split("").map((char, i) => (
-        <span
+        <div
           key={i}
           className={styles.character}
           style={
             {
               "--index": i,
-              "--current-character-index": currentCharacterIndex,
-              "--total": characters.length,
             } as CSSProperties
           }
         >
-          <span className={styles.flap}>
-            <span>{char}</span>
-          </span>
-          <span className={styles.flap} aria-hidden={true}>
-            <span>{char}</span>
-          </span>
-        </span>
+          <div className={styles.flap}>
+            <div>{char}</div>
+          </div>
+          <div className={styles.flap} aria-hidden={true}>
+            <div>{char}</div>
+          </div>
+        </div>
       ))}
-    </span>
+    </div>
   );
 };
