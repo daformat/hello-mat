@@ -31,7 +31,7 @@ const formatTime = (date: Date) => {
 };
 
 const SplitFlapDisplayPageContent = () => {
-  const nextComponent = getNextComponent("split-flap-display") ?? {};
+  const nextComponent = getNextComponent("split-flap-display");
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const [time, setTime] = useState(() => new Date());

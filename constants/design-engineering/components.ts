@@ -227,6 +227,29 @@ export const COMPONENTS = {
       imageHeight: 630,
     },
   },
+  "split-flap-display": {
+    shortTitle: "A split-flap display component",
+    video: {
+      dark: {
+        src: "/media/design-engineering/split-flap-display/split-flap-display-overview-dark.mp4",
+        type: "video/mp4",
+      },
+      light: {
+        src: "/media/design-engineering/split-flap-display/split-flap-display-overview-light.mp4",
+        type: "video/mp4",
+      },
+    },
+    metas: {
+      title: "Design engineering: a split-flap display component",
+      description:
+        "Building a realistic split-flap display with, React and css",
+      url: "/design-engineering/component/split-flap-display",
+      image:
+        "/media/design-engineering/split-flap-display/og-split-flap-display-light.png",
+      imageWidth: 1200,
+      imageHeight: 630,
+    },
+  },
 } as const satisfies Record<
   string,
   {
@@ -277,6 +300,7 @@ export const COMPONENTS_ORDER = createComponentOrder([
   "stacking-cards",
   "swipeable-cards",
   "number-flow-input",
+  "split-flap-display",
 ] as const);
 
 export const getNextComponent = (currentComponentId: ComponentId) => {
