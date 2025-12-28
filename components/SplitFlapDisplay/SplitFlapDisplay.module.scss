@@ -1,3 +1,5 @@
+@use "/styles/lib/mixins.scss";
+
 .split_flap_display {
   --split-flap-crease: 1px;
   --chars-gap: 2px;
@@ -5,10 +7,14 @@
 
   display: flex;
   //filter: drop-shadow(0 1px 12px var(--color-shadow-1));
-  font-size: 3.5em;
+  font-size: 1.5em;
   gap: var(--chars-gap);
-  transform: rotateY(45deg);
   transform-style: preserve-3d;
+  transition: transform 500ms var(--ease-out-cubic);
+
+  @include mixins.above-medium {
+    font-size: clamp(1.5em, 5vw, 3.5em);
+  }
 
   .slot {
     display: grid;
@@ -17,12 +23,44 @@
 
     .character {
       // Calculate absolute distance from current character
+      --total0: calc(var(--total) - 1);
+      --after-count: calc(var(--total0) - var(--index));
+      --before-count: max(calc(var(--total0) - var(--after-count) - 1), 0);
+      --after-char: calc(var(--total0) - var(--current-character-index));
+      --before-char: max(calc(var(--total0) - var(--after-char) - 1), 0);
       --offset: calc(var(--index) - var(--current-character-index));
       --abs-offset: max(var(--offset), calc(var(--offset) * -1));
-      --flip: clamp(-1, var(--offset), 1);
-      --angle: calc((180 / (var(--total) - 1)) * 1deg);
-      --a: calc(var(--abs-offset) * var(--angle));
-      --a2: calc(var(--a) * -1);
+      --abs-offset-reversed: calc(var(--total0) - var(--abs-offset));
+      --direction: calc(var(--offset) / var(--abs-offset));
+      --past: min(0, var(--direction));
+      --future: max(0, var(--direction));
+      --is-current: clamp(0, calc(1 - var(--abs-offset) * 1000), 1);
+      --is-previous: clamp(
+        0,
+        calc(1 - max(var(--offset) + 1, (var(--offset) + 1) * -1) * 1000),
+        1
+      );
+      --is-next: clamp(
+        0,
+        calc(1 - max(var(--offset) - 1, (var(--offset) - 1) * -1) * 1000),
+        1
+      );
+      //--is-other: clamp(
+      //  0,
+      //  calc(1 - var(--is-current) - var(--is-previous) - var(--is-next)),
+      //  1
+      //);
+      //--flip: clamp(0, var(--offset), 1);
+      --angle: calc((180 / var(--total0)) * 1deg);
+      --a: calc(
+        var(--abs-offset) * var(--angle) * var(--direction) + 180deg *
+          var(--past)
+      );
+      --a2: calc(
+        var(--abs-offset) * var(--angle) * var(--direction) + 180deg *
+          var(--future)
+      );
+      //--a2: calc(var(--abs-offset) * var(--angle) * -1);
 
       display: flex;
       flex-direction: column;
@@ -30,6 +68,8 @@
       grid-area: 1 / 1;
       pointer-events: none;
       transform-style: preserve-3d;
+      transition: z-index var(--flip-duration) var(--ease-out-cubic);
+      z-index: calc(var(--is-current) + var(--is-previous) + var(--is-next));
 
       > .flap {
         backface-visibility: hidden;
@@ -56,6 +96,7 @@
           padding-top: 0.25em;
           transform: rotateX(var(--a));
           transform-origin: center bottom;
+          //opacity: 0;
 
           > * {
             translate: 0 calc(var(--split-flap-crease) * 0.5);
@@ -67,6 +108,8 @@
           align-items: flex-end;
           backface-visibility: hidden;
           padding-bottom: 0.25em;
+          //opacity: 0;
+
           transform: rotateX(var(--a2));
           transform-origin: center top;
 

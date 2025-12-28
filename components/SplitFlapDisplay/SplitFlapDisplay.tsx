@@ -6,12 +6,14 @@ export type SplitFlapDisplayProps = {
   value: string;
   length: number;
   characters: string;
+  style?: CSSProperties;
 };
 
 export const SplitFlapDisplay = ({
   value,
   length,
   characters,
+  style,
 }: SplitFlapDisplayProps) => {
   const isOverflowing = value.length > length;
   const displayValue = (
@@ -23,7 +25,7 @@ export const SplitFlapDisplay = ({
     (isOverflowing ? "…" : "");
 
   return (
-    <div className={styles.split_flap_display}>
+    <div className={styles.split_flap_display} style={style}>
       {displayValue.split("").map((char, i) => (
         <SplitFlapDisplayChar
           key={i}
@@ -43,10 +45,14 @@ const SplitFlapDisplayChar = ({
   characters: string;
 }) => {
   const lastValueRef = useRef<string>("");
+  const turnRef = useRef<number>(0);
 
   useEffect(() => {
+    if (characters.indexOf(value) < characters.indexOf(lastValueRef.current)) {
+      turnRef.current++;
+    }
     lastValueRef.current = value;
-  }, [value]);
+  }, [characters, value]);
 
   const currentCharacterIndex = characters.indexOf(value);
 
@@ -57,6 +63,7 @@ const SplitFlapDisplayChar = ({
         {
           "--current-character-index": currentCharacterIndex,
           "--total": characters.length,
+          "--turn": turnRef.current,
         } as CSSProperties
       }
     >

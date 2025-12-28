@@ -8,6 +8,7 @@ import {
   COMPONENTS,
   getNextComponent,
 } from "@/constants/design-engineering/components";
+import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
 
 const SplitFlapDisplayPage = () => {
   const component = COMPONENTS["split-flap-display"] ?? {};
@@ -19,6 +20,13 @@ const SplitFlapDisplayPage = () => {
       </TableOfContents.Provider>
     </>
   );
+};
+
+const formatTime = (date: Date) => {
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const seconds = date.getSeconds().toString().padStart(2, "0");
+  return `${hours}:${minutes}:${seconds}`;
 };
 
 const formatSeconds = (totalSeconds: number) => {
@@ -37,12 +45,22 @@ const SplitFlapDisplayPageContent = () => {
   const nextComponent = getNextComponent("split-flap-display") ?? {};
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
-  const [format, setFormat] = useState(true);
-  const [timeInSeconds, setTimeInSeconds] = useState(INITIAL_TIME);
+  const [time, setTime] = useState(() => new Date());
+  const [rotateDisplay, setRotateDisplay] = useState(false);
+  const [clockRunning, setClockRunning] = useState(true);
 
   const incrementTime = () => {
-    setTimeInSeconds((prev) => prev + 1);
+    setTime((time) => new Date(time.getTime() + 1000));
   };
+
+  useEffect(() => {
+    if (clockRunning) {
+      const interval = setInterval(() => {
+        setTime((time) => new Date(time.getTime() + 1000));
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [clockRunning]);
 
   useEffect(() => {
     if (contentRef.current) {
@@ -98,12 +116,19 @@ const SplitFlapDisplayPageContent = () => {
               alignItems: "center",
               flexGrow: 1,
               perspective: "550px",
+              filter: "drop-shadow(0 1px 12px var(--color-shadow-1))",
             }}
           >
             <SplitFlapDisplay
               length={8}
               characters="0123456789:"
-              value={formatSeconds(timeInSeconds)}
+              // value={formatSeconds(timeInSeconds).split("").reverse().join("")}
+              value={formatTime(time).split("").reverse().join("")}
+              style={{
+                transform: rotateDisplay
+                  ? "rotateY(45deg) translateX(12%)"
+                  : undefined,
+              }}
             />
           </div>
           <footer
@@ -115,24 +140,57 @@ const SplitFlapDisplayPageContent = () => {
               alignItems: "center",
               borderBottomLeftRadius: "inherit",
               borderBottomRightRadius: "inherit",
+              justifyContent: "space-between",
               boxShadow:
                 "inset 0 0 2px 0.75px var(--color-border-2), inset 0 0 0 0.75px var(--color-border-3)",
+              flexWrap: "wrap",
+              gap: 8
             }}
           >
-            <button
-              onClick={incrementTime}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <button
+                className="button alt"
+                onClick={incrementTime}
+                style={{
+                  padding: "8px 12px",
+                  // borderRadius: 4,
+                  // border: "1px solid var(--color-border-2)",
+                  // background: "var(--color-background)",
+                  // color: "inherit",
+                  // cursor: "pointer",
+                  // fontSize: "0.875rem",
+                }}
+              >
+                +1 second
+              </button>
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  whiteSpace: "nowrap"
+                }}
+              >
+                <Checkbox
+                  defaultChecked={clockRunning}
+                  onChange={(event) => setClockRunning(event.target.checked)}
+                />
+                <small style={{ opacity: 0.8 }}>Running clock</small>
+              </label>
+            </div>
+            <label
               style={{
-                padding: "4px 12px",
-                borderRadius: 4,
-                border: "1px solid var(--color-border-2)",
-                background: "var(--color-background)",
-                color: "inherit",
-                cursor: "pointer",
-                fontSize: "0.875rem",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
               }}
             >
-              +1 second
-            </button>
+              <Checkbox
+                defaultChecked={rotateDisplay}
+                onChange={(event) => setRotateDisplay(event.target.checked)}
+              />
+              <small style={{ opacity: 0.8 }}>Rotate display</small>
+            </label>
           </footer>
         </div>
 

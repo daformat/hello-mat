@@ -120,6 +120,10 @@ a {
     white-space: nowrap;
     width: var(--button-width, auto);
 
+    &.alt {
+      background-color: var(--color-background);
+    }
+
     &[data-state="active"] {
       color: var(--text-secondary-hover);
     }
