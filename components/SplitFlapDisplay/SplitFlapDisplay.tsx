@@ -137,15 +137,23 @@ const SplitFlapDisplayChar = ({
             "--current-character-index",
             `${characters.indexOf(value)}`
           );
-          charRef.current?.addEventListener("transitionend", () => {
+          const checkAnimations = () => {
             const animations = charRef.current?.getAnimations({
               subtree: true,
             });
-            if (animations?.length === 0) {
-              charRef.current?.style.removeProperty("--flip-duration");
-              onFullyFlipped?.();
+            console.log(animations);
+            if (animations) {
+              Promise.all(animations.map((a) => a.finished)).then(() => {
+                charRef.current?.style.removeProperty("--flip-duration");
+                onFullyFlipped?.();
+                charRef.current?.removeEventListener(
+                  "transitionend",
+                  checkAnimations
+                );
+              });
             }
-          });
+          };
+          charRef.current?.addEventListener("transitionend", checkAnimations);
           if (isGoingBackwards) {
             updateTurn();
           }
