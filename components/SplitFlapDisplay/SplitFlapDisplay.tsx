@@ -1,4 +1,4 @@
-import { CSSProperties, useLayoutEffect, useRef } from "react";
+import { CSSProperties, useEffect, useLayoutEffect, useRef } from "react";
 
 import styles from "./SplitFlapDisplay.module.scss";
 
@@ -8,6 +8,7 @@ export type SplitFlapDisplayProps = {
   characters: string;
   style?: CSSProperties;
   autoSkip?: boolean;
+  onFullyFlipped?: () => void;
 };
 
 export const SplitFlapDisplay = ({
@@ -16,6 +17,7 @@ export const SplitFlapDisplay = ({
   characters,
   style,
   autoSkip,
+  onFullyFlipped,
 }: SplitFlapDisplayProps) => {
   const isOverflowing = value.length > length;
   const displayValue = (
@@ -25,6 +27,11 @@ export const SplitFlapDisplay = ({
     (characters.includes(" ") ? "" : " ") +
     characters +
     (isOverflowing ? "…" : "");
+  const fullyFlippedRef = useRef(0);
+
+  useLayoutEffect(() => {
+    fullyFlippedRef.current = 0;
+  }, [value]);
 
   return (
     <div className={styles.split_flap_display} style={style}>
@@ -34,6 +41,12 @@ export const SplitFlapDisplay = ({
           value={char}
           characters={finalCharacters}
           autoSkip={autoSkip}
+          onFullyFlipped={() => {
+            fullyFlippedRef.current++;
+            if (fullyFlippedRef.current === length) {
+              onFullyFlipped?.();
+            }
+          }}
         />
       ))}
     </div>
@@ -44,20 +57,39 @@ const SplitFlapDisplayChar = ({
   value,
   characters,
   autoSkip,
+  onFullyFlipped,
 }: {
   value: string;
   characters: string;
   autoSkip?: boolean;
+  onFullyFlipped?: () => void;
 }) => {
   const lastValueRef = useRef<string>("");
   const turnRef = useRef<number>(0);
   const charRef = useRef<HTMLDivElement>(null);
+  const isMountedRef = useRef(false);
+  const flippingThroughTimeout = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    isMountedRef.current = true;
+  }, []);
 
   useLayoutEffect(() => {
     const newCharIndex = characters.indexOf(value);
     const lastCharIndex = characters.indexOf(lastValueRef.current);
+    const isGoingBackwards = newCharIndex < lastCharIndex;
+    const isGoingForwards = newCharIndex > lastCharIndex + 1;
 
-    if (newCharIndex < lastCharIndex) {
+    if (!isMountedRef.current) {
+      lastValueRef.current = value;
+      onFullyFlipped?.();
+      return;
+    }
+
+    if (isGoingBackwards || isGoingForwards) {
+      if (flippingThroughTimeout.current) {
+        clearTimeout(flippingThroughTimeout.current);
+      }
       const animationTiming = charRef.current
         ? parseFloat(
             getComputedStyle(charRef.current).getPropertyValue(
@@ -66,20 +98,18 @@ const SplitFlapDisplayChar = ({
           )
         : 0;
       const remainingChars = characters
-        .slice(lastCharIndex + 1)
+        .slice(lastCharIndex + 1, isGoingForwards ? newCharIndex : undefined)
         .split("")
         .reverse();
       const precedingChars = characters
-        .slice(0, newCharIndex)
+        .slice(isGoingForwards ? newCharIndex : 0, newCharIndex)
         .split("")
         .reverse();
       const totalChars = remainingChars.length + precedingChars.length + 1;
       const intervalTime = animationTiming / totalChars;
-      console.log({ remainingChars, precedingChars, animationTiming });
       let updatedTurn = false;
       const updateTurn = () => {
         if (!updatedTurn) {
-          console.log("updateTurn");
           turnRef.current++;
           charRef.current?.style.setProperty("--turn", `${turnRef.current}`);
           updatedTurn = true;
@@ -94,7 +124,6 @@ const SplitFlapDisplayChar = ({
             "--flip-duration",
             intervalTime + "ms"
           );
-          console.log(newChar, characters.indexOf(newChar));
           charRef.current?.style.setProperty(
             "--current-character-index",
             `${characters.indexOf(newChar)}`
@@ -102,24 +131,31 @@ const SplitFlapDisplayChar = ({
           if (precedingChar) {
             updateTurn();
           }
-          setTimeout(update, intervalTime);
+          flippingThroughTimeout.current = setTimeout(update, intervalTime);
         } else {
-          console.log(value, characters.indexOf(value));
           charRef.current?.style.setProperty(
             "--current-character-index",
             `${characters.indexOf(value)}`
           );
           charRef.current?.addEventListener("transitionend", () => {
-            charRef.current?.style.removeProperty("--flip-duration");
+            const animations = charRef.current?.getAnimations({
+              subtree: true,
+            });
+            if (animations?.length === 0) {
+              charRef.current?.style.removeProperty("--flip-duration");
+              onFullyFlipped?.();
+            }
           });
-          updateTurn();
+          if (isGoingBackwards) {
+            updateTurn();
+          }
         }
       };
       update();
       // updateTurn();
     }
     lastValueRef.current = value;
-  }, [autoSkip, characters, value]);
+  }, [autoSkip, characters, onFullyFlipped, value]);
 
   const currentCharacterIndex = characters.indexOf(value);
 
