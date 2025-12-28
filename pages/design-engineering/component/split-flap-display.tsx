@@ -1,14 +1,14 @@
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { NextCard } from "@/components/Navigation/NextCard";
 import { SplitFlapDisplay } from "@/components/SplitFlapDisplay/SplitFlapDisplay";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
+import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
 import {
   COMPONENTS,
   getNextComponent,
 } from "@/constants/design-engineering/components";
-import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
 
 const SplitFlapDisplayPage = () => {
   const component = COMPONENTS["split-flap-display"] ?? {};
@@ -46,21 +46,37 @@ const SplitFlapDisplayPageContent = () => {
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const [time, setTime] = useState(() => new Date());
-  const [rotateDisplay, setRotateDisplay] = useState(false);
   const [clockRunning, setClockRunning] = useState(true);
+  const [rotateDisplay, setRotateDisplay] = useState(false);
+  const [message, setMessage] = useState<string>("HELLO");
+  const [rotateDisplay2, setRotateDisplay2] = useState(false);
+  const messages = useMemo(
+    () => ["HELLO", "CIAO", "SALUT", "PAKA", "HEY", "HALLO"],
+    []
+  );
 
-  const incrementTime = () => {
+  const incrementTime = useCallback(() => {
     setTime((time) => new Date(time.getTime() + 1000));
-  };
+  }, []);
+
+  const incrementMessage = useCallback(() => {
+    setMessage(
+      (message) =>
+        messages[(messages.indexOf(message) + 1) % messages.length] ?? message
+    );
+  }, [messages]);
 
   useEffect(() => {
     if (clockRunning) {
-      const interval = setInterval(() => {
-        setTime((time) => new Date(time.getTime() + 1000));
-      }, 1000);
+      const interval = setInterval(incrementTime, 1000);
       return () => clearInterval(interval);
     }
-  }, [clockRunning]);
+  }, [clockRunning, incrementTime]);
+
+  // useEffect(() => {
+  //   const interval = setInterval(incrementMessage, 5000);
+  //   return () => clearInterval(interval);
+  // }, [incrementMessage]);
 
   useEffect(() => {
     if (contentRef.current) {
@@ -123,10 +139,11 @@ const SplitFlapDisplayPageContent = () => {
               length={8}
               characters="0123456789:"
               // value={formatSeconds(timeInSeconds).split("").reverse().join("")}
-              value={formatTime(time).split("").reverse().join("")}
+              value={formatTime(time)}
+              autoSkip
               style={{
                 transform: rotateDisplay
-                  ? "rotateY(45deg) translateX(12%)"
+                  ? "rotateY(-45deg) translateX(-12%)"
                   : undefined,
               }}
             />
@@ -144,10 +161,17 @@ const SplitFlapDisplayPageContent = () => {
               boxShadow:
                 "inset 0 0 2px 0.75px var(--color-border-2), inset 0 0 0 0.75px var(--color-border-3)",
               flexWrap: "wrap",
-              gap: 8
+              gap: 8,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                flexWrap: "wrap",
+              }}
+            >
               <button
                 className="button alt"
                 onClick={incrementTime}
@@ -168,7 +192,7 @@ const SplitFlapDisplayPageContent = () => {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 8,
-                  whiteSpace: "nowrap"
+                  whiteSpace: "nowrap",
                 }}
               >
                 <Checkbox
@@ -188,6 +212,102 @@ const SplitFlapDisplayPageContent = () => {
               <Checkbox
                 defaultChecked={rotateDisplay}
                 onChange={(event) => setRotateDisplay(event.target.checked)}
+              />
+              <small style={{ opacity: 0.8 }}>Rotate display</small>
+            </label>
+          </footer>
+        </div>
+
+        <div
+          className="demo card alt"
+          style={{
+            marginBlock: 32,
+            padding: 0,
+            // maxWidth: 650,
+            marginInline: "auto",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            backgroundColor: "transparent",
+          }}
+        >
+          <div
+            style={{
+              padding: "clamp(16px, 5vw, 128px) 8px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              flexGrow: 1,
+              perspective: "550px",
+              filter: "drop-shadow(0 1px 12px var(--color-shadow-1))",
+            }}
+          >
+            <SplitFlapDisplay
+              length={5}
+              characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+              // value={formatSeconds(timeInSeconds).split("").reverse().join("")}
+              value={message}
+              style={{
+                transform: rotateDisplay2
+                  ? "rotateY(-45deg) translateX(-12%)"
+                  : undefined,
+              }}
+              onFullyFlipped={() => {
+                console.log("Fully flipped");
+                setTimeout(incrementMessage, 5000);
+              }}
+            />
+          </div>
+          <footer
+            style={{
+              padding: "8px 12px",
+              backgroundColor: "var(--color-card-background)",
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              borderBottomLeftRadius: "inherit",
+              borderBottomRightRadius: "inherit",
+              justifyContent: "space-between",
+              boxShadow:
+                "inset 0 0 2px 0.75px var(--color-border-2), inset 0 0 0 0.75px var(--color-border-3)",
+              flexWrap: "wrap",
+              gap: 8,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                className="button alt"
+                onClick={incrementMessage}
+                style={{
+                  padding: "8px 12px",
+                  // borderRadius: 4,
+                  // border: "1px solid var(--color-border-2)",
+                  // background: "var(--color-background)",
+                  // color: "inherit",
+                  // cursor: "pointer",
+                  // fontSize: "0.875rem",
+                }}
+              >
+                Next message
+              </button>
+            </div>
+            <label
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <Checkbox
+                defaultChecked={rotateDisplay2}
+                onChange={(event) => setRotateDisplay2(event.target.checked)}
               />
               <small style={{ opacity: 0.8 }}>Rotate display</small>
             </label>

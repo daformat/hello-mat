@@ -7,6 +7,7 @@ export type SplitFlapDisplayProps = {
   length: number;
   characters: string;
   style?: CSSProperties;
+  autoSkip?: boolean;
 };
 
 export const SplitFlapDisplay = ({
@@ -14,6 +15,7 @@ export const SplitFlapDisplay = ({
   length,
   characters,
   style,
+  autoSkip,
 }: SplitFlapDisplayProps) => {
   const isOverflowing = value.length > length;
   const displayValue = (
@@ -31,6 +33,7 @@ export const SplitFlapDisplay = ({
           key={i}
           value={char}
           characters={finalCharacters}
+          autoSkip={autoSkip}
         />
       ))}
     </div>
@@ -40,21 +43,83 @@ export const SplitFlapDisplay = ({
 const SplitFlapDisplayChar = ({
   value,
   characters,
+  autoSkip,
 }: {
   value: string;
   characters: string;
+  autoSkip?: boolean;
 }) => {
   const lastValueRef = useRef<string>("");
   const turnRef = useRef<number>(0);
   const charRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
-    if (characters.indexOf(value) < characters.indexOf(lastValueRef.current)) {
-      turnRef.current++;
-      charRef.current?.style.setProperty("--turn", `${turnRef.current}`);
+    const newCharIndex = characters.indexOf(value);
+    const lastCharIndex = characters.indexOf(lastValueRef.current);
+
+    if (newCharIndex < lastCharIndex) {
+      const animationTiming = charRef.current
+        ? parseFloat(
+            getComputedStyle(charRef.current).getPropertyValue(
+              "--flip-duration"
+            )
+          )
+        : 0;
+      const remainingChars = characters
+        .slice(lastCharIndex + 1)
+        .split("")
+        .reverse();
+      const precedingChars = characters
+        .slice(0, newCharIndex)
+        .split("")
+        .reverse();
+      const totalChars = remainingChars.length + precedingChars.length + 1;
+      const intervalTime = animationTiming / totalChars;
+      console.log({ remainingChars, precedingChars, animationTiming });
+      let updatedTurn = false;
+      const updateTurn = () => {
+        if (!updatedTurn) {
+          console.log("updateTurn");
+          turnRef.current++;
+          charRef.current?.style.setProperty("--turn", `${turnRef.current}`);
+          updatedTurn = true;
+        }
+      };
+      const update = () => {
+        const remainingChar = remainingChars.pop();
+        const precedingChar = remainingChar ? undefined : precedingChars.pop();
+        const newChar = remainingChar ?? precedingChar;
+        if (newChar && !autoSkip) {
+          charRef.current?.style.setProperty(
+            "--flip-duration",
+            intervalTime + "ms"
+          );
+          console.log(newChar, characters.indexOf(newChar));
+          charRef.current?.style.setProperty(
+            "--current-character-index",
+            `${characters.indexOf(newChar)}`
+          );
+          if (precedingChar) {
+            updateTurn();
+          }
+          setTimeout(update, intervalTime);
+        } else {
+          console.log(value, characters.indexOf(value));
+          charRef.current?.style.setProperty(
+            "--current-character-index",
+            `${characters.indexOf(value)}`
+          );
+          charRef.current?.addEventListener("transitionend", () => {
+            charRef.current?.style.removeProperty("--flip-duration");
+          });
+          updateTurn();
+        }
+      };
+      update();
+      // updateTurn();
     }
     lastValueRef.current = value;
-  }, [characters, value]);
+  }, [autoSkip, characters, value]);
 
   const currentCharacterIndex = characters.indexOf(value);
 
