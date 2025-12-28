@@ -75,6 +75,12 @@ const SplitFlapDisplayChar = ({
   }, []);
 
   useLayoutEffect(() => {
+    if (value === lastValueRef.current) {
+      onFullyFlipped?.();
+    }
+  });
+
+  useLayoutEffect(() => {
     const newCharIndex = characters.indexOf(value);
     const lastCharIndex = characters.indexOf(lastValueRef.current);
     const isGoingBackwards = newCharIndex < lastCharIndex;
@@ -97,6 +103,7 @@ const SplitFlapDisplayChar = ({
             )
           )
         : 0;
+
       const remainingChars = characters
         .slice(lastCharIndex + 1, isGoingForwards ? newCharIndex : undefined)
         .split("")
@@ -105,9 +112,11 @@ const SplitFlapDisplayChar = ({
         .slice(isGoingForwards ? newCharIndex : 0, newCharIndex)
         .split("")
         .reverse();
+
       const totalChars = remainingChars.length + precedingChars.length + 1;
-      const intervalTime = animationTiming / totalChars;
+      const intervalTime = Math.max(animationTiming / totalChars, 120);
       let updatedTurn = false;
+
       const updateTurn = () => {
         if (!updatedTurn) {
           turnRef.current++;
@@ -115,6 +124,7 @@ const SplitFlapDisplayChar = ({
           updatedTurn = true;
         }
       };
+
       const update = () => {
         const remainingChar = remainingChars.pop();
         const precedingChar = remainingChar ? undefined : precedingChars.pop();
@@ -141,9 +151,9 @@ const SplitFlapDisplayChar = ({
             const animations = charRef.current?.getAnimations({
               subtree: true,
             });
-            console.log(animations);
-            if (animations) {
-              Promise.all(animations.map((a) => a.finished)).then(() => {
+
+            if (animations?.length) {
+              Promise.allSettled(animations.map((a) => a.finished)).then(() => {
                 charRef.current?.style.removeProperty("--flip-duration");
                 onFullyFlipped?.();
                 charRef.current?.removeEventListener(
@@ -151,8 +161,16 @@ const SplitFlapDisplayChar = ({
                   checkAnimations
                 );
               });
+            } else {
+              charRef.current?.style.removeProperty("--flip-duration");
+              onFullyFlipped?.();
+              charRef.current?.removeEventListener(
+                "transitionend",
+                checkAnimations
+              );
             }
           };
+
           charRef.current?.addEventListener("transitionend", checkAnimations);
           if (isGoingBackwards) {
             updateTurn();

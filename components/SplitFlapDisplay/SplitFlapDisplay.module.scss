@@ -9,6 +9,7 @@
   //filter: drop-shadow(0 1px 12px var(--color-shadow-1));
   font-size: 1.5em;
   gap: var(--chars-gap);
+  position: relative;
   transform-style: preserve-3d;
   transition: transform 500ms var(--ease-out-cubic);
 
@@ -20,6 +21,21 @@
     display: grid;
     place-content: center;
     transform-style: preserve-3d;
+
+    + .slot {
+      position: relative;
+
+      //&::before {
+      //  background-color: var(--color-background);
+      //  border-radius: 3px;
+      //  content: "";
+      //  height: 100%;
+      //  left: calc(var(--chars-gap) * -1);
+      //  position: absolute;
+      //  width: var(--chars-gap);
+      //  z-index: -1;
+      //}
+    }
 
     .character {
       // Calculate absolute distance from current character
