@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { MaybeUndefined } from "@/components/Media/utils/maybe";
 import { NextCard } from "@/components/Navigation/NextCard";
+import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { SplitFlapDisplay } from "@/components/SplitFlapDisplay/SplitFlapDisplay";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
@@ -9,13 +11,12 @@ import {
   COMPONENTS,
   getNextComponent,
 } from "@/constants/design-engineering/components";
-import { MaybeUndefined } from "@/components/Media/utils/maybe";
 
 const SplitFlapDisplayPage = () => {
   const component = COMPONENTS["split-flap-display"] ?? {};
   return (
     <>
-      {/*<PageMetas {...component.metas} />*/}
+      <PageMetas {...component.metas} />
       <TableOfContents.Provider>
         <SplitFlapDisplayPageContent />
       </TableOfContents.Provider>
@@ -331,6 +332,26 @@ const SplitFlapDisplayPageContent = () => {
             </label>
           </footer>
         </div>
+        <h2 id="component-props">Component props</h2>
+        <p>This component accepts several props:</p>
+        <ul>
+          <li>
+            <code>value</code>: the current value to display
+          </li>
+          <li>
+            <code>length</code>: the total display length
+          </li>
+          <li>
+            <code>characters</code>: the character range to use
+          </li>
+          <li>
+            <code>autoSkip</code>: whether to skip the in-between characters
+            when the new character isn’t the natural next character
+          </li>
+          <li>
+            <code>onFullyFlipped</code>: a callback that will be called when the display is finished flipping through characters to display the current value
+          </li>
+        </ul>
 
         <h2 id="conclusion">That’s a wrap</h2>
         <p>
