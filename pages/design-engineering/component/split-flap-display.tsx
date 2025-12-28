@@ -9,6 +9,7 @@ import {
   COMPONENTS,
   getNextComponent,
 } from "@/constants/design-engineering/components";
+import { MaybeUndefined } from "@/components/Media/utils/maybe";
 
 const SplitFlapDisplayPage = () => {
   const component = COMPONENTS["split-flap-display"] ?? {};
@@ -50,6 +51,8 @@ const SplitFlapDisplayPageContent = () => {
   const [rotateDisplay, setRotateDisplay] = useState(false);
   const [message, setMessage] = useState<string>("HELLO");
   const [rotateDisplay2, setRotateDisplay2] = useState(false);
+  const newMessageTimeoutRef =
+    useRef<MaybeUndefined<ReturnType<typeof setTimeout>>>();
   const messages = useMemo(
     () => [
       "HELLO",
@@ -70,6 +73,9 @@ const SplitFlapDisplayPageContent = () => {
   }, []);
 
   const incrementMessage = useCallback(() => {
+    if (newMessageTimeoutRef.current) {
+      clearTimeout(newMessageTimeoutRef.current);
+    }
     setMessage(
       (message) =>
         messages[(messages.indexOf(message) + 1) % messages.length] ?? message
@@ -83,20 +89,17 @@ const SplitFlapDisplayPageContent = () => {
     }
   }, [clockRunning, incrementTime]);
 
-  // useEffect(() => {
-  //   const interval = setInterval(incrementMessage, 5000);
-  //   return () => clearInterval(interval);
-  // }, [incrementMessage]);
-
   useEffect(() => {
     if (contentRef.current) {
       tocContext.setRootElement(contentRef.current);
     }
   });
 
-  const handleFullyFlipper = useCallback(() => {
-    console.log("Fully flipped");
-    setTimeout(incrementMessage, 5000);
+  const handleFullyFlipped = useCallback(() => {
+    if (newMessageTimeoutRef.current) {
+      clearTimeout(newMessageTimeoutRef.current);
+    }
+    newMessageTimeoutRef.current = setTimeout(incrementMessage, 5000);
   }, [incrementMessage]);
 
   return (
@@ -107,24 +110,26 @@ const SplitFlapDisplayPageContent = () => {
           Back to gallery
         </Link>
         <h1 id="design-engineering-a-swipeable-cards-carousel">
-          Design engineering: a split flap display component
+          Design engineering: a split-flap display component
         </h1>
         <p>
-          An animated number input component, inspired by the{" "}
-          <a href={"https://family.co/"} target="_blank" rel="noopener">
-            Family crypto wallet
-          </a>{" "}
-          and{" "}
-          <a
-            href={"https://number-flow.barvian.me/"}
-            target="_blank"
-            rel="noopener"
-          >
-            Number Flow
-          </a>
-          . Try typing a number below, when you’ll have some numbers typed in,
-          select a single number and replace it with another number to see a
-          barrel wheel effect like the one popularized by Number Flow.
+          An animated split-flap display component, bringing back some nostalgic
+          memories. This component is inspired by a similar component I made
+          back in 2012, with many improvements. Instead of faking the physical
+          spool like many implementations do, I decided to stay as close as
+          possible to the physical split-flap displays: the flaps really do
+          rotate along the drum (try checking the <code>Rotate display</code>{" "}
+          option). Even tough there may be shortcomings to this approach,
+          I&nbsp;took it as a chance to practice.
+        </p>
+
+        <h2 id="split-flap-clock">Fig. 1: a split-flap clock</h2>
+        <p>
+          A traditional split-flap clock, cycling through digits as time passes,
+          a timeless design if you ask me. For this one I’m simply passing the
+          digits and the <code>:</code> character, and there’s a helpful prop
+          that allows to skip intermediary characters in order to only have
+          digits where appropriate without defining a different character range
         </p>
         <div
           className="demo card alt"
@@ -214,7 +219,9 @@ const SplitFlapDisplayPageContent = () => {
                   defaultChecked={clockRunning}
                   onChange={(event) => setClockRunning(event.target.checked)}
                 />
-                <small style={{ opacity: 0.8 }}>{clockRunning ? "Clock running" : "Clock paused"}</small>
+                <small style={{ opacity: 0.8 }}>
+                  {clockRunning ? "Clock running" : "Clock paused"}
+                </small>
               </label>
             </div>
             <label
@@ -232,6 +239,17 @@ const SplitFlapDisplayPageContent = () => {
             </label>
           </footer>
         </div>
+
+        <h2 id="alphabetic-split-flap-display">
+          Fig. 2: An alphabetic split-flap display
+        </h2>
+
+        <p>
+          A split-flap display that cycles through the alphabet and display
+          rolling messages. For this one, we flip through the entire spool and
+          trigger a new message after the current message is finished
+          displaying.
+        </p>
 
         <div
           className="demo card alt"
@@ -267,7 +285,7 @@ const SplitFlapDisplayPageContent = () => {
                   ? "rotateY(-45deg) translateX(-12%)"
                   : undefined,
               }}
-              onFullyFlipped={handleFullyFlipper}
+              onFullyFlipped={handleFullyFlipped}
             />
           </div>
           <footer
@@ -326,126 +344,14 @@ const SplitFlapDisplayPageContent = () => {
           </footer>
         </div>
 
-        <h2 id="features">Features</h2>
-        <h3 id="animated-digits">Animated digits</h3>
-        <ul>
-          <li>
-            <strong>Numbers are animated as they get inserted</strong>, we
-            animate them up and animate their width at the same time so the
-            input smoothly resizes as the user types.
-          </li>
-          <li>
-            <strong>
-              Selecting and replacing a digit with another digit creates a
-              barrel wheel effect
-            </strong>
-            , the direction of the wheel depends on whether the new number is
-            larger or smaller than the old one.
-          </li>
-          <li>
-            <strong>
-              Replacing a digit that is already in a barrel wheel animation
-              smoothly interrupts and restart the barrel wheel
-            </strong>{" "}
-            so that it animates to the latest digit.
-          </li>
-          <h3>Accepted characters</h3>
-          <ul>
-            <li>
-              Only digits, one decimal point, and one minus sign are allowed.
-            </li>
-            <li>Uses a numeric keyboard on mobile devices.</li>
-            <li>
-              The minus sign can only be placed at the beginning of the input.
-            </li>
-            <li>
-              When inserting a decimal point, the component can automatically
-              add the leading 0 if the <code>autoAddLeadingZero</code> prop is
-              set to <code>true</code>.
-            </li>
-            <li>
-              The component accepts an optional <code>maxLength</code> prop.
-            </li>
-          </ul>
-        </ul>
-
-        <h2 id="implementation">Implementation</h2>
-        <p>
-          The implementation of this component uses <code>contentEditable</code>{" "}
-          in order to be able to animate the digits as they are typed. Relying
-          on <code>contentEditable</code> allows to use markup, contrary to a
-          regular input, but this comes with quite a few caveats.
-        </p>
-        <h3 id="react-cant-help">React can’t help with content editable</h3>
-        <p>
-          Since the browser will insert content as the user types, the children
-          of the content editable have to be managed outside of React. We are
-          responsible for DOM manipulation, which can be a little tedious.
-        </p>
-        <h3 id="preventing-rich-text-shortcuts">
-          Preventing content editable rich text shortcuts
-        </h3>
-        <p>
-          Content editable is designed to allow rich text formatting, and
-          arbitrary markup to be inserted, for our input we need to prevent
-          this. This is done via <code>event.preventDefault()</code>, simple yet
-          effective.
-        </p>
-        <h3 id="custom-cursor-handling">Custom cursor handling</h3>
-        <p>
-          In rich text, cursor positions move between nodes, this means that
-          when you insert a <code>span</code> the cursor position can be inside,
-          or outside of the span. This means that there more than on logical
-          cursor position mapping to the same visual position. Which means the
-          user would have to press the arrow keys twice to move the cursor to
-          the next digit. This is definitely not ideal.
-        </p>
-        <p>
-          We need to handle cursor positioning ourselves. This also means we
-          need to implement things such as <kbd>alt+arrow</kbd> or{" "}
-          <kbd>cmd+arrow</kbd> in order to move the cursor to the beginning or
-          end of the input (depending on which arrow the user pressed).
-        </p>
-        <p>
-          Because of this, we also need to implement a custom selection, too.
-        </p>
-
-        <h3 id="custom-history">Custom history (undo/redo)</h3>
-        <p>
-          Since we manipulate the content ourselves and manipulate the DOM
-          directly, we can’t rely on the native history for the content
-          editable, we have to implement history on our own. The implementation
-          here is pretty naive, but it works and restore cursor position as the
-          user undoes/redoes.
-        </p>
-
-        <h3 id="custom-clipboard">Custom clipboard</h3>
-        <p>
-          Since we have rich text markup in our input, and we want to copy a raw
-          number to the clipboard, we also need to handle copy operations
-          ourselves in order to clean the markup.
-        </p>
         <h2 id="conclusion">That’s a wrap</h2>
         <p>
-          I wanted an input that animates in a similar way to the{" "}
-          <a
-            href={"https://number-flow.barvian.me/"}
-            target="_blank"
-            rel="noopener"
-          >
-            Number Flow
-          </a>
-          component, and the{" "}
-          <a href={"https://family.co/"} target="_blank" rel="noopener">
-            Family crypto wallet
-          </a>{" "}
-          inputs. Number Flow is great, but it doesn’t really have an input
-          mode. What they do in their examples is that they basically overlay
-          the number flow component on top of an input, but I wanted more
-          animation options than that. In the end, using content editable is
-          quite tricky, because you have to re-implement many things that are a
-          given with a regular input if you want it to feel right and provide a
-          decent UX.
+          I wanted an a real split-flap display component with a rolling drum
+          and implemented it with React, css, and JavaScript, the component
+          accepts a range of characters and creates as many flaps as there are
+          characters. While there might be performance implications, I favoured
+          recreating the full barrel effect as an exercise. I hope you enjoyed
+          the demos. Stay tuned.
         </p>
         <NextCard href={nextComponent.metas.url}>
           {nextComponent.shortTitle}
