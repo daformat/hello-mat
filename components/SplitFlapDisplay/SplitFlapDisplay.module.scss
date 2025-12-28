@@ -24,13 +24,8 @@
     .character {
       // Calculate absolute distance from current character
       --total0: calc(var(--total) - 1);
-      --after-count: calc(var(--total0) - var(--index));
-      --before-count: max(calc(var(--total0) - var(--after-count) - 1), 0);
-      --after-char: calc(var(--total0) - var(--current-character-index));
-      --before-char: max(calc(var(--total0) - var(--after-char) - 1), 0);
       --offset: calc(var(--index) - var(--current-character-index));
       --abs-offset: max(var(--offset), calc(var(--offset) * -1));
-      --abs-offset-reversed: calc(var(--total0) - var(--abs-offset));
       --direction: calc(var(--offset) / var(--abs-offset));
       --past: min(0, var(--direction));
       --future: max(0, var(--direction));
@@ -67,9 +62,21 @@
       gap: var(--split-flap-crease);
       grid-area: 1 / 1;
       pointer-events: none;
+      position: relative;
       transform-style: preserve-3d;
       transition: z-index var(--flip-duration) var(--ease-out-cubic);
       z-index: calc(var(--is-current) + var(--is-previous) + var(--is-next));
+
+      &::after {
+        background-color: var(--color-background);
+        content: "";
+        display: block;
+        height: var(--split-flap-crease);
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 100%;
+      }
 
       > .flap {
         backface-visibility: hidden;
@@ -95,7 +102,7 @@
           backface-visibility: hidden;
           padding-top: 0.25em;
           transform: rotateX(var(--a));
-          transform-origin: center bottom;
+          transform-origin: center calc(100% + var(--split-flap-crease) * 0.5);
           //opacity: 0;
 
           > * {
@@ -111,7 +118,7 @@
           //opacity: 0;
 
           transform: rotateX(var(--a2));
-          transform-origin: center top;
+          transform-origin: center calc(var(--split-flap-crease) * -0.5);
 
           > * {
             translate: 0 calc(var(--split-flap-crease) * -0.5);
