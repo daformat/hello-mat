@@ -49,14 +49,14 @@
       //  1
       //);
       //--flip: clamp(0, var(--offset), 1);
-      --angle: calc((180 / var(--total0)) * 1deg);
+      --angle: calc((0.5 / var(--total0)) * 1turn);
       --a: calc(
         var(--abs-offset) * var(--direction) * var(--angle) + var(--past) *
-          180deg - var(--turn) * 360deg
+          0.5turn - var(--turn) * 1turn
       );
       --a2: calc(
         var(--abs-offset) * var(--direction) * var(--angle) + var(--future) *
-          180deg - var(--turn) * 360deg
+          0.5turn - var(--turn) * 1turn
       );
       //--a2: calc(var(--abs-offset) * var(--angle) * -1);
 
