@@ -51,7 +51,17 @@ const SplitFlapDisplayPageContent = () => {
   const [message, setMessage] = useState<string>("HELLO");
   const [rotateDisplay2, setRotateDisplay2] = useState(false);
   const messages = useMemo(
-    () => ["HELLO", "CIAO", "SALUT", "PAKA", "HEY", "HALLO"],
+    () => [
+      "HELLO",
+      "CIAO",
+      "HALLO",
+      "NIHAO",
+      "SALUT",
+      "HEJ",
+      "PAKA",
+      "HEY",
+      "ALOHA",
+    ],
     []
   );
 
@@ -83,6 +93,11 @@ const SplitFlapDisplayPageContent = () => {
       tocContext.setRootElement(contentRef.current);
     }
   });
+
+  const handleFullyFlipper = useCallback(() => {
+    console.log("Fully flipped");
+    setTimeout(incrementMessage, 5000);
+  }, [incrementMessage]);
 
   return (
     <>
@@ -199,7 +214,7 @@ const SplitFlapDisplayPageContent = () => {
                   defaultChecked={clockRunning}
                   onChange={(event) => setClockRunning(event.target.checked)}
                 />
-                <small style={{ opacity: 0.8 }}>Running clock</small>
+                <small style={{ opacity: 0.8 }}>{clockRunning ? "Clock running" : "Clock paused"}</small>
               </label>
             </div>
             <label
@@ -252,10 +267,7 @@ const SplitFlapDisplayPageContent = () => {
                   ? "rotateY(-45deg) translateX(-12%)"
                   : undefined,
               }}
-              onFullyFlipped={() => {
-                console.log("Fully flipped");
-                setTimeout(incrementMessage, 5000);
-              }}
+              onFullyFlipped={handleFullyFlipper}
             />
           </div>
           <footer
