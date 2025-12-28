@@ -1,4 +1,4 @@
-import { CSSProperties, useEffect, useRef } from "react";
+import { CSSProperties, useLayoutEffect, useRef } from "react";
 
 import styles from "./SplitFlapDisplay.module.scss";
 
@@ -46,10 +46,12 @@ const SplitFlapDisplayChar = ({
 }) => {
   const lastValueRef = useRef<string>("");
   const turnRef = useRef<number>(0);
+  const charRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (characters.indexOf(value) < characters.indexOf(lastValueRef.current)) {
       turnRef.current++;
+      charRef.current?.style.setProperty("--turn", `${turnRef.current}`);
     }
     lastValueRef.current = value;
   }, [characters, value]);
@@ -58,10 +60,13 @@ const SplitFlapDisplayChar = ({
 
   return (
     <div
+      ref={charRef}
       className={styles.slot}
       style={
         {
           "--current-character-index": currentCharacterIndex,
+          "--current-character-index-with-turns":
+            currentCharacterIndex + turnRef.current * (characters.length - 1),
           "--total": characters.length,
           "--turn": turnRef.current,
         } as CSSProperties

@@ -26,10 +26,13 @@
       --total0: calc(var(--total) - 1);
       --offset: calc(var(--index) - var(--current-character-index));
       --abs-offset: max(var(--offset), calc(var(--offset) * -1));
-      --direction: calc(var(--offset) / var(--abs-offset));
+      --safe-abs-offset: max(var(--abs-offset), 0.0001); /* Prevent zero */
+      --direction: calc(var(--offset) / var(--safe-abs-offset));
+      //--direction: calc(var(--offset) / var(--abs-offset));
       --past: min(0, var(--direction));
       --future: max(0, var(--direction));
       --is-current: clamp(0, calc(1 - var(--abs-offset) * 1000), 1);
+      --is-not-current: clamp(0, calc(1 - var(--is-current)), 1);
       --is-previous: clamp(
         0,
         calc(1 - max(var(--offset) + 1, (var(--offset) + 1) * -1) * 1000),
@@ -48,12 +51,12 @@
       //--flip: clamp(0, var(--offset), 1);
       --angle: calc((180 / var(--total0)) * 1deg);
       --a: calc(
-        var(--abs-offset) * var(--angle) * var(--direction) + 180deg *
-          var(--past)
+        var(--abs-offset) * var(--direction) * var(--angle) + var(--past) *
+          180deg - var(--turn) * 360deg
       );
       --a2: calc(
-        var(--abs-offset) * var(--angle) * var(--direction) + 180deg *
-          var(--future)
+        var(--abs-offset) * var(--direction) * var(--angle) + var(--future) *
+          180deg - var(--turn) * 360deg
       );
       //--a2: calc(var(--abs-offset) * var(--angle) * -1);
 
