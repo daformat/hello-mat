@@ -148,7 +148,90 @@ const SplitFlapDisplayChar = memo(
       };
 
       if (autoSkip && newCharIndex < lastCharIndex) {
-        updateTurn();
+        const remainingChars = characters.slice(lastCharIndex + 1, undefined);
+        const precedingChars = characters.slice(0, newCharIndex);
+        const charsToDisplay = characters
+          .split("")
+          .filter(
+            (char) =>
+              !remainingChars.includes(char) && !precedingChars.includes(char)
+          );
+        const charsToDisplayCount = charsToDisplay.length;
+        const shouldSkip =
+          (remainingChars.length || precedingChars.length) &&
+          charsToDisplayCount >= 4;
+        if (shouldSkip) {
+          charRef.current?.style.setProperty(
+            "--current-character-index",
+            `${lastCharIndex}`
+          );
+          charRef.current?.style.setProperty("--flip-duration", "0ms");
+          charRef.current?.style.setProperty(
+            "--total",
+            `${charsToDisplayCount}`
+          );
+          [...remainingChars, ...precedingChars].forEach((char) => {
+            const span = charRef.current?.querySelector(
+              `[data-char="${char}"]`
+            );
+            if (span instanceof HTMLElement) {
+              span.style.setProperty("--index", "-1");
+              span.style.setProperty("display", "none");
+            }
+          });
+          charsToDisplay.forEach((char, index) => {
+            const span = charRef.current?.querySelector(
+              `[data-char="${char}"]`
+            );
+            if (span instanceof HTMLElement) {
+              span.style.setProperty("--index", `${index}`);
+            }
+          });
+          charRef.current?.style.setProperty(
+            "--current-character-index",
+            `${charsToDisplay.indexOf(lastValueRef.current)}`
+          );
+          requestAnimationFrame(() => {
+            charRef.current?.style.removeProperty("--flip-duration");
+            charRef.current?.style.setProperty(
+              "--current-character-index",
+              `${charsToDisplay.indexOf(value)}`
+            );
+            charRef.current?.addEventListener(
+              "transitionend",
+              () => {
+                charRef.current?.style.setProperty("--flip-duration", "0ms");
+                charRef.current?.style.setProperty(
+                  "--total",
+                  `${characters.length}`
+                );
+                [...characters].forEach((char) => {
+                  const span = charRef.current?.querySelector(
+                    `[data-char="${char}"]`
+                  );
+                  if (span instanceof HTMLElement) {
+                    span.style.setProperty(
+                      "--index",
+                      `${characters.indexOf(char)}`
+                    );
+                    span.style.removeProperty("display");
+                  }
+                });
+                charRef.current?.style.setProperty(
+                  "--current-character-index",
+                  `${charsToDisplay.indexOf(lastValueRef.current)}`
+                );
+                requestAnimationFrame(() => {
+                  charRef.current?.style.removeProperty("--flip-duration");
+                });
+              },
+              { once: true }
+            );
+            updateTurn();
+          });
+        } else {
+          updateTurn();
+        }
       } else if (isGoingBackwards || isGoingForwards) {
         if (flippingThroughTimeout.current) {
           clearTimeout(flippingThroughTimeout.current);
@@ -178,15 +261,15 @@ const SplitFlapDisplayChar = memo(
           const precedingChar = remainingChar
             ? undefined
             : precedingChars.pop();
-          const newChar = remainingChar ?? precedingChar;
-          if (newChar) {
+          const transitoryChar = remainingChar ?? precedingChar;
+          if (transitoryChar) {
             charRef.current?.style.setProperty(
               "--flip-duration",
               intervalTime + "ms"
             );
             charRef.current?.style.setProperty(
               "--current-character-index",
-              `${characters.indexOf(newChar)}`
+              `${characters.indexOf(transitoryChar)}`
             );
             if (precedingChar) {
               updateTurn();
@@ -239,8 +322,6 @@ const SplitFlapDisplayChar = memo(
         style={
           {
             "--current-character-index": currentCharacterIndex,
-            "--current-character-index-with-turns":
-              currentCharacterIndex + turnRef.current * (characters.length - 1),
             "--total": characters.length,
             "--turn": turnRef.current,
           } as CSSProperties
@@ -249,6 +330,7 @@ const SplitFlapDisplayChar = memo(
         {characters.split("").map((char, i) => (
           <div
             key={i}
+            data-char={char}
             className={styles.character}
             style={
               {

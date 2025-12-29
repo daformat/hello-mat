@@ -61,6 +61,10 @@ const SplitFlapDisplayPageContent = () => {
     setTime((time) => new Date(time.getTime() + 1000));
   }, []);
 
+  const incrementTime2 = useCallback(() => {
+    setTime((time) => new Date(time.getTime() + 1000 * 60 * 15));
+  }, []);
+
   const incrementMessage = useCallback(() => {
     if (newMessageTimeoutRef.current) {
       clearTimeout(newMessageTimeoutRef.current);
@@ -147,7 +151,7 @@ const SplitFlapDisplayPageContent = () => {
             <SplitFlapDisplay
               length={8}
               characters={[
-                "012 ",
+                "012",
                 "0123456789",
                 ":",
                 "012345",
@@ -195,16 +199,19 @@ const SplitFlapDisplayPageContent = () => {
                 onClick={incrementTime}
                 style={{
                   padding: "8px 12px",
-                  // borderRadius: 4,
-                  // border: "1px solid var(--color-border-2)",
-                  // background: "var(--color-background)",
-                  // color: "inherit",
-                  // cursor: "pointer",
-                  // fontSize: "0.875rem",
                 }}
               >
                 +1 second
               </button>
+              {/*<button*/}
+              {/*  className="button alt"*/}
+              {/*  onClick={incrementTime2}*/}
+              {/*  style={{*/}
+              {/*    padding: "8px 12px",*/}
+              {/*  }}*/}
+              {/*>*/}
+              {/*  +15 minutes*/}
+              {/*</button>*/}
               <label
                 style={{
                   display: "inline-flex",
@@ -358,7 +365,9 @@ const SplitFlapDisplayPageContent = () => {
             when the new character isn’t the natural next character
           </li>
           <li>
-            <code>onFullyFlipped</code>: a callback that will be called when the display is finished flipping through characters to display the current value
+            <code>onFullyFlipped</code>: a callback that will be called when the
+            display is finished flipping through characters to display the
+            current value
           </li>
         </ul>
 

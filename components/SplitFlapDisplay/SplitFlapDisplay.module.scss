@@ -42,7 +42,7 @@
       --total0: calc(var(--total) - 1);
       --offset: calc(var(--index) - var(--current-character-index));
       --abs-offset: max(var(--offset), calc(var(--offset) * -1));
-      --safe-abs-offset: max(var(--abs-offset), 0.0001); /* Prevent zero */
+      --safe-abs-offset: max(var(--abs-offset), 0.0000001); /* Prevent zero */
       --direction: calc(var(--offset) / var(--safe-abs-offset));
       //--direction: calc(var(--offset) / var(--abs-offset));
       --past: min(0, var(--direction));
@@ -71,8 +71,8 @@
           0.5turn - var(--turn) * 1turn
       );
       --a2: calc(
-        var(--abs-offset) * var(--direction) * var(--angle) + var(--future) *
-          0.5turn - var(--turn) * 1turn
+        max(var(--abs-offset) - 1, 0) * var(--direction) * var(--angle) +
+          var(--future) * 0.5turn - var(--turn) * 1turn
       );
       //--a2: calc(var(--abs-offset) * var(--angle) * -1);
 
@@ -114,6 +114,11 @@
         transition: transform var(--flip-duration) var(--ease-out-cubic);
         vertical-align: middle;
         width: 1em;
+
+        > * {
+          opacity: calc(var(--is-current) * 1 + var(--is-next) * 0.5);
+          transition: opacity var(--flip-duration) var(--ease-out-circ);
+        }
 
         // Top flap - flips down
         &:first-child {
