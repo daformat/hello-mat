@@ -12,7 +12,7 @@ import styles from "./SplitFlapDisplay.module.scss";
 export type SplitFlapDisplayProps = {
   value: string;
   length: number;
-  characters: string;
+  characters: string | string[];
   style?: CSSProperties;
   autoSkip?: boolean;
   onFullyFlipped?: () => void;
@@ -31,12 +31,19 @@ export const SplitFlapDisplay = memo(
     const displayValue = (
       isOverflowing ? value.slice(0, length - 1) + "…" : value
     ).padEnd(length, " ");
-    const finalCharacters =
-      (characters.includes(" ") ? "" : " ") +
-      characters +
-      (isOverflowing ? "…" : "");
     const fullyFlippedRef = useRef(0);
     const lastValueRef = useRef("");
+
+    const validateCharacters = () => {
+      const chars = characters instanceof Array ? characters : [characters];
+      const isInvalid = chars.some((chars) => !chars.length);
+      if (isInvalid) {
+        throw new Error(
+          "SplitFlapDisplay: characters must be a non empty string, or an array of non empty strings"
+        );
+      }
+    };
+    validateCharacters();
 
     useLayoutEffect(() => {
       const unchangedCount = displayValue
@@ -59,15 +66,21 @@ export const SplitFlapDisplay = memo(
 
     return (
       <div className={styles.split_flap_display} style={style}>
-        {displayValue.split("").map((char, i) => (
-          <SplitFlapDisplayChar
-            key={i}
-            value={char}
-            characters={finalCharacters}
-            autoSkip={autoSkip}
-            onFullyFlipped={handleFullyFlipped}
-          />
-        ))}
+        {displayValue.split("").map((char, i) => {
+          const chars =
+            characters instanceof Array ? characters[i] : characters;
+          const finalCharacters =
+            chars + (isOverflowing && i === length - 1 ? "…" : "");
+          return (
+            <SplitFlapDisplayChar
+              key={i}
+              value={char}
+              characters={finalCharacters}
+              autoSkip={autoSkip}
+              onFullyFlipped={handleFullyFlipped}
+            />
+          );
+        })}
       </div>
     );
   }
@@ -92,6 +105,12 @@ const SplitFlapDisplayChar = memo(
     const charRef = useRef<HTMLDivElement>(null);
     const isMountedRef = useRef(false);
     const flippingThroughTimeout = useRef<ReturnType<typeof setTimeout>>();
+
+    if (characters.indexOf(value) === -1) {
+      throw new Error(
+        `Character "${value}" is not in character set "${characters}"`
+      );
+    }
 
     useEffect(() => {
       isMountedRef.current = true;
@@ -119,7 +138,18 @@ const SplitFlapDisplayChar = memo(
         return;
       }
 
-      if (isGoingBackwards || isGoingForwards) {
+      let updatedTurn = false;
+      const updateTurn = () => {
+        if (!updatedTurn) {
+          turnRef.current++;
+          charRef.current?.style.setProperty("--turn", `${turnRef.current}`);
+          updatedTurn = true;
+        }
+      };
+
+      if (autoSkip && newCharIndex < lastCharIndex) {
+        updateTurn();
+      } else if (isGoingBackwards || isGoingForwards) {
         if (flippingThroughTimeout.current) {
           clearTimeout(flippingThroughTimeout.current);
         }
@@ -142,15 +172,6 @@ const SplitFlapDisplayChar = memo(
 
         const totalChars = remainingChars.length + precedingChars.length + 1;
         const intervalTime = Math.max(animationTiming / totalChars, 120);
-        let updatedTurn = false;
-
-        const updateTurn = () => {
-          if (!updatedTurn) {
-            turnRef.current++;
-            charRef.current?.style.setProperty("--turn", `${turnRef.current}`);
-            updatedTurn = true;
-          }
-        };
 
         const update = () => {
           const remainingChar = remainingChars.pop();
@@ -158,7 +179,7 @@ const SplitFlapDisplayChar = memo(
             ? undefined
             : precedingChars.pop();
           const newChar = remainingChar ?? precedingChar;
-          if (newChar && !autoSkip) {
+          if (newChar) {
             charRef.current?.style.setProperty(
               "--flip-duration",
               intervalTime + "ms"

@@ -146,7 +146,7 @@ const SplitFlapDisplayPageContent = () => {
           >
             <SplitFlapDisplay
               length={8}
-              characters="0123456789:"
+              characters={["012", "0123456789", ":", "012345", "0123456789", ":", "012345", "0123456789"]}
               // value={formatSeconds(timeInSeconds).split("").reverse().join("")}
               value={formatTime(time)}
               autoSkip
@@ -266,7 +266,7 @@ const SplitFlapDisplayPageContent = () => {
           >
             <SplitFlapDisplay
               length={5}
-              characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+              characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ "
               // value={formatSeconds(timeInSeconds).split("").reverse().join("")}
               value={message}
               style={{
