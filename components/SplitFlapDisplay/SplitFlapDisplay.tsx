@@ -110,6 +110,7 @@ const SplitFlapDisplayChar = memo(
     const charRef = useRef<HTMLDivElement>(null);
     const isMountedRef = useRef(false);
     const flippingThroughTimeout = useRef<ReturnType<typeof setTimeout>>();
+    const currentCharacterIndex = characters.indexOf(value);
 
     if (characters.indexOf(value) === -1) {
       throw new Error(
@@ -117,7 +118,9 @@ const SplitFlapDisplayChar = memo(
       );
     }
 
-    console.log(`${index}: value: "${value}" last: "${lastValueRef.current}"`);
+    console.log(
+      `index: ${index} — value: "${value}" (${currentCharacterIndex}) — last: "${lastValueRef.current}"`
+    );
 
     useEffect(() => {
       isMountedRef.current = true;
@@ -142,10 +145,16 @@ const SplitFlapDisplayChar = memo(
 
       if (!isMountedRef.current) {
         console.log(`${index}: not mounted, skipping`);
+        charRef.current?.style.setProperty("--flip-duration", "0ms");
+        charRef.current?.style.setProperty(
+          "--current-character-index",
+          `${newCharIndex}`
+        );
         lastValueRef.current = value;
-        setTimeout(() => {
+        requestAnimationFrame(() => {
+          charRef.current?.style.removeProperty("--flip-duration");
           onFullyFlipped?.();
-        }, 100);
+        });
         return;
       }
 
@@ -171,7 +180,9 @@ const SplitFlapDisplayChar = memo(
         const shouldSkip =
           (remainingChars.length || precedingChars.length) &&
           charsToDisplayCount >= 4;
-        console.log(`${index}: autoskip: ${shouldSkip} "${charsToDisplay.join("")}"`);
+        console.log(
+          `${index}: autoskip: ${shouldSkip} "${charsToDisplay.join("")}"`
+        );
         if (shouldSkip) {
           charRef.current?.style.setProperty(
             "--current-character-index",
@@ -324,8 +335,6 @@ const SplitFlapDisplayChar = memo(
       }
       lastValueRef.current = value;
     }, [autoSkip, characters, onFullyFlipped, value]);
-
-    const currentCharacterIndex = characters.indexOf(value);
 
     return (
       <div

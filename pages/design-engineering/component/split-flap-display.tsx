@@ -36,6 +36,7 @@ const SplitFlapDisplayPageContent = () => {
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const [time, setTime] = useState(() => new Date());
+  // const [time, setTime] = useState(() => new Date("Mon, 29 Dec 2025 23:59:55"));
   const [clockRunning, setClockRunning] = useState(true);
   const [rotateDisplay, setRotateDisplay] = useState(false);
   const [message, setMessage] = useState<string>("HELLO");
