@@ -64,8 +64,6 @@ export const SplitFlapDisplay = memo(
       }
     }, [length, onFullyFlipped]);
 
-    console.log(value, displayValue);
-
     return (
       <div className={styles.split_flap_display} style={style}>
         {displayValue.split("").map((char, i) => {
@@ -118,10 +116,6 @@ const SplitFlapDisplayChar = memo(
       );
     }
 
-    console.log(
-      `index: ${index} — value: "${value}" (${currentCharacterIndex}) — last: "${lastValueRef.current}"`
-    );
-
     useEffect(() => {
       isMountedRef.current = true;
     }, []);
@@ -139,12 +133,8 @@ const SplitFlapDisplayChar = memo(
       const lastCharIndex = characters.indexOf(lastValueRef.current);
       const isGoingBackwards = newCharIndex < lastCharIndex;
       const isGoingForwards = newCharIndex > lastCharIndex;
-      console.log(
-        `${index}: value: "${value}" last: "${lastValueRef.current}"`
-      );
 
       if (!isMountedRef.current) {
-        console.log(`${index}: not mounted, skipping`);
         charRef.current?.style.setProperty("--flip-duration", "0ms");
         charRef.current?.style.setProperty(
           "--current-character-index",
@@ -180,9 +170,6 @@ const SplitFlapDisplayChar = memo(
         const shouldSkip =
           (remainingChars.length || precedingChars.length) &&
           charsToDisplayCount >= 4;
-        console.log(
-          `${index}: autoskip: ${shouldSkip} "${charsToDisplay.join("")}"`
-        );
         if (shouldSkip) {
           charRef.current?.style.setProperty(
             "--current-character-index",
