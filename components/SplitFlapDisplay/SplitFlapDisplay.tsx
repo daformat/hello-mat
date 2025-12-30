@@ -64,7 +64,6 @@ export const SplitFlapDisplay = memo(
       }
     }, [length, onFullyFlipped]);
 
-
     console.log(value, displayValue);
 
     return (
@@ -114,6 +113,8 @@ const SplitFlapDisplayChar = memo(
         `Character "${value}" is not in character set "${characters}"`
       );
     }
+
+    console.log(value, lastValueRef.current);
 
     useEffect(() => {
       isMountedRef.current = true;
