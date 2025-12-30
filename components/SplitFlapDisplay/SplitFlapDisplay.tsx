@@ -64,6 +64,9 @@ export const SplitFlapDisplay = memo(
       }
     }, [length, onFullyFlipped]);
 
+
+    console.log(value, displayValue);
+
     return (
       <div className={styles.split_flap_display} style={style}>
         {displayValue.split("").map((char, i) => {
