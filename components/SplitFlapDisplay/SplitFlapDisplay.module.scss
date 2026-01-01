@@ -126,7 +126,9 @@
         &:first-child {
           align-items: flex-start;
           padding-top: 0.25em;
-          transform: rotateX(var(--a));
+          // translateZ(0.1px) fixes Safari backface-visibility bug during animation
+          transform: translateZ(calc(var(--is-current) * 0.1px))
+            rotateX(var(--a));
           transform-origin: center calc(100% + var(--split-flap-crease) * 0.5);
 
           > * {
@@ -139,7 +141,8 @@
           align-items: flex-end;
           padding-bottom: 0.25em;
 
-          transform: rotateX(var(--a2));
+          transform: translateZ(calc(var(--is-current) * 0.1px))
+            rotateX(var(--a2));
           transform-origin: center calc(var(--split-flap-crease) * -0.5);
 
           > * {
