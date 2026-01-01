@@ -84,7 +84,9 @@
       position: relative;
       transform-style: preserve-3d;
       transition: z-index var(--flip-duration) var(--ease-out-cubic);
-      z-index: calc(var(--is-current) + var(--is-previous) + var(--is-next));
+      z-index: calc(
+        var(--is-current) * 2 + var(--is-previous) + var(--is-next)
+      );
 
       &::after {
         background-color: var(--color-background);
@@ -123,11 +125,9 @@
         // Top flap - flips down
         &:first-child {
           align-items: flex-start;
-          backface-visibility: hidden;
           padding-top: 0.25em;
           transform: rotateX(var(--a));
           transform-origin: center calc(100% + var(--split-flap-crease) * 0.5);
-          //opacity: 0;
 
           > * {
             translate: 0 calc(var(--split-flap-crease) * 0.5);
@@ -137,9 +137,7 @@
         // Bottom flap
         &:last-child {
           align-items: flex-end;
-          backface-visibility: hidden;
           padding-bottom: 0.25em;
-          //opacity: 0;
 
           transform: rotateX(var(--a2));
           transform-origin: center calc(var(--split-flap-crease) * -0.5);
