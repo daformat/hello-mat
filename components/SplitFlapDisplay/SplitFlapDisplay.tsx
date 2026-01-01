@@ -89,10 +89,12 @@ export const SplitFlapDisplay = memo(
 
 SplitFlapDisplay.displayName = "SplitFlapDisplay";
 
-const SAFARI_BUGGY_TURN_VALUES = [
-  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25, 26, 30, 34, 52, 57, 60,
-  65, 68, 73, 76, 81, 93, 109, 114, 125, 146, /*?*/ 187,
-];
+// const SAFARI_BUGGY_TURN_VALUES = [
+//   11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25, 26, 30, 34, 52, 57, 60,
+//   65, 68, 73, 76, 81, 93, 109, 114, 125, 146, /*?*/ 187,
+// ];
+
+const SAFARI_BUGGY_TURN_VALUES = [11];
 
 const SplitFlapDisplayChar = memo(
   ({
@@ -157,34 +159,59 @@ const SplitFlapDisplayChar = memo(
       const updateTurn = () => {
         if (!updatedTurn) {
           turnRef.current++;
-          if (SAFARI_BUGGY_TURN_VALUES.includes(turnRef.current)) {
-            while (SAFARI_BUGGY_TURN_VALUES.includes(turnRef.current)) {
-              console.log("skipping turn", turnRef.current);
-              turnRef.current++;
-            }
+          if (turnRef.current === 3) {
+            turnRef.current = 1;
+          }
+          charRef.current?.style.setProperty(
+            "--current-character-index",
+            `${lastCharIndex}`
+          );
+          charRef.current?.style.setProperty("--flip-duration", "0ms");
+          charRef.current?.style.setProperty(
+            "--turn",
+            `${turnRef.current - 1}`
+          );
+          requestAnimationFrame(() => {
+            charRef.current?.style.removeProperty("--flip-duration");
+            charRef.current?.style.setProperty("--turn", `${turnRef.current}`);
             charRef.current?.style.setProperty(
               "--current-character-index",
-              `${lastCharIndex}`
+              `${newCharIndex}`
             );
-            charRef.current?.style.setProperty("--flip-duration", "0ms");
-            charRef.current?.style.setProperty(
-              "--turn",
-              `${turnRef.current - 1}`
-            );
-            requestAnimationFrame(() => {
-              charRef.current?.style.removeProperty("--flip-duration");
-              charRef.current?.style.setProperty(
-                "--turn",
-                `${turnRef.current}`
-              );
-              charRef.current?.style.setProperty(
-                "--current-character-index",
-                `${newCharIndex}`
-              );
-            });
-          } else {
-            charRef.current?.style.setProperty("--turn", `${turnRef.current}`);
-          }
+          });
+          // const lastKnownSafariBuggyTurn =
+          //   SAFARI_BUGGY_TURN_VALUES[SAFARI_BUGGY_TURN_VALUES.length - 1];
+          // if (SAFARI_BUGGY_TURN_VALUES.includes(turnRef.current)) {
+          //   while (SAFARI_BUGGY_TURN_VALUES.includes(turnRef.current)) {
+          //     console.log("skipping turn", turnRef.current);
+          //     turnRef.current++;
+          //   }
+          //   if (turnRef.current - 1 === lastKnownSafariBuggyTurn) {
+          //     turnRef.current = 1;
+          //   }
+          //   charRef.current?.style.setProperty(
+          //     "--current-character-index",
+          //     `${lastCharIndex}`
+          //   );
+          //   charRef.current?.style.setProperty("--flip-duration", "0ms");
+          //   charRef.current?.style.setProperty(
+          //     "--turn",
+          //     `${turnRef.current - 1}`
+          //   );
+          //   requestAnimationFrame(() => {
+          //     charRef.current?.style.removeProperty("--flip-duration");
+          //     charRef.current?.style.setProperty(
+          //       "--turn",
+          //       `${turnRef.current}`
+          //     );
+          //     charRef.current?.style.setProperty(
+          //       "--current-character-index",
+          //       `${newCharIndex}`
+          //     );
+          //   });
+          // } else {
+          //   charRef.current?.style.setProperty("--turn", `${turnRef.current}`);
+          // }
           updatedTurn = true;
         }
       };
