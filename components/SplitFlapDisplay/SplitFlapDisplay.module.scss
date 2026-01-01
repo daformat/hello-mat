@@ -42,7 +42,7 @@
       --total0: calc(var(--total) - 1);
       --offset: calc(var(--index) - var(--current-character-index));
       --abs-offset: max(var(--offset), calc(var(--offset) * -1));
-      --safe-abs-offset: max(var(--abs-offset), 0.0000001); /* Prevent zero */
+      --safe-abs-offset: max(var(--abs-offset), 0.001); /* Prevent zero */
       --direction: calc(var(--offset) / var(--safe-abs-offset));
       //--direction: calc(var(--offset) / var(--abs-offset));
       --past: min(0, var(--direction));
@@ -83,7 +83,8 @@
       pointer-events: none;
       position: relative;
       transform-style: preserve-3d;
-      transition: z-index var(--flip-duration) var(--ease-out-cubic);
+      transition: z-index calc(var(--flip-duration) / var(--speed, 1))
+        var(--ease-out-cubic);
       z-index: calc(
         var(--is-current) * 2 + var(--is-previous) + var(--is-next)
       );
@@ -113,15 +114,18 @@
         place-content: center;
         position: relative;
         transform-style: preserve-3d;
-        transition: transform var(--flip-duration) var(--ease-out-cubic);
+        transition: transform calc(var(--flip-duration) / var(--speed, 1))
+          var(--ease-out-cubic);
         vertical-align: middle;
         width: 1em;
+        will-change: transform;
 
         > * {
           @media (prefers-color-scheme: dark) {
             opacity: calc(var(--is-current) * 1 + var(--is-next) * 0.5);
           }
-          transition: opacity var(--flip-duration) var(--ease-out-circ);
+          transition: opacity calc(var(--flip-duration) / var(--speed, 1))
+            var(--ease-out-circ);
         }
 
         // Top flap - flips down

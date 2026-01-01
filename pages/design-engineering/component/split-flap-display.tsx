@@ -41,6 +41,7 @@ const SplitFlapDisplayPageContent = () => {
   const [rotateDisplay, setRotateDisplay] = useState(false);
   const [message, setMessage] = useState<string>("HELLO");
   const [rotateDisplay2, setRotateDisplay2] = useState(false);
+  const [slow, setSlow] = useState(false);
   const newMessageTimeoutRef =
     useRef<MaybeUndefined<ReturnType<typeof setTimeout>>>();
   const messages = useMemo(
@@ -78,10 +79,10 @@ const SplitFlapDisplayPageContent = () => {
 
   useEffect(() => {
     if (clockRunning) {
-      const interval = setInterval(incrementTime, 1000);
+      const interval = setInterval(incrementTime, 1_000 / (slow ? 0.1 : 1));
       return () => clearInterval(interval);
     }
-  }, [clockRunning, incrementTime]);
+  }, [clockRunning, incrementTime, slow]);
 
   useEffect(() => {
     if (contentRef.current) {
@@ -147,7 +148,8 @@ const SplitFlapDisplayPageContent = () => {
               flexGrow: 1,
               perspective: "550px",
               filter: "drop-shadow(0 1px 12px var(--color-shadow-1))",
-            }}
+              "--speed": `${slow ? 0.1 : 1}`,
+            } as CSSProperties}
           >
             <SplitFlapDisplay
               length={8}
@@ -244,6 +246,26 @@ const SplitFlapDisplayPageContent = () => {
               <small style={{ opacity: 0.8 }}>Rotate display</small>
             </label>
           </footer>
+        </div>
+        <div style={{ textAlign: "right", marginTop: "-24px" }}>
+          <button
+            className="button"
+            onClick={() => setSlow(false)}
+            data-state={!slow ? "active" : undefined}
+            aria-pressed={!slow ? "true" : "false"}
+            title="Set normal animation speed"
+          >
+            100%
+          </button>{" "}
+          <button
+            className="button"
+            onClick={() => setSlow(true)}
+            data-state={slow ? "active" : undefined}
+            aria-pressed={slow ? "true" : "false"}
+            title="Set slow animation speed"
+          >
+            10%
+          </button>
         </div>
 
         <h2 id="alphabetic-split-flap-display">
