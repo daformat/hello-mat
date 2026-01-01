@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  CSSProperties,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { MaybeUndefined } from "@/components/Media/utils/maybe";
 import { NextCard } from "@/components/Navigation/NextCard";
