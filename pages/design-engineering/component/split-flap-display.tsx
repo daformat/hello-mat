@@ -378,18 +378,6 @@ const SplitFlapDisplayPageContent = () => {
             </label>
           </footer>
         </div>
-        <h2 id="safari-warning">A word for Safari users</h2>
-        <p>
-          I tried my best to mitigate it, but Safari being Safari, there are
-          glitches after some time, the previous character’s rotated flaps might
-          be occluding the current character’s flaps. I find it personally very
-          sad that this browser, which used to be at the cutting edge of CSS3 is
-          now riddled with so many edge-cases and bugs, even the developer tools
-          freeze on this page, where other browsers are perfectly fine and
-          snappy. So long story short, there are some glitches, I know about
-          them, and I will keep trying to iron them out, but man, this is so
-          painful to do.
-        </p>
         <h2 id="component-props">Component props</h2>
         <p>This component accepts several props:</p>
         <ul>
