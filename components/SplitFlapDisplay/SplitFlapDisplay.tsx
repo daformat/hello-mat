@@ -90,8 +90,8 @@ export const SplitFlapDisplay = memo(
 SplitFlapDisplay.displayName = "SplitFlapDisplay";
 
 const SAFARI_BUGGY_TURN_VALUES = [
-  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25, 26, 34, 52, 57, 60, 65,
-  68, 73, 76, 81, 93, 109, 114, 125, 146, /*?*/ 187,
+  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25, 26, 30, 34, 52, 57, 60,
+  65, 68, 73, 76, 81, 93, 109, 114, 125, 146, /*?*/ 187,
 ];
 
 const SplitFlapDisplayChar = memo(
