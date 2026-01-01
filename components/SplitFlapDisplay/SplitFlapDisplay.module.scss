@@ -118,7 +118,9 @@
         width: 1em;
 
         > * {
-          opacity: calc(var(--is-current) * 1 + var(--is-next) * 0.5);
+          @media (prefers-color-scheme: dark) {
+            opacity: calc(var(--is-current) * 1 + var(--is-next) * 0.5);
+          }
           transition: opacity var(--flip-duration) var(--ease-out-circ);
         }
 
