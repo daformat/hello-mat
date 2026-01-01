@@ -31,6 +31,29 @@ const SplitFlapDisplayPage = () => {
   );
 };
 
+const clockChars = [
+  "012",
+  "0123456789",
+  ":",
+  "012345",
+  "0123456789",
+  ":",
+  "012345",
+  "0123456789",
+];
+
+const messages = [
+  "HELLO",
+  "CIAO",
+  "HALLO",
+  "NIHAO",
+  "SALUT",
+  "HEJ",
+  "PAKA",
+  "HEY",
+  "ALOHA",
+];
+
 const formatTime = (date: Date) => {
   const hours = date.getHours().toString().padStart(2, "0");
   const minutes = date.getMinutes().toString().padStart(2, "0");
@@ -46,25 +69,13 @@ const SplitFlapDisplayPageContent = () => {
   // const [time, setTime] = useState(() => new Date("Mon, 29 Dec 2025 23:59:55"));
   const [clockRunning, setClockRunning] = useState(true);
   const [rotateDisplay, setRotateDisplay] = useState(false);
-  const [message, setMessage] = useState<string>("HELLO");
+  const [message, setMessage] = useState<string>(messages[0] ?? "HELLO");
   const [rotateDisplay2, setRotateDisplay2] = useState(false);
   const [slow, setSlow] = useState(false);
+  const [slow2, setSlow2] = useState(false);
   const newMessageTimeoutRef =
     useRef<MaybeUndefined<ReturnType<typeof setTimeout>>>();
-  const messages = useMemo(
-    () => [
-      "HELLO",
-      "CIAO",
-      "HALLO",
-      "NIHAO",
-      "SALUT",
-      "HEJ",
-      "PAKA",
-      "HEY",
-      "ALOHA",
-    ],
-    []
-  );
+
 
   const incrementTime = useCallback(() => {
     setTime((time) => new Date(time.getTime() + 1000));
@@ -103,6 +114,14 @@ const SplitFlapDisplayPageContent = () => {
     }
     newMessageTimeoutRef.current = setTimeout(incrementMessage, 5000);
   }, [incrementMessage]);
+
+  const clockStyle = useMemo(() => ({
+    transform: rotateDisplay ? "rotateY(-45deg) translateX(-12%)" : undefined,
+  }), [rotateDisplay]);
+
+  const alphaStyle = useMemo(() => ({
+    transform: rotateDisplay2 ? "rotateY(-45deg) translateX(-12%)" : undefined,
+  }), [rotateDisplay2]);
 
   return (
     <>
@@ -147,37 +166,26 @@ const SplitFlapDisplayPageContent = () => {
           }}
         >
           <div
-            style={{
-              padding: "clamp(16px, 5vw, 128px) 8px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              flexGrow: 1,
-              perspective: "550px",
-              filter: "drop-shadow(0 1px 12px var(--color-shadow-1))",
-              "--speed": `${slow ? 0.1 : 1}`,
-            } as CSSProperties}
+            style={
+              {
+                padding: "clamp(16px, 5vw, 128px) 8px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                flexGrow: 1,
+                perspective: "550px",
+                filter: "drop-shadow(0 1px 12px var(--color-shadow-1))",
+                "--speed": `${slow ? 0.1 : 1}`,
+              } as CSSProperties
+            }
           >
             <SplitFlapDisplay
               length={8}
-              characters={[
-                "012",
-                "0123456789",
-                ":",
-                "012345",
-                "0123456789",
-                ":",
-                "012345",
-                "0123456789",
-              ]}
+              characters={clockChars}
               // value={formatSeconds(timeInSeconds).split("").reverse().join("")}
               value={formatTime(time)}
               autoSkip
-              style={{
-                transform: rotateDisplay
-                  ? "rotateY(-45deg) translateX(-12%)"
-                  : undefined,
-              }}
+              style={clockStyle}
             />
           </div>
           <footer
@@ -308,18 +316,15 @@ const SplitFlapDisplayPageContent = () => {
               flexGrow: 1,
               perspective: "550px",
               filter: "drop-shadow(0 1px 12px var(--color-shadow-1))",
-            }}
+              "--speed": `${slow2 ? 0.1 : 1}`,
+            } as CSSProperties}
           >
             <SplitFlapDisplay
               length={5}
               characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ "
               // value={formatSeconds(timeInSeconds).split("").reverse().join("")}
               value={message}
-              style={{
-                transform: rotateDisplay2
-                  ? "rotateY(-45deg) translateX(-12%)"
-                  : undefined,
-              }}
+              style={alphaStyle}
               onFullyFlipped={handleFullyFlipped}
             />
           </div>
@@ -378,6 +383,27 @@ const SplitFlapDisplayPageContent = () => {
             </label>
           </footer>
         </div>
+        <div style={{ textAlign: "right", marginTop: "-24px" }}>
+          <button
+            className="button"
+            onClick={() => setSlow2(false)}
+            data-state={!slow2 ? "active" : undefined}
+            aria-pressed={!slow2 ? "true" : "false"}
+            title="Set normal animation speed"
+          >
+            100%
+          </button>{" "}
+          <button
+            className="button"
+            onClick={() => setSlow2(true)}
+            data-state={slow2 ? "active" : undefined}
+            aria-pressed={slow2 ? "true" : "false"}
+            title="Set slow animation speed"
+          >
+            10%
+          </button>
+        </div>
+
         <h2 id="component-props">Component props</h2>
         <p>This component accepts several props:</p>
         <ul>
