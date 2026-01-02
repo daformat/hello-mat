@@ -98,13 +98,6 @@ export const SplitFlapDisplay = memo(
 
 SplitFlapDisplay.displayName = "SplitFlapDisplay";
 
-// const SAFARI_BUGGY_TURN_VALUES = [
-//   11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25, 26, 30, 34, 52, 57, 60,
-//   65, 68, 73, 76, 81, 93, 109, 114, 125, 146, /*?*/ 187,
-// ];
-
-const SAFARI_BUGGY_TURN_VALUES = [11];
-
 const SplitFlapDisplayChar = memo(
   ({
     value,
@@ -172,6 +165,12 @@ const SplitFlapDisplayChar = memo(
       ) => {
         if (!updatedTurn) {
           turnRef.current++;
+          // If we don't reset turns Safari glitches for certain values (see below),
+          // this also avoids potential number overflow for very large turn values
+          // const SAFARI_BUGGY_TURN_VALUES = [
+          //   11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25, 26, 30, 34, 52, 57, 60,
+          //   65, 68, 73, 76, 81, 93, 109, 114, 125, 146, /*?*/ 187,
+          // ];
           if (turnRef.current === 3) {
             turnRef.current = 1;
           }
@@ -185,19 +184,25 @@ const SplitFlapDisplayChar = memo(
             `${turnRef.current - 1}`
           );
           requestAnimationFrame(() => {
-            if (duration) {
+            // the double requestAnimationFrame is for Firefox
+            requestAnimationFrame(() => {
+              if (duration) {
+                charRef.current?.style.setProperty(
+                  "--flip-duration",
+                  `${duration}ms`
+                );
+              } else {
+                charRef.current?.style.removeProperty("--flip-duration");
+              }
               charRef.current?.style.setProperty(
-                "--flip-duration",
-                `${duration}ms`
+                "--turn",
+                `${turnRef.current}`
               );
-            } else {
-              charRef.current?.style.removeProperty("--flip-duration");
-            }
-            charRef.current?.style.setProperty("--turn", `${turnRef.current}`);
-            charRef.current?.style.setProperty(
-              "--current-character-index",
-              `${nextIndex}`
-            );
+              charRef.current?.style.setProperty(
+                "--current-character-index",
+                `${nextIndex}`
+              );
+            });
           });
           // const lastKnownSafariBuggyTurn =
           //   SAFARI_BUGGY_TURN_VALUES[SAFARI_BUGGY_TURN_VALUES.length - 1];
