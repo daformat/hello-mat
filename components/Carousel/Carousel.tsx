@@ -36,8 +36,8 @@ type ScrollState = {
 };
 
 const CarouselContext = createContext<{
-  ref?: MaybeNull<RefObject<HTMLElement>>;
-  setRef: (ref: MaybeNull<RefObject<HTMLElement>>) => void;
+  ref?: RefObject<MaybeNull<HTMLElement>>;
+  setRef: (ref: RefObject<MaybeNull<HTMLElement>>) => void;
   scrollsBackwards: boolean;
   scrollsForwards: boolean;
   setScrollsBackwards: (scrollsBackwards: boolean) => void;
@@ -51,7 +51,7 @@ const CarouselContext = createContext<{
   boundaryOffset?:
     | { x: number; y: number }
     | ((root: HTMLElement) => { x: number; y: number });
-  rootRef: RefObject<HTMLElement>;
+  rootRef: RefObject<MaybeNull<HTMLElement>>;
 }>({
   setRef: () => {},
   setScrollsBackwards: () => {},
@@ -76,7 +76,9 @@ const CarouselRoot = ({
       | ((root: HTMLElement) => { x: number; y: number });
   } & ComponentPropsWithoutRef<"div">
 >) => {
-  const [ref, setRef] = useState<MaybeNull<RefObject<HTMLElement>>>(null);
+  const [ref, setRef] = useState<RefObject<MaybeNull<HTMLElement>>>({
+    current: null,
+  });
   const [scrollsBackwards, setScrollsBackwards] = useState(false);
   const [scrollsForwards, setScrollsForwards] = useState(false);
   const [remainingForwards, setRemainingForwards] = useState(0);

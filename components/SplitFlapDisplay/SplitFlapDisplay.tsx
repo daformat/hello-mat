@@ -116,7 +116,7 @@ const SplitFlapDisplayChar = memo(
     const turnRef = useRef<number>(0);
     const charRef = useRef<HTMLDivElement>(null);
     const isMountedRef = useRef(false);
-    const flippingThroughTimeout = useRef<ReturnType<typeof setTimeout>>();
+    const flippingThroughTimeout = useRef<ReturnType<typeof setTimeout>>(null);
     const currentCharacterIndex = characters.indexOf(value);
 
     if (characters.indexOf(value) === -1) {

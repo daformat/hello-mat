@@ -74,8 +74,7 @@ const SplitFlapDisplayPageContent = () => {
   const [slow, setSlow] = useState(false);
   const [slow2, setSlow2] = useState(false);
   const newMessageTimeoutRef =
-    useRef<MaybeUndefined<ReturnType<typeof setTimeout>>>();
-
+    useRef<MaybeUndefined<ReturnType<typeof setTimeout>>>(null);
 
   const incrementTime = useCallback(() => {
     setTime((time) => new Date(time.getTime() + 1000));
@@ -115,13 +114,21 @@ const SplitFlapDisplayPageContent = () => {
     newMessageTimeoutRef.current = setTimeout(incrementMessage, 5000);
   }, [incrementMessage]);
 
-  const clockStyle = useMemo(() => ({
-    transform: rotateDisplay ? "rotateY(-45deg) translateX(-12%)" : undefined,
-  }), [rotateDisplay]);
+  const clockStyle = useMemo(
+    () => ({
+      transform: rotateDisplay ? "rotateY(-45deg) translateX(-12%)" : undefined,
+    }),
+    [rotateDisplay]
+  );
 
-  const alphaStyle = useMemo(() => ({
-    transform: rotateDisplay2 ? "rotateY(-45deg) translateX(-12%)" : undefined,
-  }), [rotateDisplay2]);
+  const alphaStyle = useMemo(
+    () => ({
+      transform: rotateDisplay2
+        ? "rotateY(-45deg) translateX(-12%)"
+        : undefined,
+    }),
+    [rotateDisplay2]
+  );
 
   return (
     <>
@@ -308,16 +315,18 @@ const SplitFlapDisplayPageContent = () => {
           }}
         >
           <div
-            style={{
-              padding: "clamp(16px, 5vw, 128px) 8px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              flexGrow: 1,
-              perspective: "550px",
-              filter: "drop-shadow(0 1px 12px var(--color-shadow-1))",
-              "--speed": `${slow2 ? 0.1 : 1}`,
-            } as CSSProperties}
+            style={
+              {
+                padding: "clamp(16px, 5vw, 128px) 8px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                flexGrow: 1,
+                perspective: "550px",
+                filter: "drop-shadow(0 1px 12px var(--color-shadow-1))",
+                "--speed": `${slow2 ? 0.1 : 1}`,
+              } as CSSProperties
+            }
           >
             <SplitFlapDisplay
               length={5}
