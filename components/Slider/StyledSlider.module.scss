@@ -1,0 +1,167 @@
+.wrapper {
+  --r: 8px;
+  --p: 3px;
+  --w: 200px;
+  --h: 10px;
+  --thumb-radius: 7px;
+
+  border-radius: var(--r);
+  box-shadow: inset 0 0 0 1px var(--color-border-3);
+  height: calc(var(--h) + 2 * var(--p));
+  padding: var(--p);
+  position: relative;
+  transition: width 0.2s var(--ease-out-cubic);
+  transition-property: height, width, transform, margin-bottom, border-radius;
+  width: calc(var(--w) + 2 * var(--p));
+
+  .slider {
+    border-radius: var(--r);
+    inset: var(--p);
+    //overflow: hidden;
+    position: absolute;
+    transition: width 0.2s var(--ease-out-cubic);
+    transition-property: height, width, transform, margin-bottom, border-radius;
+    width: var(--w);
+
+    .track {
+      background-color: var(--color-slider-component-bg);
+      border-radius: calc(var(--r) - var(--p));
+      height: var(--h);
+      overflow: hidden;
+      position: absolute;
+      transition: width 0.2s var(--ease-out-cubic);
+      transition-property: height, width, border-radius;
+      width: var(--w);
+    }
+
+    .range {
+      background-color: var(--color-slider-component-range);
+      border-radius: calc(var(--r) - var(--p)) var(--thumb-radius)
+        var(--thumb-radius) calc(var(--r) - var(--p));
+      inset: 0;
+      //transition: border-radius 0.2s var(--ease-out-cubic);
+    }
+
+    .thumb {
+      //opacity: 0.5;
+      background-color: var(--color-slider-component-thumb);
+      border: 0;
+      border-radius: var(--thumb-radius);
+      box-shadow: 0 1px 12px var(--color-shadow-1),
+        0 1px 6px var(--color-shadow-1), 0 1px 2px var(--color-shadow-1);
+      //box-shadow: 0 1px 12px var(--color-shadow-1),
+      //  0 1px 6px var(--color-shadow-1);
+      display: inline-block;
+      height: calc(var(--h) + 2 * var(--p) - 2px);
+      isolation: isolate;
+      position: absolute;
+      top: 50%;
+      transition: width 0.2s var(--ease-out-cubic);
+      transition-property: height, width, border-radius;
+      translate: -50% -50%;
+      width: calc(var(--h) + 2 * var(--p) - 2px);
+
+      &:hover {
+        background-color: var(--color-slider-component-thumb-focus);
+        z-index: 1;
+        //width: calc(var(--h) / 2);
+      }
+
+      &::after {
+        background-color: transparent;
+        content: "";
+        inset: 0;
+        position: absolute;
+        //background-color: rgba(222, 0, 0, 0.3);
+        transition: inset 0.2s var(--ease-out-cubic);
+      }
+    }
+
+    .value_wrapper {
+      bottom: calc(var(--h) + 2 * var(--p) + 5px);
+      font-size: 0.9em;
+      left: 50%;
+      pointer-events: none;
+      position: absolute;
+      transform: translateX(-50%) rotate(var(--rotate, 0deg));
+      transform-origin: center calc(100% + 5px);
+      transition: bottom 0.2s var(--ease-out-cubic);
+      user-select: none;
+      z-index: 100;
+    }
+
+    .value {
+      background-color: var(--color-background);
+      border-radius: 3px;
+      box-shadow: inset 0 0 0 1px var(--color-border-3);
+      display: inline-block;
+      filter: drop-shadow(0 1px 12px var(--color-shadow-1))
+        drop-shadow(0 1px 6px var(--color-shadow-1))
+        drop-shadow(0 1px 4px var(--color-shadow-1));
+      opacity: 0;
+      padding: 2px 12px;
+      position: relative;
+      transform: scale(0.7);
+      transform-origin: center calc(100% + 5px);
+      transition: all 0.2s var(--ease-out-cubic);
+
+      &::after {
+        background-color: var(--color-background);
+        //background-color: red;
+        //content: "";
+        height: 1.5px;
+        left: 50%;
+        position: absolute;
+        top: calc(100% - 2.5px);
+        transform: translateX(-50%);
+        width: 14px;
+      }
+    }
+
+    .arrow {
+      --size: 10px;
+      background-color: var(--color-background);
+      bottom: calc(-0.375em + 1px);
+      box-shadow: inset 0 0 0 1px var(--color-border-3);
+      clip-path: polygon(0 0, 100% 0, 100% 100%);
+      content: "";
+      height: var(--size);
+      left: 50%;
+      position: absolute;
+      transform: translateX(-50%) rotate(135deg);
+      width: var(--size);
+    }
+
+    .thumb:hover {
+      .value {
+        opacity: 1;
+        transform: scale(1);
+
+        &::after {
+          //box-shadow: 0 0.25px 0 0 var(--color-background);
+          //top: calc(100% - 2.2px);
+        }
+      }
+    }
+  }
+
+  &:hover {
+    --h: 20px;
+    --r: 5px;
+    --thumb-radius: calc(var(--r) - var(--p));
+    margin-bottom: -10px;
+    transform: translateY(-5px);
+    z-index: 1;
+
+    .slider {
+      .thumb {
+        height: var(--h);
+        width: 5px;
+
+        &::after {
+          inset: 0 -2px;
+        }
+      }
+    }
+  }
+}
