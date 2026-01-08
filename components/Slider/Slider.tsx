@@ -10,24 +10,30 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 
 import { MaybeNull } from "@/components/Media/utils/maybe";
 
-type SliderSliderValue = { id: string | number; value: number; label: string };
+export type SliderValue = { id: string | number; value: number; label: string };
 
 const SliderContext = createContext<{
-  values: SliderSliderValue[];
-  onChange: (values: SliderSliderValue[]) => void;
-  getValue: (id: string | number) => SliderSliderValue;
+  values: SliderValue[];
+  onChange: (values: SliderValue[]) => void;
+  getValue: (id: string | number) => SliderValue;
   min: number;
   max: number;
   step?: number;
   trackRef: RefObject<MaybeNull<HTMLSpanElement>>;
   setTrackRef: (ref: RefObject<MaybeNull<HTMLSpanElement>>) => void;
   rootRef: RefObject<MaybeNull<HTMLSpanElement>>;
+  markerValues: number[];
+  registerMarker: (value: number) => void;
+  unregisterMarker: (value: number) => void;
+  magnetizeMarkers?: boolean;
+  magnetizeThreshold?: number;
 }>({
   values: [],
   onChange: () => {},
@@ -36,8 +42,13 @@ const SliderContext = createContext<{
   max: 0,
   step: undefined,
   trackRef: { current: null },
-  setTrackRef: (ref) => {},
+  setTrackRef: () => {},
   rootRef: { current: null },
+  markerValues: [],
+  registerMarker: () => {},
+  unregisterMarker: () => {},
+  magnetizeMarkers: undefined,
+  magnetizeThreshold: undefined,
 });
 
 const useSliderContext = () => {
@@ -53,23 +64,63 @@ const roundValue = (value: number, decimalCount: number) => {
   return Math.round(value * rounder) / rounder;
 };
 
+/**
+ * Snap to nearest marker if pointer is within pixel threshold
+ * @returns The marker value if within threshold, otherwise the raw value
+ */
+const magnetizeToMarker = (
+  clientX: number,
+  rawValue: number,
+  markerValues: number[],
+  thresholdPx: number,
+  trackRect: DOMRect,
+  min: number,
+  max: number
+): number => {
+  if (markerValues.length === 0) {
+    return rawValue;
+  }
+
+  const totalRange = max - min;
+  let nearestMarker: number | undefined;
+  let nearestDistancePx = Infinity;
+
+  for (const marker of markerValues) {
+    const markerPercentage = (marker - min) / totalRange;
+    const markerClientX = trackRect.left + markerPercentage * trackRect.width;
+    const distancePx = Math.abs(clientX - markerClientX);
+
+    if (distancePx < nearestDistancePx) {
+      nearestDistancePx = distancePx;
+      nearestMarker = marker;
+    }
+  }
+
+  if (nearestMarker !== undefined && nearestDistancePx <= thresholdPx) {
+    return nearestMarker;
+  }
+
+  return rawValue;
+};
+
 type SliderControlledProps = {
-  values: SliderSliderValue[];
+  values: SliderValue[];
   defaultValues?: never;
 };
 
 type SliderUncontrolledProps = {
   values?: never;
-  defaultValues: SliderSliderValue[];
+  defaultValues: SliderValue[];
 };
 
-type SliderBaseProps =
-  | {
-      step?: number;
-      min: number;
-      max: number;
-      onChange?: (values: SliderSliderValue[]) => void;
-    } & (SliderControlledProps | SliderUncontrolledProps);
+type SliderBaseProps = {
+  min: number;
+  max: number;
+  step?: number;
+  magnetizeMarkers?: boolean;
+  magnetizeThreshold?: number;
+  onChange?: (values: SliderValue[]) => void;
+} & (SliderControlledProps | SliderUncontrolledProps);
 
 export type SliderProps = SliderBaseProps &
   Omit<ComponentProps<"span">, "onChange">;
@@ -81,21 +132,66 @@ const SliderRoot = ({
   values,
   defaultValues,
   onChange,
+  magnetizeMarkers,
+  magnetizeThreshold = 8,
   children,
   ...props
 }: SliderProps) => {
   const ref = useRef<HTMLSpanElement>(null);
-  const [internalValues, setInternalValues] = useState<SliderSliderValue[]>(
+  const [markerValues, setMarkerValues] = useState<number[]>([]);
+  const [internalValues, setInternalValues] = useState<SliderValue[]>(
     defaultValues ?? []
   );
-  const currentValues = values ?? internalValues ?? [];
-  const handleChange = (newValues: SliderSliderValue[]) => {
-    setInternalValues(newValues);
-    onChange?.(newValues);
-  };
   const [trackRef, setTrackRef] = useState<
     RefObject<MaybeNull<HTMLSpanElement>>
   >({ current: null });
+  const currentValues = useMemo(
+    () => values ?? internalValues ?? [],
+    [internalValues, values]
+  );
+  const handleChange = useCallback(
+    (newValues: SliderValue[]) => {
+      setInternalValues(newValues);
+      onChange?.(newValues);
+    },
+    [onChange]
+  );
+
+  const registerMarker = useCallback((value: number) => {
+    setMarkerValues((prev) => {
+      if (prev.includes(value)) {
+        return prev;
+      }
+      return [...prev, value].sort((a, b) => a - b);
+    });
+  }, []);
+
+  const unregisterMarker = useCallback((value: number) => {
+    setMarkerValues((prev) => prev.filter((v) => v !== value));
+  }, []);
+
+  // Round values to step if needed
+  useLayoutEffect(() => {
+    if (step) {
+      let update = false;
+      const values = currentValues.map(({ value, ...rest }) => {
+        const steppedValue = roundValue(
+          Math.round((value - min) / step) * step + min,
+          getDecimalCount(step)
+        );
+        if (steppedValue !== value) {
+          update = true;
+        }
+        return {
+          ...rest,
+          value: steppedValue,
+        };
+      });
+      if (update) {
+        handleChange(values);
+      }
+    }
+  }, [currentValues, handleChange, min, step]);
 
   // Check for valid values length
   if (
@@ -144,13 +240,18 @@ const SliderRoot = ({
         getValue: (valueId) => {
           const value = currentValues.find(({ id }) => id === valueId);
           if (!value) {
-            throw new Error(`Couldn’t find value with id "${valueId}"`);
+            throw new Error(`Couldn't find value with id "${valueId}"`);
           }
           return value;
         },
         trackRef: trackRef,
         setTrackRef: setTrackRef,
         rootRef: ref,
+        markerValues,
+        registerMarker,
+        unregisterMarker,
+        magnetizeMarkers,
+        magnetizeThreshold,
       }}
     >
       <span ref={ref} {...props}>
@@ -165,7 +266,17 @@ const SliderTrack = ({
   onClick,
   ...props
 }: ComponentProps<"span">) => {
-  const { setTrackRef, step, max, min, onChange, values } = useSliderContext();
+  const {
+    setTrackRef,
+    step,
+    max,
+    min,
+    onChange,
+    values,
+    markerValues,
+    magnetizeMarkers,
+    magnetizeThreshold,
+  } = useSliderContext();
   const ref = useRef<HTMLSpanElement>(null);
 
   useLayoutEffect(() => {
@@ -188,19 +299,43 @@ const SliderTrack = ({
         ) {
           const percentage = (clientX - rect.left) / trackWidth;
           const rawNewValue = percentage * (max - min) + min;
-          const newValue = step
+          let newValue = step
             ? roundValue(
                 Math.round((rawNewValue - min) / step) * step + min,
                 getDecimalCount(step)
               )
             : rawNewValue;
+
+          // Apply magnetization if enabled and no step
+          if (!step && magnetizeMarkers && magnetizeThreshold !== undefined) {
+            newValue = magnetizeToMarker(
+              clientX,
+              newValue,
+              markerValues,
+              magnetizeThreshold,
+              rect,
+              min,
+              max
+            );
+          }
+
           onChange([
             { id: firstValue.id, value: newValue, label: `${newValue}` },
           ]);
         }
       }
     },
-    [max, min, onChange, onClick, step, values]
+    [
+      max,
+      min,
+      onChange,
+      onClick,
+      step,
+      values,
+      markerValues,
+      magnetizeMarkers,
+      magnetizeThreshold,
+    ]
   );
 
   return (
@@ -318,6 +453,7 @@ const SliderThumb = ({
   }, [context.rootRef, valueId]);
 
   const handlePointerDown = useCallback<PointerEventHandler>((event) => {
+    event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     dragRef.current.isDragging = true;
     dragRef.current.startX = event.clientX;
@@ -327,6 +463,7 @@ const SliderThumb = ({
 
   const handlePointerMove = useCallback(
     (event: PointerEvent) => {
+      event.preventDefault();
       const maxAbsoluteVelocity = 15;
       if (dragRef.current.isDragging) {
         const thumb = ref.current;
@@ -359,18 +496,8 @@ const SliderThumb = ({
             dragRef.current.lastTime = Date.now();
             return;
           }
-          // const steppedRemainder = context.step
-          //   ? rawNewValue % context.step
-          //   : 0;
-          // const newValue = context.step
-          //   ? rawNewValue +
-          //     (steppedRemainder < context.step
-          //       ? -steppedRemainder
-          //       : context.step - steppedRemainder)
-          //   : rawNewValue;
-          // const didChangeValue = newValue !== value?.value;
-          // console.log(steppedRemainder, context.step, newValue, rawNewValue);
-          const newValue = context.step
+
+          let newValue = context.step
             ? roundValue(
                 Math.round((rawNewValue - context.min) / context.step) *
                   context.step +
@@ -378,16 +505,23 @@ const SliderThumb = ({
                 getDecimalCount(context.step)
               )
             : rawNewValue;
-          console.log({
-            clientX: event.clientX,
-            clampedClientX,
-            trackWidth,
-            totalSlider,
-            rawNewValue,
-            newValue,
-          });
+
+          if (
+            context.magnetizeMarkers &&
+            context.magnetizeThreshold !== undefined
+          ) {
+            newValue = magnetizeToMarker(
+              event.clientX,
+              newValue,
+              context.markerValues,
+              context.magnetizeThreshold,
+              rect,
+              context.min,
+              context.max
+            );
+          }
+
           const didChangeValue = newValue !== value?.value;
-          console.log(newValue);
           context.onChange([
             ...context.values.filter(({ id }) => id !== valueId),
             { id: valueId, value: newValue, label: `${newValue}` },
@@ -395,8 +529,10 @@ const SliderThumb = ({
           if (didChangeValue) {
             const currentTime = Date.now();
             const deltaTime = currentTime - dragRef.current.lastTime;
-            const deltaX = event.clientX - dragRef.current.lastValidX;
-            if (deltaTime > 0) {
+            const valueX =
+              rect.left + (rect.width * (newValue - context.min)) / totalSlider;
+            const deltaX = valueX - dragRef.current.lastValidX;
+            if (deltaTime > 0 && didChangeValue) {
               dragRef.current.velocityX = (deltaX / deltaTime) * 10; // (pixels per millisecond)
               if (Math.abs(dragRef.current.velocityX) > maxAbsoluteVelocity) {
                 dragRef.current.velocityX =
@@ -446,6 +582,7 @@ const SliderThumb = ({
         spanWidth * -offset
       }px)`;
       root.style.setProperty(`--thumb-${valueId}-width`, `${spanWidth}px`);
+      root.style.setProperty("--thumb-width", `${spanWidth}px`);
       // const range = root.querySelector<HTMLElement>("[data-range]");
       // if (range) {
       //   let radius = getComputedStyle(span).borderRadius;
@@ -478,8 +615,9 @@ const SliderThumb = ({
       data-value-id={valueId}
       onPointerDown={handlePointerDown}
       style={{
-        ...style,
+        touchAction: "none",
         left: `${positionPercentage * 100}%`,
+        ...style,
       }}
       {...props}
     />
@@ -499,8 +637,8 @@ const SliderValue = ({
 }: SliderValueProps) => {
   const context = useSliderContext();
   const value = context.values.find(({ id }) => id === valueId);
-  const totalRange = context.max - context.min;
-  const positionPercentage = (value?.value ?? 0) / totalRange;
+  // const totalRange = context.max - context.min;
+  // const positionPercentage = (value?.value ?? 0) / totalRange;
   const ref = useRef<HTMLSpanElement>(null);
 
   useLayoutEffect(() => {
@@ -508,10 +646,8 @@ const SliderValue = ({
     const thumb = context.rootRef.current?.querySelector<HTMLSpanElement>(
       `[data-thumb][data-value-id="${valueId}"]`
     );
-    console.log(thumb);
     if (span && thumb) {
       const thumbLeft = thumb.style.left;
-      console.log(thumbLeft);
       span.style.setProperty("--value-left", thumbLeft);
     }
   }, [context.rootRef, valueId, value?.value]);
@@ -524,11 +660,48 @@ const SliderValue = ({
   ) : null;
 };
 
+export type SliderMarkerProps = {
+  value: number;
+} & ComponentProps<"span">;
+
+const SliderMarker = ({
+  value,
+  style,
+  children,
+  ...props
+}: SliderMarkerProps) => {
+  const { min, max, registerMarker, unregisterMarker } = useSliderContext();
+  const totalRange = max - min;
+  const valuePercentage = ((value - min) / totalRange) * 100;
+
+  useEffect(() => {
+    registerMarker(value);
+    return () => unregisterMarker(value);
+  }, [registerMarker, unregisterMarker, value]);
+
+  return (
+    <span
+      data-marker=""
+      data-marker-value={value}
+      style={{
+        left: `calc(${valuePercentage}% - var(--thumb-width, 0px) * (${
+          valuePercentage / 100 - 0.5
+        }))`,
+        ...style,
+      }}
+      {...props}
+    >
+      {children}
+    </span>
+  );
+};
+
 export const Slider = {
   Root: SliderRoot,
   Track: SliderTrack,
   Range: SliderRange,
   Thumb: SliderThumb,
   Value: SliderValue,
+  Marker: SliderMarker,
   useSliderContext,
 };

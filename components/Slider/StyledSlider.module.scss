@@ -1,7 +1,7 @@
 .wrapper {
   --r: 8px;
   --p: 3px;
-  --w: 200px;
+  --w: 80%;
   --h: 10px;
   --thumb-radius: 7px;
 
@@ -16,12 +16,13 @@
 
   .slider {
     border-radius: var(--r);
+    height: var(--h);
     inset: var(--p);
     //overflow: hidden;
     position: absolute;
     transition: width 0.2s var(--ease-out-cubic);
     transition-property: height, width, transform, margin-bottom, border-radius;
-    width: var(--w);
+    width: calc(100% - var(--p) * 2);
 
     .track {
       background-color: var(--color-slider-component-bg);
@@ -31,7 +32,7 @@
       position: absolute;
       transition: width 0.2s var(--ease-out-cubic);
       transition-property: height, width, border-radius;
-      width: var(--w);
+      width: 100%;
     }
 
     .range {
@@ -56,6 +57,7 @@
       isolation: isolate;
       position: absolute;
       top: 50%;
+      touch-action: none;
       transition: width 0.2s var(--ease-out-cubic);
       transition-property: height, width, border-radius;
       translate: -50% -50%;
@@ -142,6 +144,14 @@
           //top: calc(100% - 2.2px);
         }
       }
+    }
+
+    .marker {
+      background-color: var(--color-slider-component-marker);
+      height: 100%;
+      position: absolute;
+      transform: translateX(-50%);
+      width: 1.5px;
     }
   }
 

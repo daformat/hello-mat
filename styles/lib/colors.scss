@@ -52,6 +52,12 @@
   --color-slider-bg: #{palette.$light-ivory-5};
   --color-slider-value: #{palette.$light-desert-sky-4};
 
+  --color-slider-component-bg: #{palette.$light-desert-sky-1};
+  --color-slider-component-range: #{palette.$light-ivory-5};
+  --color-slider-component-thumb: #{palette.$light-desert-sky-2};
+  --color-slider-component-marker: #{palette.$light-desert-sky-4};
+  --color-slider-component-thumb-focus: #{palette.$light-desert-sky-4};
+
   --color-toc-dash: #{palette.$light-ivory-3};
   --color-toc-link: #{palette.$light-ivory-3};
   --color-toc-link-active: #{palette.$light-ivory-1};
@@ -116,6 +122,12 @@
   // standalone components
   --color-slider-bg: #{palette.$dark-desert-sky-4};
   --color-slider-value: #{palette.$dark-ivory-4};
+
+  --color-slider-component-bg: #{palette.$dark-desert-sky-1};
+  --color-slider-component-range: #{palette.$dark-ivory-5};
+  --color-slider-component-thumb: #{palette.$dark-ivory-2};
+  --color-slider-component-marker: #{palette.$dark-desert-sky-4};
+  --color-slider-component-thumb-focus: #{palette.$dark-ivory-1};
 
   --color-toc-dash: #{palette.$dark-ivory-3};
   --color-toc-link: #{palette.$dark-ivory-3};

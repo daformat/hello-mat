@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { CSSProperties, useEffect, useMemo, useRef } from "react";
+import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 
 import { NextCard } from "@/components/Navigation/NextCard";
-import { Slider } from "@/components/Slider/Slider";
+import { Slider, SliderValue } from "@/components/Slider/Slider";
 import StyledSlider from "@/components/Slider/StyledSlider.module.scss";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import {
@@ -26,6 +26,18 @@ const SliderPageContent = () => {
   const nextComponent = getNextComponent("slider");
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
+  const [values1, setValues1] = useState<SliderValue[]>([
+    { id: 1, value: 30, label: "" },
+  ]);
+  const [values2, setValues2] = useState<SliderValue[]>([
+    { id: 1, value: 32, label: "" },
+  ]);
+  const [values3, setValues3] = useState<SliderValue[]>([
+    { id: 1, value: 10, label: "" },
+    { id: 2, value: 42, label: "" },
+    { id: 3, value: 60, label: "" },
+    { id: 4, value: 80, label: "" },
+  ]);
 
   useEffect(() => {
     if (contentRef.current) {
@@ -75,7 +87,7 @@ const SliderPageContent = () => {
           className="demo card alt"
           style={{
             marginBlock: 32,
-            // padding: 0,
+            padding: "24px 16px",
             // maxWidth: 650,
             marginInline: "auto",
             display: "flex",
@@ -84,14 +96,86 @@ const SliderPageContent = () => {
             backgroundColor: "transparent",
           }}
         >
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              alignItems: "center",
+              width: "100%",
+              justifyContent: "center",
+            }}
+          >
+            <small>Markers</small>
+            <div className={StyledSlider.wrapper}>
+              <Slider.Root
+                min={0}
+                max={200}
+                step={1}
+                values={values1}
+                onChange={setValues1}
+                className={StyledSlider.slider}
+                magnetizeMarkers
+              >
+                <Slider.Track className={StyledSlider.track}>
+                  <Slider.Range className={StyledSlider.range} />
+                </Slider.Track>
+                <Slider.Marker
+                  value={0}
+                  className={StyledSlider.marker}
+                  style={{ backgroundColor: "transparent" }}
+                />
+                <Slider.Marker value={25} className={StyledSlider.marker} />
+                <Slider.Marker value={50} className={StyledSlider.marker} />
+                <Slider.Marker value={75} className={StyledSlider.marker} />
+                <Slider.Marker value={100} className={StyledSlider.marker} />
+                <Slider.Marker value={125} className={StyledSlider.marker} />
+                <Slider.Marker value={150} className={StyledSlider.marker} />
+                <Slider.Marker value={175} className={StyledSlider.marker} />
+                <Slider.Marker
+                  value={200}
+                  className={StyledSlider.marker}
+                  style={{ backgroundColor: "transparent" }}
+                />
+                <Slider.Thumb valueId={1} className={StyledSlider.thumb}>
+                  <span
+                    className={StyledSlider.value_wrapper}
+                    style={
+                      {
+                        "--rotate":
+                          "calc(min(var(--velocity-1, 0), 3) / 15 * -90deg)",
+                      } as CSSProperties
+                    }
+                  >
+                    <Slider.Value
+                      valueId={1}
+                      className={StyledSlider.value}
+                      formatValue={formatter.format}
+                    >
+                      <span className={StyledSlider.arrow} />
+                    </Slider.Value>
+                  </span>
+                </Slider.Thumb>
+              </Slider.Root>
+            </div>
+          </div>
+          <br />
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              alignItems: "center",
+              width: "100%",
+              justifyContent: "center",
+            }}
+          >
             <small>Stepped</small>
             <div className={StyledSlider.wrapper}>
               <Slider.Root
                 min={0}
                 max={100}
                 step={10}
-                defaultValues={[{ id: 1, value: 10, label: "" }]}
+                values={values2}
+                onChange={setValues2}
                 className={StyledSlider.slider}
               >
                 <Slider.Track className={StyledSlider.track}>
@@ -107,7 +191,11 @@ const SliderPageContent = () => {
                       } as CSSProperties
                     }
                   >
-                    <Slider.Value valueId={1} className={StyledSlider.value}>
+                    <Slider.Value
+                      valueId={1}
+                      className={StyledSlider.value}
+                      formatValue={formatter.format}
+                    >
                       <span className={StyledSlider.arrow} />
                     </Slider.Value>
                   </span>
@@ -116,18 +204,22 @@ const SliderPageContent = () => {
             </div>
           </div>
           <br />
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              alignItems: "center",
+              width: "100%",
+              justifyContent: "center",
+            }}
+          >
             <small>Multiple</small>
             <div className={StyledSlider.wrapper}>
               <Slider.Root
                 min={0}
                 max={100}
-                defaultValues={[
-                  { id: 1, value: 10, label: "" },
-                  { id: 2, value: 12, label: "" },
-                  { id: 3, value: 60, label: "" },
-                  { id: 4, value: 80, label: "" },
-                ]}
+                values={values3}
+                onChange={setValues3}
                 className={StyledSlider.slider}
               >
                 <Slider.Track className={StyledSlider.track}>
