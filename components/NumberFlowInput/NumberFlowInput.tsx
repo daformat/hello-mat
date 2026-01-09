@@ -1,7 +1,7 @@
 import {
   ClipboardEventHandler,
   ComponentPropsWithoutRef,
-  CompositionEventHandler,
+  InputEventHandler,
   KeyboardEventHandler,
   useCallback,
   useEffect,
@@ -3753,26 +3753,27 @@ export const NumberFlowInput = ({
     [displayValue, formattedDisplayValue, mapFormattedToRawIndex, updateValue]
   );
 
-  const handleBeforeInput = useCallback<
-    CompositionEventHandler<HTMLSpanElement>
-  >((event) => {
-    if (shouldPreventInputRef.current) {
-      event.preventDefault();
-      const restorePos = preventInputCursorPosRef.current;
-      shouldPreventInputRef.current = false;
+  const handleBeforeInput = useCallback<InputEventHandler<HTMLSpanElement>>(
+    (event) => {
+      if (shouldPreventInputRef.current) {
+        event.preventDefault();
+        const restorePos = preventInputCursorPosRef.current;
+        shouldPreventInputRef.current = false;
 
-      const restoreCursor = () => {
-        if (spanRef.current) {
-          setCursorPositionInElement(spanRef.current, restorePos);
-        }
-      };
+        const restoreCursor = () => {
+          if (spanRef.current) {
+            setCursorPositionInElement(spanRef.current, restorePos);
+          }
+        };
 
-      restoreCursor();
-      Promise.resolve().then(restoreCursor);
-      setTimeout(restoreCursor, 0);
-      requestAnimationFrame(restoreCursor);
-    }
-  }, []);
+        restoreCursor();
+        Promise.resolve().then(restoreCursor);
+        setTimeout(restoreCursor, 0);
+        requestAnimationFrame(restoreCursor);
+      }
+    },
+    []
+  );
 
   const handleInput = useCallback(() => {
     // Reset the prevent flag after input is processed
