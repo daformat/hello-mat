@@ -312,8 +312,6 @@ export const Media = ({
       <div
         className={styles.media_collapsed_content}
         ref={collapsedContentRef}
-        // @ts-expect-error: inert is a valid attribute, but we're lagging behind
-        // on our react version, so we need to disable the ts rule
         inert={!collapsed}
       >
         <button
@@ -334,8 +332,6 @@ export const Media = ({
       <div
         ref={mediaContentWrapperRef}
         className={styles.media_content_wrapper}
-        // @ts-expect-error: inert is a valid attribute, but we're lagging behind
-        // on our react version, so we need to disable the ts rule
         inert={collapsed}
       >
         <div className={styles.placeholder}>

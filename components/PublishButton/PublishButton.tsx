@@ -104,8 +104,6 @@ const PublishDropdown = ({
           boxShadow: "0 1px 12px var(--color-shadow-1)",
         } as CSSProperties
       }
-      // @ts-expect-error: inert is a valid attribute, but we're lagging behind
-      // on our react version, so we need to disable the ts rule
       inert={!published}
       aria-hidden={published ? "false" : "true"}
     >
