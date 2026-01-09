@@ -1,6 +1,7 @@
 import {
   createContext,
   CSSProperties,
+  JSX,
   PropsWithChildren,
   ReactNode,
   useCallback,

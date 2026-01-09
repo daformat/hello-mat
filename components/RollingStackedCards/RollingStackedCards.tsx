@@ -1,4 +1,10 @@
-import { CSSProperties, PropsWithChildren, useEffect, useRef } from "react";
+import {
+  CSSProperties,
+  JSX,
+  PropsWithChildren,
+  useEffect,
+  useRef,
+} from "react";
 
 import { useCssSizeVariables } from "@/hooks/useCssSizeVariables";
 

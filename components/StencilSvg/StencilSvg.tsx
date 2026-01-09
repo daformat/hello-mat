@@ -1,6 +1,14 @@
 import Link from "next/link";
-import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
+import {
+  CSSProperties,
+  JSX,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
+import { MaybeUndefined } from "@/components/Media/utils/maybe";
 import { globalWindowValue } from "@/hooks/useEventListener";
 import { plotCircle, Position, translate, vec, Vector } from "@/utils/geometry";
 import { isNonNullable } from "@/utils/nullable";
@@ -98,7 +106,7 @@ export const StencilSvg = ({
   const boxWidth = width;
   const boxHeight = height;
   const xmlns = "http://www.w3.org/2000/svg";
-  const pathName = useRef<string>();
+  const pathName = useRef<string>("");
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -264,9 +272,10 @@ export const StencilSvg = ({
 export const StencilSvgAnimation = () => {
   const [index, setIndex] = useState<number>(0);
   const started = useRef<boolean>(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  const prevIndexRef = useRef<number>();
-  const nextDirectIndexRef = useRef<number>();
+  const timeoutRef =
+    useRef<MaybeUndefined<ReturnType<typeof setTimeout>>>(undefined);
+  const prevIndexRef = useRef<MaybeUndefined<number>>(undefined);
+  const nextDirectIndexRef = useRef<MaybeUndefined<number>>(undefined);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

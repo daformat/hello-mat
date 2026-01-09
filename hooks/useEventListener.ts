@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
 
+import { MaybeUndefined } from "@/components/Media/utils/maybe";
+
 export const globalWindowValue = typeof window !== "undefined" ? window : null;
 
 type EventMap = WindowEventMap & DocumentEventMap & ElementEventMap;
@@ -10,7 +12,7 @@ export const useEventListener = <K extends keyof EventMap, R = unknown>(
   target: Window | Document | Element | null = globalWindowValue,
   options: boolean | AddEventListenerOptions = {}
 ) => {
-  const savedHandler = useRef<typeof handler>();
+  const savedHandler = useRef<MaybeUndefined<typeof handler>>(undefined);
 
   useEffect(() => {
     savedHandler.current = handler;
