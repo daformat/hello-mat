@@ -9,11 +9,12 @@ import {
   BeamIconNightly,
 } from "@/components/Dock/BeamIcon";
 import { Dock, DockItem } from "@/components/Dock/Dock";
-import { NextCard } from "@/components/Navigation/NextCard";
+import { NextCard, PrevCard } from "@/components/Navigation/NextCard";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import {
   COMPONENTS,
   getNextComponent,
+  getPreviousComponent,
 } from "@/constants/design-engineering/components";
 
 const DockComponentPage = () => {
@@ -30,6 +31,7 @@ const DockComponentPage = () => {
 
 const DockComponentPageContent = () => {
   const nextComponent = getNextComponent("dock-component");
+  const prevComponent = getPreviousComponent("dock-component");
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -78,9 +80,22 @@ const DockComponentPageContent = () => {
             <DockItem icon={<BeamIconBeta />} name="beam beta" />
           </Dock>
         </div>
-        <NextCard href={nextComponent.metas.url}>
-          {nextComponent.shortTitle}
-        </NextCard>
+        <div
+          style={{
+            display: "flex",
+            gap: 24,
+            width: "100%",
+            flexWrap: "wrap",
+            marginTop: "2em",
+          }}
+        >
+          <PrevCard href={prevComponent.metas.url}>
+            {prevComponent.shortTitle}
+          </PrevCard>
+          <NextCard href={nextComponent.metas.url}>
+            {nextComponent.shortTitle}
+          </NextCard>
+        </div>
       </div>
     </>
   );

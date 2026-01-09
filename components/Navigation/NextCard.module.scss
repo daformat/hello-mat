@@ -8,14 +8,18 @@
     inset 0 0 2px 0.75px var(--color-border-2),
     inset 0 0 0 0.75px var(--color-border-1);
   display: flex;
+  flex: 1 0 100%;
   flex-direction: row;
   gap: 8px;
   justify-content: flex-start;
-  margin-top: 2em;
   padding: 16px 24px;
   transition: mixins.theme-transition(color, background-color, box-shadow);
 
   @include mixins.remove-transition;
+
+  @include mixins.above-large {
+    flex: 1 0 calc(50% - 12px);
+  }
 
   &:is(a) {
     color: inherit;
@@ -52,6 +56,19 @@
 
     .arrow {
       transform: translateX(4px);
+    }
+  }
+
+  &.prev {
+    .text {
+      text-align: right;
+    }
+
+    &:hover,
+    &:focus-visible {
+      .arrow {
+        transform: translateX(-4px);
+      }
     }
   }
 }

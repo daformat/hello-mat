@@ -4,12 +4,13 @@ import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 
 import { Carousel } from "@/components/Carousel/Carousel";
 import styles from "@/components/Carousel/Carousel.module.scss";
-import { NextCard } from "@/components/Navigation/NextCard";
+import { NextCard, PrevCard } from "@/components/Navigation/NextCard";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import {
   COMPONENTS,
   getNextComponent,
+  getPreviousComponent,
 } from "@/constants/design-engineering/components";
 import { useCssSizeVariables } from "@/hooks/useCssSizeVariables";
 
@@ -27,6 +28,7 @@ const CarouselComponentPage = () => {
 
 const CarouselComponentPageContent = () => {
   const nextComponent = getNextComponent("carousel-component");
+  const prevComponent = getPreviousComponent("carousel-component");
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(0.7);
@@ -375,9 +377,22 @@ const CarouselComponentPageContent = () => {
           to enable infinite scrolling at some point, but for now, this is a
           good start.
         </p>
-        <NextCard href={nextComponent.metas.url}>
-          {nextComponent.shortTitle}
-        </NextCard>
+        <div
+          style={{
+            display: "flex",
+            gap: 24,
+            width: "100%",
+            flexWrap: "wrap",
+            marginTop: "2em",
+          }}
+        >
+          <PrevCard href={prevComponent.metas.url}>
+            {prevComponent.shortTitle}
+          </PrevCard>
+          <NextCard href={nextComponent.metas.url}>
+            {nextComponent.shortTitle}
+          </NextCard>
+        </div>
       </div>
     </>
   );

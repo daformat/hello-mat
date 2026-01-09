@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-import { NextCard } from "@/components/Navigation/NextCard";
+import { NextCard, PrevCard } from "@/components/Navigation/NextCard";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { PublishSplitButton } from "@/components/PublishButton/PublishButton";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import {
   COMPONENTS,
   getNextComponent,
+  getPreviousComponent,
 } from "@/constants/design-engineering/components";
 
 const PublishButtonPage = () => {
@@ -24,6 +25,7 @@ const PublishButtonPage = () => {
 
 const PublishButtonPageContent = () => {
   const nextComponent = getNextComponent("publish-button");
+  const prevComponent = getPreviousComponent("publish-button");
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const [slow, setSlow] = useState(false);
@@ -107,9 +109,22 @@ const PublishButtonPageContent = () => {
             </button>
           </div>
         </div>
-        <NextCard href={nextComponent.metas.url}>
-          {nextComponent.shortTitle}
-        </NextCard>
+        <div
+          style={{
+            display: "flex",
+            gap: 24,
+            width: "100%",
+            flexWrap: "wrap",
+            marginTop: "2em",
+          }}
+        >
+          <PrevCard href={prevComponent.metas.url}>
+            {prevComponent.shortTitle}
+          </PrevCard>
+          <NextCard href={nextComponent.metas.url}>
+            {nextComponent.shortTitle}
+          </NextCard>
+        </div>
       </div>
     </>
   );

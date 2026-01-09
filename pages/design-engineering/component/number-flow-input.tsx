@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-import { NextCard } from "@/components/Navigation/NextCard";
+import { NextCard, PrevCard } from "@/components/Navigation/NextCard";
 import { NumberFlowInput } from "@/components/NumberFlowInput/NumberFlowInput";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
 import {
   COMPONENTS,
   getNextComponent,
+  getPreviousComponent,
 } from "@/constants/design-engineering/components";
 
 const useMaxLength = (
@@ -44,6 +45,7 @@ const NumberFlowInputPage = () => {
 
 const NumberFlowInputPageContent = () => {
   const nextComponent = getNextComponent("number-flow-input");
+  const prevComponent = getPreviousComponent("number-flow-input");
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const maxLength = useMaxLength(8, 15, 800);
@@ -264,9 +266,22 @@ const NumberFlowInputPageContent = () => {
           given with a regular input if you want it to feel right and provide a
           decent UX.
         </p>
-        <NextCard href={nextComponent.metas.url}>
-          {nextComponent.shortTitle}
-        </NextCard>
+        <div
+          style={{
+            display: "flex",
+            gap: 24,
+            width: "100%",
+            flexWrap: "wrap",
+            marginTop: "2em",
+          }}
+        >
+          <PrevCard href={prevComponent.metas.url}>
+            {prevComponent.shortTitle}
+          </PrevCard>
+          <NextCard href={nextComponent.metas.url}>
+            {nextComponent.shortTitle}
+          </NextCard>
+        </div>
       </div>
     </>
   );

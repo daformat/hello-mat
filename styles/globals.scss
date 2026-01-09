@@ -162,10 +162,42 @@ kbd {
     inset 0 0 0 0.75px var(--color-border-1);
   color: var(--text-secondary);
   font-family: monospace;
-  font-size: 0.94em;
+  font-size: 0.9em;
   padding: 2px 4px;
   transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out,
     box-shadow 0.2s ease-in-out;
+}
+
+.shiki {
+  background-color: var(--color-code-background) !important;
+  border-radius: 4px;
+  box-shadow: inset 0 0 2px 0.75px var(--color-border-2),
+    inset 0 0 0 0.75px var(--color-border-1);
+  line-height: 1.4;
+  overflow: scroll;
+  padding: 24px;
+  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+
+  code {
+    background-color: unset;
+    border-radius: 0;
+    box-shadow: unset;
+    font-size: 0.84em;
+    padding: 0;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .shiki,
+  .shiki span {
+    background-color: transparent !important;
+    color: var(--shiki-dark) !important;
+    /* Optional, if you also want font styles */
+    font-style: var(--shiki-dark-font-style) !important;
+    font-weight: var(--shiki-dark-font-weight) !important;
+    text-decoration: var(--shiki-dark-text-decoration) !important;
+  }
 }
 
 .video_player {

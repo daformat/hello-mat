@@ -250,6 +250,28 @@ export const COMPONENTS = {
       imageHeight: 630,
     },
   },
+  slider: {
+    shortTitle: "A slider component",
+    video: {
+      dark: {
+        src: "/media/design-engineering/slider/slider-overview-dark.mp4",
+        type: "video/mp4",
+      },
+      light: {
+        src: "/media/design-engineering/slider/slider-overview-light.mp4",
+        type: "video/mp4",
+      },
+    },
+    metas: {
+      title: "Design engineering: a slider component",
+      description:
+        "Building a headless and composable slider component with React and Css",
+      url: "/design-engineering/component/slider",
+      image: "/media/design-engineering/slider/og-slider-light.png",
+      imageWidth: 1200,
+      imageHeight: 630,
+    },
+  },
 } as const satisfies Record<
   string,
   {
@@ -301,6 +323,7 @@ export const COMPONENTS_ORDER = createComponentOrder([
   "swipeable-cards",
   "number-flow-input",
   "split-flap-display",
+  "slider",
 ] as const);
 
 export const getNextComponent = (currentComponentId: ComponentId) => {
@@ -309,5 +332,16 @@ export const getNextComponent = (currentComponentId: ComponentId) => {
   );
   const nextComponentId =
     COMPONENTS_ORDER[componentIndex + 1] ?? COMPONENTS_ORDER[0];
+  return COMPONENTS[nextComponentId];
+};
+
+export const getPreviousComponent = (currentComponentId: ComponentId) => {
+  const componentIndex = COMPONENTS_ORDER.findIndex(
+    (id) => id === currentComponentId
+  );
+  const nextComponentId =
+    COMPONENTS_ORDER[componentIndex - 1] ??
+    COMPONENTS_ORDER[COMPONENTS_ORDER.length - 1] ??
+    COMPONENTS_ORDER[0];
   return COMPONENTS[nextComponentId];
 };

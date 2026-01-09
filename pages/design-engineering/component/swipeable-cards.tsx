@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { FaCheck, FaXmark } from "react-icons/fa6";
 import { PiStarBold } from "react-icons/pi";
 
-import { NextCard } from "@/components/Navigation/NextCard";
+import { NextCard, PrevCard } from "@/components/Navigation/NextCard";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import {
   DiscardStyle,
@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
 import {
   COMPONENTS,
   getNextComponent,
+  getPreviousComponent,
 } from "@/constants/design-engineering/components";
 import { useCssSizeVariables } from "@/hooks/useCssSizeVariables";
 
@@ -32,6 +33,7 @@ const SwipeableCardsPage = () => {
 
 const SwipeableCardsPageContent = () => {
   const nextComponent = getNextComponent("swipeable-cards");
+  const prevComponent = getPreviousComponent("swipeable-cards");
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const demoRef = useRef<HTMLDivElement>(null);
@@ -232,9 +234,22 @@ const SwipeableCardsPageContent = () => {
           satisfying in using this interaction, and I think Tinder made it their
           landmark for a reason.
         </p>
-        <NextCard href={nextComponent.metas.url}>
-          {nextComponent.shortTitle}
-        </NextCard>
+        <div
+          style={{
+            display: "flex",
+            gap: 24,
+            width: "100%",
+            flexWrap: "wrap",
+            marginTop: "2em",
+          }}
+        >
+          <PrevCard href={prevComponent.metas.url}>
+            {prevComponent.shortTitle}
+          </PrevCard>
+          <NextCard href={nextComponent.metas.url}>
+            {nextComponent.shortTitle}
+          </NextCard>
+        </div>
       </div>
     </>
   );

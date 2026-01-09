@@ -19,3 +19,22 @@ export const NextCard = ({
     <span className={styles.arrow}>--&gt;</span>
   </Link>
 );
+
+export const PrevCard = ({
+  className,
+  children,
+  ...props
+}: ComponentProps<typeof Link>) => (
+  <Link
+    className={[styles.next_card, styles.prev, className]
+      .filter(Boolean)
+      .join(" ")}
+    {...props}
+  >
+    <span className={styles.arrow}>&lt;--</span>
+    <span className={styles.text}>
+      <h3 data-no-toc>Right before</h3>
+      <span>{children}</span>
+    </span>
+  </Link>
+);

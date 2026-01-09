@@ -9,6 +9,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useEffectEvent,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -461,93 +462,89 @@ const SliderThumb = ({
     dragRef.current.lastTime = Date.now();
   }, []);
 
-  const handlePointerMove = useCallback(
-    (event: PointerEvent) => {
-      event.preventDefault();
-      const maxAbsoluteVelocity = 15;
-      if (dragRef.current.isDragging) {
-        const thumb = ref.current;
-        const track = context.trackRef.current;
-        if (track && thumb) {
-          const totalSlider = context.max - context.min;
-          const rect = track.getBoundingClientRect();
-          const thumbRect = thumb.getBoundingClientRect();
-          const trackWidth = rect.width;
-          const clampedClientX = Math.min(
-            Math.max(event.clientX, rect.left - thumbRect.width / 2),
-            rect.left + rect.width + thumbRect.width / 2
-          );
-          const delta = clampedClientX - dragRef.current.lastValidX;
-          const value = context.values.find(({ id }) => id === valueId);
-          const rawNewValue = Math.min(
-            Math.max(
-              (value?.value ?? 0) + (delta / trackWidth) * totalSlider,
-              context.min
-            ),
+  const handlePointerMove = useEffectEvent((event: PointerEvent) => {
+    event.preventDefault();
+    const maxAbsoluteVelocity = 15;
+    if (dragRef.current.isDragging) {
+      const thumb = ref.current;
+      const track = context.trackRef.current;
+      if (track && thumb) {
+        const totalSlider = context.max - context.min;
+        const rect = track.getBoundingClientRect();
+        const thumbRect = thumb.getBoundingClientRect();
+        const trackWidth = rect.width;
+        const clampedClientX = Math.min(
+          Math.max(event.clientX, rect.left - thumbRect.width / 2),
+          rect.left + rect.width + thumbRect.width / 2
+        );
+        const delta = clampedClientX - dragRef.current.lastValidX;
+        const value = context.values.find(({ id }) => id === valueId);
+        const rawNewValue = Math.min(
+          Math.max(
+            (value?.value ?? 0) + (delta / trackWidth) * totalSlider,
+            context.min
+          ),
+          context.max
+        );
+        // Out of bounds?
+        if (
+          (delta < 0 && event.clientX > thumbRect.left + thumbRect.width / 2) ||
+          (delta > 0 && event.clientX < thumbRect.left + thumbRect.width / 2)
+        ) {
+          dragRef.current.lastValidX = event.clientX;
+          dragRef.current.lastTime = Date.now();
+          return;
+        }
+
+        let newValue = context.step
+          ? roundValue(
+              Math.round((rawNewValue - context.min) / context.step) *
+                context.step +
+                context.min,
+              getDecimalCount(context.step)
+            )
+          : rawNewValue;
+
+        if (
+          context.magnetizeMarkers &&
+          context.magnetizeThreshold !== undefined
+        ) {
+          newValue = magnetizeToMarker(
+            event.clientX,
+            newValue,
+            context.markerValues,
+            context.magnetizeThreshold,
+            rect,
+            context.min,
             context.max
           );
-          // Out of bounds?
-          if (
-            (delta < 0 &&
-              event.clientX > thumbRect.left + thumbRect.width / 2) ||
-            (delta > 0 && event.clientX < thumbRect.left + thumbRect.width / 2)
-          ) {
-            dragRef.current.lastValidX = event.clientX;
-            dragRef.current.lastTime = Date.now();
-            return;
-          }
+        }
 
-          let newValue = context.step
-            ? roundValue(
-                Math.round((rawNewValue - context.min) / context.step) *
-                  context.step +
-                  context.min,
-                getDecimalCount(context.step)
-              )
-            : rawNewValue;
-
-          if (
-            context.magnetizeMarkers &&
-            context.magnetizeThreshold !== undefined
-          ) {
-            newValue = magnetizeToMarker(
-              event.clientX,
-              newValue,
-              context.markerValues,
-              context.magnetizeThreshold,
-              rect,
-              context.min,
-              context.max
-            );
-          }
-
-          const didChangeValue = newValue !== value?.value;
-          context.onChange([
-            ...context.values.filter(({ id }) => id !== valueId),
-            { id: valueId, value: newValue, label: `${newValue}` },
-          ]);
-          if (didChangeValue) {
-            const currentTime = Date.now();
-            const deltaTime = currentTime - dragRef.current.lastTime;
-            const valueX =
-              rect.left + (rect.width * (newValue - context.min)) / totalSlider;
-            const deltaX = valueX - dragRef.current.lastValidX;
-            if (deltaTime > 0 && didChangeValue) {
-              dragRef.current.velocityX = (deltaX / deltaTime) * 10; // (pixels per millisecond)
-              if (Math.abs(dragRef.current.velocityX) > maxAbsoluteVelocity) {
-                dragRef.current.velocityX =
-                  Math.sign(dragRef.current.velocityX) * maxAbsoluteVelocity;
-              }
+        const didChangeValue = newValue !== value?.value;
+        context.onChange([
+          ...context.values.filter(({ id }) => id !== valueId),
+          { id: valueId, value: newValue, label: `${newValue}` },
+        ]);
+        if (didChangeValue) {
+          const currentTime = Date.now();
+          const deltaTime = currentTime - dragRef.current.lastTime;
+          const valueX =
+            rect.left + (rect.width * (newValue - context.min)) / totalSlider;
+          const deltaX = valueX - dragRef.current.lastValidX;
+          if (deltaTime > 0 && didChangeValue) {
+            dragRef.current.velocityX = (deltaX / deltaTime) * 10; // (pixels per millisecond)
+            if (Math.abs(dragRef.current.velocityX) > maxAbsoluteVelocity) {
+              dragRef.current.velocityX =
+                Math.sign(dragRef.current.velocityX) * maxAbsoluteVelocity;
             }
-            dragRef.current.lastTime = currentTime;
-            dragRef.current.lastValidX = clampedClientX;
-            updateVelocity();
           }
+          dragRef.current.lastTime = currentTime;
+          dragRef.current.lastValidX = clampedClientX;
+          updateVelocity();
         }
       }
-    },
-    [context, updateVelocity, valueId]
-  );
+    }
+  });
 
   const handlePointerUp = useCallback(() => {
     dragRef.current.isDragging = false;

@@ -17,7 +17,7 @@ import {
 
 import { ButtonGroup } from "@/components/ButtonGroup/ButtonGroup";
 import { DropdownItem } from "@/components/ButtonGroup/Dropdown/DropdownItem";
-import { NextCard } from "@/components/Navigation/NextCard";
+import { NextCard, PrevCard } from "@/components/Navigation/NextCard";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { Toolbar } from "@/components/Toolbar/Toolbar";
@@ -25,6 +25,7 @@ import { ToolbarButton } from "@/components/Toolbar/ToolbarButton";
 import {
   COMPONENTS,
   getNextComponent,
+  getPreviousComponent,
 } from "@/constants/design-engineering/components";
 
 const CollapsibleToolbarPage = () => {
@@ -41,6 +42,7 @@ const CollapsibleToolbarPage = () => {
 
 const CollapsibleToolbarPageContent = () => {
   const nextComponent = getNextComponent("collapsible-toolbar");
+  const prevComponent = getPreviousComponent("collapsible-toolbar");
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const [slow, setSlow] = useState(false);
@@ -120,9 +122,22 @@ const CollapsibleToolbarPageContent = () => {
             10%
           </button>
         </div>
-        <NextCard href={nextComponent.metas.url}>
-          {nextComponent.shortTitle}
-        </NextCard>
+        <div
+          style={{
+            display: "flex",
+            gap: 24,
+            width: "100%",
+            flexWrap: "wrap",
+            marginTop: "2em",
+          }}
+        >
+          <PrevCard href={prevComponent.metas.url}>
+            {prevComponent.shortTitle}
+          </PrevCard>
+          <NextCard href={nextComponent.metas.url}>
+            {nextComponent.shortTitle}
+          </NextCard>
+        </div>
       </div>
     </>
   );
