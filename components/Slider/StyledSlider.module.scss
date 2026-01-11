@@ -111,7 +111,7 @@
       &::after {
         background-color: var(--color-background);
         //background-color: red;
-        //content: "";
+        content: "";
         height: 1.5px;
         left: 50%;
         position: absolute;
@@ -141,8 +141,7 @@
         transform: scale(1);
 
         &::after {
-          //box-shadow: 0 0.25px 0 0 var(--color-background);
-          //top: calc(100% - 2.2px);
+          box-shadow: 0 0.25px 0 0 var(--color-background);
         }
       }
     }

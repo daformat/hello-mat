@@ -438,15 +438,25 @@ const SliderThumb = ({
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
-    const friction = 0.4;
-    const decelerationFactor = 1 - friction;
-    dragRef.current.velocityX *= decelerationFactor;
+    if (dragRef.current.lastTime < Date.now()) {
+      const friction = 0.3;
+      const decelerationFactor = 1 - friction;
+      dragRef.current.velocityX *= decelerationFactor;
+    }
     if (Math.abs(dragRef.current.velocityX) <= 0.01) {
       dragRef.current.velocityX = 0;
     }
     context.rootRef.current?.style.setProperty(
       `--velocity-${valueId}`,
       `${dragRef.current.velocityX}`
+    );
+    context.rootRef.current?.style.setProperty(
+      `--velocity-abs-${valueId}`,
+      `${Math.abs(dragRef.current.velocityX)}`
+    );
+    context.rootRef.current?.style.setProperty(
+      `--velocity-sign-${valueId}`,
+      `${Math.sign(dragRef.current.velocityX)}`
     );
     if (Math.abs(dragRef.current.velocityX) > 0) {
       rafRef.current = requestAnimationFrame(updateVelocity);
@@ -532,14 +542,23 @@ const SliderThumb = ({
             rect.left + (rect.width * (newValue - context.min)) / totalSlider;
           const deltaX = valueX - dragRef.current.lastValidX;
           if (deltaTime > 0 && didChangeValue) {
-            dragRef.current.velocityX = (deltaX / deltaTime) * 10; // (pixels per millisecond)
-            if (Math.abs(dragRef.current.velocityX) > maxAbsoluteVelocity) {
-              dragRef.current.velocityX =
-                Math.sign(dragRef.current.velocityX) * maxAbsoluteVelocity;
+            const newVelocityX = (deltaX / deltaTime) * 10; // (pixels per millisecond)
+            const isChangingDirection =
+              Math.sign(newVelocityX) !== Math.sign(dragRef.current.velocityX);
+            if (
+              Math.abs(newVelocityX) > Math.abs(dragRef.current.velocityX) ||
+              isChangingDirection
+            ) {
+              const delta = newVelocityX - dragRef.current.velocityX;
+              dragRef.current.velocityX += delta / 2;
+              if (Math.abs(dragRef.current.velocityX) > maxAbsoluteVelocity) {
+                dragRef.current.velocityX =
+                  Math.sign(dragRef.current.velocityX) * maxAbsoluteVelocity;
+              }
             }
           }
           dragRef.current.lastTime = currentTime;
-          dragRef.current.lastValidX = clampedClientX;
+          dragRef.current.lastValidX = valueX;
           updateVelocity();
         }
       }

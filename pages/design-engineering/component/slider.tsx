@@ -200,7 +200,7 @@ const SliderPageContent = (props: CodeBlocks) => {
                     style={
                       {
                         "--rotate":
-                          "calc(min(var(--velocity-1, 0), 3) / 15 * -90deg)",
+                          "calc(min(var(--velocity-abs-1, 0), 3) * var(--velocity-sign-1, 0) / 15 * -90deg)",
                       } as CSSProperties
                     }
                   >
@@ -268,7 +268,7 @@ const SliderPageContent = (props: CodeBlocks) => {
                     style={
                       {
                         "--rotate":
-                          "calc(min(var(--velocity-1, 0), 3) / 15 * -90deg)",
+                          "calc(min(var(--velocity-abs-1, 0), 3) * var(--velocity-sign-1, 0) / 15 * -90deg)",
                       } as CSSProperties
                     }
                   >
@@ -335,7 +335,7 @@ const SliderPageContent = (props: CodeBlocks) => {
                     style={
                       {
                         "--rotate":
-                          "calc(min(var(--velocity-1, 0), 3) / 15 * -90deg)",
+                          "calc(min(var(--velocity-abs-1, 0), 3) * var(--velocity-sign-1, 0) / 15 * -90deg)",
                       } as CSSProperties
                     }
                   >
@@ -354,7 +354,7 @@ const SliderPageContent = (props: CodeBlocks) => {
                     style={
                       {
                         "--rotate":
-                          "calc(min(var(--velocity-2, 0), 3) / 15 * -90deg)",
+                          "calc(min(var(--velocity-abs-2, 0), 3) * var(--velocity-sign-2, 0) / 15 * -90deg)",
                       } as CSSProperties
                     }
                   >
@@ -373,7 +373,7 @@ const SliderPageContent = (props: CodeBlocks) => {
                     style={
                       {
                         "--rotate":
-                          "calc(min(var(--velocity-3, 0), 3) / 15 * -90deg)",
+                          "calc(min(var(--velocity-abs-3, 0), 3) * var(--velocity-sign-3, 0) / 15 * -90deg)",
                       } as CSSProperties
                     }
                   >
@@ -392,7 +392,7 @@ const SliderPageContent = (props: CodeBlocks) => {
                     style={
                       {
                         "--rotate":
-                          "calc(min(var(--velocity-4, 0), 3) / 15 * -90deg)",
+                          "calc(min(var(--velocity-abs-4, 0), 3) * var(--velocity-sign-4, 0) / 15 * -90deg)",
                       } as CSSProperties
                     }
                   >
