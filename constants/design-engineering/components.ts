@@ -272,6 +272,28 @@ export const COMPONENTS = {
       imageHeight: 630,
     },
   },
+  "tilting-tile": {
+    shortTitle: "A tilting card + parallax",
+    video: {
+      dark: {
+        src: "/media/design-engineering/tilting-tile/tilting-tile-overview-dark.mp4",
+        type: "video/mp4",
+      },
+      light: {
+        src: "/media/design-engineering/tilting-tile/tilting-tile-overview-light.mp4",
+        type: "video/mp4",
+      },
+    },
+    metas: {
+      title: "Design engineering: a tilting card component with parallax",
+      description:
+        "Building a tvOS inspired tilting card component with parallax using React and Css",
+      url: "/design-engineering/component/tilting-tile",
+      image: "/media/design-engineering/tilting-tile/og-tilting-tile-light.png",
+      imageWidth: 1200,
+      imageHeight: 630,
+    },
+  },
 } as const satisfies Record<
   string,
   {
@@ -324,6 +346,7 @@ export const COMPONENTS_ORDER = createComponentOrder([
   "number-flow-input",
   "split-flap-display",
   "slider",
+  "tilting-tile",
 ] as const);
 
 export const getNextComponent = (currentComponentId: ComponentId) => {

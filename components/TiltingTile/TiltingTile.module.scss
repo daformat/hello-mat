@@ -1,0 +1,142 @@
+@use "/styles/lib/mixins.scss";
+
+@keyframes rotate-in {
+  from {
+    transform: rotateX(0deg) rotateY(0deg);
+  }
+}
+
+@keyframes rotate-out {
+  from {
+    transform: rotateX(var(--tilt-x, 0)) rotateY(var(--tilt-y, 0));
+  }
+}
+
+@keyframes rotate-in2 {
+  from {
+    transform: rotateX(0deg) rotateY(0deg);
+  }
+}
+
+@keyframes rotate-out2 {
+  from {
+    transform: rotateX(var(--tilt-x-r, 0)) rotateY(var(--tilt-y-r, 0));
+  }
+}
+
+@keyframes translate-in {
+  from {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes translate-out {
+  from {
+    transform: translate(
+      calc(var(--pointer-dx, 0) * var(--depth) * -0.5%),
+      calc(var(--pointer-dy, 0) * var(--depth) * -0.5%)
+    );
+  }
+}
+
+.tilting_tile_root {
+  display: grid;
+  font-size: 0;
+  perspective: 500px;
+  place-content: center;
+  position: relative;
+  touch-action: none;
+  transform-origin: center;
+  transform-style: preserve-3d;
+  transition: transform 0.2s var(--ease-out-cubic);
+
+  > * {
+    grid-area: 1 / 1;
+  }
+
+  .tilting_tile {
+    animation: rotate-out 0.2s var(--ease-out-cubic) forwards;
+    display: grid;
+    overflow: hidden;
+    place-content: center;
+    position: relative;
+    transform: rotateX(0deg) rotateY(0deg);
+    transform-style: preserve-3d;
+
+    &::after {
+      box-shadow: inset 0 0 0 1px var(--color-border-1);
+      content: "";
+      inset: 0;
+      position: absolute;
+      @include mixins.squircle(12px);
+    }
+
+    @include mixins.squircle(12px);
+
+    > * {
+      grid-area: 1 / 1;
+    }
+
+    .layer {
+      animation: translate-out 0.2s var(--ease-out-cubic) forwards;
+      display: grid;
+      place-content: center;
+      transform: translate(0, 0);
+
+      * {
+        aspect-ratio: 669 / 991;
+        height: 100%;
+        width: 100%;
+      }
+    }
+
+    .specular {
+      background-image: radial-gradient(
+        circle at var(--pointer-x) var(--pointer-y),
+        rgba(255, 255, 255, 0.4),
+        transparent var(--specular-size, 100%)
+      );
+      display: inline-block;
+      inset: 0;
+      position: absolute;
+    }
+
+    &:hover,
+    &:active {
+      animation: rotate-in 0.2s var(--ease-out-cubic) backwards;
+      transform: rotateX(var(--tilt-x, 0)) rotateY(var(--tilt-y, 0));
+
+      .layer {
+        animation: translate-in 0.2s var(--ease-out-cubic) backwards;
+        transform: translate(
+          calc(var(--pointer-dx, 0) * var(--depth) * -0.5%),
+          calc(var(--pointer-dy, 0) * var(--depth) * -0.5%)
+        );
+      }
+    }
+  }
+
+  &:hover {
+    z-index: 1;
+
+    .tilting_tile {
+      animation: rotate-in 0.2s var(--ease-out-cubic) backwards;
+      transform: rotateX(var(--tilt-x, 0)) rotateY(var(--tilt-y, 0));
+
+      .layer {
+        animation: translate-in 0.2s var(--ease-out-cubic) backwards;
+        transform: translate(
+          calc(var(--pointer-dx, 0) * var(--depth) * -0.5%),
+          calc(var(--pointer-dy, 0) * var(--depth) * -0.5%)
+        );
+      }
+    }
+  }
+
+  &[data-touching="false"] {
+    .tilting_tile {
+      animation: rotate-out 0.2s var(--ease-out-cubic) forwards;
+      transform: rotateX(0deg) rotateY(0deg);
+    }
+  }
+}

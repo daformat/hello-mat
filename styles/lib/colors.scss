@@ -17,6 +17,7 @@
 
   --color-shadow-1: rgba(32, 27, 33, 0.05);
   --color-shadow-2: rgba(32, 27, 33, 0.025);
+  --color-shadow-strong: rgba(32, 27, 33, 0.4);
 
   --color-border-1: #{rgba(#fff, 0.6)};
   --color-border-1-hover: #{rgba(#fff, 0.9)};
@@ -88,6 +89,7 @@
 
   --color-shadow-1: rgba(0, 0, 0, 0.08);
   --color-shadow-2: rgba(0, 0, 0, 0.04);
+  --color-shadow-strong: rgba(0, 0, 0, 1);
 
   --color-border-1: #{rgba(palette.$dark-desert-sky-4, 0.75)};
   --color-border-1-hover: #{rgba(palette.$dark-ivory-3, 0.25)};

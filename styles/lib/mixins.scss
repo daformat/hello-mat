@@ -144,12 +144,12 @@
   }
 }
 
-//@mixin squircle($radius) {
-//  --border-radius: #{$radius};
-//  border-radius: var(--border-radius);
-//
-//  @supports (corner-shape: superellipse(1)) {
-//    border-radius: calc(var(--border-radius) * 1.4);
-//    corner-shape: superellipse(1.4);
-//  }
-//}
+@mixin squircle($radius) {
+  --border-radius: #{$radius};
+  border-radius: var(--border-radius);
+
+  @supports (corner-shape: superellipse(1)) {
+    border-radius: calc(var(--border-radius) * 1.6);
+    corner-shape: superellipse(1.6);
+  }
+}
