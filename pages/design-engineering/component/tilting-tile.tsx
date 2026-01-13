@@ -209,12 +209,13 @@ const SliderPageContent = (props: CodeBlocks) => {
                       }
                       style={{
                         maskImage:
-                          "url(/media/design-engineering/tilting-tile/godfather-mid-mask.jpg)",
-                        maskMode: "luminance",
+                          "url(/media/design-engineering/tilting-tile/godfather-mid-mask.png)",
+                        // maskMode: "luminance",
                         maskSize: "100% 100%",
                         maskRepeat: "no-repeat",
                         scale: 1.02,
                         transformOrigin: "center -60%",
+                        willChange: "mask-image",
                       }}
                     />
                   ),
@@ -230,11 +231,12 @@ const SliderPageContent = (props: CodeBlocks) => {
                       }
                       style={{
                         maskImage:
-                          "url(/media/design-engineering/tilting-tile/godfather-fg-mask.jpg)",
-                        maskMode: "luminance",
+                          "url(/media/design-engineering/tilting-tile/godfather-fg-mask.png)",
+                        // maskMode: "luminance",
                         maskSize: "100% 100%",
                         maskRepeat: "no-repeat",
                         transform: "translateY(5%)",
+                        willChange: "mask-image",
                       }}
                     />
                   ),
@@ -267,12 +269,13 @@ const SliderPageContent = (props: CodeBlocks) => {
                       }
                       style={{
                         maskImage:
-                          "url(/media/design-engineering/tilting-tile/fight-club-mid-mask.jpg)",
-                        maskMode: "luminance",
+                          "url(/media/design-engineering/tilting-tile/fight-club-mid-mask.png)",
+                        // maskMode: "luminance",
                         maskSize: "100% 100%",
                         maskRepeat: "no-repeat",
                         scale: 1.06,
                         transformOrigin: "center 60%",
+                        willChange: "mask-image",
                       }}
                     />
                   ),
@@ -288,12 +291,13 @@ const SliderPageContent = (props: CodeBlocks) => {
                       }
                       style={{
                         maskImage:
-                          "url(/media/design-engineering/tilting-tile/fight-club-fg-mask.jpg)",
-                        maskMode: "luminance",
+                          "url(/media/design-engineering/tilting-tile/fight-club-fg-mask.png)",
+                        // maskMode: "luminance",
                         maskSize: "100% 100%",
                         maskRepeat: "no-repeat",
                         scale: 1.04,
                         transformOrigin: "50% center",
+                        willChange: "mask-image",
                       }}
                     />
                   ),
@@ -326,12 +330,13 @@ const SliderPageContent = (props: CodeBlocks) => {
                       }
                       style={{
                         maskImage:
-                          "url(/media/design-engineering/tilting-tile/matrix-mid-mask.jpg)",
-                        maskMode: "luminance",
+                          "url(/media/design-engineering/tilting-tile/matrix-mid-mask.png)",
+                        // maskMode: "luminance",
                         maskSize: "100% 100%",
                         maskRepeat: "no-repeat",
                         scale: 1.06,
                         transformOrigin: "center 60%",
+                        willChange: "mask-image",
                       }}
                     />
                   ),
@@ -347,12 +352,13 @@ const SliderPageContent = (props: CodeBlocks) => {
                       }
                       style={{
                         maskImage:
-                          "url(/media/design-engineering/tilting-tile/matrix-fg-mask.jpg)",
-                        maskMode: "luminance",
+                          "url(/media/design-engineering/tilting-tile/matrix-fg-mask.png)",
+                        // maskMode: "luminance",
                         maskSize: "100% 100%",
                         maskRepeat: "no-repeat",
                         scale: 1.04,
                         transformOrigin: "50% center",
+                        willChange: "mask-image",
                       }}
                     />
                   ),

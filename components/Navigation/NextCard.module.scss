@@ -41,6 +41,7 @@
 
   .arrow {
     transition: transform 0.2s var(--ease-out-cubic);
+    white-space: nowrap;
   }
 
   &:hover,
