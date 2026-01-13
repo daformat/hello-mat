@@ -58,6 +58,7 @@ export const TiltingTile = ({ layers }: TiltingTileProps) => {
     if (span) {
       const handleGlobalPointerMove = (event: PointerEvent) => {
         const span = ref.current;
+        const target = document.elementFromPoint(event.clientX, event.clientY);
         if (span) {
           const maxAngle = 5;
           const { left, top, width, height } = span.getBoundingClientRect();
@@ -79,11 +80,20 @@ export const TiltingTile = ({ layers }: TiltingTileProps) => {
           span.style.setProperty("--pointer-y", `${(y / height) * 100}%`);
           span.style.setProperty("--pointer-dx", `${dX}`);
           span.style.setProperty("--pointer-dy", `${dY}`);
+
+          if (span.contains(target)) {
+            const touching = document.querySelectorAll<HTMLElement>(
+              '[data-touching="true"]'
+            );
+            touching.forEach((el) => (el.dataset.touching = "false"));
+            span.dataset.touching = "true";
+          }
         }
       };
       const handleTouchStart = () => {
         const span = ref.current;
         if (span) {
+          console.log(span);
           span.dataset.touching = "true";
         }
       };

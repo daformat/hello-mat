@@ -139,4 +139,19 @@
       transform: rotateX(0deg) rotateY(0deg);
     }
   }
+
+  &[data-touching="true"] {
+    .tilting_tile {
+      animation: rotate-in 0.2s var(--ease-out-cubic) backwards;
+      transform: rotateX(var(--tilt-x, 0)) rotateY(var(--tilt-y, 0));
+
+      .layer {
+        animation: translate-in 0.2s var(--ease-out-cubic) backwards;
+        transform: translate(
+          calc(var(--pointer-dx, 0) * var(--depth) * -0.5%),
+          calc(var(--pointer-dy, 0) * var(--depth) * -0.5%)
+        );
+      }
+    }
+  }
 }
