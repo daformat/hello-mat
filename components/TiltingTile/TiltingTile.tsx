@@ -58,7 +58,9 @@ export const TiltingTile = ({ layers }: TiltingTileProps) => {
     if (span) {
       const handleGlobalPointerMove = (event: PointerEvent) => {
         const span = ref.current;
-        const target = document.elementFromPoint(event.clientX, event.clientY);
+        const target = document
+          .elementFromPoint(event.clientX, event.clientY)
+          ?.closest("[data-tilting-tile]");
         if (span) {
           const maxAngle = 5;
           const { left, top, width, height } = span.getBoundingClientRect();
@@ -81,18 +83,22 @@ export const TiltingTile = ({ layers }: TiltingTileProps) => {
           span.style.setProperty("--pointer-dx", `${dX}`);
           span.style.setProperty("--pointer-dy", `${dY}`);
 
-          if (span.contains(target)) {
-            const touching = document.querySelectorAll<HTMLElement>(
-              '[data-touching="true"]'
+          if (event.pointerType === "touch") {
+            const tiles = document.querySelectorAll<HTMLElement>(
+              "[data-tilting-tile]"
             );
-            touching.forEach((el) => (el.dataset.touching = "false"));
-            span.dataset.touching = "true";
+            tiles.forEach((el) => {
+              el.dataset.touching = el !== target ? "false" : "true";
+            });
           }
         }
       };
-      const handleTouchStart = () => {
+      const handleTouchStart = (event: PointerEvent | TouchEvent) => {
         const span = ref.current;
-        if (span) {
+        if (
+          span &&
+          (!("pointerType" in event) || event.pointerType === "touch")
+        ) {
           console.log(span);
           span.dataset.touching = "true";
         }
@@ -118,7 +124,7 @@ export const TiltingTile = ({ layers }: TiltingTileProps) => {
     }
   }, []);
   return (
-    <span ref={ref} className={styles.tilting_tile_root}>
+    <span ref={ref} className={styles.tilting_tile_root} data-tilting-tile={""}>
       <span className={styles.tilting_tile}>
         {children}
         <span

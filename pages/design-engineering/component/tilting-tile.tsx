@@ -156,7 +156,7 @@ const SliderPageContent = (props: CodeBlocks) => {
             marginBlock: 32,
             padding: "0",
             // maxWidth: 650,
-            marginInline: "clamp(-100px, -7vw, 0px)",
+            marginInline: "clamp(-100px, -5vw, 0px)",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",

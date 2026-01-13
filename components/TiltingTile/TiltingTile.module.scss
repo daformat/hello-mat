@@ -137,6 +137,11 @@
     .tilting_tile {
       animation: rotate-out 0.2s var(--ease-out-cubic) forwards;
       transform: rotateX(0deg) rotateY(0deg);
+
+      .layer {
+        animation: translate-out 0.2s var(--ease-out-cubic) backwards;
+        transform: translate(0, 0);
+      }
     }
   }
 
