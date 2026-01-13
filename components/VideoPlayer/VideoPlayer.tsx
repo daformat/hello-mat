@@ -1,4 +1,11 @@
-import { ComponentProps, useState } from "react";
+import {
+  ComponentProps,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 type BaseVideoSources = {
   light: {
@@ -25,20 +32,76 @@ export type VideoSources =
 
 export type VideoPlayerProps = {
   sources: VideoSources;
+  /** When true, the video will only play when visible in the viewport */
+  autoPlaysWhenVisible?: boolean;
 } & ComponentProps<"video">;
 
 export const VideoPlayer = ({
   sources,
   className,
   style,
+  autoPlaysWhenVisible = false,
   ...rest
 }: VideoPlayerProps) => {
   const [showSlow, setShowSlow] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const videoRefs = useRef<Set<HTMLVideoElement>>(new Set());
   const renderNormal = !showSlow || !sources.slow;
+
+  const addVideoRef = useCallback((el: HTMLVideoElement | null) => {
+    if (el) {
+      videoRefs.current.add(el);
+    }
+  }, []);
+
+  // Intersection Observer for autoPlaysWhenVisible
+  useEffect(() => {
+    if (!autoPlaysWhenVisible || !containerRef.current) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry) {
+          setIsVisible(entry.isIntersecting);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(containerRef.current);
+
+    return () => observer.disconnect();
+  }, [autoPlaysWhenVisible]);
+
+  // Play/pause videos based on visibility
+  useLayoutEffect(() => {
+    if (!autoPlaysWhenVisible) {
+      return;
+    }
+
+    videoRefs.current.forEach((video) => {
+      if (isVisible) {
+        video.play().catch(() => {
+          // Autoplay may be blocked by browser
+        });
+      } else {
+        video.pause();
+      }
+    });
+  }, [isVisible, autoPlaysWhenVisible]);
+
+  const shouldAutoPlay = !autoPlaysWhenVisible;
 
   return (
     <section style={{ width: "100%", ...style }}>
-      <div className="video_player" style={{ width: "100%", ...style }}>
+      <div
+        ref={containerRef}
+        className="video_player"
+        style={{ width: "100%", ...style }}
+      >
         <div
           style={{
             width: "100%",
@@ -47,8 +110,9 @@ export const VideoPlayer = ({
           }}
         >
           <video
+            ref={addVideoRef}
             className={["video_dark", className].filter(Boolean).join(" ")}
-            autoPlay
+            autoPlay={shouldAutoPlay}
             loop
             muted
             playsInline
@@ -58,8 +122,9 @@ export const VideoPlayer = ({
             <source src={sources.dark.src} type={sources.dark.type} />
           </video>
           <video
+            ref={addVideoRef}
             className={["video_light", className].filter(Boolean).join(" ")}
-            autoPlay
+            autoPlay={shouldAutoPlay}
             loop
             muted
             playsInline
@@ -78,8 +143,9 @@ export const VideoPlayer = ({
             }}
           >
             <video
+              ref={addVideoRef}
               className={["video_dark", className].filter(Boolean).join(" ")}
-              autoPlay
+              autoPlay={shouldAutoPlay}
               loop
               muted
               playsInline
@@ -92,8 +158,9 @@ export const VideoPlayer = ({
               />
             </video>
             <video
+              ref={addVideoRef}
               className={["video_light", className].filter(Boolean).join(" ")}
-              autoPlay
+              autoPlay={shouldAutoPlay}
               loop
               muted
               playsInline

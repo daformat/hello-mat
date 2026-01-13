@@ -52,6 +52,7 @@ const DesignEngineeringIndex = () => (
               <VideoPlayer
                 style={{ aspectRatio: "990/500" }}
                 sources={component.video}
+                autoPlaysWhenVisible
               />
               {component.shortTitle}
             </Link>
