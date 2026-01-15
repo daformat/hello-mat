@@ -3,7 +3,6 @@ import { VideoSourcesWithoutSlowVersions } from "@/components/VideoPlayer/VideoP
 
 export const COMPONENTS = {
   toc: {
-    shortTitle: "A Table of content component",
     video: {
       dark: {
         src: "/media/design-engineering/toc/toc-overview-dark.mp4",
@@ -15,7 +14,8 @@ export const COMPONENTS = {
       },
     },
     metas: {
-      title: "Design engineering: a table of contents component",
+      shortTitle: "A Table of content component",
+      title: "A table of contents component",
       description:
         "Building a table of contents component, using React, TypeScript, and SCSS.",
       url: "/design-engineering/component/table-of-contents",
@@ -25,7 +25,6 @@ export const COMPONENTS = {
     },
   },
   details: {
-    shortTitle: "A details (or disclosure) component",
     video: {
       dark: {
         src: "/media/design-engineering/details/details-overview-dark.mp4",
@@ -37,7 +36,8 @@ export const COMPONENTS = {
       },
     },
     metas: {
-      title: "Design engineering: a details (or disclosure) component",
+      shortTitle: "A details (or disclosure) component",
+      title: "A details (or disclosure) component",
       description:
         "Building a details (disclosure) component, using React, TypeScript, and SCSS.",
       url: "/design-engineering/component/details-disclosure-component",
@@ -47,7 +47,6 @@ export const COMPONENTS = {
     },
   },
   "images-and-embeds": {
-    shortTitle: "Images and embeds",
     video: {
       dark: {
         src: "/media/design-engineering/images-and-embeds/images-and-embeds-overview-slow-dark.mp4",
@@ -59,7 +58,8 @@ export const COMPONENTS = {
       },
     },
     metas: {
-      title: "Design engineering: images and embeds",
+      shortTitle: "Images and embeds",
+      title: "Images and embeds component",
       description:
         "Building a Media component supporting images and embeds using React, TypeScript, and SCSS.",
       url: "/design-engineering/component/images-and-embeds",
@@ -69,7 +69,6 @@ export const COMPONENTS = {
     },
   },
   "collapsible-toolbar": {
-    shortTitle: "A collapsible toolbar",
     video: {
       dark: {
         src: "/media/design-engineering/collapsible-toolbar/collapsible-toolbar-overview-dark.mp4",
@@ -81,7 +80,8 @@ export const COMPONENTS = {
       },
     },
     metas: {
-      title: "Design engineering: a collapsible toolbar",
+      shortTitle: "A collapsible toolbar",
+      title: "A collapsible toolbar component",
       description:
         "Building a collapsible / resizable toolbar using React, TypeScript, and SCSS.",
       url: "/design-engineering/component/collapsible-toolbar",
@@ -92,7 +92,6 @@ export const COMPONENTS = {
     },
   },
   "publish-button": {
-    shortTitle: "A publish button",
     video: {
       dark: {
         src: "/media/design-engineering/publish-button/publish-button-overview-dark.mp4",
@@ -104,7 +103,8 @@ export const COMPONENTS = {
       },
     },
     metas: {
-      title: "Design engineering: a publish button",
+      shortTitle: "A publish button",
+      title: "A publish button component",
       description:
         "Building a publish button component with feedback, using React, TypeScript, and SCSS.",
       url: "/design-engineering/component/publish-button",
@@ -115,7 +115,6 @@ export const COMPONENTS = {
     },
   },
   "dock-component": {
-    shortTitle: "A macOS inspired dock",
     video: {
       dark: {
         src: "/media/design-engineering/dock/dock-overview-dark.mp4",
@@ -127,7 +126,8 @@ export const COMPONENTS = {
       },
     },
     metas: {
-      title: "Design engineering: a dock component",
+      shortTitle: "A macOS inspired dock",
+      title: "A macOS inspired dock component",
       description:
         "Building a macOS-like dock component, using React, TypeScript, and SCSS.",
       url: "/design-engineering/component/dock-component",
@@ -137,7 +137,6 @@ export const COMPONENTS = {
     },
   },
   "carousel-component": {
-    shortTitle: "A carousel component",
     video: {
       dark: {
         src: "/media/design-engineering/carousel/carousel-overview-dark.mp4",
@@ -149,7 +148,8 @@ export const COMPONENTS = {
       },
     },
     metas: {
-      title: "Design engineering: a carousel component",
+      shortTitle: "A carousel component",
+      title: "A carousel component with inertia and momentum scrolling",
       description:
         "Building a scrollable, and swipeable carousel, with momentum scrolling, overscroll and rubber-banding using React, TypeScript, and SCSS.",
       url: "/design-engineering/component/carousel-component",
@@ -159,7 +159,6 @@ export const COMPONENTS = {
     },
   },
   "stacking-cards": {
-    shortTitle: "Rolling stacking cards",
     video: {
       dark: {
         src: "/media/design-engineering/stacking-cards/stacking-cards-overview-dark.mp4",
@@ -171,7 +170,8 @@ export const COMPONENTS = {
       },
     },
     metas: {
-      title: "Design engineering: rolling stacking cards",
+      shortTitle: "Rolling stacking cards",
+      title: "Rolling stacking cards component",
       description:
         "Building a rolling stacking cards scroll-driven animation with React, TypeScript, and SCSS.",
       url: "/design-engineering/component/stacking-cards",
@@ -182,7 +182,6 @@ export const COMPONENTS = {
     },
   },
   "swipeable-cards": {
-    shortTitle: "Swipeable cards carousel",
     video: {
       dark: {
         src: "/media/design-engineering/swipeable-cards/swipeable-cards-overview-dark.mp4",
@@ -194,7 +193,8 @@ export const COMPONENTS = {
       },
     },
     metas: {
-      title: "Design engineering: a swipeable cards carousel",
+      shortTitle: "Swipeable cards carousel",
+      title: "A swipeable cards carousel component",
       description:
         "Building a swipeable cards stack with React, TypeScript, and SCSS.",
       url: "/design-engineering/component/swipeable-cards",
@@ -205,7 +205,6 @@ export const COMPONENTS = {
     },
   },
   "number-flow-input": {
-    shortTitle: "A Number Flow Input component",
     video: {
       dark: {
         src: "/media/design-engineering/number-flow-input/number-flow-input-overview-dark.mp4",
@@ -217,7 +216,8 @@ export const COMPONENTS = {
       },
     },
     metas: {
-      title: "Design engineering: a number flow input component",
+      shortTitle: "A Number Flow Input component",
+      title: "A number flow input component",
       description:
         "Building a number flow input component with React, TypeScript, and SCSS. Inspired by Number Flow and the Family wallet",
       url: "/design-engineering/component/number-flow-input",
@@ -228,7 +228,6 @@ export const COMPONENTS = {
     },
   },
   "split-flap-display": {
-    shortTitle: "A split-flap display component",
     video: {
       dark: {
         src: "/media/design-engineering/split-flap-display/split-flap-display-overview-dark.mp4",
@@ -240,7 +239,8 @@ export const COMPONENTS = {
       },
     },
     metas: {
-      title: "Design engineering: a split-flap display component",
+      shortTitle: "A split-flap display component",
+      title: "A split-flap display component",
       description:
         "Building a realistic split-flap display with, React and css",
       url: "/design-engineering/component/split-flap-display",
@@ -251,7 +251,6 @@ export const COMPONENTS = {
     },
   },
   slider: {
-    shortTitle: "A slider component",
     video: {
       dark: {
         src: "/media/design-engineering/slider/slider-overview-dark.mp4",
@@ -263,7 +262,8 @@ export const COMPONENTS = {
       },
     },
     metas: {
-      title: "Design engineering: a slider component",
+      shortTitle: "A slider component",
+      title: "A composable headless slider component",
       description:
         "Building a headless and composable slider component with React and Css",
       url: "/design-engineering/component/slider",
@@ -273,7 +273,6 @@ export const COMPONENTS = {
     },
   },
   "tilting-tile": {
-    shortTitle: "A tilting card + parallax",
     video: {
       dark: {
         src: "/media/design-engineering/tilting-tile/tilting-tile-overview-dark.mp4",
@@ -285,7 +284,8 @@ export const COMPONENTS = {
       },
     },
     metas: {
-      title: "Design engineering: a tilting card component with parallax",
+      shortTitle: "A tilting card with parallax",
+      title: "A tilting card component with parallax, just like tvOS",
       description:
         "Building a tvOS inspired tilting card component with parallax using React and Css",
       url: "/design-engineering/component/tilting-tile",
@@ -298,7 +298,6 @@ export const COMPONENTS = {
   string,
   {
     metas: PageMetasProps;
-    shortTitle: string;
     video: VideoSourcesWithoutSlowVersions;
   }
 >;

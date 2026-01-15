@@ -3,17 +3,18 @@ import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { EmbedComp, ImageComp } from "@/components/Media/MediaComponent";
-import { NextCard, PrevCard } from "@/components/Navigation/NextCard";
+import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer";
 import {
+  ComponentId,
   COMPONENTS,
-  getNextComponent,
-  getPreviousComponent,
 } from "@/constants/design-engineering/components";
 
+const componentId: ComponentId = "images-and-embeds";
+
 const ImageAndEmbedsPage = () => {
-  const component = COMPONENTS["images-and-embeds"];
+  const component = COMPONENTS[componentId];
   return (
     <>
       <PageMetas {...component.metas} />
@@ -25,8 +26,6 @@ const ImageAndEmbedsPage = () => {
 };
 
 const ImageAndEmbedsContent = () => {
-  const nextComponent = getNextComponent("images-and-embeds");
-  const prevComponent = getPreviousComponent("images-and-embeds");
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const [render, setRender] = useState(0);
@@ -218,22 +217,7 @@ const ImageAndEmbedsContent = () => {
             },
           }}
         />
-        <div
-          style={{
-            display: "flex",
-            gap: 24,
-            width: "100%",
-            flexWrap: "wrap",
-            marginTop: "2em",
-          }}
-        >
-          <PrevCard href={prevComponent.metas.url}>
-            {prevComponent.shortTitle}
-          </PrevCard>
-          <NextCard href={nextComponent.metas.url}>
-            {nextComponent.shortTitle}
-          </NextCard>
-        </div>
+        <PrevNextNavigation currentComponentId={componentId} />
       </div>
     </>
   );

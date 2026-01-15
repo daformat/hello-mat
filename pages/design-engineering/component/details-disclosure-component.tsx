@@ -3,17 +3,18 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { DetailsComponent } from "@/components/Details/DetailsComponent";
-import { NextCard, PrevCard } from "@/components/Navigation/NextCard";
+import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer";
 import {
+  ComponentId,
   COMPONENTS,
-  getNextComponent,
-  getPreviousComponent,
 } from "@/constants/design-engineering/components";
 
+const componentId: ComponentId = "details";
+
 const DetailsDisclosureComponent = () => {
-  const component = COMPONENTS.details;
+  const component = COMPONENTS[componentId];
   return (
     <>
       <PageMetas {...component.metas} />
@@ -25,8 +26,6 @@ const DetailsDisclosureComponent = () => {
 };
 
 const DetailsPageContent = () => {
-  const nextComponent = getNextComponent("details");
-  const prevComponent = getPreviousComponent("details");
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const [slow, setSlow] = useState(false);
@@ -211,22 +210,7 @@ const DetailsPageContent = () => {
           <li>The component should be accessible to mouse users</li>
           <li>The component should be accessible to touch users</li>
         </ul>
-        <div
-          style={{
-            display: "flex",
-            gap: 24,
-            width: "100%",
-            flexWrap: "wrap",
-            marginTop: "2em",
-          }}
-        >
-          <PrevCard href={prevComponent.metas.url}>
-            {prevComponent.shortTitle}
-          </PrevCard>
-          <NextCard href={nextComponent.metas.url}>
-            {nextComponent.shortTitle}
-          </NextCard>
-        </div>
+        <PrevNextNavigation currentComponentId={componentId} />
       </div>
     </>
   );

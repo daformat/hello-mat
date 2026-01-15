@@ -1,18 +1,19 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-import { NextCard, PrevCard } from "@/components/Navigation/NextCard";
+import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { PublishSplitButton } from "@/components/PublishButton/PublishButton";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import {
+  ComponentId,
   COMPONENTS,
-  getNextComponent,
-  getPreviousComponent,
 } from "@/constants/design-engineering/components";
 
+const componentId: ComponentId = "publish-button";
+
 const PublishButtonPage = () => {
-  const component = COMPONENTS["publish-button"];
+  const component = COMPONENTS[componentId];
   return (
     <>
       <PageMetas {...component.metas} />
@@ -24,8 +25,6 @@ const PublishButtonPage = () => {
 };
 
 const PublishButtonPageContent = () => {
-  const nextComponent = getNextComponent("publish-button");
-  const prevComponent = getPreviousComponent("publish-button");
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const [slow, setSlow] = useState(false);
@@ -109,22 +108,7 @@ const PublishButtonPageContent = () => {
             </button>
           </div>
         </div>
-        <div
-          style={{
-            display: "flex",
-            gap: 24,
-            width: "100%",
-            flexWrap: "wrap",
-            marginTop: "2em",
-          }}
-        >
-          <PrevCard href={prevComponent.metas.url}>
-            {prevComponent.shortTitle}
-          </PrevCard>
-          <NextCard href={nextComponent.metas.url}>
-            {nextComponent.shortTitle}
-          </NextCard>
-        </div>
+        <PrevNextNavigation currentComponentId={componentId} />
       </div>
     </>
   );

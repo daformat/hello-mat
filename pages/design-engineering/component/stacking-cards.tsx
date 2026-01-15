@@ -1,19 +1,20 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 
-import { NextCard, PrevCard } from "@/components/Navigation/NextCard";
+import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { RollingStackedCards } from "@/components/RollingStackedCards/RollingStackedCards";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer";
 import {
+  ComponentId,
   COMPONENTS,
-  getNextComponent,
-  getPreviousComponent,
 } from "@/constants/design-engineering/components";
 
+const componentId: ComponentId = "stacking-cards";
+
 const StackingCardsPage = () => {
-  const component = COMPONENTS["stacking-cards"];
+  const component = COMPONENTS[componentId];
   return (
     <>
       <PageMetas {...component.metas} />
@@ -25,8 +26,6 @@ const StackingCardsPage = () => {
 };
 
 const StackingCardsPageContent = () => {
-  const nextComponent = getNextComponent("stacking-cards");
-  const prevComponent = getPreviousComponent("stacking-cards");
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -190,22 +189,7 @@ const StackingCardsPageContent = () => {
           the effect you’re aiming for, and deal with browsers quirks, because
           life as a web engineer wouldn’t be fun without them.
         </p>
-        <div
-          style={{
-            display: "flex",
-            gap: 24,
-            width: "100%",
-            flexWrap: "wrap",
-            marginTop: "2em",
-          }}
-        >
-          <PrevCard href={prevComponent.metas.url}>
-            {prevComponent.shortTitle}
-          </PrevCard>
-          <NextCard href={nextComponent.metas.url}>
-            {nextComponent.shortTitle}
-          </NextCard>
-        </div>
+        <PrevNextNavigation currentComponentId={componentId} />
       </div>
     </>
   );

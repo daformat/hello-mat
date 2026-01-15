@@ -9,19 +9,20 @@ import {
 } from "react";
 
 import { MaybeUndefined } from "@/components/Media/utils/maybe";
-import { NextCard, PrevCard } from "@/components/Navigation/NextCard";
+import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { SplitFlapDisplay } from "@/components/SplitFlapDisplay/SplitFlapDisplay";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
 import {
+  ComponentId,
   COMPONENTS,
-  getNextComponent,
-  getPreviousComponent,
 } from "@/constants/design-engineering/components";
 
+const componentId: ComponentId = "split-flap-display";
+
 const SplitFlapDisplayPage = () => {
-  const component = COMPONENTS["split-flap-display"] ?? {};
+  const component = COMPONENTS[componentId];
   return (
     <>
       <PageMetas {...component.metas} />
@@ -63,8 +64,6 @@ const formatTime = (date: Date) => {
 };
 
 const SplitFlapDisplayPageContent = () => {
-  const nextComponent = getNextComponent("split-flap-display");
-  const prevComponent = getPreviousComponent("split-flap-display");
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const [time, setTime] = useState(() => new Date());
@@ -82,7 +81,7 @@ const SplitFlapDisplayPageContent = () => {
     setTime((time) => new Date(time.getTime() + 1000));
   }, []);
 
-  const incrementTime2 = useCallback(() => {
+  const _incrementTime2 = useCallback(() => {
     setTime((time) => new Date(time.getTime() + 1000 * 60 * 15));
   }, []);
 
@@ -94,7 +93,7 @@ const SplitFlapDisplayPageContent = () => {
       (message) =>
         messages[(messages.indexOf(message) + 1) % messages.length] ?? message
     );
-  }, [messages]);
+  }, []);
 
   useEffect(() => {
     if (clockRunning) {
@@ -447,22 +446,7 @@ const SplitFlapDisplayPageContent = () => {
           recreating the full barrel effect as an exercise. I hope you enjoyed
           the demos. Stay tuned.
         </p>
-        <div
-          style={{
-            display: "flex",
-            gap: 24,
-            width: "100%",
-            flexWrap: "wrap",
-            marginTop: "2em",
-          }}
-        >
-          <PrevCard href={prevComponent.metas.url}>
-            {prevComponent.shortTitle}
-          </PrevCard>
-          <NextCard href={nextComponent.metas.url}>
-            {nextComponent.shortTitle}
-          </NextCard>
-        </div>
+        <PrevNextNavigation currentComponentId={componentId} />
       </div>
     </>
   );

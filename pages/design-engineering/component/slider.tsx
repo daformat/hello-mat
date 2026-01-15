@@ -3,15 +3,14 @@ import Link from "next/link";
 import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { codeToHtml } from "shiki";
 
-import { NextCard, PrevCard } from "@/components/Navigation/NextCard";
+import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { Slider, SliderValue } from "@/components/Slider/Slider";
 import StyledSlider from "@/components/Slider/StyledSlider.module.scss";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import {
+  ComponentId,
   COMPONENTS,
-  getNextComponent,
-  getPreviousComponent,
 } from "@/constants/design-engineering/components";
 
 interface CodeBlocks {
@@ -45,8 +44,10 @@ export const getStaticProps: GetStaticProps<CodeBlocks> = async () => {
   };
 };
 
+const componentId: ComponentId = "slider";
+
 const SliderPage = (props: CodeBlocks) => {
-  const component = COMPONENTS["slider"] ?? {};
+  const component = COMPONENTS[componentId];
   return (
     <>
       <PageMetas {...component.metas} />
@@ -58,8 +59,6 @@ const SliderPage = (props: CodeBlocks) => {
 };
 
 const SliderPageContent = (props: CodeBlocks) => {
-  const nextComponent = getNextComponent("slider");
-  const prevComponent = getPreviousComponent("slider");
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const [values1, setValues1] = useState<SliderValue[]>([
@@ -98,7 +97,7 @@ const SliderPageContent = (props: CodeBlocks) => {
           Back to gallery
         </Link>
         <h1 id="design-engineering-a-swipeable-cards-carousel">
-          Design engineering: a slider component
+          Design engineering: a composable headless slider component
         </h1>
         <p>
           This started out as an exercise, and out of a frustration that both{" "}
@@ -455,22 +454,7 @@ const SliderPageContent = (props: CodeBlocks) => {
           building reusable ui components. And it’s just so damn fun to see the
           value react to the drag velocity. Stay tuned!
         </p>
-        <div
-          style={{
-            display: "flex",
-            gap: 24,
-            width: "100%",
-            flexWrap: "wrap",
-            marginTop: "2em",
-          }}
-        >
-          <PrevCard href={prevComponent.metas.url}>
-            {prevComponent.shortTitle}
-          </PrevCard>
-          <NextCard href={nextComponent.metas.url}>
-            {nextComponent.shortTitle}
-          </NextCard>
-        </div>
+        <PrevNextNavigation currentComponentId={componentId} />
       </div>
     </>
   );

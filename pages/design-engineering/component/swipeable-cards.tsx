@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { FaCheck, FaXmark } from "react-icons/fa6";
 import { PiStarBold } from "react-icons/pi";
 
-import { NextCard, PrevCard } from "@/components/Navigation/NextCard";
+import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import {
   DiscardStyle,
@@ -13,14 +13,15 @@ import {
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
 import {
+  ComponentId,
   COMPONENTS,
-  getNextComponent,
-  getPreviousComponent,
 } from "@/constants/design-engineering/components";
 import { useCssSizeVariables } from "@/hooks/useCssSizeVariables";
 
+const componentId: ComponentId = "swipeable-cards";
+
 const SwipeableCardsPage = () => {
-  const component = COMPONENTS["swipeable-cards"];
+  const component = COMPONENTS[componentId];
   return (
     <>
       <PageMetas {...component.metas} />
@@ -32,12 +33,10 @@ const SwipeableCardsPage = () => {
 };
 
 const SwipeableCardsPageContent = () => {
-  const nextComponent = getNextComponent("swipeable-cards");
-  const prevComponent = getPreviousComponent("swipeable-cards");
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const demoRef = useRef<HTMLDivElement>(null);
-  const [discardStyle, setDiscardStyle] = useState<DiscardStyle>("sendToBack");
+  const [discardStyle, setDiscardStyle] = useState<DiscardStyle>("fling");
   useCssSizeVariables(demoRef);
   const [_swipedCards, setSwipedCards] = useState<
     Record<SwipeDirection, string[]>
@@ -234,22 +233,7 @@ const SwipeableCardsPageContent = () => {
           satisfying in using this interaction, and I think Tinder made it their
           landmark for a reason.
         </p>
-        <div
-          style={{
-            display: "flex",
-            gap: 24,
-            width: "100%",
-            flexWrap: "wrap",
-            marginTop: "2em",
-          }}
-        >
-          <PrevCard href={prevComponent.metas.url}>
-            {prevComponent.shortTitle}
-          </PrevCard>
-          <NextCard href={nextComponent.metas.url}>
-            {nextComponent.shortTitle}
-          </NextCard>
-        </div>
+        <PrevNextNavigation currentComponentId={componentId} />
       </div>
     </>
   );

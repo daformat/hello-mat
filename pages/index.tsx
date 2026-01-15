@@ -8,6 +8,7 @@ const Homepage = () => {
   return (
     <>
       <PageMetas
+        shortTitle="Hello Mat"
         title="Hello Mat - Design engineering"
         description="Crafting the web. Portfolio of Mathieu Jouhet, design engineer."
         url="https://hello-mat.com"

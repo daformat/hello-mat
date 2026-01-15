@@ -4,18 +4,19 @@ import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 
 import { Carousel } from "@/components/Carousel/Carousel";
 import styles from "@/components/Carousel/Carousel.module.scss";
-import { NextCard, PrevCard } from "@/components/Navigation/NextCard";
+import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import {
+  ComponentId,
   COMPONENTS,
-  getNextComponent,
-  getPreviousComponent,
 } from "@/constants/design-engineering/components";
 import { useCssSizeVariables } from "@/hooks/useCssSizeVariables";
 
+const componentId: ComponentId = "carousel-component";
+
 const CarouselComponentPage = () => {
-  const component = COMPONENTS["carousel-component"];
+  const component = COMPONENTS[componentId];
   return (
     <>
       <PageMetas {...component.metas} />
@@ -27,8 +28,6 @@ const CarouselComponentPage = () => {
 };
 
 const CarouselComponentPageContent = () => {
-  const nextComponent = getNextComponent("carousel-component");
-  const prevComponent = getPreviousComponent("carousel-component");
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(0.7);
@@ -377,22 +376,7 @@ const CarouselComponentPageContent = () => {
           to enable infinite scrolling at some point, but for now, this is a
           good start.
         </p>
-        <div
-          style={{
-            display: "flex",
-            gap: 24,
-            width: "100%",
-            flexWrap: "wrap",
-            marginTop: "2em",
-          }}
-        >
-          <PrevCard href={prevComponent.metas.url}>
-            {prevComponent.shortTitle}
-          </PrevCard>
-          <NextCard href={nextComponent.metas.url}>
-            {nextComponent.shortTitle}
-          </NextCard>
-        </div>
+        <PrevNextNavigation currentComponentId={componentId} />
       </div>
     </>
   );

@@ -11,6 +11,7 @@ import {
 const DesignEngineeringIndex = () => (
   <>
     <PageMetas
+      shortTitle="Design engineering gallery"
       title="Hello Mat - Design engineering portfolio"
       description="Design engineering portfolio of Mathieu Jouhet, explore real components, explorations, and more"
       url="https://hello-mat.com/design-engineering"
@@ -54,7 +55,7 @@ const DesignEngineeringIndex = () => (
                 sources={component.video}
                 autoPlaysWhenVisible
               />
-              {component.shortTitle}
+              {component.metas.shortTitle}
             </Link>
           );
         })}

@@ -3,14 +3,13 @@ import Link from "next/link";
 import { CSSProperties, useEffect, useRef } from "react";
 import { codeToHtml } from "shiki";
 
-import { NextCard, PrevCard } from "@/components/Navigation/NextCard";
+import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { TiltingTile } from "@/components/TiltingTile/TiltingTile";
 import {
+  ComponentId,
   COMPONENTS,
-  getNextComponent,
-  getPreviousComponent,
 } from "@/constants/design-engineering/components";
 
 interface CodeBlocks {
@@ -108,21 +107,21 @@ useEffect(() => {
   };
 };
 
-const SliderPage = (props: CodeBlocks) => {
-  const component = COMPONENTS["tilting-tile"] ?? {};
+const componentId: ComponentId = "tilting-tile";
+
+const TiltingTilePage = (props: CodeBlocks) => {
+  const component = COMPONENTS[componentId] ?? {};
   return (
     <>
       <PageMetas {...component.metas} />
       <TableOfContents.Provider>
-        <SliderPageContent {...props} />
+        <TiltingTilePageContent {...props} />
       </TableOfContents.Provider>
     </>
   );
 };
 
-const SliderPageContent = (props: CodeBlocks) => {
-  const nextComponent = getNextComponent("tilting-tile");
-  const prevComponent = getPreviousComponent("tilting-tile");
+const TiltingTilePageContent = (props: CodeBlocks) => {
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -189,6 +188,7 @@ const SliderPageContent = (props: CodeBlocks) => {
                 {
                   img: (
                     <img
+                      alt=""
                       width={698 / 2}
                       height={991 / 2}
                       src={
@@ -202,6 +202,7 @@ const SliderPageContent = (props: CodeBlocks) => {
                 {
                   img: (
                     <img
+                      alt=""
                       width={698 / 2}
                       height={991 / 2}
                       src={
@@ -224,6 +225,7 @@ const SliderPageContent = (props: CodeBlocks) => {
                 {
                   img: (
                     <img
+                      alt=""
                       width={698 / 2}
                       height={991 / 2}
                       src={
@@ -249,6 +251,7 @@ const SliderPageContent = (props: CodeBlocks) => {
                 {
                   img: (
                     <img
+                      alt=""
                       width={698 / 2}
                       height={991 / 2}
                       src={
@@ -262,6 +265,7 @@ const SliderPageContent = (props: CodeBlocks) => {
                 {
                   img: (
                     <img
+                      alt=""
                       width={698 / 2}
                       height={991 / 2}
                       src={
@@ -284,6 +288,7 @@ const SliderPageContent = (props: CodeBlocks) => {
                 {
                   img: (
                     <img
+                      alt=""
                       width={698 / 2}
                       height={991 / 2}
                       src={
@@ -310,6 +315,7 @@ const SliderPageContent = (props: CodeBlocks) => {
                 {
                   img: (
                     <img
+                      alt=""
                       width={698 / 2}
                       height={991 / 2}
                       src={
@@ -323,6 +329,7 @@ const SliderPageContent = (props: CodeBlocks) => {
                 {
                   img: (
                     <img
+                      alt=""
                       width={698 / 2}
                       height={991 / 2}
                       src={
@@ -345,6 +352,7 @@ const SliderPageContent = (props: CodeBlocks) => {
                 {
                   img: (
                     <img
+                      alt=""
                       width={698 / 2}
                       height={991 / 2}
                       src={
@@ -398,25 +406,10 @@ const SliderPageContent = (props: CodeBlocks) => {
           I can understand since this needs crating layered assets manually.
           Stay tuned
         </p>
-        <div
-          style={{
-            display: "flex",
-            gap: 24,
-            width: "100%",
-            flexWrap: "wrap",
-            marginTop: "2em",
-          }}
-        >
-          <PrevCard href={prevComponent.metas.url}>
-            {prevComponent.shortTitle}
-          </PrevCard>
-          <NextCard href={nextComponent.metas.url}>
-            {nextComponent.shortTitle}
-          </NextCard>
-        </div>
+        <PrevNextNavigation currentComponentId={componentId} />
       </div>
     </>
   );
 };
 
-export default SliderPage;
+export default TiltingTilePage;

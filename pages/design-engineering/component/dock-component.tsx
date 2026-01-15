@@ -9,16 +9,17 @@ import {
   BeamIconNightly,
 } from "@/components/Dock/BeamIcon";
 import { Dock, DockItem } from "@/components/Dock/Dock";
-import { NextCard, PrevCard } from "@/components/Navigation/NextCard";
+import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import {
+  ComponentId,
   COMPONENTS,
-  getNextComponent,
-  getPreviousComponent,
 } from "@/constants/design-engineering/components";
 
+const componentId: ComponentId = "dock-component";
+
 const DockComponentPage = () => {
-  const component = COMPONENTS["dock-component"];
+  const component = COMPONENTS[componentId];
   return (
     <>
       <PageMetas {...component.metas} />
@@ -30,8 +31,6 @@ const DockComponentPage = () => {
 };
 
 const DockComponentPageContent = () => {
-  const nextComponent = getNextComponent("dock-component");
-  const prevComponent = getPreviousComponent("dock-component");
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -80,22 +79,7 @@ const DockComponentPageContent = () => {
             <DockItem icon={<BeamIconBeta />} name="beam beta" />
           </Dock>
         </div>
-        <div
-          style={{
-            display: "flex",
-            gap: 24,
-            width: "100%",
-            flexWrap: "wrap",
-            marginTop: "2em",
-          }}
-        >
-          <PrevCard href={prevComponent.metas.url}>
-            {prevComponent.shortTitle}
-          </PrevCard>
-          <NextCard href={nextComponent.metas.url}>
-            {nextComponent.shortTitle}
-          </NextCard>
-        </div>
+        <PrevNextNavigation currentComponentId={componentId} />
       </div>
     </>
   );

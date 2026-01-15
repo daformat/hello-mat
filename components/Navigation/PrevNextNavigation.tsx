@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { ComponentProps } from "react";
 
+import {
+  ComponentId,
+  getNextComponent,
+  getPreviousComponent,
+} from "@/constants/design-engineering/components";
+
 import styles from "./NextCard.module.scss";
 
-export const NextCard = ({
+const NextCard = ({
   className,
   children,
   ...props
@@ -20,7 +26,7 @@ export const NextCard = ({
   </Link>
 );
 
-export const PrevCard = ({
+const PrevCard = ({
   className,
   children,
   ...props
@@ -38,3 +44,31 @@ export const PrevCard = ({
     </span>
   </Link>
 );
+
+export const PrevNextNavigation = ({
+  currentComponentId,
+}: {
+  currentComponentId: ComponentId;
+}) => {
+  const nextComponent = getNextComponent(currentComponentId);
+  const prevComponent = getPreviousComponent(currentComponentId);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: 24,
+        width: "100%",
+        flexWrap: "wrap",
+        marginTop: "2em",
+      }}
+    >
+      <PrevCard href={prevComponent.metas.url}>
+        {prevComponent.metas.shortTitle}
+      </PrevCard>
+      <NextCard href={nextComponent.metas.url}>
+        {nextComponent.metas.shortTitle}
+      </NextCard>
+    </div>
+  );
+};

@@ -150,6 +150,7 @@
 
   @supports (corner-shape: superellipse(1)) {
     border-radius: calc(var(--border-radius) * 1.6);
+    // stylelint-disable-next-line property-no-unknown
     corner-shape: superellipse(1.6);
   }
 }

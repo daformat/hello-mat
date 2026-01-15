@@ -1,8 +1,9 @@
-import { NextSeo } from "next-seo";
+import { BreadcrumbJsonLd, NextSeo } from "next-seo";
 import { OpenGraph } from "next-seo/lib/types";
 
 export type PageMetasBaseProps = {
   title: string;
+  shortTitle: string;
   description: string;
   url: string;
 };
@@ -39,6 +40,7 @@ export type PageMetasProps = PageMetasBaseProps &
 
 export const PageMetas = ({
   title,
+  shortTitle,
   description,
   url,
   image,
@@ -73,13 +75,29 @@ export const PageMetas = ({
     ];
   }
   return (
-    <NextSeo
-      title={title}
-      description={description}
-      canonical={getAbsoluteUrl(url)}
-      openGraph={openGraph}
-      twitter={{ handle: "@daformat", cardType: "summary_large_image" }}
-    />
+    <>
+      <NextSeo
+        title={title}
+        description={description}
+        canonical={getAbsoluteUrl(url)}
+        openGraph={openGraph}
+        twitter={{ handle: "@daformat", cardType: "summary_large_image" }}
+      />
+      <BreadcrumbJsonLd
+        itemListElements={[
+          {
+            position: 1,
+            name: "Design engineering gallery",
+            item: getAbsoluteUrl("/design-engineering"),
+          },
+          {
+            position: 2,
+            name: shortTitle,
+            item: getAbsoluteUrl(url),
+          },
+        ]}
+      />
+    </>
   );
 };
 
