@@ -188,6 +188,10 @@ export const NumberFlowInput = ({
     return { decimal: ".", group: "," };
   }, [locale, format]);
 
+  const localeSeparators: Separators = useMemo(() => {
+    return getLocaleSeparators(locale);
+  }, [locale]);
+
   // Format options for the formatValue function
   const formatOptions = useMemo(
     () => ({ locale, format, autoAddLeadingZero, separators }),
@@ -3286,7 +3290,7 @@ export const NumberFlowInput = ({
             if (!char) {
               return false;
             }
-            return !/[\d.\-]/.test(char);
+            return new RegExp(`[^\\d.${localeSeparators.decimal}-]`).test(char);
           };
 
           // Get current cursor position in formatted text
@@ -3626,7 +3630,7 @@ export const NumberFlowInput = ({
       event.preventDefault();
 
       // Handle decimal point input - accept both '.' and locale decimal separator
-      const { decimal } = separators;
+      const { decimal } = localeSeparators;
       if (key === "." || key === decimal) {
         // Only allow one decimal point (internally stored as '.')
         if (!currentText.includes(".")) {
@@ -3668,12 +3672,12 @@ export const NumberFlowInput = ({
       displayValue,
       formattedDisplayValue,
       mapFormattedToRawIndex,
-      updateValue,
+      localeSeparators,
       removeBarrelWheelsAtIndices,
-      applyHistoryItem,
+      updateValue,
       applyHistoryItemWithCursor,
+      applyHistoryItem,
       maxLength,
-      separators,
     ]
   );
 
@@ -3788,7 +3792,7 @@ export const NumberFlowInput = ({
       let pastedText = event.clipboardData.getData("text");
 
       // Convert locale decimal separator to '.' for internal storage
-      const { decimal } = separators;
+      const { decimal } = localeSeparators;
       if (decimal !== ".") {
         // Replace locale decimal with '.' and also accept '.' as-is
         pastedText = pastedText.replace(new RegExp(`\\${decimal}`, "g"), ".");
@@ -3843,12 +3847,12 @@ export const NumberFlowInput = ({
       }
     },
     [
+      localeSeparators,
+      mapFormattedToRawIndex,
       displayValue,
       formattedDisplayValue,
-      mapFormattedToRawIndex,
-      updateValue,
       maxLength,
-      separators,
+      updateValue,
     ]
   );
 
