@@ -34,6 +34,7 @@
 
   overflow: scroll;
   -ms-overflow-style: none; /* Internet Explorer 10+ */
+  overscroll-behavior-x: contain;
   position: relative;
   scroll-snap-type: x mandatory;
   scrollbar-color: transparent transparent;

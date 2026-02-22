@@ -192,6 +192,14 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
     setScrollsForwards,
   ]);
 
+  const handlePreventScroll = useCallback((event: WheelEvent) => {
+    if (scrollStateRef.current.isDragging) {
+      event.preventDefault();
+    } else {
+      scrollStateRef.current.velocityX = 0;
+    }
+  }, []);
+
   useLayoutEffect(() => {
     const container = containerRef.current;
     if (container) {
@@ -204,14 +212,18 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
         subtree: true,
       });
       container.addEventListener("scroll", updateScrollState);
+      container.addEventListener("wheel", handlePreventScroll, {
+        passive: false,
+      });
       updateScrollState();
       return () => {
         resizeObserver.disconnect();
         mutationObserver.disconnect();
         container.removeEventListener("scroll", updateScrollState);
+        container.removeEventListener("wheel", handlePreventScroll);
       };
     }
-  }, [updateScrollState]);
+  }, [handlePreventScroll, updateScrollState]);
 
   const handlePointerDown = (event: React.PointerEvent) => {
     if (event.pointerType !== "mouse") {
@@ -226,15 +238,21 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
     }
 
     const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+
+    // set to hidden to prevent momentum scrolling from the wheel when dragging
+    container.style.overflowX = "hidden";
     state.isDragging = true;
     state.startX = event.clientX;
     state.lastX = event.clientX;
-    state.scrollLeft = container?.scrollLeft ?? 0;
+    state.scrollLeft = container.scrollLeft ?? 0;
     state.lastTime = Date.now();
     state.velocityX = 0;
     state.initialTarget = event.target;
     state.initialPointerPosition = { x: event.clientX, y: event.clientY };
-    state.initialMouseScrollLeft = container?.scrollLeft ?? 0;
+    state.initialMouseScrollLeft = container.scrollLeft ?? 0;
     event.preventDefault();
   };
 
@@ -313,7 +331,8 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
       : 0;
     const friction = 0.05 + Math.abs(rubberBandingFactor);
     let decelerationFactor = 1 - friction;
-    const minVelocity = 0.01;
+    const minVelocity = 0.05;
+    const minVelocityForSnapping = 0.5;
 
     const x = Math.abs(
       Math.log(minVelocity / Math.abs(state.velocityX)) /
@@ -333,7 +352,8 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
     );
     if (
       tFinalScroll < container.scrollWidth - container.offsetWidth &&
-      tFinalScroll > 0
+      tFinalScroll > 0 &&
+      Math.abs(state.velocityX) > minVelocityForSnapping
     ) {
       container.scrollLeft = tFinalScroll;
       container.style.scrollSnapType = "";
@@ -415,6 +435,7 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
       if (!state.isDragging || !container) {
         return;
       }
+      container.style.overflowX = "";
       // dispatch click if needed (we prevented it on pointer down)
       if (
         state.initialPointerPosition &&
