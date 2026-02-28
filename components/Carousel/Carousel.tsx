@@ -42,6 +42,8 @@ const CarouselContext = createContext<{
   scrollsForwards: boolean;
   setScrollsBackwards: (scrollsBackwards: boolean) => void;
   setScrollsForwards: (scrollsForwards: boolean) => void;
+  handleScrollToNext: () => void;
+  handleScrollToPrev: () => void;
   remainingForwards?: number;
   remainingBackwards?: number;
   setRemainingForwards: (remainingForwards: number) => void;
@@ -61,8 +63,18 @@ const CarouselContext = createContext<{
   setRemainingForwards: () => {},
   setRemainingBackwards: () => {},
   setScrollStateRef: () => {},
+  handleScrollToNext: () => {},
+  handleScrollToPrev: () => {},
   rootRef: { current: null },
 });
+
+const useCarouselContext = () => {
+  const context = useContext(CarouselContext);
+  if (!context) {
+    throw new Error("useCarouselContext must be used within Carousel.Root");
+  }
+  return context;
+};
 
 const CarouselRoot = ({
   boundaryOffset,
@@ -87,6 +99,67 @@ const CarouselRoot = ({
     useState<MaybeUndefined<RefObject<ScrollState>>>(undefined);
   const rootRef = useRef<HTMLDivElement>(null);
 
+  // Scrolls the container to next slide until hitting max
+  const handleScrollToNext = useCallback(() => {
+    cancelAnimationFrame(scrollStateRef?.current?.animationId ?? 0);
+    const container = ref?.current;
+    const root = rootRef?.current;
+    if (root && container && container.scrollLeft < container.scrollWidth) {
+      container.style.scrollSnapType = "";
+      const items = Array.from(
+        container.querySelectorAll("[data-carousel-item]")
+      ) as HTMLElement[];
+      const currentScroll = container.scrollLeft;
+      const containerOffsetWidth = container.offsetWidth;
+      const { x: boundaryOffsetX } = getBoundaryOffset(boundaryOffset, root);
+      const isNextItem = (item: HTMLElement) => {
+        return (
+          item.offsetLeft + item.offsetWidth >
+          Math.ceil(currentScroll + containerOffsetWidth - boundaryOffsetX)
+        );
+      };
+      const nextItem = items.find(isNextItem) ?? items[items.length - 1];
+      if (nextItem) {
+        const [_, inline] = getScrollSnapAlign(getComputedStyle(nextItem));
+        nextItem?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: ["start", "center", "end"].includes(inline ?? "")
+            ? (inline as ScrollLogicalPosition)
+            : "start",
+        });
+      }
+    }
+  }, [boundaryOffset, ref, scrollStateRef]);
+
+  // Scrolls the container to previous slide until hitting 0
+  const handleScrollToPrev = useCallback(() => {
+    cancelAnimationFrame(scrollStateRef?.current?.animationId ?? 0);
+    const container = ref?.current;
+    const root = rootRef?.current;
+    if (root && container && container.scrollLeft > 0) {
+      container.style.scrollSnapType = "";
+      const items = Array.from(
+        container.querySelectorAll("[data-carousel-item]")
+      ) as HTMLElement[];
+      const currentScroll = container.scrollLeft;
+      const { x: boundaryOffsetX } = getBoundaryOffset(boundaryOffset, root);
+      const isPrevItem = (item: HTMLElement) => {
+        return currentScroll > item.offsetLeft - boundaryOffsetX;
+      };
+      const prevItems = items.filter(isPrevItem);
+      const prevItem = prevItems[prevItems.length - 1] ?? items[0];
+      if (prevItem) {
+        const [_, inline] = getScrollSnapAlign(getComputedStyle(prevItem));
+        prevItem?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: inline === "center" ? "center" : "end",
+        });
+      }
+    }
+  }, [boundaryOffset, ref, scrollStateRef]);
+
   return (
     <CarouselContext.Provider
       value={{
@@ -102,6 +175,8 @@ const CarouselRoot = ({
         setRemainingBackwards,
         scrollStateRef,
         setScrollStateRef,
+        handleScrollToNext,
+        handleScrollToPrev,
         boundaryOffset,
         rootRef,
       }}
@@ -225,7 +300,7 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
     }
   }, [handlePreventScroll, updateScrollState]);
 
-  const handlePointerDown = (event: React.PointerEvent) => {
+  const handlePointerDown = useCallback((event: React.PointerEvent) => {
     if (event.pointerType !== "mouse") {
       return;
     }
@@ -254,9 +329,9 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
     state.initialPointerPosition = { x: event.clientX, y: event.clientY };
     state.initialMouseScrollLeft = container.scrollLeft ?? 0;
     event.preventDefault();
-  };
+  }, []);
 
-  const handlePointerMove = (event: React.PointerEvent) => {
+  const handlePointerMove = useCallback((event: React.PointerEvent) => {
     const container = containerRef.current;
     const state = scrollStateRef.current;
     const maxAbsoluteVelocity = 15;
@@ -315,7 +390,7 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
         state.velocityX = Math.sign(state.velocityX) * maxAbsoluteVelocity;
       }
     }
-  };
+  }, []);
 
   const startMomentumAnimation = useCallback(() => {
     const container = containerRef.current;
@@ -380,14 +455,12 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
       const newScrollLeft = container.scrollLeft;
       const scrollWidth = container.scrollWidth;
       const offsetWidth = container.offsetWidth;
-      // const maxScrollLeft = scrollWidth - offsetWidth
       const remainingForwards = scrollWidth - offsetWidth - newScrollLeft;
       const remainingBackwards = newScrollLeft;
 
       // Overscroll
       const content = container.querySelector("[data-carousel-content]");
       if (content instanceof HTMLElement) {
-        // const startScroll = state.initialMouseScrollLeft
         if (
           Math.abs(state.velocityX) > minVelocity &&
           (remainingForwards <= 1 || remainingBackwards < 1)
@@ -510,46 +583,7 @@ const CarouselItem = ({ children }: PropsWithChildren) => {
 };
 
 const CarouselNextPage = ({ children }: PropsWithChildren) => {
-  const {
-    ref: containerRef,
-    scrollsForwards,
-    scrollStateRef,
-    rootRef,
-    boundaryOffset,
-  } = useContext(CarouselContext);
-
-  // Scrolls the container to next slide until hitting max
-  const handleScrollToNext = () => {
-    cancelAnimationFrame(scrollStateRef?.current?.animationId ?? 0);
-    const container = containerRef?.current;
-    const root = rootRef?.current;
-    if (root && container && container.scrollLeft < container.scrollWidth) {
-      container.style.scrollSnapType = "";
-      const items = Array.from(
-        container.querySelectorAll("[data-carousel-item]")
-      ) as HTMLElement[];
-      const currentScroll = container.scrollLeft;
-      const containerOffsetWidth = container.offsetWidth;
-      const { x: boundaryOffsetX } = getBoundaryOffset(boundaryOffset, root);
-      const isNextItem = (item: HTMLElement) => {
-        return (
-          item.offsetLeft + item.offsetWidth >
-          Math.ceil(currentScroll + containerOffsetWidth - boundaryOffsetX)
-        );
-      };
-      const nextItem = items.find(isNextItem) ?? items[items.length - 1];
-      if (nextItem) {
-        const [_, inline] = getScrollSnapAlign(getComputedStyle(nextItem));
-        nextItem?.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-          inline: ["start", "center", "end"].includes(inline ?? "")
-            ? (inline as ScrollLogicalPosition)
-            : "start",
-        });
-      }
-    }
-  };
+  const { scrollsForwards, handleScrollToNext } = useContext(CarouselContext);
 
   return (
     <button
@@ -563,45 +597,10 @@ const CarouselNextPage = ({ children }: PropsWithChildren) => {
 };
 
 const CarouselPrevPage = ({ children }: PropsWithChildren) => {
-  const {
-    ref: containerRef,
-    scrollsBackwards,
-    scrollStateRef,
-    rootRef,
-    boundaryOffset,
-  } = useContext(CarouselContext);
-
-  // Scrolls the container to previous slide until hitting 0
-  const handleScrollToPrev = () => {
-    cancelAnimationFrame(scrollStateRef?.current?.animationId ?? 0);
-    const container = containerRef?.current;
-    const root = rootRef?.current;
-    if (root && container && container.scrollLeft > 0) {
-      container.style.scrollSnapType = "";
-      const items = Array.from(
-        container.querySelectorAll("[data-carousel-item]")
-      ) as HTMLElement[];
-      const currentScroll = container.scrollLeft;
-      const { x: boundaryOffsetX } = getBoundaryOffset(boundaryOffset, root);
-      const isPrevItem = (item: HTMLElement) => {
-        return currentScroll > item.offsetLeft - boundaryOffsetX;
-      };
-      const prevItems = items.filter(isPrevItem);
-      const prevItem = prevItems[prevItems.length - 1] ?? items[0];
-      if (prevItem) {
-        const [_, inline] = getScrollSnapAlign(getComputedStyle(prevItem));
-        prevItem?.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-          inline: inline === "center" ? "center" : "end",
-        });
-      }
-    }
-  };
+  const { scrollsBackwards, handleScrollToPrev } = useContext(CarouselContext);
 
   return (
     <button
-      // ref={ref}
       className={styles.button}
       onClick={handleScrollToPrev}
       disabled={!scrollsBackwards}
@@ -610,20 +609,6 @@ const CarouselPrevPage = ({ children }: PropsWithChildren) => {
     </button>
   );
 };
-
-// const isIOSSafari = (): boolean => {
-//   const ua = navigator.userAgent
-//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//   return /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream
-// }
-
-// const isDesktopSafari = () => {
-//   const ua = navigator.userAgent
-//   const isSafari = /^((?!chrome|android).)*safari/i.test(ua)
-//   const isDesktop = !/iPhone|iPad|iPod|Android/i.test(ua)
-//
-//   return isSafari && isDesktop
-// }
 
 const getBoundaryOffset = (
   boundaryOffset: ContextType<typeof CarouselContext>["boundaryOffset"],
@@ -728,4 +713,5 @@ export const Carousel = {
   Item: CarouselItem,
   PrevPage: CarouselPrevPage,
   NextPage: CarouselNextPage,
+  useCarouselContext,
 };

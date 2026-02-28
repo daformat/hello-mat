@@ -395,7 +395,6 @@ const getBoundaryOffset = (container: HTMLElement) => {
     document.body.appendChild(temp);
     const computed = getComputedStyle(temp);
     const result = { x: parseFloat(computed.getPropertyValue("width")), y: 0 };
-    console.log(result);
     return result;
   }
   return { x: 0, y: 0 };
