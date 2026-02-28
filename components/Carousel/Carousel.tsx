@@ -3,7 +3,6 @@ import {
   ContextType,
   createContext,
   CSSProperties,
-  PropsWithChildren,
   RefObject,
   useCallback,
   useContext,
@@ -76,18 +75,18 @@ const useCarouselContext = () => {
   return context;
 };
 
+type CarouselRootProps = {
+  boundaryOffset?:
+    | { x: number; y: number }
+    | ((root: HTMLElement) => { x: number; y: number });
+} & ComponentPropsWithoutRef<"div">;
+
 const CarouselRoot = ({
   boundaryOffset,
   children,
   className,
   ...props
-}: PropsWithChildren<
-  {
-    boundaryOffset?:
-      | { x: number; y: number }
-      | ((root: HTMLElement) => { x: number; y: number });
-  } & ComponentPropsWithoutRef<"div">
->) => {
+}: CarouselRootProps) => {
   const [ref, setRef] = useState<RefObject<MaybeNull<HTMLElement>>>({
     current: null,
   });
@@ -183,8 +182,8 @@ const CarouselRoot = ({
     >
       <div
         ref={rootRef}
-        className={[styles.carousel, className].filter(Boolean).join(" ")}
         {...props}
+        className={[styles.carousel, className].filter(Boolean).join(" ")}
       >
         {children}
       </div>
@@ -192,7 +191,18 @@ const CarouselRoot = ({
   );
 };
 
-const CarouselViewport = ({ children }: PropsWithChildren) => {
+type CarouselViewportProps = ComponentPropsWithoutRef<"div">;
+
+const CarouselViewport = ({
+  children,
+  className,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onClickCapture,
+  onWheel,
+  ...props
+}: CarouselViewportProps) => {
   const {
     setRef,
     setScrollsBackwards,
@@ -300,97 +310,107 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
     }
   }, [handlePreventScroll, updateScrollState]);
 
-  const handlePointerDown = useCallback((event: React.PointerEvent) => {
-    if (event.pointerType !== "mouse") {
-      return;
-    }
-    event.currentTarget.setPointerCapture(event.pointerId);
-
-    const state = scrollStateRef.current;
-    if (state.animationId !== null) {
-      cancelAnimationFrame(state.animationId);
-      state.animationId = null;
-    }
-
-    const container = containerRef.current;
-    if (!container) {
-      return;
-    }
-
-    // set to hidden to prevent momentum scrolling from the wheel when dragging
-    container.style.overflowX = "hidden";
-    state.isDragging = true;
-    state.startX = event.clientX;
-    state.lastX = event.clientX;
-    state.scrollLeft = container.scrollLeft ?? 0;
-    state.lastTime = Date.now();
-    state.velocityX = 0;
-    state.initialTarget = event.target;
-    state.initialPointerPosition = { x: event.clientX, y: event.clientY };
-    state.initialMouseScrollLeft = container.scrollLeft ?? 0;
-    event.preventDefault();
-  }, []);
-
-  const handlePointerMove = useCallback((event: React.PointerEvent) => {
-    const container = containerRef.current;
-    const state = scrollStateRef.current;
-    const maxAbsoluteVelocity = 15;
-    if (!state.isDragging || !container || event.pointerType !== "mouse") {
-      return;
-    }
-
-    container.style.scrollSnapType = "none";
-    const currentTime = Date.now();
-    const deltaTime = currentTime - state.lastTime;
-    const deltaX = event.clientX - state.lastX;
-    if (deltaTime > 0) {
-      state.velocityX = deltaX / deltaTime; // (pixels per millisecond)
-      if (Math.abs(state.velocityX) > maxAbsoluteVelocity) {
-        state.velocityX = Math.sign(state.velocityX) * maxAbsoluteVelocity;
+  const handlePointerDown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (event.pointerType !== "mouse") {
+        return;
       }
-    }
+      event.currentTarget.setPointerCapture(event.pointerId);
 
-    // update scroll position
-    const scrollDelta = state.startX - event.clientX;
-    const direction = Math.sign(
-      state.scrollLeft + scrollDelta - state.mouseScrollLeft
-    );
-    if (direction !== state.mouseDirection) {
-      state.mouseDirection = direction;
-      state.initialMouseScrollLeft = state.scrollLeft + scrollDelta;
-    }
-    container.scrollLeft = state.scrollLeft + scrollDelta;
-    state.mouseScrollLeft = state.scrollLeft + scrollDelta;
-    state.lastX = event.clientX;
-    state.lastTime = currentTime;
-    if (
-      container.scrollLeft <= 1 ||
-      container.scrollLeft >= container.scrollWidth - container.offsetWidth - 1
-    ) {
-      const items = container.querySelectorAll("[data-carousel-item]");
-      const maxDistance = container.offsetWidth / 3;
-      const maxScrollLeft = container.scrollWidth - container.offsetWidth;
-      const targetScrollLeft = state.scrollLeft + scrollDelta;
-      const overscroll =
-        targetScrollLeft < 0
-          ? Math.abs(targetScrollLeft)
-          : targetScrollLeft > maxScrollLeft
-          ? targetScrollLeft - maxScrollLeft
-          : 0;
-      const sign = Math.sign(scrollDelta);
-      const easedDistance = iOSRubberBand(overscroll, 0, maxDistance);
-      items.forEach((item) => {
-        if (item instanceof HTMLElement) {
-          item.style.translate = `${-sign * easedDistance}px 0`;
+      const state = scrollStateRef.current;
+      if (state.animationId !== null) {
+        cancelAnimationFrame(state.animationId);
+        state.animationId = null;
+      }
+
+      const container = containerRef.current;
+      if (!container) {
+        return;
+      }
+
+      // set to hidden to prevent momentum scrolling from the wheel when dragging
+      container.style.overflowX = "hidden";
+      state.isDragging = true;
+      state.startX = event.clientX;
+      state.lastX = event.clientX;
+      state.scrollLeft = container.scrollLeft ?? 0;
+      state.lastTime = Date.now();
+      state.velocityX = 0;
+      state.initialTarget = event.target;
+      state.initialPointerPosition = { x: event.clientX, y: event.clientY };
+      state.initialMouseScrollLeft = container.scrollLeft ?? 0;
+      event.preventDefault();
+      onPointerDown?.(event);
+    },
+    [onPointerDown]
+  );
+
+  const handlePointerMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      const container = containerRef.current;
+      const state = scrollStateRef.current;
+      const maxAbsoluteVelocity = 15;
+      if (!state.isDragging || !container || event.pointerType !== "mouse") {
+        onPointerMove?.(event);
+        return;
+      }
+
+      container.style.scrollSnapType = "none";
+      const currentTime = Date.now();
+      const deltaTime = currentTime - state.lastTime;
+      const deltaX = event.clientX - state.lastX;
+      if (deltaTime > 0) {
+        state.velocityX = deltaX / deltaTime; // (pixels per millisecond)
+        if (Math.abs(state.velocityX) > maxAbsoluteVelocity) {
+          state.velocityX = Math.sign(state.velocityX) * maxAbsoluteVelocity;
         }
-      });
-
-      state.velocityX = (-sign * easedDistance) / 20;
-      if (Math.abs(state.velocityX) > maxAbsoluteVelocity) {
-        state.velocityX = Math.sign(state.velocityX) * maxAbsoluteVelocity;
       }
-    }
-  }, []);
+
+      // update scroll position
+      const scrollDelta = state.startX - event.clientX;
+      const direction = Math.sign(
+        state.scrollLeft + scrollDelta - state.mouseScrollLeft
+      );
+      if (direction !== state.mouseDirection) {
+        state.mouseDirection = direction;
+        state.initialMouseScrollLeft = state.scrollLeft + scrollDelta;
+      }
+      container.scrollLeft = state.scrollLeft + scrollDelta;
+      state.mouseScrollLeft = state.scrollLeft + scrollDelta;
+      state.lastX = event.clientX;
+      state.lastTime = currentTime;
+      if (
+        container.scrollLeft <= 1 ||
+        container.scrollLeft >=
+          container.scrollWidth - container.offsetWidth - 1
+      ) {
+        const items = container.querySelectorAll("[data-carousel-item]");
+        const maxDistance = container.offsetWidth / 3;
+        const maxScrollLeft = container.scrollWidth - container.offsetWidth;
+        const targetScrollLeft = state.scrollLeft + scrollDelta;
+        const overscroll =
+          targetScrollLeft < 0
+            ? Math.abs(targetScrollLeft)
+            : targetScrollLeft > maxScrollLeft
+            ? targetScrollLeft - maxScrollLeft
+            : 0;
+        const sign = Math.sign(scrollDelta);
+        const easedDistance = iOSRubberBand(overscroll, 0, maxDistance);
+        items.forEach((item) => {
+          if (item instanceof HTMLElement) {
+            item.style.translate = `${-sign * easedDistance}px 0`;
+          }
+        });
+
+        state.velocityX = (-sign * easedDistance) / 20;
+        if (Math.abs(state.velocityX) > maxAbsoluteVelocity) {
+          state.velocityX = Math.sign(state.velocityX) * maxAbsoluteVelocity;
+        }
+      }
+      onPointerMove?.(event);
+    },
+    [onPointerMove]
+  );
 
   const startMomentumAnimation = useCallback(() => {
     const container = containerRef.current;
@@ -496,7 +516,7 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
   }, []);
 
   const handlePointerUp = useCallback(
-    (event: React.PointerEvent | PointerEvent) => {
+    (event: React.PointerEvent<HTMLDivElement> | PointerEvent) => {
       if (event.pointerType !== "mouse") {
         return;
       }
@@ -525,8 +545,12 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
       state.initialPointerPosition = null;
       state.isDragging = false;
       startMomentumAnimation();
+      if (event instanceof PointerEvent) {
+        return;
+      }
+      onPointerUp?.(event);
     },
-    [startMomentumAnimation]
+    [onPointerUp, startMomentumAnimation]
   );
 
   useEffect(() => {
@@ -539,16 +563,21 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
   return (
     <div
       ref={containerRef}
-      className={styles.carousel_viewport}
+      {...props}
+      className={[styles.carousel_viewport, className]
+        .filter(Boolean)
+        .join(" ")}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onClickCapture={(event) => {
         event.preventDefault();
         event.stopPropagation();
+        onClickCapture?.(event);
       }}
       onWheel={(event) => {
         event.currentTarget.style.scrollSnapType = "";
+        onWheel?.(event);
       }}
       data-carousel-viewport={""}
       data-can-scroll={
@@ -566,44 +595,84 @@ const CarouselViewport = ({ children }: PropsWithChildren) => {
   );
 };
 
-const CarouselContent = ({ children }: PropsWithChildren) => {
+type CarouselContentProps = ComponentPropsWithoutRef<"div">;
+
+const CarouselContent = ({
+  children,
+  className,
+  ...props
+}: CarouselContentProps) => {
   return (
-    <div data-carousel-content className={styles.carousel_content}>
+    <div
+      {...props}
+      data-carousel-content
+      className={[styles.carousel_content, className].filter(Boolean).join(" ")}
+    >
       {children}
     </div>
   );
 };
 
-const CarouselItem = ({ children }: PropsWithChildren) => {
+type CarouselItemProps = ComponentPropsWithoutRef<"div">;
+
+const CarouselItem = ({ children, className, ...props }: CarouselItemProps) => {
   return (
-    <div data-carousel-item className={styles.carousel_item}>
+    <div
+      {...props}
+      data-carousel-item
+      className={[styles.carousel_item, className].filter(Boolean).join(" ")}
+    >
       {children}
     </div>
   );
 };
 
-const CarouselNextPage = ({ children }: PropsWithChildren) => {
+type CarouselNextPageProps = ComponentPropsWithoutRef<"button">;
+
+const CarouselNextPage = ({
+  children,
+  className,
+  onClick,
+  disabled,
+  ...props
+}: CarouselNextPageProps) => {
   const { scrollsForwards, handleScrollToNext } = useContext(CarouselContext);
 
   return (
     <button
-      className={styles.button}
-      onClick={handleScrollToNext}
-      disabled={!scrollsForwards}
+      {...props}
+      className={[styles.button, className].filter(Boolean).join(" ")}
+      onClick={(event) => {
+        handleScrollToNext();
+        onClick?.(event);
+      }}
+      disabled={disabled ?? !scrollsForwards}
     >
       {children}
     </button>
   );
 };
 
-const CarouselPrevPage = ({ children }: PropsWithChildren) => {
+type CarouselPrevPageProps = ComponentPropsWithoutRef<"button">;
+
+const CarouselPrevPage = ({
+  children,
+  className,
+  onClick,
+  disabled,
+  ...props
+}: CarouselPrevPageProps) => {
   const { scrollsBackwards, handleScrollToPrev } = useContext(CarouselContext);
 
   return (
     <button
-      className={styles.button}
-      onClick={handleScrollToPrev}
-      disabled={!scrollsBackwards}
+      {...props}
+      className={[styles.button, className].filter(Boolean).join(" ")}
+      onClick={(event) => {
+        handleScrollToPrev();
+        onClick?.(event);
+      }}
+      disabled={disabled ?? !scrollsBackwards}
     >
       {children}
     </button>
