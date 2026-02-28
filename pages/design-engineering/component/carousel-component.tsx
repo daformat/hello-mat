@@ -52,8 +52,8 @@ const CarouselComponentPageContent = () => {
         </h1>
         <p>
           A scrollable, and swipeable carousel, even on desktop (complete with
-          snapping, friction and overscroll). Inspired by a&nbsp;component made
-          at{" "}
+          snapping, friction, rubber-banding and overscroll). Inspired by
+          a&nbsp;component made at{" "}
           <a href="https://finary.com" target="_blank" rel="noopener">
             Finary
           </a>
@@ -74,9 +74,9 @@ const CarouselComponentPageContent = () => {
               style={
                 {
                   "--margin-inline": "-12px",
-                  "--m-offset-b":
+                  "--carousel-fade-offset-backwards":
                     "min(var(--remaining-backwards, 0px) + var(--margin-inline), var(--margin-inline) * -1)",
-                  "--m-offset-f":
+                  "--carousel-fade-offset-forwards":
                     "min(var(--remaining-forwards, 0px) + var(--margin-inline), var(--margin-inline) * -1)",
                   marginInline: "var(--margin-inline)",
                 } as CSSProperties
@@ -401,12 +401,12 @@ const getBoundaryOffset = (container: HTMLElement) => {
   const viewport = container.querySelector("[data-carousel-viewport]");
   if (viewport) {
     const computedStyle = getComputedStyle(viewport);
-    const maskSize = computedStyle.getPropertyValue("--mask-size");
+    const maskSize = computedStyle.getPropertyValue("--carousel-fade-size");
     const temp = document.createElement("div");
     temp.style.position = "absolute";
     temp.style.visibility = "hidden";
-    temp.style.setProperty("--mask-size", maskSize);
-    temp.style.width = "var(--mask-size)";
+    temp.style.setProperty("--carousel-fade-size", maskSize);
+    temp.style.width = "var(--carousel-fade-size)";
     document.body.appendChild(temp);
     const computed = getComputedStyle(temp);
     const result = { x: parseFloat(computed.getPropertyValue("width")), y: 0 };

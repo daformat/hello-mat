@@ -184,7 +184,17 @@ const CarouselRoot = ({
   );
 };
 
-type CarouselViewportProps = ComponentPropsWithoutRef<"div">;
+type CarouselViewportProps = ComponentPropsWithoutRef<"div"> &
+  (
+    | {
+        contentFade?: true;
+        contentFadeSize?: string | number;
+      }
+    | {
+        contentFade: false;
+        contentFadeSize?: never;
+      }
+  );
 
 const CarouselViewport = ({
   children,
@@ -193,6 +203,8 @@ const CarouselViewport = ({
   onPointerUp,
   onClickCapture,
   onWheel,
+  contentFade = true,
+  contentFadeSize = "clamp(16px, 10vw, 64px)",
   ...props
 }: CarouselViewportProps) => {
   const {
@@ -580,17 +592,26 @@ const CarouselViewport = ({
       }
       style={
         {
-          "--mask-size": "clamp(16px, 10vw, 64px)",
-          "--m-offset-b": "var(--remaining-backwards, 0px)",
-          "--m-offset-f": "var(--remaining-forwards, 0px)",
-          maskImage: `linear-gradient(
+          ...(contentFade
+            ? {
+                "--carousel-fade-size":
+                  typeof contentFadeSize === "number"
+                    ? `${contentFadeSize}px`
+                    : contentFadeSize,
+                "--carousel-fade-offset-backwards":
+                  "var(--remaining-backwards, 0px)",
+                "--carousel-fade-offset-forwards":
+                  "var(--remaining-forwards, 0px)",
+                maskImage: `linear-gradient(
               to right,
-              transparent var(--m-offset-b),
-              #000 calc(min(var(--remaining-backwards, 0px), var(--mask-size)) + var(--m-offset-b)),
-              #000 calc(100% - min(var(--remaining-forwards, 0px), var(--mask-size)) - var(--m-offset-f)),
-              transparent calc(100% - var(--m-offset-f))
+              transparent var(--carousel-fade-offset-backwards),
+              #000 calc(min(var(--remaining-backwards, 0px), var(--carousel-fade-size)) + var(--carousel-fade-offset-backwards)),
+              #000 calc(100% - min(var(--remaining-forwards, 0px), var(--carousel-fade-size)) - var(--carousel-fade-offset-forwards)),
+              transparent calc(100% - var(--carousel-fade-offset-forwards))
             )`,
-          maskSize: "100% 100%",
+                maskSize: "100% 100%",
+              }
+            : {}),
           overflow: "scroll",
           msOverflowStyle: "none",
           overscrollBehaviorX: "contain",
