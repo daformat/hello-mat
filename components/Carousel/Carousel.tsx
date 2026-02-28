@@ -14,8 +14,6 @@ import {
 
 import { MaybeNull, MaybeUndefined } from "@/components/Media/utils/maybe";
 
-import styles from "./Carousel.module.scss";
-
 type ScrollState = {
   isDragging: boolean;
   startX: number;
@@ -84,7 +82,6 @@ type CarouselRootProps = {
 const CarouselRoot = ({
   boundaryOffset,
   children,
-  className,
   ...props
 }: CarouselRootProps) => {
   const [ref, setRef] = useState<RefObject<MaybeNull<HTMLElement>>>({
@@ -180,11 +177,7 @@ const CarouselRoot = ({
         rootRef,
       }}
     >
-      <div
-        ref={rootRef}
-        {...props}
-        className={[styles.carousel, className].filter(Boolean).join(" ")}
-      >
+      <div ref={rootRef} {...props}>
         {children}
       </div>
     </CarouselContext.Provider>
@@ -195,7 +188,6 @@ type CarouselViewportProps = ComponentPropsWithoutRef<"div">;
 
 const CarouselViewport = ({
   children,
-  className,
   onPointerDown,
   onPointerMove,
   onPointerUp,
@@ -564,9 +556,6 @@ const CarouselViewport = ({
     <div
       ref={containerRef}
       {...props}
-      className={[styles.carousel_viewport, className]
-        .filter(Boolean)
-        .join(" ")}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -589,6 +578,29 @@ const CarouselViewport = ({
           ? "backwards"
           : "none"
       }
+      style={
+        {
+          "--mask-size": "clamp(16px, 10vw, 64px)",
+          "--m-offset-b": "var(--remaining-backwards, 0px)",
+          "--m-offset-f": "var(--remaining-forwards, 0px)",
+          maskImage: `linear-gradient(
+              to right,
+              transparent var(--m-offset-b),
+              #000 calc(min(var(--remaining-backwards, 0px), var(--mask-size)) + var(--m-offset-b)),
+              #000 calc(100% - min(var(--remaining-forwards, 0px), var(--mask-size)) - var(--m-offset-f)),
+              transparent calc(100% - var(--m-offset-f))
+            )`,
+          maskSize: "100% 100%",
+          overflow: "scroll",
+          msOverflowStyle: "none",
+          overscrollBehaviorX: "contain",
+          position: "relative",
+          scrollSnapType: "x mandatory",
+          scrollbarColor: "transparent transparent",
+          scrollbarWidth: "none",
+          ...props.style,
+        } as CSSProperties
+      }
     >
       {children}
     </div>
@@ -597,17 +609,9 @@ const CarouselViewport = ({
 
 type CarouselContentProps = ComponentPropsWithoutRef<"div">;
 
-const CarouselContent = ({
-  children,
-  className,
-  ...props
-}: CarouselContentProps) => {
+const CarouselContent = ({ children, ...props }: CarouselContentProps) => {
   return (
-    <div
-      {...props}
-      data-carousel-content
-      className={[styles.carousel_content, className].filter(Boolean).join(" ")}
-    >
+    <div {...props} data-carousel-content>
       {children}
     </div>
   );
@@ -615,13 +619,9 @@ const CarouselContent = ({
 
 type CarouselItemProps = ComponentPropsWithoutRef<"div">;
 
-const CarouselItem = ({ children, className, ...props }: CarouselItemProps) => {
+const CarouselItem = ({ children, ...props }: CarouselItemProps) => {
   return (
-    <div
-      {...props}
-      data-carousel-item
-      className={[styles.carousel_item, className].filter(Boolean).join(" ")}
-    >
+    <div {...props} data-carousel-item>
       {children}
     </div>
   );
@@ -631,7 +631,6 @@ type CarouselNextPageProps = ComponentPropsWithoutRef<"button">;
 
 const CarouselNextPage = ({
   children,
-  className,
   onClick,
   disabled,
   ...props
@@ -641,7 +640,6 @@ const CarouselNextPage = ({
   return (
     <button
       {...props}
-      className={[styles.button, className].filter(Boolean).join(" ")}
       onClick={(event) => {
         handleScrollToNext();
         onClick?.(event);
@@ -657,7 +655,6 @@ type CarouselPrevPageProps = ComponentPropsWithoutRef<"button">;
 
 const CarouselPrevPage = ({
   children,
-  className,
   onClick,
   disabled,
   ...props
@@ -667,7 +664,6 @@ const CarouselPrevPage = ({
   return (
     <button
       {...props}
-      className={[styles.button, className].filter(Boolean).join(" ")}
       onClick={(event) => {
         handleScrollToPrev();
         onClick?.(event);

@@ -65,10 +65,25 @@ const CarouselComponentPageContent = () => {
           className={styles.wrapper}
           style={{ marginBottom: 32 }}
         >
-          <Carousel.Root boundaryOffset={getBoundaryOffset}>
-            <Carousel.Viewport>
-              <Carousel.Content>
-                <Carousel.Item>
+          <Carousel.Root
+            boundaryOffset={getBoundaryOffset}
+            className={styles.carousel}
+          >
+            <Carousel.Viewport
+              className={styles.carousel_viewport}
+              style={
+                {
+                  "--margin-inline": "-12px",
+                  "--m-offset-b":
+                    "min(var(--remaining-backwards, 0px) + var(--margin-inline), var(--margin-inline) * -1)",
+                  "--m-offset-f":
+                    "min(var(--remaining-forwards, 0px) + var(--margin-inline), var(--margin-inline) * -1)",
+                  marginInline: "var(--margin-inline)",
+                } as CSSProperties
+              }
+            >
+              <Carousel.Content className={styles.carousel_content}>
+                <Carousel.Item className={styles.carousel_item}>
                   <picture
                     style={
                       { fontSize: 0, "--size": `${size}` } as CSSProperties
@@ -86,7 +101,7 @@ const CarouselComponentPageContent = () => {
                     />
                   </picture>
                 </Carousel.Item>
-                <Carousel.Item>
+                <Carousel.Item className={styles.carousel_item}>
                   <picture
                     style={
                       { fontSize: 0, "--size": `${size}` } as CSSProperties
@@ -104,7 +119,7 @@ const CarouselComponentPageContent = () => {
                     />
                   </picture>
                 </Carousel.Item>
-                <Carousel.Item>
+                <Carousel.Item className={styles.carousel_item}>
                   <picture
                     style={
                       { fontSize: 0, "--size": `${size}` } as CSSProperties
@@ -122,7 +137,7 @@ const CarouselComponentPageContent = () => {
                     />
                   </picture>
                 </Carousel.Item>
-                <Carousel.Item>
+                <Carousel.Item className={styles.carousel_item}>
                   <picture
                     style={
                       { fontSize: 0, "--size": `${size}` } as CSSProperties
@@ -140,7 +155,7 @@ const CarouselComponentPageContent = () => {
                     />
                   </picture>
                 </Carousel.Item>
-                <Carousel.Item>
+                <Carousel.Item className={styles.carousel_item}>
                   <picture
                     style={
                       { fontSize: 0, "--size": `${size}` } as CSSProperties
@@ -158,7 +173,7 @@ const CarouselComponentPageContent = () => {
                     />
                   </picture>
                 </Carousel.Item>
-                <Carousel.Item>
+                <Carousel.Item className={styles.carousel_item}>
                   <picture
                     style={
                       { fontSize: 0, "--size": `${size}` } as CSSProperties
@@ -176,7 +191,7 @@ const CarouselComponentPageContent = () => {
                     />
                   </picture>
                 </Carousel.Item>
-                <Carousel.Item>
+                <Carousel.Item className={styles.carousel_item}>
                   <picture
                     style={
                       { fontSize: 0, "--size": `${size}` } as CSSProperties
@@ -194,7 +209,7 @@ const CarouselComponentPageContent = () => {
                     />
                   </picture>
                 </Carousel.Item>
-                <Carousel.Item>
+                <Carousel.Item className={styles.carousel_item}>
                   <picture
                     style={
                       { fontSize: 0, "--size": `${size}` } as CSSProperties
@@ -212,7 +227,7 @@ const CarouselComponentPageContent = () => {
                     />
                   </picture>
                 </Carousel.Item>
-                <Carousel.Item>
+                <Carousel.Item className={styles.carousel_item}>
                   <picture
                     style={
                       { fontSize: 0, "--size": `${size}` } as CSSProperties
@@ -230,7 +245,7 @@ const CarouselComponentPageContent = () => {
                     />
                   </picture>
                 </Carousel.Item>
-                <Carousel.Item>
+                <Carousel.Item className={styles.carousel_item}>
                   <picture
                     style={
                       { fontSize: 0, "--size": `${size}` } as CSSProperties
@@ -248,7 +263,7 @@ const CarouselComponentPageContent = () => {
                     />
                   </picture>
                 </Carousel.Item>
-                <Carousel.Item>
+                <Carousel.Item className={styles.carousel_item}>
                   <picture
                     style={
                       { fontSize: 0, "--size": `${size}` } as CSSProperties
@@ -266,7 +281,7 @@ const CarouselComponentPageContent = () => {
                     />
                   </picture>
                 </Carousel.Item>
-                <Carousel.Item>
+                <Carousel.Item className={styles.carousel_item}>
                   <picture
                     style={
                       { fontSize: 0, "--size": `${size}` } as CSSProperties
@@ -312,10 +327,10 @@ const CarouselComponentPageContent = () => {
                 </div>
               </div>
               <div className={styles.controls}>
-                <Carousel.PrevPage>
+                <Carousel.PrevPage className={styles.button}>
                   <FaChevronLeft size={12} />
                 </Carousel.PrevPage>
-                <Carousel.NextPage>
+                <Carousel.NextPage className={styles.button}>
                   <FaChevronRight size={12} />
                 </Carousel.NextPage>
               </div>
