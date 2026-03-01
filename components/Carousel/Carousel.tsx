@@ -15,7 +15,11 @@ import { MaybeNull, MaybeUndefined } from "@/components/Media/utils/maybe";
 
 /**
  * Use a fixed frame duration so that we can accurately predict snapping and
- * other momentum-based calculations.
+ * other momentum-based calculations. This is an acceptable tradeoff, since
+ * requestAnimationFrame frame duration is variable. Using a dynamic frame
+ * duration compounds into missed snap points if the actual frame duration is
+ * different from the one we use for calculations ahead of the animation
+ * (velocity and deceleration factor adjustments to account for snapping).
  */
 const FRAME_DURATION = 16;
 
@@ -834,8 +838,8 @@ const CarouselPrevPage = ({
  * a parent, so that the "next/prev item" calculation is relative to the visible
  * area rather than the raw container edge.
  *
- * For example if the carousel has margin-inline: -12px, items near the edges
- * might appear partially visible but the scroll logic would incorrectly think
+ * For example, if the carousel has margin-inline: -12px, items near the edges
+ * might appear partially visible, but the scroll logic would incorrectly think
  * they're fully in view without the offset adjustment.
  */
 const getBoundaryOffset = (

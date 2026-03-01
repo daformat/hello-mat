@@ -65,6 +65,13 @@
   }
 
   &.prev {
+    order: 1;
+
+    @include mixins.above-large {
+      flex: 1 0 calc(50% - 12px);
+      order: initial;
+    }
+
     .text {
       text-align: right;
     }
