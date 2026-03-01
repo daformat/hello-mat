@@ -262,8 +262,11 @@ const CarouselViewport = ({
    * Save inlined scroll-snap-type if any, since we manipulate it
    */
   useLayoutEffect(() => {
-    scrollStateRef.current.scrollSnapType =
-      containerRef.current?.style.scrollSnapType ?? "";
+    const container = containerRef.current;
+    if (container) {
+      scrollStateRef.current.scrollSnapType =
+        getComputedStyle(container).scrollSnapType ?? "";
+    }
   }, []);
 
   /**
@@ -502,14 +505,14 @@ const CarouselViewport = ({
       const snappedScroll = container.scrollLeft;
       container.style.scrollSnapType = "none";
       container.scrollLeft = initialScroll;
-      // const snappedInCorrectDirection =
-      //   state.mouseDirection > 0
-      //     ? snappedScroll >= initialScroll
-      //     : snappedScroll <= initialScroll;
-      //
-      // if (!snappedInCorrectDirection) {
-      //   state.velocityX = Math.sign(state.velocityX) * -1 * 0.5;
-      // }
+      const snappedInCorrectDirection =
+        state.mouseDirection > 0
+          ? snappedScroll >= initialScroll
+          : snappedScroll <= initialScroll;
+
+      if (!snappedInCorrectDirection) {
+        state.velocityX = Math.sign(state.velocityX) * -1 * 0.5;
+      }
 
       const { finalScroll, iterations } = getFinalScroll(
         initialScroll,
@@ -764,6 +767,7 @@ const CarouselViewport = ({
                 maskSize: "100% 100%",
               }
             : {}),
+          position: "relative",
           overflow: "scroll",
           msOverflowStyle: "none",
           overscrollBehaviorX: "contain",
