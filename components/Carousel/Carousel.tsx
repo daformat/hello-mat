@@ -14,6 +14,13 @@ import {
 
 import { MaybeNull, MaybeUndefined } from "@/components/Media/utils/maybe";
 
+/**
+ * Reference frame duration used as a unit scaling constant in deceleration
+ * factor computations. The actual animation uses real elapsed time for
+ * smoothness, but the math must be derived with a consistent reference value.
+ */
+const FRAME_DURATION = 16;
+
 type ScrollState = {
   isDragging: boolean;
   startX: number;
@@ -33,7 +40,7 @@ type ScrollState = {
   scrollSnapType: string;
 };
 
-const CarouselContext = createContext<{
+type CarouselContext = {
   ref?: RefObject<MaybeNull<HTMLElement>>;
   setRef: (ref: RefObject<MaybeNull<HTMLElement>>) => void;
   scrollsBackwards: boolean;
@@ -52,7 +59,8 @@ const CarouselContext = createContext<{
     | { x: number; y: number }
     | ((root: HTMLElement) => { x: number; y: number });
   rootRef: RefObject<MaybeNull<HTMLElement>>;
-}>({
+};
+const CarouselContext = createContext<CarouselContext>({
   setRef: () => {},
   setScrollsBackwards: () => {},
   setScrollsForwards: () => {},
@@ -225,6 +233,7 @@ const CarouselViewport = ({
     setScrollStateRef,
   } = useContext(CarouselContext);
   const containerRef = useRef<HTMLDivElement>(null);
+  const lastFrameTime = useRef<number | null>(null);
   const scrollStateRef = useRef<ScrollState>({
     isDragging: false,
     startX: 0,
@@ -396,7 +405,7 @@ const CarouselViewport = ({
 
   /**
    * Calculate rubber banding effect, translate carousel items, and update
-   * velocity accordingly
+   * velocity accordingly.
    */
   const applyRubberBanding = useCallback(
     (container: HTMLDivElement, scrollDelta: number) => {
@@ -473,7 +482,9 @@ const CarouselViewport = ({
   );
 
   /**
-   * Updates velocity for proper snapping and returns the deceleration factor
+   * Updates velocity for proper snapping and returns the adjusted deceleration
+   * factor. Ensures the animation lands on the snap point and is visually
+   * perceptible.
    */
   const applyMomentumSnapping = useCallback(
     (
@@ -484,6 +495,8 @@ const CarouselViewport = ({
       minVelocity: number
     ) => {
       const state = scrollStateRef.current;
+
+      // Find where the browser would snap to at tFinalScroll
       container.style.scrollSnapType = state.scrollSnapType;
       container.scrollLeft = tFinalScroll;
       const snappedScroll = container.scrollLeft;
@@ -512,19 +525,20 @@ const CarouselViewport = ({
         const displacement = snappedScroll - initialScroll;
         state.velocityX =
           (-displacement * (1 - decelerationFactor)) /
-          (16 * (1 - Math.pow(decelerationFactor, minIterations)));
+          (FRAME_DURATION * (1 - Math.pow(decelerationFactor, minIterations)));
       } else {
         const gap = snappedScroll - finalScroll;
         if (Math.abs(gap) > 0.5) {
-          const velocityAdjustment = (-gap * (1 - decelerationFactor)) / 16;
+          const velocityAdjustment =
+            (-gap * (1 - decelerationFactor)) / FRAME_DURATION;
           state.velocityX += velocityAdjustment;
         }
       }
 
       return findDecelerationFactor(
-        container.scrollLeft,
-        state.velocityX,
-        snappedScroll
+        initialScroll,
+        snappedScroll,
+        state.velocityX
       );
     },
     []
@@ -532,7 +546,7 @@ const CarouselViewport = ({
 
   /**
    * Returns the deceleration factor for the momentum animation, accounting for
-   * snapping, if needed
+   * snapping if needed.
    */
   const computeMomentumDecelerationFactor = useCallback(
     (container: HTMLDivElement, minVelocity: number) => {
@@ -565,7 +579,7 @@ const CarouselViewport = ({
           initialScroll,
           finalScroll,
           decelerationFactor,
-          minVelocityForSnapping
+          minVelocity
         );
       }
 
@@ -575,7 +589,7 @@ const CarouselViewport = ({
   );
 
   /**
-   * Start the momentum animation if needed
+   * Start the momentum animation if needed.
    */
   const startMomentumAnimation = useCallback(() => {
     const container = containerRef.current;
@@ -589,13 +603,22 @@ const CarouselViewport = ({
       minVelocity
     );
 
-    const animate = () => {
+    const animate = (timestamp: number) => {
       const container = containerRef.current;
       if (!container) {
         return;
       }
+
+      // Use actual elapsed time for smooth animation across variable refresh
+      // rates, but fall back to FRAME_DURATION on the first frame
+      const elapsed =
+        lastFrameTime.current !== null
+          ? timestamp - lastFrameTime.current
+          : FRAME_DURATION;
+      lastFrameTime.current = timestamp;
+
       container.style.scrollSnapType = "none";
-      container.scrollLeft -= state.velocityX * 16; // ~16ms frame time
+      container.scrollLeft -= state.velocityX * elapsed;
       state.scrollLeft = container.scrollLeft;
       state.velocityX *= decelerationFactor;
 
@@ -605,7 +628,7 @@ const CarouselViewport = ({
       const remainingForwards = scrollWidth - offsetWidth - newScrollLeft;
       const remainingBackwards = newScrollLeft;
 
-      // Overscroll
+      // Overscroll rubber band bounce-back
       const content = container.querySelector("[data-carousel-content]");
       if (content instanceof HTMLElement) {
         if (
@@ -635,12 +658,12 @@ const CarouselViewport = ({
       if (Math.abs(state.velocityX) > minVelocity) {
         state.animationId = requestAnimationFrame(animate);
       } else {
-        console.log("finished");
         state.animationId = null;
+        lastFrameTime.current = null;
       }
     };
 
-    console.log("start");
+    lastFrameTime.current = null;
     state.animationId = requestAnimationFrame(animate);
   }, [computeMomentumDecelerationFactor]);
 
@@ -841,6 +864,9 @@ const getBoundaryOffset = (
     : boundaryOffset ?? { x: 0, y: 0 };
 };
 
+/**
+ * Returns the normalized scroll-snap-align given a computed style.
+ */
 const getScrollSnapAlign = (computedStyle: MaybeNull<CSSStyleDeclaration>) => {
   if (computedStyle) {
     const scrollSnapAlign = computedStyle
@@ -857,16 +883,16 @@ const getScrollSnapAlign = (computedStyle: MaybeNull<CSSStyleDeclaration>) => {
 };
 
 /**
- * Returns the deceleration factor for the momentum animation, accounting based
- * on given parameters
+ * Returns the deceleration factor needed to travel from initialScroll to
+ * targetScroll given an initial velocity.
  */
 const findDecelerationFactor = (
   initialScroll: number,
-  velocity: number,
-  targetScroll: number
+  targetScroll: number,
+  velocity: number
 ) => {
   const totalDisplacement = targetScroll - initialScroll;
-  const factor = 1 + (velocity * 16) / totalDisplacement;
+  const factor = 1 + (velocity * FRAME_DURATION) / totalDisplacement;
 
   if (!isFinite(factor) || factor <= 0 || factor >= 1) {
     return 0.95;
@@ -886,16 +912,15 @@ const getFinalScroll = (
   minVelocity = 0.05
 ) => {
   // Number of frames until velocity drops below minVelocity
-  // velocityX * factor^n = minVelocity => n = log(minVelocity / |velocity|) / log(factor)
   const iterations = Math.ceil(
     Math.log(minVelocity / Math.abs(velocity)) / Math.log(decelerationFactor)
   );
 
-  // Partial geometric series: -velocity * 16 * Σ(factor^i, i=0..iterations-1)
-  //                         = -velocity * 16 * (1 - factor^iterations) / (1 - factor)
   const finalScroll =
     initialScroll -
-    (velocity * 16 * (1 - Math.pow(decelerationFactor, iterations))) /
+    (velocity *
+      FRAME_DURATION *
+      (1 - Math.pow(decelerationFactor, iterations))) /
       (1 - decelerationFactor);
 
   return { finalScroll, iterations };
