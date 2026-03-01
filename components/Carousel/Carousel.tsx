@@ -1,7 +1,10 @@
 import {
+  cloneElement,
   ComponentPropsWithoutRef,
   createContext,
   CSSProperties,
+  isValidElement,
+  ReactElement,
   RefObject,
   useCallback,
   useContext,
@@ -108,6 +111,44 @@ const CarouselRoot = ({
   const rootRef = useRef<HTMLDivElement>(null);
 
   /**
+   * Fallback on scrolling the whole page if we can't find multiple children
+   */
+  const handleLegacyScroll = useCallback(
+    (direction: "forwards" | "backwards", container: HTMLElement) => {
+      const scrollPosition =
+        container.scrollLeft +
+        container.clientWidth * (direction === "forwards" ? 1 : -1);
+      const maxScroll = container.scrollWidth - container.clientWidth;
+      const nextScrollPosition = Math.max(
+        0,
+        Math.min(scrollPosition, maxScroll)
+      );
+      container.scrollTo({ left: nextScrollPosition, behavior: "smooth" });
+    },
+    []
+  );
+
+  /**
+   * Custom scrollIntoView to prevent ancestors scrolling when doing native
+   * element.scrollIntoView()
+   */
+  const scrollIntoView = useCallback(
+    (target: HTMLElement, container: HTMLElement) => {
+      const [_, inline] = getScrollSnapAlign(getComputedStyle(target));
+      let scrollPosition = target.offsetLeft;
+      if (inline === "center") {
+        scrollPosition =
+          target.offsetLeft - (container.offsetWidth - target.offsetWidth) / 2;
+      } else if (inline === "end") {
+        scrollPosition =
+          target.offsetLeft - container.offsetWidth + target.offsetWidth;
+      }
+      container.scrollTo({ left: scrollPosition, behavior: "smooth" });
+    },
+    []
+  );
+
+  /**
    * Scrolls the container to the next slide until hitting the end of the container
    */
   const handleScrollToNext = useCallback(() => {
@@ -116,10 +157,14 @@ const CarouselRoot = ({
     const root = rootRef?.current;
     if (root && container && container.scrollLeft < container.scrollWidth) {
       container.style.scrollSnapType =
-        scrollStateRef?.current.scrollSnapType ?? "";
+        scrollStateRef?.current?.scrollSnapType ?? "";
       const items = Array.from(
-        container.querySelectorAll("[data-carousel-item]")
+        container.querySelectorAll(":scope [data-carousel-content] > *")
       ) as HTMLElement[];
+      if (items.length === 1) {
+        handleLegacyScroll("forwards", container);
+        return;
+      }
       const currentScroll = container.scrollLeft;
       const containerOffsetWidth = container.offsetWidth;
       const { x: boundaryOffsetX } = getBoundaryOffset(boundaryOffset, root);
@@ -131,17 +176,11 @@ const CarouselRoot = ({
       };
       const nextItem = items.find(isNextItem) ?? items[items.length - 1];
       if (nextItem) {
-        const [_, inline] = getScrollSnapAlign(getComputedStyle(nextItem));
-        nextItem?.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-          inline: ["start", "center", "end"].includes(inline ?? "")
-            ? (inline as ScrollLogicalPosition)
-            : "start",
-        });
+        console.log({ nextItem });
+        scrollIntoView(nextItem, container);
       }
     }
-  }, [boundaryOffset, ref, scrollStateRef]);
+  }, [boundaryOffset, handleLegacyScroll, ref, scrollIntoView, scrollStateRef]);
 
   /**
    * Scrolls the container to the previous slide until hitting the start of the container
@@ -152,10 +191,15 @@ const CarouselRoot = ({
     const root = rootRef?.current;
     if (root && container && container.scrollLeft > 0) {
       container.style.scrollSnapType =
-        scrollStateRef?.current.scrollSnapType ?? "";
+        scrollStateRef?.current?.scrollSnapType ?? "";
       const items = Array.from(
-        container.querySelectorAll("[data-carousel-item]")
+        container.querySelectorAll(":scope [data-carousel-content] > *")
       ) as HTMLElement[];
+      console.log(items);
+      if (items.length === 1) {
+        handleLegacyScroll("backwards", container);
+        return;
+      }
       const currentScroll = container.scrollLeft;
       const { x: boundaryOffsetX } = getBoundaryOffset(boundaryOffset, root);
       const isPrevItem = (item: HTMLElement) => {
@@ -164,15 +208,10 @@ const CarouselRoot = ({
       const prevItems = items.filter(isPrevItem);
       const prevItem = prevItems[prevItems.length - 1] ?? items[0];
       if (prevItem) {
-        const [_, inline] = getScrollSnapAlign(getComputedStyle(prevItem));
-        prevItem?.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-          inline: inline === "center" ? "center" : "end",
-        });
+        scrollIntoView(prevItem, container);
       }
     }
-  }, [boundaryOffset, ref, scrollStateRef]);
+  }, [boundaryOffset, handleLegacyScroll, ref, scrollIntoView, scrollStateRef]);
 
   return (
     <CarouselContext.Provider
@@ -395,6 +434,7 @@ const CarouselViewport = ({
       state.initialPointerPosition = { x: event.clientX, y: event.clientY };
       state.initialMouseScrollLeft = container.scrollLeft ?? 0;
       event.preventDefault();
+      event.stopPropagation();
       onPointerDown?.(event);
     },
     [onPointerDown]
@@ -417,7 +457,9 @@ const CarouselViewport = ({
   const applyRubberBanding = useCallback(
     (container: HTMLDivElement, scrollDelta: number) => {
       const state = scrollStateRef.current;
-      const items = container.querySelectorAll("[data-carousel-item]");
+      const items = container.querySelectorAll(
+        ":scope [data-carousel-content] > *"
+      );
       const maxDistance = container.offsetWidth / 3;
       const maxScrollLeft = container.scrollWidth - container.offsetWidth;
       const targetScrollLeft = state.scrollLeft + scrollDelta;
@@ -603,19 +645,19 @@ const CarouselViewport = ({
     );
 
     const animate = () => {
-      const container = containerRef.current;
-      if (!container) {
+      const container2 = containerRef.current;
+      if (!container2) {
         return;
       }
 
-      container.style.scrollSnapType = "none";
-      container.scrollLeft -= state.velocityX * FRAME_DURATION;
-      state.scrollLeft = container.scrollLeft;
+      container2.style.scrollSnapType = "none";
+      container2.scrollLeft -= state.velocityX * FRAME_DURATION;
+      state.scrollLeft = container2.scrollLeft;
       state.velocityX *= decelerationFactor;
 
-      const newScrollLeft = container.scrollLeft;
-      const scrollWidth = container.scrollWidth;
-      const offsetWidth = container.offsetWidth;
+      const newScrollLeft = container2.scrollLeft;
+      const scrollWidth = container2.scrollWidth;
+      const offsetWidth = container2.offsetWidth;
       const remainingForwards = scrollWidth - offsetWidth - newScrollLeft;
       const remainingBackwards = newScrollLeft;
 
@@ -624,7 +666,7 @@ const CarouselViewport = ({
         Math.abs(state.velocityX) > minVelocity &&
         (remainingForwards <= 1 || remainingBackwards < 1)
       ) {
-        const content = container.querySelector("[data-carousel-content]");
+        const content = container2.querySelector("[data-carousel-content]");
         if (content instanceof HTMLElement) {
           const theoreticalTranslate = state.velocityX * 50;
           const currentTranslate = parseFloat(content.style.translate || "0");
@@ -637,7 +679,7 @@ const CarouselViewport = ({
               const sign = Math.sign(delta);
               const clampedDelta = Math.min(
                 Math.abs(delta / 2),
-                container.offsetWidth / 2
+                container2.offsetWidth / 2
               );
               item.style.translate = `${sign * clampedDelta}px 0`;
             }
@@ -776,15 +818,27 @@ type CarouselContentProps = ComponentPropsWithoutRef<"div">;
 
 const CarouselContent = ({ children, ...props }: CarouselContentProps) => {
   return (
-    <div {...props} data-carousel-content>
+    <div
+      {...props}
+      style={{ width: "fit-content", ...props.style }}
+      data-carousel-content
+    >
       {children}
     </div>
   );
 };
 
-type CarouselItemProps = ComponentPropsWithoutRef<"div">;
+type CarouselItemProps = ComponentPropsWithoutRef<"div"> & {
+  asChild?: boolean;
+};
 
-const CarouselItem = ({ children, ...props }: CarouselItemProps) => {
+const CarouselItem = ({ children, asChild, ...props }: CarouselItemProps) => {
+  if (asChild && isValidElement(children)) {
+    return cloneElement(children as ReactElement<Record<string, unknown>>, {
+      ...props,
+      "data-carousel-item": "",
+    });
+  }
   return (
     <div {...props} data-carousel-item>
       {children}
