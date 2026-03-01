@@ -505,15 +505,6 @@ const CarouselViewport = ({
       const snappedScroll = container.scrollLeft;
       container.style.scrollSnapType = "none";
       container.scrollLeft = initialScroll;
-      const snappedInCorrectDirection =
-        state.mouseDirection > 0
-          ? snappedScroll >= initialScroll
-          : snappedScroll <= initialScroll;
-
-      if (!snappedInCorrectDirection) {
-        console.log("Snapping in the wrong direction");
-        state.velocityX = Math.sign(state.velocityX) * -1 * 0.5;
-      }
 
       const { finalScroll, iterations } = getFinalScroll(
         initialScroll,
@@ -522,50 +513,26 @@ const CarouselViewport = ({
         minVelocity
       );
 
-      decelerationFactor = findDecelerationFactor(
-        initialScroll,
-        snappedScroll,
-        state.velocityX
-      );
-
       // update velocity to ensure momentum snaps to the correct position and
       // the animation is not too fast
       const minIterations = 10;
-      if (!isFinite(iterations) || iterations < minIterations) {
-        console.log("Snapping in not enough iterations");
+      const gap = snappedScroll - finalScroll;
+      if (
+        !isFinite(iterations) ||
+        iterations < minIterations ||
+        Math.abs(gap) > 0.5
+      ) {
         const displacement = snappedScroll - initialScroll;
         state.velocityX =
           (-displacement * (1 - decelerationFactor)) /
           (FRAME_DURATION * (1 - Math.pow(decelerationFactor, minIterations)));
-      } else {
-        const gap = snappedScroll - finalScroll;
-        if (Math.abs(gap) > 0.5) {
-          console.log("Gap is too large, adjusting velocity");
-          const velocityAdjustment =
-            (-gap * (1 - decelerationFactor)) / FRAME_DURATION;
-          state.velocityX += velocityAdjustment;
-        }
       }
 
-      const f = findDecelerationFactor(
+      return findDecelerationFactor(
         initialScroll,
         snappedScroll,
         state.velocityX
       );
-
-      console.table({
-        initialScroll,
-        tFinalScroll,
-        snappedScroll,
-        ...getFinalScroll(
-          initialScroll,
-          state.velocityX,
-          decelerationFactor,
-          minVelocity
-        ),
-      });
-
-      return f;
     },
     []
   );
@@ -630,22 +597,14 @@ const CarouselViewport = ({
       minVelocity
     );
 
-    const animate = (timestamp: number) => {
+    const animate = () => {
       const container = containerRef.current;
       if (!container) {
         return;
       }
 
-      // Use actual elapsed time for smooth animation across variable refresh
-      // rates, but fall back to FRAME_DURATION on the first frame
-      const elapsed =
-        lastFrameTime.current !== null
-          ? timestamp - lastFrameTime.current
-          : FRAME_DURATION;
-      lastFrameTime.current = timestamp;
-
       container.style.scrollSnapType = "none";
-      container.scrollLeft -= state.velocityX * elapsed;
+      container.scrollLeft -= state.velocityX * FRAME_DURATION;
       state.scrollLeft = container.scrollLeft;
       state.velocityX *= decelerationFactor;
 
