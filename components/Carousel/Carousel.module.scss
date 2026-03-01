@@ -1,10 +1,17 @@
 @use "/styles/lib/mixins.scss";
 
+/**
+ * These are the demo styles, the Carousel component has minimal inline styling
+ * for overflow / scrolling and contentFade mask
+ */
+
 .carousel {
   width: 100%;
 }
 
 .carousel_viewport {
+  scroll-snap-type: x mandatory;
+
   &::-webkit-scrollbar {
     display: none; /* Older Safari and Chromium */
   }

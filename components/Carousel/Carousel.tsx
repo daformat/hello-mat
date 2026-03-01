@@ -30,6 +30,7 @@ type ScrollState = {
   initialMouseScrollLeft: number;
   mouseDirection: number;
   mouseScrollLeft: number;
+  scrollSnapType: string;
 };
 
 const CarouselContext = createContext<{
@@ -95,13 +96,16 @@ const CarouselRoot = ({
     useState<MaybeUndefined<RefObject<ScrollState>>>(undefined);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  // Scrolls the container to next slide until hitting max
+  /**
+   * Scrolls the container to the next slide until hitting the end of the container
+   */
   const handleScrollToNext = useCallback(() => {
     cancelAnimationFrame(scrollStateRef?.current?.animationId ?? 0);
     const container = ref?.current;
     const root = rootRef?.current;
     if (root && container && container.scrollLeft < container.scrollWidth) {
-      container.style.scrollSnapType = "";
+      container.style.scrollSnapType =
+        scrollStateRef?.current.scrollSnapType ?? "";
       const items = Array.from(
         container.querySelectorAll("[data-carousel-item]")
       ) as HTMLElement[];
@@ -128,13 +132,16 @@ const CarouselRoot = ({
     }
   }, [boundaryOffset, ref, scrollStateRef]);
 
-  // Scrolls the container to previous slide until hitting 0
+  /**
+   * Scrolls the container to the previous slide until hitting the start of the container
+   */
   const handleScrollToPrev = useCallback(() => {
     cancelAnimationFrame(scrollStateRef?.current?.animationId ?? 0);
     const container = ref?.current;
     const root = rootRef?.current;
     if (root && container && container.scrollLeft > 0) {
-      container.style.scrollSnapType = "";
+      container.style.scrollSnapType =
+        scrollStateRef?.current.scrollSnapType ?? "";
       const items = Array.from(
         container.querySelectorAll("[data-carousel-item]")
       ) as HTMLElement[];
@@ -218,7 +225,7 @@ const CarouselViewport = ({
     setScrollStateRef,
   } = useContext(CarouselContext);
   const containerRef = useRef<HTMLDivElement>(null);
-  const scrollStateRef = useRef({
+  const scrollStateRef = useRef<ScrollState>({
     isDragging: false,
     startX: 0,
     scrollLeft: 0,
@@ -231,13 +238,30 @@ const CarouselViewport = ({
     initialMouseScrollLeft: 0,
     mouseDirection: 0,
     mouseScrollLeft: 0,
+    scrollSnapType: "",
   });
 
+  /**
+   * Register our refs
+   */
   useLayoutEffect(() => {
     setRef(containerRef);
     setScrollStateRef(scrollStateRef);
   }, [setRef, setScrollStateRef]);
 
+  /**
+   * Save inlined scroll-snap-type if any, since we manipulate it
+   */
+  useLayoutEffect(() => {
+    scrollStateRef.current.scrollSnapType =
+      containerRef.current?.style.scrollSnapType ?? "";
+  }, []);
+
+  /**
+   * Determine whether the container can scroll forwards or backwards based on
+   * its current scroll position, offset width, and scroll width. Updates
+   * relevant state and CSS variables.
+   */
   const updateScrollState = useCallback(() => {
     const container = containerRef.current;
     if (container) {
@@ -281,6 +305,10 @@ const CarouselViewport = ({
     setScrollsForwards,
   ]);
 
+  /**
+   * Prevent native scroll when dragging, reset velocity when not dragging to
+   * avoid cumulating momentum.
+   */
   const handlePreventScroll = useCallback((event: WheelEvent) => {
     if (scrollStateRef.current.isDragging) {
       event.preventDefault();
@@ -289,6 +317,10 @@ const CarouselViewport = ({
     }
   }, []);
 
+  /**
+   * Set up observers and scrolling event listeners to update the scroll state
+   * and prevent native scroll when dragging.
+   */
   useLayoutEffect(() => {
     const container = containerRef.current;
     if (container) {
@@ -314,6 +346,9 @@ const CarouselViewport = ({
     }
   }, [handlePreventScroll, updateScrollState]);
 
+  /**
+   * Initialize dragging.
+   */
   const handlePointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
       if (event.pointerType !== "mouse") {
@@ -349,6 +384,51 @@ const CarouselViewport = ({
     [onPointerDown]
   );
 
+  /**
+   * Prevent velocity from exceeding a given threshold.
+   */
+  const clampVelocity = useCallback((maxAbsoluteVelocity: number) => {
+    const state = scrollStateRef.current;
+    if (Math.abs(state.velocityX) > maxAbsoluteVelocity) {
+      state.velocityX = Math.sign(state.velocityX) * maxAbsoluteVelocity;
+    }
+  }, []);
+
+  /**
+   * Calculate rubber banding effect, translate carousel items, and update
+   * velocity accordingly
+   */
+  const applyRubberBanding = useCallback(
+    (container: HTMLDivElement, scrollDelta: number) => {
+      const state = scrollStateRef.current;
+      const items = container.querySelectorAll("[data-carousel-item]");
+      const maxDistance = container.offsetWidth / 3;
+      const maxScrollLeft = container.scrollWidth - container.offsetWidth;
+      const targetScrollLeft = state.scrollLeft + scrollDelta;
+      const overscroll =
+        targetScrollLeft < 0
+          ? Math.abs(targetScrollLeft)
+          : targetScrollLeft > maxScrollLeft
+          ? targetScrollLeft - maxScrollLeft
+          : 0;
+      const sign = Math.sign(scrollDelta);
+      const easedDistance = iOSRubberBand(overscroll, 0, maxDistance);
+      items.forEach((item) => {
+        // we have to translate the items instead of the content because
+        // Safari scrolls the viewport if the content is translated
+        if (item instanceof HTMLElement) {
+          item.style.translate = `${-sign * easedDistance}px 0`;
+        }
+      });
+
+      state.velocityX = (-sign * easedDistance) / 20;
+    },
+    []
+  );
+
+  /**
+   * Update scroll position and velocity on pointer move.
+   */
   const handlePointerMove = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
       const container = containerRef.current;
@@ -365,16 +445,11 @@ const CarouselViewport = ({
       const deltaX = event.clientX - state.lastX;
       if (deltaTime > 0) {
         state.velocityX = deltaX / deltaTime; // (pixels per millisecond)
-        if (Math.abs(state.velocityX) > maxAbsoluteVelocity) {
-          state.velocityX = Math.sign(state.velocityX) * maxAbsoluteVelocity;
-        }
+        clampVelocity(maxAbsoluteVelocity);
       }
 
-      // update scroll position
       const scrollDelta = state.startX - event.clientX;
-      const direction = Math.sign(
-        state.scrollLeft + scrollDelta - state.mouseScrollLeft
-      );
+      const direction = Math.sign(state.startX - event.clientX);
       if (direction !== state.mouseDirection) {
         state.mouseDirection = direction;
         state.initialMouseScrollLeft = state.scrollLeft + scrollDelta;
@@ -383,88 +458,136 @@ const CarouselViewport = ({
       state.mouseScrollLeft = state.scrollLeft + scrollDelta;
       state.lastX = event.clientX;
       state.lastTime = currentTime;
+
       if (
         container.scrollLeft <= 1 ||
         container.scrollLeft >=
           container.scrollWidth - container.offsetWidth - 1
       ) {
-        const items = container.querySelectorAll("[data-carousel-item]");
-        const maxDistance = container.offsetWidth / 3;
-        const maxScrollLeft = container.scrollWidth - container.offsetWidth;
-        const targetScrollLeft = state.scrollLeft + scrollDelta;
-        const overscroll =
-          targetScrollLeft < 0
-            ? Math.abs(targetScrollLeft)
-            : targetScrollLeft > maxScrollLeft
-            ? targetScrollLeft - maxScrollLeft
-            : 0;
-        const sign = Math.sign(scrollDelta);
-        const easedDistance = iOSRubberBand(overscroll, 0, maxDistance);
-        items.forEach((item) => {
-          if (item instanceof HTMLElement) {
-            item.style.translate = `${-sign * easedDistance}px 0`;
-          }
-        });
-
-        state.velocityX = (-sign * easedDistance) / 20;
-        if (Math.abs(state.velocityX) > maxAbsoluteVelocity) {
-          state.velocityX = Math.sign(state.velocityX) * maxAbsoluteVelocity;
-        }
+        applyRubberBanding(container, scrollDelta);
+        clampVelocity(maxAbsoluteVelocity);
       }
       onPointerMove?.(event);
     },
-    [onPointerMove]
+    [applyRubberBanding, clampVelocity, onPointerMove]
   );
 
+  /**
+   * Updates velocity for proper snapping and returns the deceleration factor
+   */
+  const applyMomentumSnapping = useCallback(
+    (
+      container: HTMLDivElement,
+      initialScroll: number,
+      tFinalScroll: number,
+      decelerationFactor: number,
+      minVelocity: number
+    ) => {
+      const state = scrollStateRef.current;
+      container.style.scrollSnapType = state.scrollSnapType;
+      container.scrollLeft = tFinalScroll;
+      const snappedScroll = container.scrollLeft;
+      container.style.scrollSnapType = "none";
+      container.scrollLeft = initialScroll;
+      // const snappedInCorrectDirection =
+      //   state.mouseDirection > 0
+      //     ? snappedScroll >= initialScroll
+      //     : snappedScroll <= initialScroll;
+      //
+      // if (!snappedInCorrectDirection) {
+      //   state.velocityX = Math.sign(state.velocityX) * -1 * 0.5;
+      // }
+
+      const { finalScroll, iterations } = getFinalScroll(
+        initialScroll,
+        state.velocityX,
+        decelerationFactor,
+        minVelocity
+      );
+
+      // update velocity to ensure momentum snaps to the correct position and
+      // the animation is not too fast
+      const minIterations = 10;
+      if (!isFinite(iterations) || iterations < minIterations) {
+        const displacement = snappedScroll - initialScroll;
+        state.velocityX =
+          (-displacement * (1 - decelerationFactor)) /
+          (16 * (1 - Math.pow(decelerationFactor, minIterations)));
+      } else {
+        const gap = snappedScroll - finalScroll;
+        if (Math.abs(gap) > 0.5) {
+          const velocityAdjustment = (-gap * (1 - decelerationFactor)) / 16;
+          state.velocityX += velocityAdjustment;
+        }
+      }
+
+      return findDecelerationFactor(
+        container.scrollLeft,
+        state.velocityX,
+        snappedScroll
+      );
+    },
+    []
+  );
+
+  /**
+   * Returns the deceleration factor for the momentum animation, accounting for
+   * snapping, if needed
+   */
+  const computeMomentumDecelerationFactor = useCallback(
+    (container: HTMLDivElement, minVelocity: number) => {
+      const minVelocityForSnapping = 0;
+      const state = scrollStateRef.current;
+      const isRubberBanding =
+        container.scrollLeft <= 1 ||
+        container.scrollLeft >=
+          container.scrollWidth - container.offsetWidth - 1;
+      const rubberBandingFactor = isRubberBanding
+        ? (state.velocityX * 50) / container.scrollWidth
+        : 0;
+      const friction = 0.05 + Math.abs(rubberBandingFactor);
+      const decelerationFactor = 1 - friction;
+      const initialScroll = container.scrollLeft;
+      const { finalScroll } = getFinalScroll(
+        initialScroll,
+        state.velocityX,
+        decelerationFactor,
+        minVelocity
+      );
+
+      if (
+        finalScroll < container.scrollWidth - container.offsetWidth &&
+        finalScroll > 0 &&
+        Math.abs(state.velocityX) >= minVelocityForSnapping
+      ) {
+        return applyMomentumSnapping(
+          container,
+          initialScroll,
+          finalScroll,
+          decelerationFactor,
+          minVelocityForSnapping
+        );
+      }
+
+      return decelerationFactor;
+    },
+    [applyMomentumSnapping]
+  );
+
+  /**
+   * Start the momentum animation if needed
+   */
   const startMomentumAnimation = useCallback(() => {
     const container = containerRef.current;
     if (!container) {
       return;
     }
     const state = scrollStateRef.current;
-    const isRubberBanding =
-      container.scrollLeft <= 1 ||
-      container.scrollLeft >= container.scrollWidth - container.offsetWidth - 1;
-    const rubberBandingFactor = isRubberBanding
-      ? (state.velocityX * 50) / container.scrollWidth
-      : 0;
-    const friction = 0.05 + Math.abs(rubberBandingFactor);
-    let decelerationFactor = 1 - friction;
-    const minVelocity = 0.05;
-    const minVelocityForSnapping = 0.5;
-
-    const x = Math.abs(
-      Math.log(minVelocity / Math.abs(state.velocityX)) /
-        Math.log(decelerationFactor)
+    const minVelocity = 0.00001;
+    const decelerationFactor = computeMomentumDecelerationFactor(
+      container,
+      minVelocity
     );
-    const initialScroll = container.scrollLeft;
-    const tFinalScroll = Math.max(
-      Math.min(
-        Array(Math.ceil(isFinite(x) ? x : 0))
-          .fill(0)
-          .reduce((acc, val, i) => {
-            return acc - state.velocityX * Math.pow(decelerationFactor, i) * 16;
-          }, initialScroll),
-        container.scrollWidth - container.offsetWidth
-      ),
-      0
-    );
-    if (
-      tFinalScroll < container.scrollWidth - container.offsetWidth &&
-      tFinalScroll > 0 &&
-      Math.abs(state.velocityX) > minVelocityForSnapping
-    ) {
-      container.scrollLeft = tFinalScroll;
-      container.style.scrollSnapType = "";
-      const snappedScroll = container.scrollLeft;
-      container.style.scrollSnapType = "none";
-      container.scrollLeft = initialScroll;
-      decelerationFactor = findDecelerationFactor(
-        container.scrollLeft,
-        state.velocityX,
-        snappedScroll
-      );
-    }
 
     const animate = () => {
       const container = containerRef.current;
@@ -512,13 +635,18 @@ const CarouselViewport = ({
       if (Math.abs(state.velocityX) > minVelocity) {
         state.animationId = requestAnimationFrame(animate);
       } else {
+        console.log("finished");
         state.animationId = null;
       }
     };
 
+    console.log("start");
     state.animationId = requestAnimationFrame(animate);
-  }, []);
+  }, [computeMomentumDecelerationFactor]);
 
+  /**
+   * Trigger momentum animation when dragging stops, dispatch click if needed.
+   */
   const handlePointerUp = useCallback(
     (event: React.PointerEvent<HTMLDivElement> | PointerEvent) => {
       if (event.pointerType !== "mouse") {
@@ -577,7 +705,8 @@ const CarouselViewport = ({
         onClickCapture?.(event);
       }}
       onWheel={(event) => {
-        event.currentTarget.style.scrollSnapType = "";
+        event.currentTarget.style.scrollSnapType =
+          scrollStateRef.current.scrollSnapType;
         onWheel?.(event);
       }}
       data-carousel-viewport={""}
@@ -615,8 +744,6 @@ const CarouselViewport = ({
           overflow: "scroll",
           msOverflowStyle: "none",
           overscrollBehaviorX: "contain",
-          position: "relative",
-          scrollSnapType: "x mandatory",
           scrollbarColor: "transparent transparent",
           scrollbarWidth: "none",
           ...props.style,
@@ -696,6 +823,15 @@ const CarouselPrevPage = ({
   );
 };
 
+/**
+ * Accounts for cases where the carousel viewport has padding or is inset within
+ * a parent, so that the "next/prev item" calculation is relative to the visible
+ * area rather than the raw container edge.
+ *
+ * For example if the carousel has margin-inline: -12px, items near the edges
+ * might appear partially visible but the scroll logic would incorrectly think
+ * they're fully in view without the offset adjustment.
+ */
 const getBoundaryOffset = (
   boundaryOffset: ContextType<typeof CarouselContext>["boundaryOffset"],
   root: HTMLElement
@@ -720,69 +856,49 @@ const getScrollSnapAlign = (computedStyle: MaybeNull<CSSStyleDeclaration>) => {
   return [] as CSSProperties["scrollSnapAlign"][];
 };
 
+/**
+ * Returns the deceleration factor for the momentum animation, accounting based
+ * on given parameters
+ */
 const findDecelerationFactor = (
   initialScroll: number,
   velocity: number,
   targetScroll: number
 ) => {
-  const minVelocity = 0.01;
-  const totalDistance = targetScroll - initialScroll;
+  const totalDisplacement = targetScroll - initialScroll;
+  const factor = 1 + (velocity * 16) / totalDisplacement;
 
-  // If distance is too small, return default factor
-  if (Math.abs(totalDistance) < 1) {
+  if (!isFinite(factor) || factor <= 0 || factor >= 1) {
     return 0.95;
   }
 
-  // Binary search for the deceleration factor
-  let low = 0.5; // Lower bound (more friction)
-  let high = 0.999; // Upper bound (less friction)
-  const tolerance = 1; // 1px tolerance
-  const maxIterations = 50;
+  return factor;
+};
 
-  for (let iteration = 0; iteration < maxIterations; iteration++) {
-    const testFactor = (low + high) / 2;
+/**
+ * Returns the final scroll position and the number of iterations required to
+ * reach it, based on the given parameters.
+ */
+const getFinalScroll = (
+  initialScroll: number,
+  velocity: number,
+  decelerationFactor: number,
+  minVelocity = 0.05
+) => {
+  // Number of frames until velocity drops below minVelocity
+  // velocityX * factor^n = minVelocity => n = log(minVelocity / |velocity|) / log(factor)
+  const iterations = Math.ceil(
+    Math.log(minVelocity / Math.abs(velocity)) / Math.log(decelerationFactor)
+  );
 
-    // Calculate number of frames until velocity reaches minVelocity
-    const x = Math.log(minVelocity / Math.abs(velocity)) / Math.log(testFactor);
+  // Partial geometric series: -velocity * 16 * Σ(factor^i, i=0..iterations-1)
+  //                         = -velocity * 16 * (1 - factor^iterations) / (1 - factor)
+  const finalScroll =
+    initialScroll -
+    (velocity * 16 * (1 - Math.pow(decelerationFactor, iterations))) /
+      (1 - decelerationFactor);
 
-    // Invalid calculation, adjust bounds
-    if (!isFinite(x) || x < 0) {
-      high = testFactor;
-      continue;
-    }
-
-    // Calculate final scroll with this factor
-    // -> sum of geometric series: initial + v*r^0 + v*r^1 + ... + v*r^(n-1)
-    let calculatedScroll = initialScroll;
-    for (let i = 0; i < Math.ceil(x); i++) {
-      calculatedScroll -= velocity * Math.pow(testFactor, i) * 16;
-    }
-
-    // Close enough?
-    const error = calculatedScroll - targetScroll;
-    if (Math.abs(error) < tolerance) {
-      return testFactor;
-    }
-
-    if (velocity < 0) {
-      // Scrolling right, calculatedScroll increases
-      if (calculatedScroll > targetScroll) {
-        high = testFactor;
-      } else {
-        low = testFactor;
-      }
-    } else {
-      // Scrolling left, calculatedScroll decreases
-      if (calculatedScroll < targetScroll) {
-        high = testFactor;
-      } else {
-        low = testFactor;
-      }
-    }
-  }
-
-  // Return default factor if we didn't find a good one
-  return 0.95;
+  return { finalScroll, iterations };
 };
 
 const iOSRubberBand = (translation: number, ratio: number, dimension = 1) => {
