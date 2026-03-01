@@ -89,6 +89,26 @@ const useCarouselContext = () => {
   return context;
 };
 
+/**
+ * Default boundary offset accounts for the content fade size
+ */
+const defaultBoundaryOffset = (container: HTMLElement) => {
+  const viewport = container.querySelector("[data-carousel-viewport]");
+  if (viewport) {
+    const computedStyle = getComputedStyle(viewport);
+    const maskSize = computedStyle.getPropertyValue("--carousel-fade-size");
+    const temp = document.createElement("div");
+    temp.style.position = "absolute";
+    temp.style.visibility = "hidden";
+    temp.style.setProperty("--carousel-fade-size", maskSize);
+    temp.style.width = "var(--carousel-fade-size)";
+    document.body.appendChild(temp);
+    const computed = getComputedStyle(temp);
+    return { x: parseFloat(computed.getPropertyValue("width")), y: 0 };
+  }
+  return { x: 0, y: 0 };
+};
+
 type CarouselRootProps = {
   boundaryOffset?:
     | { x: number; y: number }
@@ -96,7 +116,7 @@ type CarouselRootProps = {
 } & ComponentPropsWithoutRef<"div">;
 
 const CarouselRoot = ({
-  boundaryOffset,
+  boundaryOffset = defaultBoundaryOffset,
   children,
   ...props
 }: CarouselRootProps) => {
@@ -115,9 +135,43 @@ const CarouselRoot = ({
    * Scroll the whole page (the container client width)
    */
   const handleScrollPage = useCallback(
-    (direction: "forwards" | "backwards", container: HTMLElement) => {
+    (
+      direction: "forwards" | "backwards",
+      container: HTMLElement,
+      items: HTMLElement[]
+    ) => {
       const currentScroll = container.scrollLeft;
-      const delta = container.clientWidth * (direction === "forwards" ? 1 : -1);
+      const offset = rootRef.current
+        ? getBoundaryOffset(boundaryOffset, rootRef.current).x
+        : 0;
+      let delta =
+        (container.clientWidth - offset * 2) *
+        (direction === "forwards" ? 1 : -1);
+      // If multiple items, we can be more precise and scroll so the next / prev
+      // item that is not fully visible becomes fully visible after page scroll.
+      if (items.length > 1) {
+        if (direction === "forwards") {
+          const nextItem = items.find(
+            (item) =>
+              item.offsetLeft + item.offsetWidth >
+              currentScroll + container.offsetWidth - offset
+          );
+          if (nextItem) {
+            delta = nextItem.offsetLeft - container.scrollLeft - offset;
+          }
+        } else {
+          const prevItem = items
+            .filter((item) => item.offsetLeft < currentScroll + offset)
+            .reverse()[0];
+          if (prevItem) {
+            delta =
+              container.scrollLeft -
+              prevItem.offsetLeft -
+              container.offsetWidth -
+              offset;
+          }
+        }
+      }
       const scrollPosition = currentScroll + delta;
       const maxScroll = container.scrollWidth - container.clientWidth;
       const nextScrollPosition = Math.max(
@@ -126,7 +180,7 @@ const CarouselRoot = ({
       );
       container.scrollTo({ left: nextScrollPosition, behavior: "smooth" });
     },
-    []
+    [boundaryOffset]
   );
 
   /**
@@ -162,8 +216,11 @@ const CarouselRoot = ({
       const items = Array.from(
         container.querySelectorAll(":scope [data-carousel-content] > *")
       ) as HTMLElement[];
-      if (items.length === 1) {
-        handleScrollPage("forwards", container);
+      if (
+        items.length === 1 ||
+        scrollStateRef?.current?.scrollSnapType === "none"
+      ) {
+        handleScrollPage("forwards", container, items);
         return;
       }
       const currentScroll = container.scrollLeft;
@@ -177,6 +234,7 @@ const CarouselRoot = ({
       };
       const nextItem = items.find(isNextItem) ?? items[items.length - 1];
       if (nextItem) {
+        console.log(nextItem);
         scrollIntoView(nextItem, container);
       }
     }
@@ -195,8 +253,11 @@ const CarouselRoot = ({
       const items = Array.from(
         container.querySelectorAll(":scope [data-carousel-content] > *")
       ) as HTMLElement[];
-      if (items.length === 1) {
-        handleScrollPage("backwards", container);
+      if (
+        items.length === 1 ||
+        scrollStateRef?.current?.scrollSnapType === "none"
+      ) {
+        handleScrollPage("backwards", container, items);
         return;
       }
       const currentScroll = container.scrollLeft;
@@ -207,6 +268,7 @@ const CarouselRoot = ({
       const prevItems = items.filter(isPrevItem);
       const prevItem = prevItems[prevItems.length - 1] ?? items[0];
       if (prevItem) {
+        console.log(prevItem);
         scrollIntoView(prevItem, container);
       }
     }
@@ -261,6 +323,8 @@ const CarouselViewport = ({
   onWheel,
   contentFade = true,
   contentFadeSize = "clamp(16px, 10vw, 64px)",
+  style,
+  className,
   ...props
 }: CarouselViewportProps) => {
   const {
@@ -308,7 +372,7 @@ const CarouselViewport = ({
       scrollStateRef.current.scrollSnapType =
         getComputedStyle(container).scrollSnapType ?? "";
     }
-  }, []);
+  }, [className, style]);
 
   /**
    * Determine whether the container can scroll forwards or backwards based on
@@ -776,6 +840,7 @@ const CarouselViewport = ({
           ? "backwards"
           : "none"
       }
+      className={className}
       style={
         {
           ...(contentFade
@@ -804,7 +869,7 @@ const CarouselViewport = ({
           overscrollBehaviorX: "contain",
           scrollbarColor: "transparent transparent",
           scrollbarWidth: "none",
-          ...props.style,
+          ...style,
         } as CSSProperties
       }
     >
@@ -894,13 +959,7 @@ const CarouselPrevPage = ({
 };
 
 /**
- * Accounts for cases where the carousel viewport has padding or is inset within
- * a parent, so that the "next/prev item" calculation is relative to the visible
- * area rather than the raw container edge.
- *
- * For example, if the carousel has margin-inline: -12px, items near the edges
- * might appear partially visible, but the scroll logic would incorrectly think
- * they're fully in view without the offset adjustment.
+ * Returns the computed boundary offset (used for adjusting prev / next scroll)
  */
 const getBoundaryOffset = (
   boundaryOffset: CarouselContext["boundaryOffset"],

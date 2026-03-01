@@ -7,6 +7,7 @@ import styles from "@/components/Carousel/Carousel.module.scss";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
+import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
 import {
   ComponentId,
   COMPONENTS,
@@ -31,6 +32,8 @@ const CarouselComponentPageContent = () => {
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(0.7);
+  const [contentFade, setContentFade] = useState(true);
+  const [snap, setSnap] = useState(true);
   const carouselRef = useRef<HTMLDivElement>(null);
   useCssSizeVariables(carouselRef);
 
@@ -65,11 +68,9 @@ const CarouselComponentPageContent = () => {
           className={styles.wrapper}
           style={{ marginBottom: 32 }}
         >
-          <Carousel.Root
-            boundaryOffset={getBoundaryOffset}
-            className={styles.carousel}
-          >
+          <Carousel.Root className={styles.carousel}>
             <Carousel.Viewport
+              contentFade={contentFade}
               className={styles.carousel_viewport}
               style={
                 {
@@ -79,6 +80,7 @@ const CarouselComponentPageContent = () => {
                   "--carousel-fade-offset-forwards":
                     "min(var(--remaining-forwards, 0px) + var(--margin-inline), var(--margin-inline) * -1)",
                   marginInline: "var(--margin-inline)",
+                  scrollSnapType: snap ? "x mandatory" : "none",
                 } as CSSProperties
               }
             >
@@ -335,6 +337,46 @@ const CarouselComponentPageContent = () => {
                 </Carousel.NextPage>
               </div>
             </div>
+            <div
+              className={styles.legend_and_controls + " card"}
+              style={{ marginTop: 8, paddingBlock: 10, paddingInline: 12 }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  columnGap: 16,
+                  flexWrap: "wrap",
+                  rowGap: 8,
+                }}
+              >
+                <label
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <Checkbox
+                    defaultChecked={contentFade}
+                    onChange={(event) => setContentFade(event.target.checked)}
+                  />
+                  <small style={{ opacity: 0.8 }}>Content fade</small>
+                </label>
+                <label
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <Checkbox
+                    defaultChecked={snap}
+                    onChange={(event) => setSnap(event.target.checked)}
+                  />
+                  <small style={{ opacity: 0.8 }}>Snap (center)</small>
+                </label>
+              </div>
+            </div>
           </Carousel.Root>
         </div>
         <h2 id="things-to-try">Things to try</h2>
@@ -395,24 +437,6 @@ const CarouselComponentPageContent = () => {
       </div>
     </>
   );
-};
-
-const getBoundaryOffset = (container: HTMLElement) => {
-  const viewport = container.querySelector("[data-carousel-viewport]");
-  if (viewport) {
-    const computedStyle = getComputedStyle(viewport);
-    const maskSize = computedStyle.getPropertyValue("--carousel-fade-size");
-    const temp = document.createElement("div");
-    temp.style.position = "absolute";
-    temp.style.visibility = "hidden";
-    temp.style.setProperty("--carousel-fade-size", maskSize);
-    temp.style.width = "var(--carousel-fade-size)";
-    document.body.appendChild(temp);
-    const computed = getComputedStyle(temp);
-    const result = { x: parseFloat(computed.getPropertyValue("width")), y: 0 };
-    return result;
-  }
-  return { x: 0, y: 0 };
 };
 
 export default CarouselComponentPage;
