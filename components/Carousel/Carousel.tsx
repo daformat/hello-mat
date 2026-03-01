@@ -511,6 +511,7 @@ const CarouselViewport = ({
           : snappedScroll <= initialScroll;
 
       if (!snappedInCorrectDirection) {
+        console.log("Snapping in the wrong direction");
         state.velocityX = Math.sign(state.velocityX) * -1 * 0.5;
       }
 
@@ -525,6 +526,7 @@ const CarouselViewport = ({
       // the animation is not too fast
       const minIterations = 10;
       if (!isFinite(iterations) || iterations < minIterations) {
+        console.log("Snapping in not enough iterations");
         const displacement = snappedScroll - initialScroll;
         state.velocityX =
           (-displacement * (1 - decelerationFactor)) /
@@ -532,17 +534,32 @@ const CarouselViewport = ({
       } else {
         const gap = snappedScroll - finalScroll;
         if (Math.abs(gap) > 0.5) {
+          console.log("Gap is too large, adjusting velocity");
           const velocityAdjustment =
             (-gap * (1 - decelerationFactor)) / FRAME_DURATION;
           state.velocityX += velocityAdjustment;
         }
       }
 
-      return findDecelerationFactor(
+      const f = findDecelerationFactor(
         initialScroll,
         snappedScroll,
         state.velocityX
       );
+
+      console.table({
+        initialScroll,
+        tFinalScroll,
+        snappedScroll,
+        ...getFinalScroll(
+          initialScroll,
+          state.velocityX,
+          decelerationFactor,
+          minVelocity
+        ),
+      });
+
+      return f;
     },
     []
   );
@@ -575,7 +592,8 @@ const CarouselViewport = ({
       if (
         finalScroll < container.scrollWidth - container.offsetWidth &&
         finalScroll > 0 &&
-        Math.abs(state.velocityX) >= minVelocityForSnapping
+        Math.abs(state.velocityX) >= minVelocityForSnapping &&
+        state.scrollSnapType
       ) {
         return applyMomentumSnapping(
           container,
