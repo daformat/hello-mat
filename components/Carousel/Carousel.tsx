@@ -1,6 +1,5 @@
 import {
   ComponentPropsWithoutRef,
-  ContextType,
   createContext,
   CSSProperties,
   RefObject,
@@ -233,7 +232,6 @@ const CarouselViewport = ({
     setScrollStateRef,
   } = useContext(CarouselContext);
   const containerRef = useRef<HTMLDivElement>(null);
-  const lastFrameTime = useRef<number | null>(null);
   const scrollStateRef = useRef<ScrollState>({
     isDragging: false,
     startX: 0,
@@ -563,6 +561,7 @@ const CarouselViewport = ({
       );
 
       if (
+        !isRubberBanding &&
         finalScroll < container.scrollWidth - container.offsetWidth &&
         finalScroll > 0 &&
         Math.abs(state.velocityX) >= minVelocityForSnapping &&
@@ -615,12 +614,12 @@ const CarouselViewport = ({
       const remainingBackwards = newScrollLeft;
 
       // Overscroll rubber band bounce-back
-      const content = container.querySelector("[data-carousel-content]");
-      if (content instanceof HTMLElement) {
-        if (
-          Math.abs(state.velocityX) > minVelocity &&
-          (remainingForwards <= 1 || remainingBackwards < 1)
-        ) {
+      if (
+        Math.abs(state.velocityX) > minVelocity &&
+        (remainingForwards <= 1 || remainingBackwards < 1)
+      ) {
+        const content = container.querySelector("[data-carousel-content]");
+        if (content instanceof HTMLElement) {
           const theoreticalTranslate = state.velocityX * 50;
           const currentTranslate = parseFloat(content.style.translate || "0");
           const delta = theoreticalTranslate - currentTranslate;
@@ -645,11 +644,9 @@ const CarouselViewport = ({
         state.animationId = requestAnimationFrame(animate);
       } else {
         state.animationId = null;
-        lastFrameTime.current = null;
       }
     };
 
-    lastFrameTime.current = null;
     state.animationId = requestAnimationFrame(animate);
   }, [computeMomentumDecelerationFactor]);
 
@@ -843,7 +840,7 @@ const CarouselPrevPage = ({
  * they're fully in view without the offset adjustment.
  */
 const getBoundaryOffset = (
-  boundaryOffset: ContextType<typeof CarouselContext>["boundaryOffset"],
+  boundaryOffset: CarouselContext["boundaryOffset"],
   root: HTMLElement
 ) => {
   return typeof boundaryOffset === "function"
