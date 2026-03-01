@@ -522,6 +522,12 @@ const CarouselViewport = ({
         minVelocity
       );
 
+      decelerationFactor = findDecelerationFactor(
+        initialScroll,
+        snappedScroll,
+        state.velocityX
+      );
+
       // update velocity to ensure momentum snaps to the correct position and
       // the animation is not too fast
       const minIterations = 10;
