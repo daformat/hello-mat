@@ -14,9 +14,8 @@ import {
 import { MaybeNull, MaybeUndefined } from "@/components/Media/utils/maybe";
 
 /**
- * Reference frame duration used as a unit scaling constant in deceleration
- * factor computations. The actual animation uses real elapsed time for
- * smoothness, but the math must be derived with a consistent reference value.
+ * Use a fixed frame duration so that we can accurately predict snapping and
+ * other momentum-based calculations.
  */
 const FRAME_DURATION = 16;
 
