@@ -66,6 +66,7 @@ type CarouselContext = {
     | ((root: HTMLElement) => { x: number; y: number });
   rootRef: RefObject<MaybeNull<HTMLElement>>;
 };
+
 const CarouselContext = createContext<CarouselContext>({
   setRef: () => {},
   setScrollsBackwards: () => {},
@@ -111,13 +112,13 @@ const CarouselRoot = ({
   const rootRef = useRef<HTMLDivElement>(null);
 
   /**
-   * Fallback on scrolling the whole page if we can't find multiple children
+   * Scroll the whole page (the container client width)
    */
-  const handleLegacyScroll = useCallback(
+  const handleScrollPage = useCallback(
     (direction: "forwards" | "backwards", container: HTMLElement) => {
-      const scrollPosition =
-        container.scrollLeft +
-        container.clientWidth * (direction === "forwards" ? 1 : -1);
+      const currentScroll = container.scrollLeft;
+      const delta = container.clientWidth * (direction === "forwards" ? 1 : -1);
+      const scrollPosition = currentScroll + delta;
       const maxScroll = container.scrollWidth - container.clientWidth;
       const nextScrollPosition = Math.max(
         0,
@@ -162,7 +163,7 @@ const CarouselRoot = ({
         container.querySelectorAll(":scope [data-carousel-content] > *")
       ) as HTMLElement[];
       if (items.length === 1) {
-        handleLegacyScroll("forwards", container);
+        handleScrollPage("forwards", container);
         return;
       }
       const currentScroll = container.scrollLeft;
@@ -176,11 +177,10 @@ const CarouselRoot = ({
       };
       const nextItem = items.find(isNextItem) ?? items[items.length - 1];
       if (nextItem) {
-        console.log({ nextItem });
         scrollIntoView(nextItem, container);
       }
     }
-  }, [boundaryOffset, handleLegacyScroll, ref, scrollIntoView, scrollStateRef]);
+  }, [boundaryOffset, handleScrollPage, ref, scrollIntoView, scrollStateRef]);
 
   /**
    * Scrolls the container to the previous slide until hitting the start of the container
@@ -195,9 +195,8 @@ const CarouselRoot = ({
       const items = Array.from(
         container.querySelectorAll(":scope [data-carousel-content] > *")
       ) as HTMLElement[];
-      console.log(items);
       if (items.length === 1) {
-        handleLegacyScroll("backwards", container);
+        handleScrollPage("backwards", container);
         return;
       }
       const currentScroll = container.scrollLeft;
@@ -211,7 +210,7 @@ const CarouselRoot = ({
         scrollIntoView(prevItem, container);
       }
     }
-  }, [boundaryOffset, handleLegacyScroll, ref, scrollIntoView, scrollStateRef]);
+  }, [boundaryOffset, handleScrollPage, ref, scrollIntoView, scrollStateRef]);
 
   return (
     <CarouselContext.Provider
@@ -671,7 +670,7 @@ const CarouselViewport = ({
           const theoreticalTranslate = state.velocityX * 50;
           const currentTranslate = parseFloat(content.style.translate || "0");
           const delta = theoreticalTranslate - currentTranslate;
-          const items = content.querySelectorAll("[data-carousel-item]");
+          const items = content.querySelectorAll(":scope > *");
           // we have to translate the items instead of the content because
           // Safari scrolls the viewport if the content is translated
           items.forEach((item) => {
@@ -767,7 +766,7 @@ const CarouselViewport = ({
           scrollStateRef.current.scrollSnapType;
         onWheel?.(event);
       }}
-      data-carousel-viewport={""}
+      data-carousel-viewport=""
       data-can-scroll={
         scrollsForwards && scrollsBackwards
           ? "both"
@@ -821,7 +820,7 @@ const CarouselContent = ({ children, ...props }: CarouselContentProps) => {
     <div
       {...props}
       style={{ width: "fit-content", ...props.style }}
-      data-carousel-content
+      data-carousel-content=""
     >
       {children}
     </div>
@@ -840,7 +839,7 @@ const CarouselItem = ({ children, asChild, ...props }: CarouselItemProps) => {
     });
   }
   return (
-    <div {...props} data-carousel-item>
+    <div {...props} data-carousel-item="">
       {children}
     </div>
   );
