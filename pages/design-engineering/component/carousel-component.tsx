@@ -339,7 +339,7 @@ const CarouselComponentPageContent = () => {
             </div>
             <div
               className={styles.legend_and_controls + " card"}
-              style={{ marginTop: 8, paddingBlock: 10, paddingInline: 12 }}
+              style={{ marginTop: 12, paddingBlock: 10, paddingInline: 12 }}
             >
               <div
                 style={{
