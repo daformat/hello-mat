@@ -25,6 +25,7 @@ const FRAME_DURATION = 16;
 
 type ScrollState = {
   isDragging: boolean;
+  isDispatchingClick: boolean;
   startX: number;
   scrollLeft: number;
   lastX: number;
@@ -237,6 +238,7 @@ const CarouselViewport = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollStateRef = useRef<ScrollState>({
     isDragging: false,
+    isDispatchingClick: false,
     startX: 0,
     scrollLeft: 0,
     lastX: 0,
@@ -357,6 +359,7 @@ const CarouselViewport = ({
         container.removeEventListener("wheel", handlePreventScroll);
       };
     }
+    return;
   }, [handlePreventScroll, updateScrollState]);
 
   /**
@@ -678,9 +681,11 @@ const CarouselViewport = ({
           state.initialPointerPosition.y - event.clientY
         ) < 3
       ) {
+        state.isDispatchingClick = true;
         state.initialTarget?.dispatchEvent(
-          new PointerEvent("click", { bubbles: true })
+          new MouseEvent("click", { bubbles: true, cancelable: true })
         );
+        state.isDispatchingClick = false;
       }
       state.initialTarget = null;
       state.initialPointerPosition = null;
@@ -705,12 +710,14 @@ const CarouselViewport = ({
     <div
       ref={containerRef}
       {...props}
-      onPointerDown={handlePointerDown}
+      onPointerDownCapture={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onClickCapture={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
+        if (!scrollStateRef.current.isDispatchingClick) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
         onClickCapture?.(event);
       }}
       onWheel={(event) => {
@@ -737,9 +744,9 @@ const CarouselViewport = ({
                     ? `${contentFadeSize}px`
                     : contentFadeSize,
                 "--carousel-fade-offset-backwards":
-                  "var(--remaining-backwards, 0px)",
+                  "min(var(--remaining-backwards, 0px), 0px)",
                 "--carousel-fade-offset-forwards":
-                  "var(--remaining-forwards, 0px)",
+                  "min(var(--remaining-forwards, 0px), 0px)",
                 maskImage: `linear-gradient(
               to right,
               transparent var(--carousel-fade-offset-backwards),
