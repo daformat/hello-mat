@@ -188,15 +188,26 @@ const CarouselRoot = ({
    * element.scrollIntoView()
    */
   const scrollIntoView = useCallback(
-    (target: HTMLElement, container: HTMLElement) => {
+    (
+      target: HTMLElement,
+      container: HTMLElement,
+      direction: "forwards" | "backwards"
+    ) => {
       const [_, inline] = getScrollSnapAlign(getComputedStyle(target));
-      let scrollPosition = target.offsetLeft;
+      let scrollPosition =
+        direction === "forwards"
+          ? target.offsetLeft - target.offsetWidth * 0.5
+          : target.offsetLeft -
+            container.offsetWidth +
+            target.offsetWidth * 1.5;
       if (inline === "center") {
         scrollPosition =
           target.offsetLeft - (container.offsetWidth - target.offsetWidth) / 2;
       } else if (inline === "end") {
         scrollPosition =
-          target.offsetLeft - container.offsetWidth + target.offsetWidth;
+          direction === "forwards"
+            ? target.offsetLeft - target.offsetWidth
+            : target.offsetLeft - container.offsetWidth + target.offsetWidth;
       }
       container.scrollTo({ left: scrollPosition, behavior: "smooth" });
     },
@@ -234,8 +245,7 @@ const CarouselRoot = ({
       };
       const nextItem = items.find(isNextItem) ?? items[items.length - 1];
       if (nextItem) {
-        console.log(nextItem);
-        scrollIntoView(nextItem, container);
+        scrollIntoView(nextItem, container, "forwards");
       }
     }
   }, [boundaryOffset, handleScrollPage, ref, scrollIntoView, scrollStateRef]);
@@ -268,8 +278,7 @@ const CarouselRoot = ({
       const prevItems = items.filter(isPrevItem);
       const prevItem = prevItems[prevItems.length - 1] ?? items[0];
       if (prevItem) {
-        console.log(prevItem);
-        scrollIntoView(prevItem, container);
+        scrollIntoView(prevItem, container, "backwards");
       }
     }
   }, [boundaryOffset, handleScrollPage, ref, scrollIntoView, scrollStateRef]);

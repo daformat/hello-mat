@@ -1,7 +1,16 @@
 import Link from "next/link";
-import { CSSProperties, useEffect, useRef, useState } from "react";
+import {
+  CSSProperties,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
+import { IoChevronDownOutline } from "react-icons/io5";
 
+import { Dropdown } from "@/components/ButtonGroup/Dropdown/Dropdown";
+import { DropdownItem } from "@/components/ButtonGroup/Dropdown/DropdownItem";
 import { Carousel } from "@/components/Carousel/Carousel";
 import styles from "@/components/Carousel/Carousel.module.scss";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
@@ -34,7 +43,11 @@ const CarouselComponentPageContent = () => {
   const [size, setSize] = useState(0.7);
   const [contentFade, setContentFade] = useState(true);
   const [snap, setSnap] = useState(true);
+  const [snapAlign, setSnapAlign] = useState<"center" | "start" | "end">(
+    "center"
+  );
   const carouselRef = useRef<HTMLDivElement>(null);
+  const restoreSnap = useRef(false);
   useCssSizeVariables(carouselRef);
 
   useEffect(() => {
@@ -42,6 +55,13 @@ const CarouselComponentPageContent = () => {
       tocContext.setRootElement(contentRef.current);
     }
   });
+
+  useLayoutEffect(() => {
+    if (restoreSnap.current) {
+      setSnap(true);
+      restoreSnap.current = false;
+    }
+  }, [snapAlign, contentFade]);
 
   return (
     <>
@@ -68,7 +88,10 @@ const CarouselComponentPageContent = () => {
           className={styles.wrapper}
           style={{ marginBottom: 32 }}
         >
-          <Carousel.Root className={styles.carousel}>
+          <Carousel.Root
+            className={styles.carousel}
+            data-snap-align={snapAlign}
+          >
             <Carousel.Viewport
               contentFade={contentFade}
               className={styles.carousel_viewport}
@@ -357,8 +380,16 @@ const CarouselComponentPageContent = () => {
                   }}
                 >
                   <Checkbox
-                    defaultChecked={contentFade}
-                    onChange={(event) => setContentFade(event.target.checked)}
+                    checked={contentFade}
+                    onChange={(event) => {
+                      setSnap((prev) => {
+                        if (prev) {
+                          restoreSnap.current = true;
+                        }
+                        return false;
+                      });
+                      setContentFade(event.target.checked);
+                    }}
                   />
                   <small style={{ opacity: 0.8 }}>Content fade</small>
                 </label>
@@ -370,11 +401,48 @@ const CarouselComponentPageContent = () => {
                   }}
                 >
                   <Checkbox
-                    defaultChecked={snap}
+                    checked={snap}
                     onChange={(event) => setSnap(event.target.checked)}
                   />
-                  <small style={{ opacity: 0.8 }}>Snap (center)</small>
+                  <small style={{ opacity: 0.8 }}>Snap</small>
                 </label>
+                <Dropdown
+                  trigger={
+                    <button className={"button"}>
+                      {snapAlign}{" "}
+                      {contentFade && snapAlign !== "center" ? "(+ fade)" : ""}
+                      <IoChevronDownOutline />
+                    </button>
+                  }
+                >
+                  <DropdownItem
+                    onSelect={() => {
+                      restoreSnap.current = true;
+                      setSnap(false);
+                      setSnapAlign("center");
+                    }}
+                  >
+                    Center
+                  </DropdownItem>
+                  <DropdownItem
+                    onSelect={() => {
+                      restoreSnap.current = true;
+                      setSnap(false);
+                      setSnapAlign("start");
+                    }}
+                  >
+                    Start {contentFade ? "(+ fade)" : ""}
+                  </DropdownItem>
+                  <DropdownItem
+                    onSelect={() => {
+                      restoreSnap.current = true;
+                      setSnap(false);
+                      setSnapAlign("end");
+                    }}
+                  >
+                    End {contentFade ? "(+ fade)" : ""}
+                  </DropdownItem>
+                </Dropdown>
               </div>
             </div>
           </Carousel.Root>
