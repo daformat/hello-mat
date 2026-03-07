@@ -229,6 +229,7 @@ const CarouselRoot = ({
       const [_, inline] = getScrollSnapAlign(getComputedStyle(target));
       if (direction === "nearest") {
         scrollIntoViewNearest(target, container);
+        return;
       }
       let scrollPosition =
         direction === "forwards"
