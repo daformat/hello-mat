@@ -46,6 +46,12 @@ type ScrollState = {
   scrollSnapType: string;
 };
 
+type ScrollIntoView = (
+  target: HTMLElement,
+  container: HTMLElement,
+  direction: "forwards" | "backwards" | "nearest"
+) => void;
+
 type CarouselContext = {
   ref?: RefObject<MaybeNull<HTMLElement>>;
   setRef: (ref: RefObject<MaybeNull<HTMLElement>>) => void;
@@ -55,6 +61,7 @@ type CarouselContext = {
   setScrollsForwards: (scrollsForwards: boolean) => void;
   handleScrollToNext: () => void;
   handleScrollToPrev: () => void;
+  scrollIntoView: ScrollIntoView;
   remainingForwards?: number;
   remainingBackwards?: number;
   setRemainingForwards: (remainingForwards: number) => void;
@@ -78,6 +85,7 @@ const CarouselContext = createContext<CarouselContext>({
   setScrollStateRef: () => {},
   handleScrollToNext: () => {},
   handleScrollToPrev: () => {},
+  scrollIntoView: () => {},
   rootRef: { current: null },
 });
 
@@ -184,16 +192,44 @@ const CarouselRoot = ({
   );
 
   /**
+   * Custom scrollIntoViewNearest to prevent ancestors scrolling when doing
+   * native element.scrollIntoView()
+   */
+  const scrollIntoViewNearest = useCallback(
+    (target: HTMLElement, container: HTMLElement) => {
+      const offset = rootRef.current
+        ? getBoundaryOffset(boundaryOffset, rootRef.current).x
+        : 0;
+      const isBefore = target.offsetLeft <= container.scrollLeft + offset;
+      const isAfter =
+        target.offsetLeft + target.offsetWidth >=
+        container.scrollLeft + container.offsetWidth - offset;
+      if (isBefore || isAfter) {
+        const scrollPosition = isBefore
+          ? target.offsetLeft - offset
+          : target.offsetLeft -
+            container.offsetWidth +
+            target.offsetWidth +
+            offset;
+        container.scrollTo({
+          left: scrollPosition <= offset ? 0 : scrollPosition,
+          behavior: "smooth",
+        });
+      }
+    },
+    [boundaryOffset]
+  );
+
+  /**
    * Custom scrollIntoView to prevent ancestors scrolling when doing native
    * element.scrollIntoView()
    */
-  const scrollIntoView = useCallback(
-    (
-      target: HTMLElement,
-      container: HTMLElement,
-      direction: "forwards" | "backwards"
-    ) => {
+  const scrollIntoView = useCallback<ScrollIntoView>(
+    (target, container, direction) => {
       const [_, inline] = getScrollSnapAlign(getComputedStyle(target));
+      if (direction === "nearest") {
+        scrollIntoViewNearest(target, container);
+      }
       let scrollPosition =
         direction === "forwards"
           ? target.offsetLeft - target.offsetWidth * 0.5
@@ -211,7 +247,7 @@ const CarouselRoot = ({
       }
       container.scrollTo({ left: scrollPosition, behavior: "smooth" });
     },
-    []
+    [scrollIntoViewNearest]
   );
 
   /**
@@ -300,6 +336,7 @@ const CarouselRoot = ({
         setScrollStateRef,
         handleScrollToNext,
         handleScrollToPrev,
+        scrollIntoView,
         boundaryOffset,
         rootRef,
       }}
@@ -342,6 +379,7 @@ const CarouselViewport = ({
     setScrollsForwards,
     scrollsForwards,
     scrollsBackwards,
+    scrollIntoView,
     setRemainingForwards,
     setRemainingBackwards,
     setScrollStateRef,
@@ -668,7 +706,7 @@ const CarouselViewport = ({
         container.scrollLeft >=
           container.scrollWidth - container.offsetWidth - 1;
       const rubberBandingFactor = isRubberBanding
-        ? (state.velocityX * 50) / container.scrollWidth
+        ? (state.velocityX * 25) / container.scrollWidth
         : 0;
       const friction = 0.05 + Math.abs(rubberBandingFactor);
       const decelerationFactor = 1 - friction;
@@ -819,6 +857,35 @@ const CarouselViewport = ({
       document.removeEventListener("pointerup", handlePointerUp);
     };
   }, [handlePointerUp]);
+
+  /**
+   * Scroll focused element into view if it's not already visible'
+   */
+  const handleFocus = useCallback(
+    (event: FocusEvent) => {
+      const container = containerRef.current;
+      const { target } = event;
+      if (
+        container &&
+        target instanceof HTMLElement &&
+        target !== event.currentTarget
+      ) {
+        scrollIntoView(target, container, "nearest");
+      }
+    },
+    [scrollIntoView]
+  );
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+    container.addEventListener("focus", handleFocus, { capture: true });
+    return () => {
+      container.removeEventListener("focus", handleFocus, { capture: true });
+    };
+  }, [handleFocus]);
 
   return (
     <div
