@@ -490,7 +490,7 @@ describe("Carousel", () => {
       drag(vp, 100, 0);
 
       const scrollAfterDrag = vp.scrollLeft;
-      frames[0](0);
+      frames[0]?.(0);
       expect(vp.scrollLeft).not.toBe(scrollAfterDrag);
     });
 
@@ -502,9 +502,9 @@ describe("Carousel", () => {
       drag(vp, 100, 0);
 
       const s0 = vp.scrollLeft;
-      frames[0](0);
+      frames[0]?.(0);
       const s1 = vp.scrollLeft;
-      frames[1](0);
+      frames[1]?.(0);
       const s2 = vp.scrollLeft;
 
       // Each frame should move less than the one before due to deceleration
@@ -519,7 +519,7 @@ describe("Carousel", () => {
       drag(vp, 100, 0);
 
       const countBeforeFirstFrame = frames.length;
-      frames[0](0);
+      frames[0]?.(0);
       // The animate loop should have re-queued itself since velocity hasn't decayed yet
       expect(frames.length).toBeGreaterThan(countBeforeFirstFrame);
     });
@@ -530,7 +530,11 @@ describe("Carousel", () => {
       renderCarousel();
       const vp = getViewport();
       // offsetWidth must be non-zero so the rubber-band distance is meaningful
-      stubViewportLayout(vp, { scrollLeft: 0, scrollWidth: 1000, offsetWidth: 300 });
+      stubViewportLayout(vp, {
+        scrollLeft: 0,
+        scrollWidth: 1000,
+        offsetWidth: 300,
+      });
 
       vi.useFakeTimers({ toFake: ["Date"], now: 0 });
       fireEvent.pointerDown(vp, {
@@ -556,7 +560,9 @@ describe("Carousel", () => {
       expect(items.length).toBeGreaterThan(0);
       // Every item should carry a non-trivial translate offset
       expect(
-        items.every((item) => (item.getAttribute("style") ?? "").includes("translate"))
+        items.every((item) =>
+          (item.getAttribute("style") ?? "").includes("translate")
+        )
       ).toBe(true);
     });
 
@@ -564,7 +570,11 @@ describe("Carousel", () => {
       renderCarousel();
       const vp = getViewport();
       // scrollLeft=300 is well within [0, 700], so no boundary is touched
-      stubViewportLayout(vp, { scrollLeft: 300, scrollWidth: 1000, offsetWidth: 300 });
+      stubViewportLayout(vp, {
+        scrollLeft: 300,
+        scrollWidth: 1000,
+        offsetWidth: 300,
+      });
 
       vi.useFakeTimers({ toFake: ["Date"], now: 0 });
       fireEvent.pointerDown(vp, {
@@ -587,7 +597,9 @@ describe("Carousel", () => {
         document.querySelectorAll("[data-carousel-item]")
       ) as HTMLElement[];
       expect(
-        items.every((item) => !(item.getAttribute("style") ?? "").includes("translate"))
+        items.every(
+          (item) => !(item.getAttribute("style") ?? "").includes("translate")
+        )
       ).toBe(true);
     });
   });
