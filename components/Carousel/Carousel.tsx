@@ -200,20 +200,60 @@ const CarouselRoot = ({
       const offset = rootRef.current
         ? getBoundaryOffset(boundaryOffset, rootRef.current).x
         : 0;
-      const isBefore = target.offsetLeft <= container.scrollLeft + offset;
-      const isAfter =
-        target.offsetLeft + target.offsetWidth >=
-        container.scrollLeft + container.offsetWidth - offset;
-      if (isBefore || isAfter) {
-        const scrollPosition = isBefore
+      const getIsBeforeAfter = () => {
+        const isBefore = target.offsetLeft < container.scrollLeft + offset;
+        const isAfter =
+          target.offsetLeft + target.offsetWidth >
+          container.scrollLeft + container.offsetWidth - offset;
+        return { isBefore, isAfter };
+      };
+      let { isBefore, isAfter } = getIsBeforeAfter();
+      // Default when the target is larger than the container
+      if (isBefore && isAfter) {
+        const scrollPosition = target.offsetLeft - offset;
+        container.scrollTo({
+          left: scrollPosition <= offset ? 0 : scrollPosition,
+          behavior: "smooth",
+        });
+      } else if (isBefore || isAfter) {
+        const currentScroll = container.scrollLeft;
+        let scrollPosition = isBefore
           ? target.offsetLeft - offset
           : target.offsetLeft -
             container.offsetWidth +
             target.offsetWidth +
             offset;
-        container.scrollTo({
-          left: scrollPosition <= offset ? 0 : scrollPosition,
-          behavior: "smooth",
+        let iterations = 0;
+        const maxIterations = 10;
+        // Adjust scroll position to account for snapping, if the target is
+        // still before or after, we increment / decrement the scroll position
+        while (
+          scrollPosition > 0 &&
+          scrollPosition < container.scrollWidth - container.offsetWidth &&
+          (isBefore || isAfter) &&
+          iterations < maxIterations
+        ) {
+          container.scrollTo({
+            left: scrollPosition <= offset ? 0 : scrollPosition,
+            behavior: "instant",
+          });
+          const newState = getIsBeforeAfter();
+          isBefore = newState.isBefore;
+          isAfter = newState.isAfter;
+          if (isBefore) {
+            scrollPosition -= target.offsetWidth / 2;
+          } else if (isAfter) {
+            scrollPosition += target.offsetWidth / 2;
+          }
+          iterations++;
+        }
+        container.scrollTo({ left: currentScroll, behavior: "instant" });
+        // request animation frame to prevent Safari from being Safari
+        requestAnimationFrame(() => {
+          container.scrollTo({
+            left: scrollPosition <= offset ? 0 : scrollPosition,
+            behavior: "smooth",
+          });
         });
       }
     },
@@ -859,8 +899,10 @@ const CarouselViewport = ({
     };
   }, [handlePointerUp]);
 
+  const lastTabScrollLeft = useRef<MaybeNull<number>>(null);
+
   /**
-   * Scroll focused element into view if it's not already visible'
+   * Scroll to the focused element into view if it's not already visible
    */
   const handleFocus = useCallback(
     (event: FocusEvent) => {
@@ -871,7 +913,12 @@ const CarouselViewport = ({
         target instanceof HTMLElement &&
         target !== event.currentTarget
       ) {
+        if (lastTabScrollLeft.current !== null) {
+          container.scrollLeft = lastTabScrollLeft.current;
+        }
         scrollIntoView(target, container, "nearest");
+        void container.offsetWidth;
+        lastTabScrollLeft.current = null;
       }
     },
     [scrollIntoView]
@@ -882,9 +929,22 @@ const CarouselViewport = ({
     if (!container) {
       return;
     }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Tab") {
+        if (
+          event.target instanceof HTMLElement &&
+          container.contains(event.target)
+        ) {
+          lastTabScrollLeft.current = container.scrollLeft;
+        }
+      }
+    };
+
     container.addEventListener("focus", handleFocus, { capture: true });
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
       container.removeEventListener("focus", handleFocus, { capture: true });
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [handleFocus]);
 
