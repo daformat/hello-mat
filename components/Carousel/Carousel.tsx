@@ -224,7 +224,7 @@ const CarouselRoot = ({
             target.offsetWidth +
             offset;
         let iterations = 0;
-        const maxIterations = 10;
+        const maxIterations = 20;
         // Adjust scroll position to account for snapping, if the target is
         // still before or after, we increment / decrement the scroll position
         while (
