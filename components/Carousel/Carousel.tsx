@@ -304,10 +304,7 @@ const CarouselRoot = ({
       const items = Array.from(
         container.querySelectorAll(":scope [data-carousel-content] > *")
       ) as HTMLElement[];
-      if (
-        items.length === 1 ||
-        scrollStateRef?.current?.scrollSnapType === "none"
-      ) {
+      if (items.length === 1) {
         handleScrollPage("forwards", container, items);
         return;
       }
@@ -340,10 +337,7 @@ const CarouselRoot = ({
       const items = Array.from(
         container.querySelectorAll(":scope [data-carousel-content] > *")
       ) as HTMLElement[];
-      if (
-        items.length === 1 ||
-        scrollStateRef?.current?.scrollSnapType === "none"
-      ) {
+      if (items.length === 1) {
         handleScrollPage("backwards", container, items);
         return;
       }
