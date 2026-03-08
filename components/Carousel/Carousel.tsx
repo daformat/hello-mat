@@ -463,7 +463,12 @@ const CarouselViewport = ({
   const updateScrollState = useCallback(() => {
     const container = containerRef.current;
     if (container) {
-      const containerScrollWidth = container.scrollWidth ?? 0;
+      const translateX = parseFloat(
+        container.style.getPropertyValue("--carousel-overscroll-translate-x") ??
+          "0"
+      );
+      const containerScrollWidth =
+        (container.scrollWidth ?? 0) - (translateX > 0 ? translateX : 0);
       const containerOffsetWidth = container.offsetWidth ?? 0;
       const containerScrollLeft = container.scrollLeft ?? 0;
       if (!container || containerScrollWidth <= containerOffsetWidth) {
@@ -614,11 +619,15 @@ const CarouselViewport = ({
           : 0;
       const sign = Math.sign(scrollDelta);
       const easedDistance = iOSRubberBand(overscroll, 0, maxDistance);
+      container.style.setProperty(
+        "--carousel-overscroll-translate-x",
+        `${-sign * easedDistance}px`
+      );
       items.forEach((item) => {
         // we have to translate the items instead of the content because
         // Safari scrolls the viewport if the content is translated
         if (item instanceof HTMLElement) {
-          item.style.translate = `${-sign * easedDistance}px 0`;
+          item.style.translate = "var(--carousel-overscroll-translate-x) 0";
         }
       });
 
@@ -825,9 +834,13 @@ const CarouselViewport = ({
               Math.abs(theoreticalTranslate),
               container2.offsetWidth / 2
             );
+          container2.style.setProperty(
+            "--carousel-overscroll-translate-x",
+            `${clampedTranslate}px`
+          );
           items.forEach((item) => {
             if (item instanceof HTMLElement) {
-              item.style.translate = `${clampedTranslate}px 0`;
+              item.style.translate = "var(--carousel-overscroll-translate-x) 0";
             }
           });
           state.velocityX *= decelerationFactor;
@@ -839,6 +852,7 @@ const CarouselViewport = ({
       } else {
         state.animationId = null;
         container2.style.scrollSnapType = state.scrollSnapType;
+        container2.style.removeProperty("--carousel-overscroll-translate-x");
         const allItems = container2.querySelectorAll(
           ":scope [data-carousel-content] > *"
         );
