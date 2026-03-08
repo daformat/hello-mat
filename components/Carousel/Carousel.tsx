@@ -26,6 +26,14 @@ import { MaybeNull, MaybeUndefined } from "@/components/Media/utils/maybe";
  */
 const FRAME_DURATION = 16;
 const RUBBER_BAND_BOUNCE_COEFFICIENT = 40;
+const CSS_VARS = Object.freeze({
+  fadeSize: "--carousel-fade-size",
+  fadeOffsetBackwards: "--carousel-fade-offset-backwards",
+  fadeOffsetForwards: "--carousel-fade-offset-forwards",
+  overscrollTranslateX: "--carousel-overscroll-translate-x",
+  remainingBackwards: "--carousel-remaining-backwards",
+  remainingForwards: "--carousel-remaining-forwards",
+});
 
 type ScrollState = {
   isDragging: boolean;
@@ -103,12 +111,12 @@ const defaultBoundaryOffset = (container: HTMLElement) => {
   const viewport = container.querySelector("[data-carousel-viewport]");
   if (viewport) {
     const computedStyle = getComputedStyle(viewport);
-    const maskSize = computedStyle.getPropertyValue("--carousel-fade-size");
+    const maskSize = computedStyle.getPropertyValue(CSS_VARS.fadeSize);
     const temp = document.createElement("div");
     temp.style.position = "absolute";
     temp.style.visibility = "hidden";
-    temp.style.setProperty("--carousel-fade-size", maskSize);
-    temp.style.width = "var(--carousel-fade-size)";
+    temp.style.setProperty(CSS_VARS.fadeSize, maskSize);
+    temp.style.width = `var(${CSS_VARS.fadeSize})`;
     document.body.appendChild(temp);
     const computed = getComputedStyle(temp);
     const fadeSize = parseFloat(computed.getPropertyValue("width"));
@@ -464,8 +472,7 @@ const CarouselViewport = ({
     const container = containerRef.current;
     if (container) {
       const translateX = parseFloat(
-        container.style.getPropertyValue("--carousel-overscroll-translate-x") ??
-          "0"
+        container.style.getPropertyValue(CSS_VARS.overscrollTranslateX) ?? "0"
       );
       const containerScrollWidth =
         (container.scrollWidth ?? 0) - (translateX > 0 ? translateX : 0);
@@ -493,11 +500,11 @@ const CarouselViewport = ({
       setRemainingForwards(remainingForwards);
       setRemainingBackwards(remainingBackwards);
       container.style.setProperty(
-        "--remaining-forwards",
+        CSS_VARS.remainingForwards,
         `${remainingForwards}px`
       );
       container.style.setProperty(
-        "--remaining-backwards",
+        CSS_VARS.remainingBackwards,
         `${remainingBackwards}px`
       );
     }
@@ -620,14 +627,14 @@ const CarouselViewport = ({
       const sign = Math.sign(scrollDelta);
       const easedDistance = iOSRubberBand(overscroll, 0, maxDistance);
       container.style.setProperty(
-        "--carousel-overscroll-translate-x",
+        CSS_VARS.overscrollTranslateX,
         `${-sign * easedDistance}px`
       );
       items.forEach((item) => {
         // we have to translate the items instead of the content because
         // Safari scrolls the viewport if the content is translated
         if (item instanceof HTMLElement) {
-          item.style.translate = "var(--carousel-overscroll-translate-x) 0";
+          item.style.translate = `var(${CSS_VARS.overscrollTranslateX}) 0`;
         }
       });
 
@@ -835,12 +842,12 @@ const CarouselViewport = ({
               container2.offsetWidth / 2
             );
           container2.style.setProperty(
-            "--carousel-overscroll-translate-x",
+            CSS_VARS.overscrollTranslateX,
             `${clampedTranslate}px`
           );
           items.forEach((item) => {
             if (item instanceof HTMLElement) {
-              item.style.translate = "var(--carousel-overscroll-translate-x) 0";
+              item.style.translate = `var(${CSS_VARS.overscrollTranslateX}) 0`;
             }
           });
           state.velocityX *= decelerationFactor;
@@ -852,7 +859,7 @@ const CarouselViewport = ({
       } else {
         state.animationId = null;
         container2.style.scrollSnapType = state.scrollSnapType;
-        container2.style.removeProperty("--carousel-overscroll-translate-x");
+        container2.style.removeProperty(CSS_VARS.overscrollTranslateX);
         const allItems = container2.querySelectorAll(
           ":scope [data-carousel-content] > *"
         );
@@ -1002,20 +1009,18 @@ const CarouselViewport = ({
         {
           ...(contentFade
             ? {
-                "--carousel-fade-size":
+                [CSS_VARS.fadeSize]:
                   typeof contentFadeSize === "number"
                     ? `${contentFadeSize}px`
                     : contentFadeSize,
-                "--carousel-fade-offset-backwards":
-                  "min(var(--remaining-backwards, 0px), 0px)",
-                "--carousel-fade-offset-forwards":
-                  "min(var(--remaining-forwards, 0px), 0px)",
+                [CSS_VARS.fadeOffsetBackwards]: `min(var(${CSS_VARS.remainingBackwards}, 0px), 0px)`,
+                [CSS_VARS.fadeOffsetForwards]: `min(var(${CSS_VARS.remainingForwards}, 0px), 0px)`,
                 maskImage: `linear-gradient(
               to right,
-              transparent var(--carousel-fade-offset-backwards),
-              #000 calc(min(var(--remaining-backwards, 0px), var(--carousel-fade-size)) + var(--carousel-fade-offset-backwards)),
-              #000 calc(100% - min(var(--remaining-forwards, 0px), var(--carousel-fade-size)) - var(--carousel-fade-offset-forwards)),
-              transparent calc(100% - var(--carousel-fade-offset-forwards))
+              transparent var(${CSS_VARS.fadeOffsetBackwards}),
+              #000 calc(min(var(${CSS_VARS.remainingBackwards}, 0px), var(${CSS_VARS.fadeSize})) + var(${CSS_VARS.fadeOffsetBackwards})),
+              #000 calc(100% - min(var(${CSS_VARS.remainingForwards}, 0px), var(${CSS_VARS.fadeSize})) - var(${CSS_VARS.fadeOffsetForwards})),
+              transparent calc(100% - var(${CSS_VARS.fadeOffsetForwards}))
             )`,
                 maskSize: "100% 100%",
               }
@@ -1208,4 +1213,5 @@ export const Carousel = {
   NextPage: CarouselNextPage,
   useCarouselContext,
   defaultBoundaryOffset,
+  CSS_VARS,
 };
