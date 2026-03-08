@@ -40,9 +40,7 @@ type ScrollState = {
     x: number;
     y: number;
   }>;
-  initialMouseScrollLeft: number;
   mouseDirection: number;
-  mouseScrollLeft: number;
   scrollSnapType: string;
 };
 
@@ -433,9 +431,7 @@ const CarouselViewport = ({
     animationId: null as number | null,
     initialTarget: null as MaybeNull<EventTarget>,
     initialPointerPosition: null as MaybeNull<{ x: number; y: number }>,
-    initialMouseScrollLeft: 0,
     mouseDirection: 0,
-    mouseScrollLeft: 0,
     scrollSnapType: "",
   });
 
@@ -456,7 +452,7 @@ const CarouselViewport = ({
       scrollStateRef.current.scrollSnapType =
         getComputedStyle(container).scrollSnapType ?? "";
     }
-  }, [className, style]);
+  }, [/* effect dep */ className, /* effect dep */ style]);
 
   /**
    * Determine whether the container can scroll forwards or backwards based on
@@ -579,7 +575,6 @@ const CarouselViewport = ({
       state.velocityX = 0;
       state.initialTarget = event.target;
       state.initialPointerPosition = { x: event.clientX, y: event.clientY };
-      state.initialMouseScrollLeft = container.scrollLeft ?? 0;
       event.preventDefault();
       event.stopPropagation();
       onPointerDown?.(event);
@@ -657,10 +652,8 @@ const CarouselViewport = ({
       const direction = Math.sign(state.startX - event.clientX);
       if (direction !== state.mouseDirection) {
         state.mouseDirection = direction;
-        state.initialMouseScrollLeft = state.scrollLeft + scrollDelta;
       }
       container.scrollLeft = state.scrollLeft + scrollDelta;
-      state.mouseScrollLeft = state.scrollLeft + scrollDelta;
       state.lastX = event.clientX;
       state.lastTime = currentTime;
 
@@ -815,12 +808,16 @@ const CarouselViewport = ({
       ) {
         const content = container2.querySelector("[data-carousel-content]");
         if (content instanceof HTMLElement) {
-          const theoreticalTranslate = state.velocityX * 50;
-          const currentTranslate = parseFloat(content.style.translate || "0");
-          const delta = theoreticalTranslate - currentTranslate;
           const items = content.querySelectorAll(":scope > *");
           // we have to translate the items instead of the content because
           // Safari scrolls the viewport if the content is translated
+          const firstItem = items[0];
+          const currentTranslate =
+            firstItem instanceof HTMLElement
+              ? parseFloat(firstItem.style.translate || "0")
+              : 0;
+          const theoreticalTranslate = state.velocityX * 50;
+          const delta = theoreticalTranslate - currentTranslate;
           items.forEach((item) => {
             if (item instanceof HTMLElement) {
               const sign = Math.sign(delta);
@@ -839,6 +836,15 @@ const CarouselViewport = ({
         state.animationId = requestAnimationFrame(animate);
       } else {
         state.animationId = null;
+        container2.style.scrollSnapType = state.scrollSnapType;
+        const allItems = container2.querySelectorAll(
+          ":scope [data-carousel-content] > *"
+        );
+        allItems.forEach((item) => {
+          if (item instanceof HTMLElement) {
+            item.style.translate = "";
+          }
+        });
       }
     };
 
@@ -952,7 +958,9 @@ const CarouselViewport = ({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onClickCapture={(event) => {
-        if (!scrollStateRef.current.isDispatchingClick) {
+        // detail === 0 means the click was synthesized by the keyboard (Enter/Space),
+        // not by a pointer device — let it through unconditionally
+        if (!scrollStateRef.current.isDispatchingClick && event.detail !== 0) {
           event.preventDefault();
           event.stopPropagation();
         }
@@ -1150,6 +1158,9 @@ const getFinalScroll = (
   decelerationFactor: number,
   minVelocity = 0.05
 ) => {
+  if (decelerationFactor >= 1) {
+    return { finalScroll: initialScroll, iterations: 0 };
+  }
   // Number of frames until velocity drops below minVelocity
   const iterations = Math.ceil(
     Math.log(minVelocity / Math.abs(velocity)) / Math.log(decelerationFactor)
