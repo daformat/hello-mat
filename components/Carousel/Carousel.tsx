@@ -471,8 +471,10 @@ const CarouselViewport = ({
   const updateScrollState = useCallback(() => {
     const container = containerRef.current;
     if (container) {
-      const translateX = parseFloat(
-        container.style.getPropertyValue(CSS_VARS.overscrollTranslateX) ?? "0"
+      const translateX = Math.ceil(
+        parseFloat(
+          container.style.getPropertyValue(CSS_VARS.overscrollTranslateX) ?? "0"
+        )
       );
       const containerScrollWidth =
         (container.scrollWidth ?? 0) - (translateX > 0 ? translateX : 0);
