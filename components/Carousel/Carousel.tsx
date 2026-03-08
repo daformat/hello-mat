@@ -25,6 +25,7 @@ import { MaybeNull, MaybeUndefined } from "@/components/Media/utils/maybe";
  * (velocity and deceleration factor adjustments to account for snapping).
  */
 const FRAME_DURATION = 16;
+const RUBBER_BAND_BOUNCE_COEFFICIENT = 40;
 
 type ScrollState = {
   isDragging: boolean;
@@ -621,7 +622,8 @@ const CarouselViewport = ({
         }
       });
 
-      state.velocityX = (-sign * easedDistance) / 20;
+      state.velocityX =
+        (-sign * easedDistance) / RUBBER_BAND_BOUNCE_COEFFICIENT;
     },
     []
   );
@@ -811,21 +813,17 @@ const CarouselViewport = ({
           const items = content.querySelectorAll(":scope > *");
           // we have to translate the items instead of the content because
           // Safari scrolls the viewport if the content is translated
-          const firstItem = items[0];
-          const currentTranslate =
-            firstItem instanceof HTMLElement
-              ? parseFloat(firstItem.style.translate || "0")
-              : 0;
-          const theoreticalTranslate = state.velocityX * 50;
-          const delta = theoreticalTranslate - currentTranslate;
+          const theoreticalTranslate =
+            state.velocityX * RUBBER_BAND_BOUNCE_COEFFICIENT;
+          const clampedTranslate =
+            Math.sign(theoreticalTranslate) *
+            Math.min(
+              Math.abs(theoreticalTranslate),
+              container2.offsetWidth / 2
+            );
           items.forEach((item) => {
             if (item instanceof HTMLElement) {
-              const sign = Math.sign(delta);
-              const clampedDelta = Math.min(
-                Math.abs(delta / 2),
-                container2.offsetWidth / 2
-              );
-              item.style.translate = `${sign * clampedDelta}px 0`;
+              item.style.translate = `${clampedTranslate}px 0`;
             }
           });
           state.velocityX *= decelerationFactor;
