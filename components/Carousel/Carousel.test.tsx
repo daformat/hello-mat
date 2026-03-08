@@ -396,8 +396,10 @@ describe("Carousel", () => {
         clientY: 0,
       });
 
-      // A click fired after the drag should be suppressed by onClickCapture
-      fireEvent.click(btn);
+      // A click fired after the drag should be suppressed by onClickCapture.
+      // detail: 1 matches a real browser mouse-click (keyboard-synthesized clicks
+      // have detail: 0 and must be allowed through for accessibility).
+      fireEvent.click(btn, { detail: 1 });
       expect(onClick).not.toHaveBeenCalled();
     });
 
