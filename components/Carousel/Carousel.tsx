@@ -112,7 +112,9 @@ const defaultBoundaryOffset = (container: HTMLElement) => {
     temp.style.width = "var(--carousel-fade-size)";
     document.body.appendChild(temp);
     const computed = getComputedStyle(temp);
-    return { x: parseFloat(computed.getPropertyValue("width")), y: 0 };
+    const fadeSize = parseFloat(computed.getPropertyValue("width"));
+    temp.remove();
+    return { x: fadeSize, y: 0 };
   }
   return { x: 0, y: 0 };
 };
@@ -1178,4 +1180,5 @@ export const Carousel = {
   PrevPage: CarouselPrevPage,
   NextPage: CarouselNextPage,
   useCarouselContext,
+  defaultBoundaryOffset,
 };
