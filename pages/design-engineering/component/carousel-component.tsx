@@ -98,10 +98,10 @@ const CarouselComponentPageContent = () => {
               style={
                 {
                   "--margin-inline": "-12px",
-                  "--carousel-fade-offset-backwards":
-                    "min(var(--remaining-backwards, 0px) + var(--margin-inline), var(--margin-inline) * -1)",
-                  "--carousel-fade-offset-forwards":
-                    "min(var(--remaining-forwards, 0px) + var(--margin-inline), var(--margin-inline) * -1)",
+                  [Carousel.CSS_VARS
+                    .fadeOffsetBackwards]: `min(var(${Carousel.CSS_VARS.remainingBackwards}, 0px) + var(--margin-inline), var(--margin-inline) * -1)`,
+                  [Carousel.CSS_VARS
+                    .fadeOffsetForwards]: `min(var(${Carousel.CSS_VARS.remainingForwards}, 0px) + var(--margin-inline), var(--margin-inline) * -1)`,
                   marginInline: "var(--margin-inline)",
                   scrollSnapType: snap ? "x mandatory" : "none",
                 } as CSSProperties
