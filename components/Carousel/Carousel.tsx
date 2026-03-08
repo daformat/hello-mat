@@ -623,7 +623,11 @@ const CarouselViewport = ({
       });
 
       state.velocityX =
-        (-sign * easedDistance) / RUBBER_BAND_BOUNCE_COEFFICIENT;
+        -sign *
+        Math.max(
+          easedDistance / RUBBER_BAND_BOUNCE_COEFFICIENT,
+          state.velocityX
+        );
     },
     []
   );
