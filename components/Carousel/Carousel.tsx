@@ -446,6 +446,7 @@ const CarouselViewport = ({
     setRemainingForwards,
     setRemainingBackwards,
     setScrollStateRef,
+    rootRef,
   } = useContext(CarouselContext);
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollStateRef = useRef<ScrollState>({
@@ -489,7 +490,8 @@ const CarouselViewport = ({
    */
   const updateScrollState = useCallback(() => {
     const container = containerRef.current;
-    if (container) {
+    const root = rootRef.current;
+    if (container && root) {
       const translateX = Math.ceil(
         parseFloat(
           container.style.getPropertyValue(CSS_VARS.overscrollTranslateX) ?? "0"
@@ -520,11 +522,11 @@ const CarouselViewport = ({
         containerScrollWidth - containerScrollLeft - containerOffsetWidth;
       setRemainingForwards(remainingForwards);
       setRemainingBackwards(remainingBackwards);
-      container.style.setProperty(
+      root.style.setProperty(
         CSS_VARS.remainingForwards,
         `${remainingForwards}px`
       );
-      container.style.setProperty(
+      root.style.setProperty(
         CSS_VARS.remainingBackwards,
         `${remainingBackwards}px`
       );
