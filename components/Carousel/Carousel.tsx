@@ -173,14 +173,20 @@ const CarouselRoot = ({
               item.offsetLeft + item.offsetWidth >
               currentScroll + container.offsetWidth - offset
           );
-          if (nextItem) {
+          if (
+            nextItem &&
+            nextItem.offsetWidth < container.offsetWidth - offset * 2
+          ) {
             delta = nextItem.offsetLeft - container.scrollLeft - offset;
           }
         } else {
           const prevItem = items
             .filter((item) => item.offsetLeft < currentScroll + offset)
             .reverse()[0];
-          if (prevItem) {
+          if (
+            prevItem &&
+            prevItem.offsetWidth < container.offsetWidth - offset * 2
+          ) {
             delta =
               container.scrollLeft -
               prevItem.offsetLeft -
@@ -280,24 +286,23 @@ const CarouselRoot = ({
         scrollIntoViewNearest(target, container);
         return;
       }
+      const offset = rootRef.current
+        ? getBoundaryOffset(boundaryOffset, rootRef.current).x
+        : 0;
       let scrollPosition =
         direction === "forwards"
-          ? target.offsetLeft - target.offsetWidth * 0.5
+          ? target.offsetLeft - offset
           : target.offsetLeft -
             container.offsetWidth +
-            target.offsetWidth * 1.5;
+            target.offsetWidth +
+            offset;
       if (inline === "center") {
         scrollPosition =
           target.offsetLeft - (container.offsetWidth - target.offsetWidth) / 2;
-      } else if (inline === "end") {
-        scrollPosition =
-          direction === "forwards"
-            ? target.offsetLeft - target.offsetWidth
-            : target.offsetLeft - container.offsetWidth + target.offsetWidth;
       }
       container.scrollTo({ left: scrollPosition, behavior: "smooth" });
     },
-    [scrollIntoViewNearest]
+    [boundaryOffset, scrollIntoViewNearest]
   );
 
   /**
@@ -328,7 +333,14 @@ const CarouselRoot = ({
       };
       const nextItem = items.find(isNextItem) ?? items[items.length - 1];
       if (nextItem) {
-        scrollIntoView(nextItem, container, "forwards");
+        if (
+          nextItem.offsetWidth >=
+          container.offsetWidth - boundaryOffsetX * 2
+        ) {
+          handleScrollPage("forwards", container, items);
+        } else {
+          scrollIntoView(nextItem, container, "forwards");
+        }
       }
     }
   }, [boundaryOffset, handleScrollPage, ref, scrollIntoView, scrollStateRef]);
@@ -358,7 +370,14 @@ const CarouselRoot = ({
       const prevItems = items.filter(isPrevItem);
       const prevItem = prevItems[prevItems.length - 1] ?? items[0];
       if (prevItem) {
-        scrollIntoView(prevItem, container, "backwards");
+        if (
+          prevItem.offsetWidth >=
+          container.offsetWidth - boundaryOffsetX * 2
+        ) {
+          handleScrollPage("backwards", container, items);
+        } else {
+          scrollIntoView(prevItem, container, "backwards");
+        }
       }
     }
   }, [boundaryOffset, handleScrollPage, ref, scrollIntoView, scrollStateRef]);
@@ -564,7 +583,7 @@ const CarouselViewport = ({
    */
   const handlePointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
-      if (event.pointerType !== "mouse") {
+      if (event.pointerType !== "mouse" || event.button !== 0) {
         return;
       }
       event.currentTarget.setPointerCapture(event.pointerId);
