@@ -10,6 +10,7 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -382,28 +383,41 @@ const CarouselRoot = ({
     }
   }, [boundaryOffset, handleScrollPage, ref, scrollIntoView, scrollStateRef]);
 
+  const carouselContext = useMemo<CarouselContext>(() => {
+    return {
+      ref,
+      setRef,
+      scrollsBackwards,
+      scrollsForwards,
+      setScrollsBackwards,
+      setScrollsForwards,
+      remainingForwards,
+      remainingBackwards,
+      setRemainingForwards,
+      setRemainingBackwards,
+      scrollStateRef,
+      setScrollStateRef,
+      handleScrollToNext,
+      handleScrollToPrev,
+      scrollIntoView,
+      boundaryOffset,
+      rootRef,
+    };
+  }, [
+    ref,
+    boundaryOffset,
+    handleScrollToNext,
+    handleScrollToPrev,
+    remainingBackwards,
+    remainingForwards,
+    scrollIntoView,
+    scrollStateRef,
+    scrollsBackwards,
+    scrollsForwards,
+  ]);
+
   return (
-    <CarouselContext.Provider
-      value={{
-        ref,
-        setRef,
-        scrollsBackwards,
-        scrollsForwards,
-        setScrollsBackwards,
-        setScrollsForwards,
-        remainingForwards,
-        remainingBackwards,
-        setRemainingForwards,
-        setRemainingBackwards,
-        scrollStateRef,
-        setScrollStateRef,
-        handleScrollToNext,
-        handleScrollToPrev,
-        scrollIntoView,
-        boundaryOffset,
-        rootRef,
-      }}
-    >
+    <CarouselContext.Provider value={carouselContext}>
       <div ref={rootRef} {...props}>
         {children}
       </div>
