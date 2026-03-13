@@ -3,8 +3,10 @@ import {
   ComponentPropsWithoutRef,
   createContext,
   CSSProperties,
+  forwardRef,
   isValidElement,
   ReactElement,
+  Ref,
   RefObject,
   useCallback,
   useContext,
@@ -133,297 +135,301 @@ type CarouselRootProps = {
     | ((root: HTMLElement) => { x: number; y: number });
 } & ComponentPropsWithoutRef<"div">;
 
-const CarouselRoot = ({
-  boundaryOffset = defaultBoundaryOffset,
-  children,
-  ...props
-}: CarouselRootProps) => {
-  const [ref, setRef] = useState<RefObject<MaybeNull<HTMLElement>>>({
-    current: null,
-  });
-  const [scrollsBackwards, setScrollsBackwards] = useState(false);
-  const [scrollsForwards, setScrollsForwards] = useState(false);
-  const [remainingForwards, setRemainingForwards] = useState(0);
-  const [remainingBackwards, setRemainingBackwards] = useState(0);
-  const [scrollStateRef, setScrollStateRef] =
-    useState<MaybeUndefined<RefObject<ScrollState>>>(undefined);
-  const rootRef = useRef<HTMLDivElement>(null);
+const CarouselRoot = forwardRef<HTMLDivElement, CarouselRootProps>(
+  (
+    { boundaryOffset = defaultBoundaryOffset, children, ...props },
+    forwardedRef
+  ) => {
+    const [ref, setRef] = useState<RefObject<MaybeNull<HTMLElement>>>({
+      current: null,
+    });
+    const [scrollsBackwards, setScrollsBackwards] = useState(false);
+    const [scrollsForwards, setScrollsForwards] = useState(false);
+    const [remainingForwards, setRemainingForwards] = useState(0);
+    const [remainingBackwards, setRemainingBackwards] = useState(0);
+    const [scrollStateRef, setScrollStateRef] =
+      useState<MaybeUndefined<RefObject<ScrollState>>>(undefined);
+    const rootRef = useRef<HTMLDivElement>(null);
 
-  /**
-   * Scroll the whole page (the container client width)
-   */
-  const handleScrollPage = useCallback(
-    (
-      direction: "forwards" | "backwards",
-      container: HTMLElement,
-      items: HTMLElement[]
-    ) => {
-      const currentScroll = container.scrollLeft;
-      const offset = rootRef.current
-        ? getBoundaryOffset(boundaryOffset, rootRef.current).x
-        : 0;
-      let delta =
-        (container.clientWidth - offset * 2) *
-        (direction === "forwards" ? 1 : -1);
-      // If multiple items, we can be more precise and scroll so the next / prev
-      // item that is not fully visible becomes fully visible after page scroll.
-      if (items.length > 1) {
-        if (direction === "forwards") {
-          const nextItem = items.find(
-            (item) =>
-              item.offsetLeft + item.offsetWidth >
-              currentScroll + container.offsetWidth - offset
-          );
-          if (
-            nextItem &&
-            nextItem.offsetWidth < container.offsetWidth - offset * 2
-          ) {
-            delta = nextItem.offsetLeft - container.scrollLeft - offset;
-          }
-        } else {
-          const prevItem = items
-            .filter((item) => item.offsetLeft < currentScroll + offset)
-            .reverse()[0];
-          if (
-            prevItem &&
-            prevItem.offsetWidth < container.offsetWidth - offset * 2
-          ) {
-            delta =
-              container.scrollLeft -
-              prevItem.offsetLeft -
-              container.offsetWidth -
-              offset;
-          }
-        }
-      }
-      const scrollPosition = currentScroll + delta;
-      const maxScroll = container.scrollWidth - container.clientWidth;
-      const nextScrollPosition = Math.max(
-        0,
-        Math.min(scrollPosition, maxScroll)
-      );
-      container.scrollTo({ left: nextScrollPosition, behavior: "smooth" });
-    },
-    [boundaryOffset]
-  );
-
-  /**
-   * Custom scrollIntoViewNearest to prevent ancestors scrolling when doing
-   * native element.scrollIntoView()
-   */
-  const scrollIntoViewNearest = useCallback(
-    (target: HTMLElement, container: HTMLElement) => {
-      const offset = rootRef.current
-        ? getBoundaryOffset(boundaryOffset, rootRef.current).x
-        : 0;
-      const getIsBeforeAfter = () => {
-        const isBefore = target.offsetLeft < container.scrollLeft + offset;
-        const isAfter =
-          target.offsetLeft + target.offsetWidth >
-          container.scrollLeft + container.offsetWidth - offset;
-        return { isBefore, isAfter };
-      };
-      let { isBefore, isAfter } = getIsBeforeAfter();
-      // Default when the target is larger than the container
-      if (isBefore && isAfter) {
-        const scrollPosition = target.offsetLeft - offset;
-        container.scrollTo({
-          left: scrollPosition <= offset ? 0 : scrollPosition,
-          behavior: "smooth",
-        });
-      } else if (isBefore || isAfter) {
+    /**
+     * Scroll the whole page (the container client width)
+     */
+    const handleScrollPage = useCallback(
+      (
+        direction: "forwards" | "backwards",
+        container: HTMLElement,
+        items: HTMLElement[]
+      ) => {
         const currentScroll = container.scrollLeft;
-        let scrollPosition = isBefore
-          ? target.offsetLeft - offset
-          : target.offsetLeft -
-            container.offsetWidth +
-            target.offsetWidth +
-            offset;
-        let iterations = 0;
-        const maxIterations = 20;
-        // Adjust scroll position to account for snapping, if the target is
-        // still before or after, we increment / decrement the scroll position
-        while (
-          scrollPosition > 0 &&
-          scrollPosition < container.scrollWidth - container.offsetWidth &&
-          (isBefore || isAfter) &&
-          iterations < maxIterations
-        ) {
-          container.scrollTo({
-            left: scrollPosition <= offset ? 0 : scrollPosition,
-            behavior: "instant",
-          });
-          const newState = getIsBeforeAfter();
-          isBefore = newState.isBefore;
-          isAfter = newState.isAfter;
-          if (isBefore) {
-            scrollPosition -= target.offsetWidth / 2;
-          } else if (isAfter) {
-            scrollPosition += target.offsetWidth / 2;
+        const offset = rootRef.current
+          ? getBoundaryOffset(boundaryOffset, rootRef.current).x
+          : 0;
+        let delta =
+          (container.clientWidth - offset * 2) *
+          (direction === "forwards" ? 1 : -1);
+        // If multiple items, we can be more precise and scroll so the next / prev
+        // item that is not fully visible becomes fully visible after page scroll.
+        if (items.length > 1) {
+          if (direction === "forwards") {
+            const nextItem = items.find(
+              (item) =>
+                item.offsetLeft + item.offsetWidth >
+                currentScroll + container.offsetWidth - offset
+            );
+            if (
+              nextItem &&
+              nextItem.offsetWidth < container.offsetWidth - offset * 2
+            ) {
+              delta = nextItem.offsetLeft - container.scrollLeft - offset;
+            }
+          } else {
+            const prevItem = items
+              .filter((item) => item.offsetLeft < currentScroll + offset)
+              .reverse()[0];
+            if (
+              prevItem &&
+              prevItem.offsetWidth < container.offsetWidth - offset * 2
+            ) {
+              delta =
+                container.scrollLeft -
+                prevItem.offsetLeft -
+                container.offsetWidth -
+                offset;
+            }
           }
-          iterations++;
         }
-        container.scrollTo({ left: currentScroll, behavior: "instant" });
-        // request animation frame to prevent Safari from being Safari
-        requestAnimationFrame(() => {
+        const scrollPosition = currentScroll + delta;
+        const maxScroll = container.scrollWidth - container.clientWidth;
+        const nextScrollPosition = Math.max(
+          0,
+          Math.min(scrollPosition, maxScroll)
+        );
+        container.scrollTo({ left: nextScrollPosition, behavior: "smooth" });
+      },
+      [boundaryOffset]
+    );
+
+    /**
+     * Custom scrollIntoViewNearest to prevent ancestors scrolling when doing
+     * native element.scrollIntoView()
+     */
+    const scrollIntoViewNearest = useCallback(
+      (target: HTMLElement, container: HTMLElement) => {
+        const offset = rootRef.current
+          ? getBoundaryOffset(boundaryOffset, rootRef.current).x
+          : 0;
+        const getIsBeforeAfter = () => {
+          const isBefore = target.offsetLeft < container.scrollLeft + offset;
+          const isAfter =
+            target.offsetLeft + target.offsetWidth >
+            container.scrollLeft + container.offsetWidth - offset;
+          return { isBefore, isAfter };
+        };
+        let { isBefore, isAfter } = getIsBeforeAfter();
+        // Default when the target is larger than the container
+        if (isBefore && isAfter) {
+          const scrollPosition = target.offsetLeft - offset;
           container.scrollTo({
             left: scrollPosition <= offset ? 0 : scrollPosition,
             behavior: "smooth",
           });
-        });
-      }
-    },
-    [boundaryOffset]
-  );
+        } else if (isBefore || isAfter) {
+          const currentScroll = container.scrollLeft;
+          let scrollPosition = isBefore
+            ? target.offsetLeft - offset
+            : target.offsetLeft -
+              container.offsetWidth +
+              target.offsetWidth +
+              offset;
+          let iterations = 0;
+          const maxIterations = 20;
+          // Adjust scroll position to account for snapping, if the target is
+          // still before or after, we increment / decrement the scroll position
+          while (
+            scrollPosition > 0 &&
+            scrollPosition < container.scrollWidth - container.offsetWidth &&
+            (isBefore || isAfter) &&
+            iterations < maxIterations
+          ) {
+            container.scrollTo({
+              left: scrollPosition <= offset ? 0 : scrollPosition,
+              behavior: "instant",
+            });
+            const newState = getIsBeforeAfter();
+            isBefore = newState.isBefore;
+            isAfter = newState.isAfter;
+            if (isBefore) {
+              scrollPosition -= target.offsetWidth / 2;
+            } else if (isAfter) {
+              scrollPosition += target.offsetWidth / 2;
+            }
+            iterations++;
+          }
+          container.scrollTo({ left: currentScroll, behavior: "instant" });
+          // request animation frame to prevent Safari from being Safari
+          requestAnimationFrame(() => {
+            container.scrollTo({
+              left: scrollPosition <= offset ? 0 : scrollPosition,
+              behavior: "smooth",
+            });
+          });
+        }
+      },
+      [boundaryOffset]
+    );
 
-  /**
-   * Custom scrollIntoView to prevent ancestors scrolling when doing native
-   * element.scrollIntoView()
-   */
-  const scrollIntoView = useCallback<ScrollIntoView>(
-    (target, container, direction) => {
-      const [_, inline] = getScrollSnapAlign(getComputedStyle(target));
-      if (direction === "nearest") {
-        scrollIntoViewNearest(target, container);
-        return;
-      }
-      const offset = rootRef.current
-        ? getBoundaryOffset(boundaryOffset, rootRef.current).x
-        : 0;
-      let scrollPosition =
-        direction === "forwards"
-          ? target.offsetLeft - offset
-          : target.offsetLeft -
-            container.offsetWidth +
-            target.offsetWidth +
-            offset;
-      if (inline === "center") {
-        scrollPosition =
-          target.offsetLeft - (container.offsetWidth - target.offsetWidth) / 2;
-      }
-      container.scrollTo({ left: scrollPosition, behavior: "smooth" });
-    },
-    [boundaryOffset, scrollIntoViewNearest]
-  );
+    /**
+     * Custom scrollIntoView to prevent ancestors scrolling when doing native
+     * element.scrollIntoView()
+     */
+    const scrollIntoView = useCallback<ScrollIntoView>(
+      (target, container, direction) => {
+        const [_, inline] = getScrollSnapAlign(getComputedStyle(target));
+        if (direction === "nearest") {
+          scrollIntoViewNearest(target, container);
+          return;
+        }
+        const offset = rootRef.current
+          ? getBoundaryOffset(boundaryOffset, rootRef.current).x
+          : 0;
+        let scrollPosition =
+          direction === "forwards"
+            ? target.offsetLeft - offset
+            : target.offsetLeft -
+              container.offsetWidth +
+              target.offsetWidth +
+              offset;
+        if (inline === "center") {
+          scrollPosition =
+            target.offsetLeft -
+            (container.offsetWidth - target.offsetWidth) / 2;
+        }
+        container.scrollTo({ left: scrollPosition, behavior: "smooth" });
+      },
+      [boundaryOffset, scrollIntoViewNearest]
+    );
 
-  /**
-   * Scrolls the container to the next slide until hitting the end of the container
-   */
-  const handleScrollToNext = useCallback(() => {
-    cancelAnimationFrame(scrollStateRef?.current?.animationId ?? 0);
-    const container = ref?.current;
-    const root = rootRef?.current;
-    if (root && container && container.scrollLeft < container.scrollWidth) {
-      container.style.scrollSnapType =
-        scrollStateRef?.current?.scrollSnapType ?? "";
-      const items = Array.from(
-        container.querySelectorAll(":scope [data-carousel-content] > *")
-      ) as HTMLElement[];
-      if (items.length === 1) {
-        handleScrollPage("forwards", container, items);
-        return;
-      }
-      const currentScroll = container.scrollLeft;
-      const containerOffsetWidth = container.offsetWidth;
-      const { x: boundaryOffsetX } = getBoundaryOffset(boundaryOffset, root);
-      const isNextItem = (item: HTMLElement) => {
-        return (
-          item.offsetLeft + item.offsetWidth >
-          Math.ceil(currentScroll + containerOffsetWidth - boundaryOffsetX)
-        );
-      };
-      const nextItem = items.find(isNextItem) ?? items[items.length - 1];
-      if (nextItem) {
-        if (
-          nextItem.offsetWidth >=
-          container.offsetWidth - boundaryOffsetX * 2
-        ) {
+    /**
+     * Scrolls the container to the next slide until hitting the end of the container
+     */
+    const handleScrollToNext = useCallback(() => {
+      cancelAnimationFrame(scrollStateRef?.current?.animationId ?? 0);
+      const container = ref?.current;
+      const root = rootRef?.current;
+      if (root && container && container.scrollLeft < container.scrollWidth) {
+        container.style.scrollSnapType =
+          scrollStateRef?.current?.scrollSnapType ?? "";
+        const items = Array.from(
+          container.querySelectorAll(":scope [data-carousel-content] > *")
+        ) as HTMLElement[];
+        if (items.length === 1) {
           handleScrollPage("forwards", container, items);
-        } else {
-          scrollIntoView(nextItem, container, "forwards");
+          return;
+        }
+        const currentScroll = container.scrollLeft;
+        const containerOffsetWidth = container.offsetWidth;
+        const { x: boundaryOffsetX } = getBoundaryOffset(boundaryOffset, root);
+        const isNextItem = (item: HTMLElement) => {
+          return (
+            item.offsetLeft + item.offsetWidth >
+            Math.ceil(currentScroll + containerOffsetWidth - boundaryOffsetX)
+          );
+        };
+        const nextItem = items.find(isNextItem) ?? items[items.length - 1];
+        if (nextItem) {
+          if (
+            nextItem.offsetWidth >=
+            container.offsetWidth - boundaryOffsetX * 2
+          ) {
+            handleScrollPage("forwards", container, items);
+          } else {
+            scrollIntoView(nextItem, container, "forwards");
+          }
         }
       }
-    }
-  }, [boundaryOffset, handleScrollPage, ref, scrollIntoView, scrollStateRef]);
+    }, [boundaryOffset, handleScrollPage, ref, scrollIntoView, scrollStateRef]);
 
-  /**
-   * Scrolls the container to the previous slide until hitting the start of the container
-   */
-  const handleScrollToPrev = useCallback(() => {
-    cancelAnimationFrame(scrollStateRef?.current?.animationId ?? 0);
-    const container = ref?.current;
-    const root = rootRef?.current;
-    if (root && container && container.scrollLeft > 0) {
-      container.style.scrollSnapType =
-        scrollStateRef?.current?.scrollSnapType ?? "";
-      const items = Array.from(
-        container.querySelectorAll(":scope [data-carousel-content] > *")
-      ) as HTMLElement[];
-      if (items.length === 1) {
-        handleScrollPage("backwards", container, items);
-        return;
-      }
-      const currentScroll = container.scrollLeft;
-      const { x: boundaryOffsetX } = getBoundaryOffset(boundaryOffset, root);
-      const isPrevItem = (item: HTMLElement) => {
-        return currentScroll > item.offsetLeft - boundaryOffsetX;
-      };
-      const prevItems = items.filter(isPrevItem);
-      const prevItem = prevItems[prevItems.length - 1] ?? items[0];
-      if (prevItem) {
-        if (
-          prevItem.offsetWidth >=
-          container.offsetWidth - boundaryOffsetX * 2
-        ) {
+    /**
+     * Scrolls the container to the previous slide until hitting the start of the container
+     */
+    const handleScrollToPrev = useCallback(() => {
+      cancelAnimationFrame(scrollStateRef?.current?.animationId ?? 0);
+      const container = ref?.current;
+      const root = rootRef?.current;
+      if (root && container && container.scrollLeft > 0) {
+        container.style.scrollSnapType =
+          scrollStateRef?.current?.scrollSnapType ?? "";
+        const items = Array.from(
+          container.querySelectorAll(":scope [data-carousel-content] > *")
+        ) as HTMLElement[];
+        if (items.length === 1) {
           handleScrollPage("backwards", container, items);
-        } else {
-          scrollIntoView(prevItem, container, "backwards");
+          return;
+        }
+        const currentScroll = container.scrollLeft;
+        const { x: boundaryOffsetX } = getBoundaryOffset(boundaryOffset, root);
+        const isPrevItem = (item: HTMLElement) => {
+          return currentScroll > item.offsetLeft - boundaryOffsetX;
+        };
+        const prevItems = items.filter(isPrevItem);
+        const prevItem = prevItems[prevItems.length - 1] ?? items[0];
+        if (prevItem) {
+          if (
+            prevItem.offsetWidth >=
+            container.offsetWidth - boundaryOffsetX * 2
+          ) {
+            handleScrollPage("backwards", container, items);
+          } else {
+            scrollIntoView(prevItem, container, "backwards");
+          }
         }
       }
-    }
-  }, [boundaryOffset, handleScrollPage, ref, scrollIntoView, scrollStateRef]);
+    }, [boundaryOffset, handleScrollPage, ref, scrollIntoView, scrollStateRef]);
 
-  const carouselContext = useMemo<CarouselContext>(() => {
-    return {
+    const carouselContext = useMemo<CarouselContext>(() => {
+      return {
+        ref,
+        setRef,
+        scrollsBackwards,
+        scrollsForwards,
+        setScrollsBackwards,
+        setScrollsForwards,
+        remainingForwards,
+        remainingBackwards,
+        setRemainingForwards,
+        setRemainingBackwards,
+        scrollStateRef,
+        setScrollStateRef,
+        handleScrollToNext,
+        handleScrollToPrev,
+        scrollIntoView,
+        boundaryOffset,
+        rootRef,
+      };
+    }, [
       ref,
-      setRef,
-      scrollsBackwards,
-      scrollsForwards,
-      setScrollsBackwards,
-      setScrollsForwards,
-      remainingForwards,
-      remainingBackwards,
-      setRemainingForwards,
-      setRemainingBackwards,
-      scrollStateRef,
-      setScrollStateRef,
+      boundaryOffset,
       handleScrollToNext,
       handleScrollToPrev,
+      remainingBackwards,
+      remainingForwards,
       scrollIntoView,
-      boundaryOffset,
-      rootRef,
-    };
-  }, [
-    ref,
-    boundaryOffset,
-    handleScrollToNext,
-    handleScrollToPrev,
-    remainingBackwards,
-    remainingForwards,
-    scrollIntoView,
-    scrollStateRef,
-    scrollsBackwards,
-    scrollsForwards,
-  ]);
+      scrollStateRef,
+      scrollsBackwards,
+      scrollsForwards,
+    ]);
 
-  return (
-    <CarouselContext.Provider value={carouselContext}>
-      <div ref={rootRef} {...props}>
-        {children}
-      </div>
-    </CarouselContext.Provider>
-  );
-};
+    return (
+      <CarouselContext.Provider value={carouselContext}>
+        <div ref={combineRefs(rootRef, forwardedRef)} {...props}>
+          {children}
+        </div>
+      </CarouselContext.Provider>
+    );
+  }
+);
+
+CarouselRoot.displayName = "Carousel.Root";
 
 type CarouselViewportProps = ComponentPropsWithoutRef<"div"> &
   (
@@ -439,721 +445,745 @@ type CarouselViewportProps = ComponentPropsWithoutRef<"div"> &
     scrollSnapType?: CSSProperties["scrollSnapType"];
   };
 
-const CarouselViewport = ({
-  children,
-  onPointerDown,
-  onPointerMove,
-  onPointerUp,
-  onClickCapture,
-  onWheel,
-  contentFade = true,
-  contentFadeSize = "clamp(16px, 10vw, 64px)",
-  scrollSnapType,
-  style,
-  className,
-  ...props
-}: CarouselViewportProps) => {
-  const {
-    setRef,
-    setScrollsBackwards,
-    setScrollsForwards,
-    scrollsForwards,
-    scrollsBackwards,
-    scrollIntoView,
-    setRemainingForwards,
-    setRemainingBackwards,
-    setScrollStateRef,
-    rootRef,
-  } = useContext(CarouselContext);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const scrollStateRef = useRef<ScrollState>({
-    isDragging: false,
-    isDispatchingClick: false,
-    startX: 0,
-    scrollLeft: 0,
-    lastX: 0,
-    lastTime: 0,
-    velocityX: 0,
-    animationId: null as number | null,
-    initialTarget: null as MaybeNull<EventTarget>,
-    initialPointerPosition: null as MaybeNull<{ x: number; y: number }>,
-    mouseDirection: 0,
-    scrollSnapType: scrollSnapType ?? "",
-  });
+const CarouselViewport = forwardRef<HTMLDivElement, CarouselViewportProps>(
+  (
+    {
+      children,
+      onPointerDown,
+      onPointerMove,
+      onPointerUp,
+      onClickCapture,
+      onWheel,
+      contentFade = true,
+      contentFadeSize = "clamp(16px, 10vw, 64px)",
+      scrollSnapType,
+      style,
+      className,
+      ...props
+    },
+    forwardedRef
+  ) => {
+    const {
+      setRef,
+      setScrollsBackwards,
+      setScrollsForwards,
+      scrollsForwards,
+      scrollsBackwards,
+      scrollIntoView,
+      setRemainingForwards,
+      setRemainingBackwards,
+      setScrollStateRef,
+      rootRef,
+    } = useContext(CarouselContext);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const scrollStateRef = useRef<ScrollState>({
+      isDragging: false,
+      isDispatchingClick: false,
+      startX: 0,
+      scrollLeft: 0,
+      lastX: 0,
+      lastTime: 0,
+      velocityX: 0,
+      animationId: null as number | null,
+      initialTarget: null as MaybeNull<EventTarget>,
+      initialPointerPosition: null as MaybeNull<{ x: number; y: number }>,
+      mouseDirection: 0,
+      scrollSnapType: scrollSnapType ?? "",
+    });
 
-  // Keep the ref in sync with the prop on every render so event handlers
-  // always see the current value without needing a layout effect.
-  scrollStateRef.current.scrollSnapType = scrollSnapType ?? "";
+    // Keep the ref in sync with the prop on every render so event handlers
+    // always see the current value without needing a layout effect.
+    scrollStateRef.current.scrollSnapType = scrollSnapType ?? "";
 
-  /**
-   * Register our refs; Layout effect to make sure we render the arrows
-   * or the content-fade in the initial frame
-   */
-  useLayoutEffect(() => {
-    setRef(containerRef);
-    setScrollStateRef(scrollStateRef);
-  }, [setRef, setScrollStateRef]);
+    /**
+     * Register our refs; Layout effect to make sure we render the arrows
+     * or the content-fade in the initial frame
+     */
+    useLayoutEffect(() => {
+      setRef(containerRef);
+      setScrollStateRef(scrollStateRef);
+    }, [setRef, setScrollStateRef]);
 
-  /**
-   * Determine whether the container can scroll forwards or backwards based on
-   * its current scroll position, offset width, and scroll width. Updates
-   * relevant state and CSS variables.
-   */
-  const updateScrollState = useCallback(() => {
-    const container = containerRef.current;
-    const root = rootRef.current;
-    if (container && root) {
-      const translateX = Math.ceil(
-        parseFloat(
-          container.style.getPropertyValue(CSS_VARS.overscrollTranslateX) ?? "0"
-        )
-      );
-      const containerScrollWidth =
-        (container.scrollWidth ?? 0) - (translateX > 0 ? translateX : 0);
-      const containerOffsetWidth = container.offsetWidth ?? 0;
-      const containerScrollLeft = container.scrollLeft ?? 0;
-      if (!container || containerScrollWidth <= containerOffsetWidth) {
-        setScrollsBackwards(false);
-        setScrollsForwards(false);
-      } else if (containerScrollLeft <= 0) {
-        setScrollsBackwards(false);
-        setScrollsForwards(true);
-      } else if (
-        Math.ceil(containerScrollLeft) <
-        containerScrollWidth - containerOffsetWidth - 1
-      ) {
-        setScrollsBackwards(true);
-        setScrollsForwards(true);
+    /**
+     * Determine whether the container can scroll forwards or backwards based on
+     * its current scroll position, offset width, and scroll width. Updates
+     * relevant state and CSS variables.
+     */
+    const updateScrollState = useCallback(() => {
+      const container = containerRef.current;
+      const root = rootRef.current;
+      if (container && root) {
+        const translateX = Math.ceil(
+          parseFloat(
+            container.style.getPropertyValue(CSS_VARS.overscrollTranslateX) ??
+              "0"
+          )
+        );
+        const containerScrollWidth =
+          (container.scrollWidth ?? 0) - (translateX > 0 ? translateX : 0);
+        const containerOffsetWidth = container.offsetWidth ?? 0;
+        const containerScrollLeft = container.scrollLeft ?? 0;
+        if (!container || containerScrollWidth <= containerOffsetWidth) {
+          setScrollsBackwards(false);
+          setScrollsForwards(false);
+        } else if (containerScrollLeft <= 0) {
+          setScrollsBackwards(false);
+          setScrollsForwards(true);
+        } else if (
+          Math.ceil(containerScrollLeft) <
+          containerScrollWidth - containerOffsetWidth - 1
+        ) {
+          setScrollsBackwards(true);
+          setScrollsForwards(true);
+        } else {
+          setScrollsBackwards(true);
+          setScrollsForwards(false);
+        }
+        const remainingBackwards = containerScrollLeft;
+        const remainingForwards =
+          containerScrollWidth - containerScrollLeft - containerOffsetWidth;
+        setRemainingForwards(remainingForwards);
+        setRemainingBackwards(remainingBackwards);
+        root.style.setProperty(
+          CSS_VARS.remainingForwards,
+          `${remainingForwards}px`
+        );
+        root.style.setProperty(
+          CSS_VARS.remainingBackwards,
+          `${remainingBackwards}px`
+        );
+      }
+    }, [
+      setRemainingBackwards,
+      setRemainingForwards,
+      setScrollsBackwards,
+      setScrollsForwards,
+    ]);
+
+    /**
+     * Prevent native scroll when dragging, reset velocity when not dragging to
+     * avoid cumulating momentum.
+     */
+    const handlePreventScroll = useCallback((event: WheelEvent) => {
+      if (scrollStateRef.current.isDragging) {
+        event.preventDefault();
       } else {
-        setScrollsBackwards(true);
-        setScrollsForwards(false);
+        scrollStateRef.current.velocityX = 0;
       }
-      const remainingBackwards = containerScrollLeft;
-      const remainingForwards =
-        containerScrollWidth - containerScrollLeft - containerOffsetWidth;
-      setRemainingForwards(remainingForwards);
-      setRemainingBackwards(remainingBackwards);
-      root.style.setProperty(
-        CSS_VARS.remainingForwards,
-        `${remainingForwards}px`
-      );
-      root.style.setProperty(
-        CSS_VARS.remainingBackwards,
-        `${remainingBackwards}px`
-      );
-    }
-  }, [
-    setRemainingBackwards,
-    setRemainingForwards,
-    setScrollsBackwards,
-    setScrollsForwards,
-  ]);
+    }, []);
 
-  /**
-   * Prevent native scroll when dragging, reset velocity when not dragging to
-   * avoid cumulating momentum.
-   */
-  const handlePreventScroll = useCallback((event: WheelEvent) => {
-    if (scrollStateRef.current.isDragging) {
-      event.preventDefault();
-    } else {
-      scrollStateRef.current.velocityX = 0;
-    }
-  }, []);
-
-  /**
-   * Set up observers and scrolling event listeners to update the scroll state
-   * and prevent native scroll when dragging.
-   */
-  useLayoutEffect(() => {
-    const container = containerRef.current;
-    if (container) {
-      const resizeObserver = new ResizeObserver(updateScrollState);
-      const mutationObserver = new MutationObserver(updateScrollState);
-      resizeObserver.observe(container);
-      mutationObserver.observe(container, {
-        attributes: true,
-        childList: true,
-        subtree: true,
-      });
-      container.addEventListener("scroll", updateScrollState);
-      container.addEventListener("wheel", handlePreventScroll, {
-        passive: false,
-      });
-      updateScrollState();
-      return () => {
-        resizeObserver.disconnect();
-        mutationObserver.disconnect();
-        container.removeEventListener("scroll", updateScrollState);
-        container.removeEventListener("wheel", handlePreventScroll);
-      };
-    }
-    return;
-  }, [handlePreventScroll, updateScrollState]);
-
-  /**
-   * Initialize dragging.
-   */
-  const handlePointerDown = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>) => {
-      if (event.pointerType !== "mouse" || event.button !== 0) {
-        return;
+    /**
+     * Set up observers and scrolling event listeners to update the scroll state
+     * and prevent native scroll when dragging.
+     */
+    useLayoutEffect(() => {
+      const container = containerRef.current;
+      if (container) {
+        const resizeObserver = new ResizeObserver(updateScrollState);
+        const mutationObserver = new MutationObserver(updateScrollState);
+        resizeObserver.observe(container);
+        mutationObserver.observe(container, {
+          attributes: true,
+          childList: true,
+          subtree: true,
+        });
+        container.addEventListener("scroll", updateScrollState);
+        container.addEventListener("wheel", handlePreventScroll, {
+          passive: false,
+        });
+        updateScrollState();
+        return () => {
+          resizeObserver.disconnect();
+          mutationObserver.disconnect();
+          container.removeEventListener("scroll", updateScrollState);
+          container.removeEventListener("wheel", handlePreventScroll);
+        };
       }
-      event.currentTarget.setPointerCapture(event.pointerId);
+      return;
+    }, [handlePreventScroll, updateScrollState]);
 
+    /**
+     * Initialize dragging.
+     */
+    const handlePointerDown = useCallback(
+      (event: React.PointerEvent<HTMLDivElement>) => {
+        if (event.pointerType !== "mouse" || event.button !== 0) {
+          return;
+        }
+        event.currentTarget.setPointerCapture(event.pointerId);
+
+        const state = scrollStateRef.current;
+        if (state.animationId !== null) {
+          cancelAnimationFrame(state.animationId);
+          state.animationId = null;
+        }
+
+        const container = containerRef.current;
+        if (!container) {
+          return;
+        }
+
+        // set to hidden to prevent momentum scrolling from the wheel when dragging
+        container.style.overflowX = "hidden";
+        state.isDragging = true;
+        state.startX = event.clientX;
+        state.lastX = event.clientX;
+        state.scrollLeft = container.scrollLeft ?? 0;
+        state.lastTime = Date.now();
+        state.velocityX = 0;
+        state.initialTarget = event.target;
+        state.initialPointerPosition = { x: event.clientX, y: event.clientY };
+        event.preventDefault();
+        event.stopPropagation();
+        onPointerDown?.(event);
+      },
+      [onPointerDown]
+    );
+
+    /**
+     * Prevent velocity from exceeding a given threshold.
+     */
+    const clampVelocity = useCallback((maxAbsoluteVelocity: number) => {
       const state = scrollStateRef.current;
-      if (state.animationId !== null) {
-        cancelAnimationFrame(state.animationId);
-        state.animationId = null;
+      if (Math.abs(state.velocityX) > maxAbsoluteVelocity) {
+        state.velocityX = Math.sign(state.velocityX) * maxAbsoluteVelocity;
       }
+    }, []);
 
+    /**
+     * Calculate rubber banding effect, translate carousel items, and update
+     * velocity accordingly.
+     */
+    const applyRubberBanding = useCallback(
+      (container: HTMLDivElement, scrollDelta: number) => {
+        const state = scrollStateRef.current;
+        const items = container.querySelectorAll(
+          ":scope [data-carousel-content] > *"
+        );
+        const maxDistance = container.offsetWidth / 3;
+        const maxScrollLeft = container.scrollWidth - container.offsetWidth;
+        const targetScrollLeft = state.scrollLeft + scrollDelta;
+        const overscroll =
+          targetScrollLeft < 0
+            ? Math.abs(targetScrollLeft)
+            : targetScrollLeft > maxScrollLeft
+            ? targetScrollLeft - maxScrollLeft
+            : 0;
+        const sign = Math.sign(scrollDelta);
+        const easedDistance = iOSRubberBand(overscroll, 0, maxDistance);
+        container.style.setProperty(
+          CSS_VARS.overscrollTranslateX,
+          `${-sign * easedDistance}px`
+        );
+        items.forEach((item) => {
+          // we have to translate the items instead of the content because
+          // Safari scrolls the viewport if the content is translated
+          if (item instanceof HTMLElement) {
+            item.style.translate = `var(${CSS_VARS.overscrollTranslateX}) 0`;
+          }
+        });
+
+        state.velocityX =
+          -sign *
+          Math.max(
+            easedDistance / RUBBER_BAND_BOUNCE_COEFFICIENT,
+            Math.abs(state.velocityX)
+          );
+      },
+      []
+    );
+
+    /**
+     * Update scroll position and velocity on pointer move.
+     */
+    const handlePointerMove = useCallback(
+      (event: React.PointerEvent<HTMLDivElement>) => {
+        const container = containerRef.current;
+        const state = scrollStateRef.current;
+        const maxAbsoluteVelocity = 15;
+        if (!state.isDragging || !container || event.pointerType !== "mouse") {
+          onPointerMove?.(event);
+          return;
+        }
+
+        container.style.scrollSnapType = "none";
+        const currentTime = Date.now();
+        const deltaTime = currentTime - state.lastTime;
+        const deltaX = event.clientX - state.lastX;
+        if (deltaTime > 0) {
+          state.velocityX = deltaX / deltaTime; // (pixels per millisecond)
+          clampVelocity(maxAbsoluteVelocity);
+        }
+
+        const scrollDelta = state.startX - event.clientX;
+        const direction = Math.sign(state.startX - event.clientX);
+        if (direction !== state.mouseDirection) {
+          state.mouseDirection = direction;
+        }
+        container.scrollLeft = state.scrollLeft + scrollDelta;
+        state.lastX = event.clientX;
+        state.lastTime = currentTime;
+
+        if (
+          container.scrollLeft <= 1 ||
+          container.scrollLeft >=
+            container.scrollWidth - container.offsetWidth - 1
+        ) {
+          applyRubberBanding(container, scrollDelta);
+          clampVelocity(maxAbsoluteVelocity);
+        }
+        onPointerMove?.(event);
+      },
+      [applyRubberBanding, clampVelocity, onPointerMove]
+    );
+
+    /**
+     * Updates velocity for proper snapping and returns the adjusted deceleration
+     * factor. Ensures the animation lands on the snap point and is visually
+     * perceptible.
+     */
+    const applyMomentumSnapping = useCallback(
+      (
+        container: HTMLDivElement,
+        initialScroll: number,
+        tFinalScroll: number,
+        decelerationFactor: number,
+        minVelocity: number
+      ) => {
+        const state = scrollStateRef.current;
+
+        // Find where the browser would snap to at tFinalScroll
+        container.style.scrollSnapType = state.scrollSnapType;
+        container.scrollLeft = tFinalScroll;
+        const snappedScroll = container.scrollLeft;
+        container.style.scrollSnapType = "none";
+        container.scrollLeft = initialScroll;
+
+        const { finalScroll, iterations } = getFinalScroll(
+          initialScroll,
+          state.velocityX,
+          decelerationFactor,
+          minVelocity
+        );
+
+        // update velocity to ensure momentum snaps to the correct position and
+        // the animation is not too fast
+        const minIterations = 10;
+        const gap = snappedScroll - finalScroll;
+        if (
+          !isFinite(iterations) ||
+          iterations < minIterations ||
+          Math.abs(gap) > 0.5
+        ) {
+          const displacement = snappedScroll - initialScroll;
+          state.velocityX =
+            (-displacement * (1 - decelerationFactor)) /
+            (FRAME_DURATION *
+              (1 - Math.pow(decelerationFactor, minIterations)));
+        }
+
+        return findDecelerationFactor(
+          initialScroll,
+          snappedScroll,
+          state.velocityX
+        );
+      },
+      []
+    );
+
+    /**
+     * Returns the deceleration factor for the momentum animation, accounting for
+     * snapping if needed.
+     */
+    const computeMomentumDecelerationFactor = useCallback(
+      (container: HTMLDivElement, minVelocity: number) => {
+        const minVelocityForSnapping = 0;
+        const state = scrollStateRef.current;
+        const isRubberBanding =
+          container.scrollLeft <= 1 ||
+          container.scrollLeft >=
+            container.scrollWidth - container.offsetWidth - 1;
+        const rubberBandingFactor = isRubberBanding
+          ? (state.velocityX * 25) / container.scrollWidth
+          : 0;
+        const friction = 0.05 + Math.abs(rubberBandingFactor);
+        const decelerationFactor = 1 - friction;
+        const initialScroll = container.scrollLeft;
+        const { finalScroll } = getFinalScroll(
+          initialScroll,
+          state.velocityX,
+          decelerationFactor,
+          minVelocity
+        );
+
+        if (
+          !isRubberBanding &&
+          finalScroll < container.scrollWidth - container.offsetWidth &&
+          finalScroll > 0 &&
+          Math.abs(state.velocityX) >= minVelocityForSnapping &&
+          state.scrollSnapType
+        ) {
+          return applyMomentumSnapping(
+            container,
+            initialScroll,
+            finalScroll,
+            decelerationFactor,
+            minVelocity
+          );
+        }
+
+        return decelerationFactor;
+      },
+      [applyMomentumSnapping]
+    );
+
+    /**
+     * Start the momentum animation if needed.
+     */
+    const startMomentumAnimation = useCallback(() => {
       const container = containerRef.current;
       if (!container) {
         return;
       }
-
-      // set to hidden to prevent momentum scrolling from the wheel when dragging
-      container.style.overflowX = "hidden";
-      state.isDragging = true;
-      state.startX = event.clientX;
-      state.lastX = event.clientX;
-      state.scrollLeft = container.scrollLeft ?? 0;
-      state.lastTime = Date.now();
-      state.velocityX = 0;
-      state.initialTarget = event.target;
-      state.initialPointerPosition = { x: event.clientX, y: event.clientY };
-      event.preventDefault();
-      event.stopPropagation();
-      onPointerDown?.(event);
-    },
-    [onPointerDown]
-  );
-
-  /**
-   * Prevent velocity from exceeding a given threshold.
-   */
-  const clampVelocity = useCallback((maxAbsoluteVelocity: number) => {
-    const state = scrollStateRef.current;
-    if (Math.abs(state.velocityX) > maxAbsoluteVelocity) {
-      state.velocityX = Math.sign(state.velocityX) * maxAbsoluteVelocity;
-    }
-  }, []);
-
-  /**
-   * Calculate rubber banding effect, translate carousel items, and update
-   * velocity accordingly.
-   */
-  const applyRubberBanding = useCallback(
-    (container: HTMLDivElement, scrollDelta: number) => {
       const state = scrollStateRef.current;
-      const items = container.querySelectorAll(
-        ":scope [data-carousel-content] > *"
+      const minVelocity = 0.00001;
+      const decelerationFactor = computeMomentumDecelerationFactor(
+        container,
+        minVelocity
       );
-      const maxDistance = container.offsetWidth / 3;
-      const maxScrollLeft = container.scrollWidth - container.offsetWidth;
-      const targetScrollLeft = state.scrollLeft + scrollDelta;
-      const overscroll =
-        targetScrollLeft < 0
-          ? Math.abs(targetScrollLeft)
-          : targetScrollLeft > maxScrollLeft
-          ? targetScrollLeft - maxScrollLeft
-          : 0;
-      const sign = Math.sign(scrollDelta);
-      const easedDistance = iOSRubberBand(overscroll, 0, maxDistance);
-      container.style.setProperty(
-        CSS_VARS.overscrollTranslateX,
-        `${-sign * easedDistance}px`
-      );
-      items.forEach((item) => {
-        // we have to translate the items instead of the content because
-        // Safari scrolls the viewport if the content is translated
-        if (item instanceof HTMLElement) {
-          item.style.translate = `var(${CSS_VARS.overscrollTranslateX}) 0`;
+
+      const animate = () => {
+        const container2 = containerRef.current;
+        if (!container2) {
+          return;
         }
-      });
 
-      state.velocityX =
-        -sign *
-        Math.max(
-          easedDistance / RUBBER_BAND_BOUNCE_COEFFICIENT,
-          Math.abs(state.velocityX)
-        );
-    },
-    []
-  );
+        container2.style.scrollSnapType = "none";
+        container2.scrollLeft -= state.velocityX * FRAME_DURATION;
+        state.scrollLeft = container2.scrollLeft;
+        state.velocityX *= decelerationFactor;
 
-  /**
-   * Update scroll position and velocity on pointer move.
-   */
-  const handlePointerMove = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>) => {
-      const container = containerRef.current;
-      const state = scrollStateRef.current;
-      const maxAbsoluteVelocity = 15;
-      if (!state.isDragging || !container || event.pointerType !== "mouse") {
-        onPointerMove?.(event);
-        return;
-      }
+        const newScrollLeft = container2.scrollLeft;
+        const scrollWidth = container2.scrollWidth;
+        const offsetWidth = container2.offsetWidth;
+        const remainingForwards = scrollWidth - offsetWidth - newScrollLeft;
+        const remainingBackwards = newScrollLeft;
 
-      container.style.scrollSnapType = "none";
-      const currentTime = Date.now();
-      const deltaTime = currentTime - state.lastTime;
-      const deltaX = event.clientX - state.lastX;
-      if (deltaTime > 0) {
-        state.velocityX = deltaX / deltaTime; // (pixels per millisecond)
-        clampVelocity(maxAbsoluteVelocity);
-      }
-
-      const scrollDelta = state.startX - event.clientX;
-      const direction = Math.sign(state.startX - event.clientX);
-      if (direction !== state.mouseDirection) {
-        state.mouseDirection = direction;
-      }
-      container.scrollLeft = state.scrollLeft + scrollDelta;
-      state.lastX = event.clientX;
-      state.lastTime = currentTime;
-
-      if (
-        container.scrollLeft <= 1 ||
-        container.scrollLeft >=
-          container.scrollWidth - container.offsetWidth - 1
-      ) {
-        applyRubberBanding(container, scrollDelta);
-        clampVelocity(maxAbsoluteVelocity);
-      }
-      onPointerMove?.(event);
-    },
-    [applyRubberBanding, clampVelocity, onPointerMove]
-  );
-
-  /**
-   * Updates velocity for proper snapping and returns the adjusted deceleration
-   * factor. Ensures the animation lands on the snap point and is visually
-   * perceptible.
-   */
-  const applyMomentumSnapping = useCallback(
-    (
-      container: HTMLDivElement,
-      initialScroll: number,
-      tFinalScroll: number,
-      decelerationFactor: number,
-      minVelocity: number
-    ) => {
-      const state = scrollStateRef.current;
-
-      // Find where the browser would snap to at tFinalScroll
-      container.style.scrollSnapType = state.scrollSnapType;
-      container.scrollLeft = tFinalScroll;
-      const snappedScroll = container.scrollLeft;
-      container.style.scrollSnapType = "none";
-      container.scrollLeft = initialScroll;
-
-      const { finalScroll, iterations } = getFinalScroll(
-        initialScroll,
-        state.velocityX,
-        decelerationFactor,
-        minVelocity
-      );
-
-      // update velocity to ensure momentum snaps to the correct position and
-      // the animation is not too fast
-      const minIterations = 10;
-      const gap = snappedScroll - finalScroll;
-      if (
-        !isFinite(iterations) ||
-        iterations < minIterations ||
-        Math.abs(gap) > 0.5
-      ) {
-        const displacement = snappedScroll - initialScroll;
-        state.velocityX =
-          (-displacement * (1 - decelerationFactor)) /
-          (FRAME_DURATION * (1 - Math.pow(decelerationFactor, minIterations)));
-      }
-
-      return findDecelerationFactor(
-        initialScroll,
-        snappedScroll,
-        state.velocityX
-      );
-    },
-    []
-  );
-
-  /**
-   * Returns the deceleration factor for the momentum animation, accounting for
-   * snapping if needed.
-   */
-  const computeMomentumDecelerationFactor = useCallback(
-    (container: HTMLDivElement, minVelocity: number) => {
-      const minVelocityForSnapping = 0;
-      const state = scrollStateRef.current;
-      const isRubberBanding =
-        container.scrollLeft <= 1 ||
-        container.scrollLeft >=
-          container.scrollWidth - container.offsetWidth - 1;
-      const rubberBandingFactor = isRubberBanding
-        ? (state.velocityX * 25) / container.scrollWidth
-        : 0;
-      const friction = 0.05 + Math.abs(rubberBandingFactor);
-      const decelerationFactor = 1 - friction;
-      const initialScroll = container.scrollLeft;
-      const { finalScroll } = getFinalScroll(
-        initialScroll,
-        state.velocityX,
-        decelerationFactor,
-        minVelocity
-      );
-
-      if (
-        !isRubberBanding &&
-        finalScroll < container.scrollWidth - container.offsetWidth &&
-        finalScroll > 0 &&
-        Math.abs(state.velocityX) >= minVelocityForSnapping &&
-        state.scrollSnapType
-      ) {
-        return applyMomentumSnapping(
-          container,
-          initialScroll,
-          finalScroll,
-          decelerationFactor,
-          minVelocity
-        );
-      }
-
-      return decelerationFactor;
-    },
-    [applyMomentumSnapping]
-  );
-
-  /**
-   * Start the momentum animation if needed.
-   */
-  const startMomentumAnimation = useCallback(() => {
-    const container = containerRef.current;
-    if (!container) {
-      return;
-    }
-    const state = scrollStateRef.current;
-    const minVelocity = 0.00001;
-    const decelerationFactor = computeMomentumDecelerationFactor(
-      container,
-      minVelocity
-    );
-
-    const animate = () => {
-      const container2 = containerRef.current;
-      if (!container2) {
-        return;
-      }
-
-      container2.style.scrollSnapType = "none";
-      container2.scrollLeft -= state.velocityX * FRAME_DURATION;
-      state.scrollLeft = container2.scrollLeft;
-      state.velocityX *= decelerationFactor;
-
-      const newScrollLeft = container2.scrollLeft;
-      const scrollWidth = container2.scrollWidth;
-      const offsetWidth = container2.offsetWidth;
-      const remainingForwards = scrollWidth - offsetWidth - newScrollLeft;
-      const remainingBackwards = newScrollLeft;
-
-      // Overscroll rubber band bounce-back
-      if (
-        Math.abs(state.velocityX) > minVelocity &&
-        (remainingForwards <= 1 || remainingBackwards < 1)
-      ) {
-        const content = container2.querySelector("[data-carousel-content]");
-        if (content instanceof HTMLElement) {
-          const items = content.querySelectorAll(":scope > *");
-          // we have to translate the items instead of the content because
-          // Safari scrolls the viewport if the content is translated
-          const theoreticalTranslate =
-            state.velocityX * RUBBER_BAND_BOUNCE_COEFFICIENT;
-          const clampedTranslate =
-            Math.sign(theoreticalTranslate) *
-            Math.min(
-              Math.abs(theoreticalTranslate),
-              container2.offsetWidth / 2
+        // Overscroll rubber band bounce-back
+        if (
+          Math.abs(state.velocityX) > minVelocity &&
+          (remainingForwards <= 1 || remainingBackwards < 1)
+        ) {
+          const content = container2.querySelector("[data-carousel-content]");
+          if (content instanceof HTMLElement) {
+            const items = content.querySelectorAll(":scope > *");
+            // we have to translate the items instead of the content because
+            // Safari scrolls the viewport if the content is translated
+            const theoreticalTranslate =
+              state.velocityX * RUBBER_BAND_BOUNCE_COEFFICIENT;
+            const clampedTranslate =
+              Math.sign(theoreticalTranslate) *
+              Math.min(
+                Math.abs(theoreticalTranslate),
+                container2.offsetWidth / 2
+              );
+            container2.style.setProperty(
+              CSS_VARS.overscrollTranslateX,
+              `${clampedTranslate}px`
             );
-          container2.style.setProperty(
-            CSS_VARS.overscrollTranslateX,
-            `${clampedTranslate}px`
+            items.forEach((item) => {
+              if (item instanceof HTMLElement) {
+                item.style.translate = `var(${CSS_VARS.overscrollTranslateX}) 0`;
+              }
+            });
+            state.velocityX *= decelerationFactor;
+          }
+        }
+
+        if (Math.abs(state.velocityX) > minVelocity) {
+          state.animationId = requestAnimationFrame(animate);
+        } else {
+          state.animationId = null;
+          container2.style.scrollSnapType = state.scrollSnapType;
+          container2.style.removeProperty(CSS_VARS.overscrollTranslateX);
+          const allItems = container2.querySelectorAll(
+            ":scope [data-carousel-content] > *"
           );
-          items.forEach((item) => {
+          allItems.forEach((item) => {
             if (item instanceof HTMLElement) {
-              item.style.translate = `var(${CSS_VARS.overscrollTranslateX}) 0`;
+              item.style.translate = "";
             }
           });
-          state.velocityX *= decelerationFactor;
         }
-      }
+      };
 
-      if (Math.abs(state.velocityX) > minVelocity) {
-        state.animationId = requestAnimationFrame(animate);
-      } else {
-        state.animationId = null;
-        container2.style.scrollSnapType = state.scrollSnapType;
-        container2.style.removeProperty(CSS_VARS.overscrollTranslateX);
-        const allItems = container2.querySelectorAll(
-          ":scope [data-carousel-content] > *"
-        );
-        allItems.forEach((item) => {
-          if (item instanceof HTMLElement) {
-            item.style.translate = "";
-          }
-        });
-      }
-    };
+      state.animationId = requestAnimationFrame(animate);
+    }, [computeMomentumDecelerationFactor]);
 
-    state.animationId = requestAnimationFrame(animate);
-  }, [computeMomentumDecelerationFactor]);
-
-  /**
-   * Trigger momentum animation when dragging stops, dispatch click if needed.
-   */
-  const handlePointerUp = useCallback(
-    (event: React.PointerEvent<HTMLDivElement> | PointerEvent) => {
-      if (event.pointerType !== "mouse") {
-        return;
-      }
-      const container = containerRef.current;
-      if ("pointerId" in event) {
-        container?.releasePointerCapture(event.pointerId);
-      }
-      const state = scrollStateRef.current;
-      if (!state.isDragging || !container) {
-        return;
-      }
-      container.style.overflowX = "";
-      // dispatch click if needed (we prevented it on pointer down)
-      if (
-        state.initialPointerPosition &&
-        Math.hypot(
-          state.initialPointerPosition.x - event.clientX,
-          state.initialPointerPosition.y - event.clientY
-        ) < 3
-      ) {
-        state.isDispatchingClick = true;
-        state.initialTarget?.dispatchEvent(
-          new MouseEvent("click", { bubbles: true, cancelable: true })
-        );
-        state.isDispatchingClick = false;
-      }
-      state.initialTarget = null;
-      state.initialPointerPosition = null;
-      state.isDragging = false;
-      startMomentumAnimation();
-      if (event instanceof PointerEvent) {
-        return;
-      }
-      onPointerUp?.(event);
-    },
-    [onPointerUp, startMomentumAnimation]
-  );
-
-  useEffect(() => {
-    document.addEventListener("pointerup", handlePointerUp);
-    return () => {
-      document.removeEventListener("pointerup", handlePointerUp);
-    };
-  }, [handlePointerUp]);
-
-  const lastTabScrollLeft = useRef<MaybeNull<number>>(null);
-
-  /**
-   * Scroll to the focused element into view if it's not already visible
-   */
-  const handleFocus = useCallback(
-    (event: FocusEvent) => {
-      const container = containerRef.current;
-      const { target } = event;
-      if (
-        container &&
-        target instanceof HTMLElement &&
-        target !== event.currentTarget
-      ) {
-        if (lastTabScrollLeft.current !== null) {
-          container.scrollLeft = lastTabScrollLeft.current;
+    /**
+     * Trigger momentum animation when dragging stops, dispatch click if needed.
+     */
+    const handlePointerUp = useCallback(
+      (event: React.PointerEvent<HTMLDivElement> | PointerEvent) => {
+        if (event.pointerType !== "mouse") {
+          return;
         }
-        scrollIntoView(target, container, "nearest");
-        void container.offsetWidth;
-        lastTabScrollLeft.current = null;
-      }
-    },
-    [scrollIntoView]
-  );
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) {
-      return;
-    }
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Tab") {
+        const container = containerRef.current;
+        if ("pointerId" in event) {
+          container?.releasePointerCapture(event.pointerId);
+        }
+        const state = scrollStateRef.current;
+        if (!state.isDragging || !container) {
+          return;
+        }
+        container.style.overflowX = "";
+        // dispatch click if needed (we prevented it on pointer down)
         if (
-          event.target instanceof HTMLElement &&
-          container.contains(event.target)
+          state.initialPointerPosition &&
+          Math.hypot(
+            state.initialPointerPosition.x - event.clientX,
+            state.initialPointerPosition.y - event.clientY
+          ) < 3
         ) {
-          lastTabScrollLeft.current = container.scrollLeft;
+          state.isDispatchingClick = true;
+          state.initialTarget?.dispatchEvent(
+            new MouseEvent("click", { bubbles: true, cancelable: true })
+          );
+          state.isDispatchingClick = false;
         }
-      }
-    };
-
-    container.addEventListener("focus", handleFocus, { capture: true });
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      container.removeEventListener("focus", handleFocus, { capture: true });
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [handleFocus]);
-
-  return (
-    <div
-      ref={containerRef}
-      {...props}
-      onPointerDownCapture={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onClickCapture={(event) => {
-        // detail === 0 means the click was synthesized by the keyboard (Enter/Space),
-        // not by a pointer device — let it through unconditionally
-        if (!scrollStateRef.current.isDispatchingClick && event.detail !== 0) {
-          event.preventDefault();
-          event.stopPropagation();
+        state.initialTarget = null;
+        state.initialPointerPosition = null;
+        state.isDragging = false;
+        startMomentumAnimation();
+        if (event instanceof PointerEvent) {
+          return;
         }
-        onClickCapture?.(event);
-      }}
-      onWheel={(event) => {
-        event.currentTarget.style.scrollSnapType =
-          scrollStateRef.current.scrollSnapType;
-        onWheel?.(event);
-      }}
-      data-carousel-viewport=""
-      data-can-scroll={
-        scrollsForwards && scrollsBackwards
-          ? "both"
-          : scrollsForwards
-          ? "forwards"
-          : scrollsBackwards
-          ? "backwards"
-          : "none"
+        onPointerUp?.(event);
+      },
+      [onPointerUp, startMomentumAnimation]
+    );
+
+    useEffect(() => {
+      document.addEventListener("pointerup", handlePointerUp);
+      return () => {
+        document.removeEventListener("pointerup", handlePointerUp);
+      };
+    }, [handlePointerUp]);
+
+    const lastTabScrollLeft = useRef<MaybeNull<number>>(null);
+
+    /**
+     * Scroll to the focused element into view if it's not already visible
+     */
+    const handleFocus = useCallback(
+      (event: FocusEvent) => {
+        const container = containerRef.current;
+        const { target } = event;
+        if (
+          container &&
+          target instanceof HTMLElement &&
+          target !== event.currentTarget
+        ) {
+          if (lastTabScrollLeft.current !== null) {
+            container.scrollLeft = lastTabScrollLeft.current;
+          }
+          scrollIntoView(target, container, "nearest");
+          void container.offsetWidth;
+          lastTabScrollLeft.current = null;
+        }
+      },
+      [scrollIntoView]
+    );
+
+    useEffect(() => {
+      const container = containerRef.current;
+      if (!container) {
+        return;
       }
-      className={className}
-      style={
-        {
-          ...(contentFade
-            ? {
-                [CSS_VARS.fadeSize]:
-                  typeof contentFadeSize === "number"
-                    ? `${contentFadeSize}px`
-                    : contentFadeSize,
-                [CSS_VARS.fadeOffsetBackwards]: `min(var(${CSS_VARS.remainingBackwards}, 0px), 0px)`,
-                [CSS_VARS.fadeOffsetForwards]: `min(var(${CSS_VARS.remainingForwards}, 0px), 0px)`,
-                maskImage: `linear-gradient(
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "Tab") {
+          if (
+            event.target instanceof HTMLElement &&
+            container.contains(event.target)
+          ) {
+            lastTabScrollLeft.current = container.scrollLeft;
+          }
+        }
+      };
+
+      container.addEventListener("focus", handleFocus, { capture: true });
+      document.addEventListener("keydown", handleKeyDown);
+      return () => {
+        container.removeEventListener("focus", handleFocus, { capture: true });
+        document.removeEventListener("keydown", handleKeyDown);
+      };
+    }, [handleFocus]);
+
+    return (
+      <div
+        ref={combineRefs(containerRef, forwardedRef)}
+        {...props}
+        onPointerDownCapture={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onClickCapture={(event) => {
+          // detail === 0 means the click was synthesized by the keyboard (Enter/Space),
+          // not by a pointer device — let it through unconditionally
+          if (
+            !scrollStateRef.current.isDispatchingClick &&
+            event.detail !== 0
+          ) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          onClickCapture?.(event);
+        }}
+        onWheel={(event) => {
+          event.currentTarget.style.scrollSnapType =
+            scrollStateRef.current.scrollSnapType;
+          onWheel?.(event);
+        }}
+        data-carousel-viewport=""
+        data-can-scroll={
+          scrollsForwards && scrollsBackwards
+            ? "both"
+            : scrollsForwards
+            ? "forwards"
+            : scrollsBackwards
+            ? "backwards"
+            : "none"
+        }
+        className={className}
+        style={
+          {
+            ...(contentFade
+              ? {
+                  [CSS_VARS.fadeSize]:
+                    typeof contentFadeSize === "number"
+                      ? `${contentFadeSize}px`
+                      : contentFadeSize,
+                  [CSS_VARS.fadeOffsetBackwards]: `min(var(${CSS_VARS.remainingBackwards}, 0px), 0px)`,
+                  [CSS_VARS.fadeOffsetForwards]: `min(var(${CSS_VARS.remainingForwards}, 0px), 0px)`,
+                  maskImage: `linear-gradient(
               to right,
               transparent var(${CSS_VARS.fadeOffsetBackwards}),
               #000 calc(min(var(${CSS_VARS.remainingBackwards}, 0px), var(${CSS_VARS.fadeSize})) + var(${CSS_VARS.fadeOffsetBackwards})),
               #000 calc(100% - min(var(${CSS_VARS.remainingForwards}, 0px), var(${CSS_VARS.fadeSize})) - var(${CSS_VARS.fadeOffsetForwards})),
               transparent calc(100% - var(${CSS_VARS.fadeOffsetForwards}))
             )`,
-                maskSize: "100% 100%",
-              }
-            : {}),
-          position: "relative",
-          overflow: "scroll",
-          msOverflowStyle: "none",
-          overscrollBehaviorX: "contain",
-          scrollbarColor: "transparent transparent",
-          scrollbarWidth: "none",
-          scrollSnapType,
-          ...style,
-        } as CSSProperties
-      }
-    >
-      {children}
-    </div>
-  );
-};
+                  maskSize: "100% 100%",
+                }
+              : {}),
+            position: "relative",
+            overflow: "scroll",
+            msOverflowStyle: "none",
+            overscrollBehaviorX: "contain",
+            scrollbarColor: "transparent transparent",
+            scrollbarWidth: "none",
+            scrollSnapType,
+            ...style,
+          } as CSSProperties
+        }
+      >
+        {children}
+      </div>
+    );
+  }
+);
+
+CarouselViewport.displayName = "Carousel.Viewport";
 
 type CarouselContentProps = ComponentPropsWithoutRef<"div">;
 
-const CarouselContent = ({ children, ...props }: CarouselContentProps) => {
-  return (
-    <div
-      {...props}
-      style={{ width: "fit-content", ...props.style }}
-      data-carousel-content=""
-    >
-      {children}
-    </div>
-  );
-};
+const CarouselContent = forwardRef<HTMLDivElement, CarouselContentProps>(
+  ({ children, ...props }, ref) => {
+    return (
+      <div
+        ref={ref}
+        {...props}
+        style={{ width: "fit-content", ...props.style }}
+        data-carousel-content=""
+      >
+        {children}
+      </div>
+    );
+  }
+);
+CarouselContent.displayName = "Carousel.Content";
 
 type CarouselItemProps = ComponentPropsWithoutRef<"div"> & {
   asChild?: boolean;
 };
 
-const CarouselItem = ({ children, asChild, ...props }: CarouselItemProps) => {
-  if (asChild && isValidElement(children)) {
-    return cloneElement(children as ReactElement<Record<string, unknown>>, {
-      ...props,
-      "data-carousel-item": "",
-    });
+const CarouselItem = forwardRef<HTMLElement, CarouselItemProps>(
+  ({ children, asChild, ...props }, ref) => {
+    if (asChild && isValidElement(children)) {
+      const child = children as ReactElement<Record<string, unknown>>;
+      const childRef = (children as { ref?: Ref<unknown> }).ref;
+      return cloneElement(child, {
+        ...props,
+        ref: childRef ? combineRefs(childRef, ref as Ref<unknown>) : ref,
+        "data-carousel-item": "",
+      });
+    }
+    return (
+      <div ref={ref as Ref<HTMLDivElement>} {...props} data-carousel-item="">
+        {children}
+      </div>
+    );
   }
-  return (
-    <div {...props} data-carousel-item="">
-      {children}
-    </div>
-  );
-};
+);
+
+CarouselItem.displayName = "Carousel.Item";
 
 type CarouselNextPageProps = ComponentPropsWithoutRef<"button">;
 
-const CarouselNextPage = ({
-  children,
-  onClick,
-  disabled,
-  ...props
-}: CarouselNextPageProps) => {
-  const { scrollsForwards, handleScrollToNext } = useContext(CarouselContext);
+const CarouselNextPage = forwardRef<HTMLButtonElement, CarouselNextPageProps>(
+  ({ children, onClick, disabled, ...props }, ref) => {
+    const { scrollsForwards, handleScrollToNext } = useContext(CarouselContext);
 
-  return (
-    <button
-      {...props}
-      onClick={(event) => {
-        handleScrollToNext();
-        onClick?.(event);
-      }}
-      disabled={disabled ?? !scrollsForwards}
-    >
-      {children}
-    </button>
-  );
-};
+    return (
+      <button
+        ref={ref}
+        {...props}
+        onClick={(event) => {
+          handleScrollToNext();
+          onClick?.(event);
+        }}
+        disabled={disabled ?? !scrollsForwards}
+      >
+        {children}
+      </button>
+    );
+  }
+);
+
+CarouselNextPage.displayName = "Carousel.NextPage";
 
 type CarouselPrevPageProps = ComponentPropsWithoutRef<"button">;
 
-const CarouselPrevPage = ({
-  children,
-  onClick,
-  disabled,
-  ...props
-}: CarouselPrevPageProps) => {
-  const { scrollsBackwards, handleScrollToPrev } = useContext(CarouselContext);
+const CarouselPrevPage = forwardRef<HTMLButtonElement, CarouselPrevPageProps>(
+  ({ children, onClick, disabled, ...props }, ref) => {
+    const { scrollsBackwards, handleScrollToPrev } =
+      useContext(CarouselContext);
 
-  return (
-    <button
-      {...props}
-      onClick={(event) => {
-        handleScrollToPrev();
-        onClick?.(event);
-      }}
-      disabled={disabled ?? !scrollsBackwards}
-    >
-      {children}
-    </button>
-  );
-};
+    return (
+      <button
+        ref={ref}
+        {...props}
+        onClick={(event) => {
+          handleScrollToPrev();
+          onClick?.(event);
+        }}
+        disabled={disabled ?? !scrollsBackwards}
+      >
+        {children}
+      </button>
+    );
+  }
+);
+
+CarouselPrevPage.displayName = "Carousel.PrevPage";
 
 /**
  * Returns the computed boundary offset (used for adjusting prev / next scroll)
@@ -1230,6 +1260,23 @@ const getFinalScroll = (
       (1 - decelerationFactor);
 
   return { finalScroll, iterations };
+};
+
+/**
+ * Combines the given refs into a single ref
+ */
+const combineRefs = <T,>(
+  ...refs: (Ref<T> | null | undefined)[]
+): ((node: T | null) => void) => {
+  return (node) => {
+    refs.forEach((ref) => {
+      if (typeof ref === "function") {
+        ref(node);
+      } else if (ref != null) {
+        (ref as { current: T | null }).current = node;
+      }
+    });
+  };
 };
 
 const iOSRubberBand = (translation: number, ratio: number, dimension = 1) => {
