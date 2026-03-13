@@ -904,7 +904,6 @@ const CarouselViewport = forwardRef<HTMLDivElement, CarouselViewportProps>(
           state.animationId = requestAnimationFrame(animate);
         } else {
           state.animationId = null;
-          container2.style.scrollSnapType = state.scrollSnapType;
           container2.style.removeProperty(CSS_VARS.overscrollTranslateX);
           const allItems = container2.querySelectorAll(
             ":scope [data-carousel-content] > *"
