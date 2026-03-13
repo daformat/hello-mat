@@ -435,7 +435,9 @@ type CarouselViewportProps = ComponentPropsWithoutRef<"div"> &
         contentFade: false;
         contentFadeSize?: never;
       }
-  );
+  ) & {
+    scrollSnapType?: CSSProperties["scrollSnapType"];
+  };
 
 const CarouselViewport = ({
   children,
@@ -446,6 +448,7 @@ const CarouselViewport = ({
   onWheel,
   contentFade = true,
   contentFadeSize = "clamp(16px, 10vw, 64px)",
+  scrollSnapType,
   style,
   className,
   ...props
@@ -475,27 +478,21 @@ const CarouselViewport = ({
     initialTarget: null as MaybeNull<EventTarget>,
     initialPointerPosition: null as MaybeNull<{ x: number; y: number }>,
     mouseDirection: 0,
-    scrollSnapType: "",
+    scrollSnapType: scrollSnapType ?? "",
   });
 
+  // Keep the ref in sync with the prop on every render so event handlers
+  // always see the current value without needing a layout effect.
+  scrollStateRef.current.scrollSnapType = scrollSnapType ?? "";
+
   /**
-   * Register our refs
+   * Register our refs; Layout effect to make sure we render the arrows
+   * or the content-fade in the initial frame
    */
   useLayoutEffect(() => {
     setRef(containerRef);
     setScrollStateRef(scrollStateRef);
   }, [setRef, setScrollStateRef]);
-
-  /**
-   * Save inlined scroll-snap-type if any, since we manipulate it
-   */
-  useLayoutEffect(() => {
-    const container = containerRef.current;
-    if (container) {
-      scrollStateRef.current.scrollSnapType =
-        getComputedStyle(container).scrollSnapType ?? "";
-    }
-  }, [/* effect dep */ className, /* effect dep */ style]);
 
   /**
    * Determine whether the container can scroll forwards or backwards based on
@@ -1068,6 +1065,7 @@ const CarouselViewport = ({
           overscrollBehaviorX: "contain",
           scrollbarColor: "transparent transparent",
           scrollbarWidth: "none",
+          scrollSnapType,
           ...style,
         } as CSSProperties
       }

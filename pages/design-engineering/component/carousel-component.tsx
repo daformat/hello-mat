@@ -95,6 +95,7 @@ const CarouselComponentPageContent = () => {
             <Carousel.Viewport
               contentFade={contentFade}
               className={styles.carousel_viewport}
+              scrollSnapType={snap ? "x mandatory" : "none"}
               style={
                 {
                   "--margin-inline": "-12px",
@@ -103,7 +104,6 @@ const CarouselComponentPageContent = () => {
                   [Carousel.CSS_VARS
                     .fadeOffsetForwards]: `min(var(${Carousel.CSS_VARS.remainingForwards}, 0px) + var(--margin-inline), var(--margin-inline) * -1)`,
                   marginInline: "var(--margin-inline)",
-                  scrollSnapType: snap ? "x mandatory" : "none",
                 } as CSSProperties
               }
             >
