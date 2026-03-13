@@ -3,6 +3,7 @@ import {
   ComponentPropsWithoutRef,
   createContext,
   CSSProperties,
+  ForwardedRef,
   forwardRef,
   isValidElement,
   ReactElement,
@@ -554,6 +555,7 @@ const CarouselViewport = forwardRef<HTMLDivElement, CarouselViewportProps>(
         );
       }
     }, [
+      rootRef,
       setRemainingBackwards,
       setRemainingForwards,
       setScrollsBackwards,
@@ -1265,7 +1267,7 @@ const getFinalScroll = (
  * Combines the given refs into a single ref
  */
 const combineRefs = <T,>(
-  ...refs: (Ref<T> | null | undefined)[]
+  ...refs: (ForwardedRef<T> | RefObject<T> | undefined)[]
 ): ((node: T | null) => void) => {
   return (node) => {
     refs.forEach((ref) => {
