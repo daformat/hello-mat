@@ -7,7 +7,6 @@ import {
   forwardRef,
   isValidElement,
   ReactElement,
-  Ref,
   RefObject,
   useCallback,
   useContext,
@@ -1120,15 +1119,19 @@ const CarouselItem = forwardRef<HTMLElement, CarouselItemProps>(
   ({ children, asChild, ...props }, ref) => {
     if (asChild && isValidElement(children)) {
       const child = children as ReactElement<Record<string, unknown>>;
-      const childRef = (children as { ref?: Ref<unknown> }).ref;
+      const childRef = (children as { ref?: RefObject<unknown> }).ref;
       return cloneElement(child, {
         ...props,
-        ref: childRef ? combineRefs(childRef, ref as Ref<unknown>) : ref,
+        ref: childRef ? combineRefs(childRef, ref as RefObject<unknown>) : ref,
         "data-carousel-item": "",
       });
     }
     return (
-      <div ref={ref as Ref<HTMLDivElement>} {...props} data-carousel-item="">
+      <div
+        ref={ref as RefObject<HTMLDivElement>}
+        {...props}
+        data-carousel-item=""
+      >
         {children}
       </div>
     );
