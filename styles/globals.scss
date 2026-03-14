@@ -438,6 +438,10 @@ input[type="range"]:focus::-webkit-slider-thumb {
   background-color: var(--slider-thumb-bg-focus);
 }
 
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--color-border-1-outline);
+}
+
 input[type="range"]::-moz-range-track {
   background-color: var(--slider-track-bg);
   background-image: var(--slider-track-bg-image);
@@ -465,6 +469,10 @@ input[type="range"]:focus::-moz-range-track {
 
 input[type="range"]:focus::-moz-range-thumb {
   background: var(--slider-thumb-bg-focus);
+}
+
+input[type="range"]:focus-visible::-moz-range-thumb {
+  outline: 2px solid var(--color-border-1-outline);
 }
 
 input[type="range"]::-ms-track {
@@ -507,4 +515,8 @@ input[type="range"]:focus::-ms-fill-upper {
 
 input[type="range"]:focus::-ms-thumb {
   background: var(--slider-thumb-bg-focus);
+}
+
+input[type="range"]:focus-visible::-ms-thumb {
+  outline: 2px solid var(--color-border-1-outline);
 }
