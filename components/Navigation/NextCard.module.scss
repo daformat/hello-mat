@@ -64,11 +64,19 @@
     }
   }
 
+  &.next {
+    order: 0;
+
+    @include mixins.above-large {
+      order: 1;
+    }
+  }
+
   &.prev {
     order: 1;
 
     @include mixins.above-large {
-      order: initial;
+      order: 0;
     }
 
     .text {

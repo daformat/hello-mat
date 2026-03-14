@@ -455,9 +455,9 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
           The carousel can be paginated, using the dedicated buttons, pagination
           is based on the <code>scroll-snap-align</code> set in css. Pagination
           accounts for the fade mask if any, or whatever offset is returned by
-          the `boundaryOffset`, this allows to ensure the next item is always
-          fully visible, instead of being partially masked, ensuring better
-          pagination.
+          the <code>boundaryOffset</code>, this allows to ensure the next item
+          is always fully visible, instead of being partially masked, ensuring
+          better pagination.
         </p>
         <h3 id="snapping">Snapping</h3>
         <p>
