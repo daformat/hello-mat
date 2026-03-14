@@ -21,7 +21,7 @@
 
   --color-border-1: #{rgba(#fff, 0.6)};
   --color-border-1-hover: #{rgba(#fff, 0.9)};
-  --color-border-1-outline: #{rgba(#fff, 1)};
+  --color-border-1-outline: #{rgba(palette.$light-ivory-4, 0.75)};
   --color-border-2: #{rgba(#fff, 0.001)};
   --color-border-3: #{rgba(palette.$light-ivory-4, 0.25)};
   --color-border-active: #{rgba(palette.$light-ivory-2, 1)};

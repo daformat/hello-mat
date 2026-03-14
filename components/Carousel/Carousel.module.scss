@@ -25,8 +25,26 @@
 }
 
 .carousel_item {
+  --radius: clamp(6px, calc(1vw * var(--size, 1)), 10px);
   scroll-margin-inline: calc(var(--margin-inline) * -1);
   scroll-snap-align: center;
+
+  button {
+    background-color: transparent;
+    border: 0;
+    padding: 0;
+
+    &:focus-visible {
+      border-color: transparent;
+      border-radius: var(--radius);
+      outline: 2px solid var(--color-border-1-outline);
+      outline-offset: 2px;
+    }
+  }
+
+  picture {
+    display: block;
+  }
 }
 
 .carousel {
@@ -70,7 +88,6 @@
   }
 
   img {
-    --radius: clamp(6px, calc(1vw * var(--size, 1)), 10px);
     --padding: clamp(4px, calc(1vw * var(--size, 1)), 7px);
     --base-size: calc(var(--inline, 20vw) * 0.94);
     --final-size: calc(var(--base-size) * (var(--size, 1) + 0.5));
@@ -96,6 +113,33 @@
   }
 
   @include mixins.remove-transition;
+}
+
+.feedback {
+  backdrop-filter: blur(4px);
+  background-color: rgb(
+    from var(--color-toolbar-button-background-active) r g b / 0.75
+  );
+  border-radius: 50%;
+  box-shadow: 0 1px 12px var(--color-shadow-1);
+  color: var(--color-toolbar-button-color-active);
+  display: grid;
+  left: 50%;
+  padding: 8px;
+  place-items: center;
+  position: absolute;
+  top: 50%;
+  transition: opacity 0.2s var(--ease-out-cubic),
+    scale 0.2s var(--ease-out-cubic);
+  translate: -50% -50%;
+
+  path {
+    stroke-dasharray: 100%;
+    stroke-width: 2px;
+    transition: stroke-dashoffset 0.15s var(--ease-in-out-cubic) 0.1s;
+
+    @include mixins.remove-transition;
+  }
 }
 
 .button {

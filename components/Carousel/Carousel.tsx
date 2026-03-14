@@ -82,6 +82,7 @@ type CarouselContext = {
     | { x: number; y: number }
     | ((root: HTMLElement) => { x: number; y: number });
   rootRef: RefObject<MaybeNull<HTMLElement>>;
+  clearAnimation: () => void;
 };
 
 const CarouselContext = createContext<CarouselContext>({
@@ -97,6 +98,7 @@ const CarouselContext = createContext<CarouselContext>({
   handleScrollToPrev: () => {},
   scrollIntoView: () => {},
   rootRef: { current: null },
+  clearAnimation: () => {},
 });
 
 const useCarouselContext = () => {
@@ -150,6 +152,35 @@ const CarouselRoot = forwardRef<HTMLDivElement, CarouselRootProps>(
     const [scrollStateRef, setScrollStateRef] =
       useState<MaybeUndefined<RefObject<ScrollState>>>(undefined);
     const rootRef = useRef<HTMLDivElement>(null);
+
+    /**
+     * Clears the current animation and resets animation styling
+     */
+    const clearAnimation = useCallback(() => {
+      const state = scrollStateRef?.current;
+      if (!state) {
+        return;
+      }
+      const animationId = state.animationId;
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+      state.animationId = null;
+      state.velocityX = 0;
+      const container = ref.current;
+      if (!container) {
+        return;
+      }
+      container.style.removeProperty(CSS_VARS.overscrollTranslateX);
+      const allItems = container.querySelectorAll(
+        ":scope [data-carousel-content] > *"
+      );
+      allItems.forEach((item) => {
+        if (item instanceof HTMLElement) {
+          item.style.translate = "";
+        }
+      });
+    }, [ref, scrollStateRef]);
 
     /**
      * Scroll the whole page (the container client width)
@@ -210,6 +241,44 @@ const CarouselRoot = forwardRef<HTMLDivElement, CarouselRootProps>(
     );
 
     /**
+     * Snaps the desired scroll according to the selected snapping qnd returns
+     * the snapped scroll position
+     */
+    const snapScroll = useCallback(
+      (targetScroll: number, container: HTMLElement) => {
+        const currentScroll = container.scrollLeft;
+        container.style.scrollSnapType =
+          scrollStateRef?.current.scrollSnapType ?? "";
+        container.scrollTo({ left: targetScroll, behavior: "instant" });
+        const snappedScrollPosition = container.scrollLeft;
+        container.scrollTo({ left: currentScroll, behavior: "instant" });
+        return snappedScrollPosition;
+      },
+      [scrollStateRef]
+    );
+
+    /**
+     * Scroll to the target scroll or to the closest snapped position
+     */
+    const snappedScrollTo = useCallback(
+      (
+        targetScroll: number,
+        container: HTMLElement,
+        behavior: ScrollToOptions["behavior"] = "smooth"
+      ) => {
+        const snappedScroll = snapScroll(targetScroll, container);
+        // request animation frame to prevent Safari from being Safari
+        requestAnimationFrame(() => {
+          container.scrollTo({
+            left: snappedScroll,
+            behavior,
+          });
+        });
+      },
+      [snapScroll]
+    );
+
+    /**
      * Custom scrollIntoViewNearest to prevent ancestors scrolling when doing
      * native element.scrollIntoView()
      */
@@ -245,6 +314,8 @@ const CarouselRoot = forwardRef<HTMLDivElement, CarouselRootProps>(
           const maxIterations = 20;
           // Adjust scroll position to account for snapping, if the target is
           // still before or after, we increment / decrement the scroll position
+          container.style.scrollSnapType =
+            scrollStateRef?.current.scrollSnapType ?? "";
           while (
             scrollPosition > 0 &&
             scrollPosition < container.scrollWidth - container.offsetWidth &&
@@ -266,16 +337,13 @@ const CarouselRoot = forwardRef<HTMLDivElement, CarouselRootProps>(
             iterations++;
           }
           container.scrollTo({ left: currentScroll, behavior: "instant" });
-          // request animation frame to prevent Safari from being Safari
-          requestAnimationFrame(() => {
-            container.scrollTo({
-              left: scrollPosition <= offset ? 0 : scrollPosition,
-              behavior: "smooth",
-            });
-          });
+          snappedScrollTo(
+            scrollPosition <= offset ? 0 : scrollPosition,
+            container
+          );
         }
       },
-      [boundaryOffset]
+      [boundaryOffset, scrollStateRef, snappedScrollTo]
     );
 
     /**
@@ -284,6 +352,7 @@ const CarouselRoot = forwardRef<HTMLDivElement, CarouselRootProps>(
      */
     const scrollIntoView = useCallback<ScrollIntoView>(
       (target, container, direction) => {
+        clearAnimation();
         const [_, inline] = getScrollSnapAlign(getComputedStyle(target));
         if (direction === "nearest") {
           scrollIntoViewNearest(target, container);
@@ -304,16 +373,16 @@ const CarouselRoot = forwardRef<HTMLDivElement, CarouselRootProps>(
             target.offsetLeft -
             (container.offsetWidth - target.offsetWidth) / 2;
         }
-        container.scrollTo({ left: scrollPosition, behavior: "smooth" });
+        snappedScrollTo(scrollPosition, container);
       },
-      [boundaryOffset, scrollIntoViewNearest]
+      [boundaryOffset, clearAnimation, scrollIntoViewNearest, snappedScrollTo]
     );
 
     /**
      * Scrolls the container to the next slide until hitting the end of the container
      */
     const handleScrollToNext = useCallback(() => {
-      cancelAnimationFrame(scrollStateRef?.current?.animationId ?? 0);
+      clearAnimation();
       const container = ref?.current;
       const root = rootRef?.current;
       if (root && container && container.scrollLeft < container.scrollWidth) {
@@ -347,13 +416,20 @@ const CarouselRoot = forwardRef<HTMLDivElement, CarouselRootProps>(
           }
         }
       }
-    }, [boundaryOffset, handleScrollPage, ref, scrollIntoView, scrollStateRef]);
+    }, [
+      boundaryOffset,
+      clearAnimation,
+      handleScrollPage,
+      ref,
+      scrollIntoView,
+      scrollStateRef,
+    ]);
 
     /**
      * Scrolls the container to the previous slide until hitting the start of the container
      */
     const handleScrollToPrev = useCallback(() => {
-      cancelAnimationFrame(scrollStateRef?.current?.animationId ?? 0);
+      clearAnimation();
       const container = ref?.current;
       const root = rootRef?.current;
       if (root && container && container.scrollLeft > 0) {
@@ -384,7 +460,14 @@ const CarouselRoot = forwardRef<HTMLDivElement, CarouselRootProps>(
           }
         }
       }
-    }, [boundaryOffset, handleScrollPage, ref, scrollIntoView, scrollStateRef]);
+    }, [
+      boundaryOffset,
+      clearAnimation,
+      handleScrollPage,
+      ref,
+      scrollIntoView,
+      scrollStateRef,
+    ]);
 
     const carouselContext = useMemo<CarouselContext>(() => {
       return {
@@ -403,21 +486,27 @@ const CarouselRoot = forwardRef<HTMLDivElement, CarouselRootProps>(
         handleScrollToNext,
         handleScrollToPrev,
         scrollIntoView,
+        clearAnimation,
         boundaryOffset,
         rootRef,
       };
     }, [
       ref,
-      boundaryOffset,
-      handleScrollToNext,
-      handleScrollToPrev,
-      remainingBackwards,
-      remainingForwards,
-      scrollIntoView,
-      scrollStateRef,
       scrollsBackwards,
       scrollsForwards,
+      remainingForwards,
+      remainingBackwards,
+      scrollStateRef,
+      handleScrollToNext,
+      handleScrollToPrev,
+      scrollIntoView,
+      clearAnimation,
+      boundaryOffset,
     ]);
+
+    useEffect(() => {
+      return clearAnimation;
+    }, [clearAnimation]);
 
     return (
       <CarouselContext.Provider value={carouselContext}>
@@ -431,7 +520,11 @@ const CarouselRoot = forwardRef<HTMLDivElement, CarouselRootProps>(
 
 CarouselRoot.displayName = "Carousel.Root";
 
-type CarouselViewportProps = ComponentPropsWithoutRef<"div"> &
+type CarouselViewportBaseProps = ComponentPropsWithoutRef<"div"> & {
+  scrollSnapType?: CSSProperties["scrollSnapType"];
+};
+
+type CarouselViewportProps = CarouselViewportBaseProps &
   (
     | {
         contentFade?: true;
@@ -441,9 +534,7 @@ type CarouselViewportProps = ComponentPropsWithoutRef<"div"> &
         contentFade: false;
         contentFadeSize?: never;
       }
-  ) & {
-    scrollSnapType?: CSSProperties["scrollSnapType"];
-  };
+  );
 
 const CarouselViewport = forwardRef<HTMLDivElement, CarouselViewportProps>(
   (
@@ -473,6 +564,7 @@ const CarouselViewport = forwardRef<HTMLDivElement, CarouselViewportProps>(
       setRemainingForwards,
       setRemainingBackwards,
       setScrollStateRef,
+      clearAnimation,
       rootRef,
     } = useContext(CarouselContext);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -904,21 +996,12 @@ const CarouselViewport = forwardRef<HTMLDivElement, CarouselViewportProps>(
         if (Math.abs(state.velocityX) > minVelocity) {
           state.animationId = requestAnimationFrame(animate);
         } else {
-          state.animationId = null;
-          container2.style.removeProperty(CSS_VARS.overscrollTranslateX);
-          const allItems = container2.querySelectorAll(
-            ":scope [data-carousel-content] > *"
-          );
-          allItems.forEach((item) => {
-            if (item instanceof HTMLElement) {
-              item.style.translate = "";
-            }
-          });
+          clearAnimation();
         }
       };
 
       state.animationId = requestAnimationFrame(animate);
-    }, [computeMomentumDecelerationFactor]);
+    }, [clearAnimation, computeMomentumDecelerationFactor]);
 
     /**
      * Trigger momentum animation when dragging stops, dispatch click if needed.
@@ -988,7 +1071,6 @@ const CarouselViewport = forwardRef<HTMLDivElement, CarouselViewportProps>(
             container.scrollLeft = lastTabScrollLeft.current;
           }
           scrollIntoView(target, container, "nearest");
-          void container.offsetWidth;
           lastTabScrollLeft.current = null;
         }
       },
