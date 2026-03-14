@@ -248,7 +248,7 @@ const CarouselRoot = forwardRef<HTMLDivElement, CarouselRootProps>(
       (targetScroll: number, container: HTMLElement) => {
         const currentScroll = container.scrollLeft;
         container.style.scrollSnapType =
-          scrollStateRef?.current.scrollSnapType ?? "";
+          scrollStateRef?.current?.scrollSnapType ?? "";
         container.scrollTo({ left: targetScroll, behavior: "instant" });
         const snappedScrollPosition = container.scrollLeft;
         container.scrollTo({ left: currentScroll, behavior: "instant" });
@@ -315,7 +315,7 @@ const CarouselRoot = forwardRef<HTMLDivElement, CarouselRootProps>(
           // Adjust scroll position to account for snapping, if the target is
           // still before or after, we increment / decrement the scroll position
           container.style.scrollSnapType =
-            scrollStateRef?.current.scrollSnapType ?? "";
+            scrollStateRef?.current?.scrollSnapType ?? "";
           while (
             scrollPosition > 0 &&
             scrollPosition < container.scrollWidth - container.offsetWidth &&
