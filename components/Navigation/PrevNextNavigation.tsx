@@ -15,7 +15,9 @@ const NextCard = ({
   ...props
 }: ComponentProps<typeof Link>) => (
   <Link
-    className={[styles.next_card, className].filter(Boolean).join(" ")}
+    className={[styles.next_card, styles.next, className]
+      .filter(Boolean)
+      .join(" ")}
     {...props}
   >
     <span className={styles.text}>
@@ -63,12 +65,12 @@ export const PrevNextNavigation = ({
         marginTop: "2em",
       }}
     >
-      <PrevCard href={prevComponent.metas.url}>
-        {prevComponent.metas.shortTitle}
-      </PrevCard>
       <NextCard href={nextComponent.metas.url}>
         {nextComponent.metas.shortTitle}
       </NextCard>
+      <PrevCard href={prevComponent.metas.url}>
+        {prevComponent.metas.shortTitle}
+      </PrevCard>
     </div>
   );
 };

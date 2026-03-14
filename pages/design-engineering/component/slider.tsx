@@ -35,6 +35,7 @@ export const getStaticProps: GetStaticProps<CodeBlocks> = async () => {
       light: "vitesse-light",
       dark: "houston",
     },
+    tabindex: false,
   });
 
   return {

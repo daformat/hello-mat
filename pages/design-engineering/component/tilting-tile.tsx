@@ -60,6 +60,7 @@ useEffect(() => {
       light: "vitesse-light",
       dark: "houston",
     },
+    tabindex: false,
   });
 
   const codeSnippet2 = `
@@ -97,6 +98,7 @@ useEffect(() => {
       light: "vitesse-light",
       dark: "houston",
     },
+    tabindex: false,
   });
 
   return {
