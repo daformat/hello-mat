@@ -461,16 +461,15 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
         </p>
         <h3 id="snapping">Snapping</h3>
         <p>
-          Because of the css styles, the carousel items will snap naturally when
-          performing a regular scroll. I chose{" "}
-          <code>scroll-snap-align: center</code> for this demo. But when you
-          drag to scroll on desktop, this behavior is not a given. You have to
-          implement it yourself by adjusting the deceleration factor for the
-          velocity, so that the velocity reaches 0 towards the snap point. I
-          also chose to allow small movements not to snap, so that it feels more
-          natural.
+          You can play withe the demo controls to change the snapping. Thanks
+          to the css styles, the carousel items will snap naturally when
+          performing a regular scroll. But when you drag to scroll on desktop,
+          this behavior is not a given. You have to implement it yourself by
+          adjusting the deceleration factor for the velocity, so that the
+          velocity reaches 0 towards the snap point. Snapping is also respected
+          when using pagination or whn tabbing.
         </p>
-        <h3 id="tabbing">Tabbing through the carsouel items</h3>
+        <h3 id="tabbing">Tabbing through the carousel items</h3>
         <p>
           Full support for tabbing through the carousel items, provided the
           items contain tabbable content. Here again, when tabbing through, the
