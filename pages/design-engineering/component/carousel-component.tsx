@@ -1,3 +1,4 @@
+import { Carousel } from "@daformat/react-headless-carousel";
 import { GetStaticProps } from "next";
 import Link from "next/link";
 import {
@@ -15,7 +16,6 @@ import { codeToHtml } from "shiki";
 
 import { Dropdown } from "@/components/ButtonGroup/Dropdown/Dropdown";
 import { DropdownItem } from "@/components/ButtonGroup/Dropdown/DropdownItem";
-import { Carousel } from "@/components/Carousel/Carousel";
 import styles from "@/components/Carousel/Carousel.module.scss";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
@@ -461,10 +461,10 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
         </p>
         <h3 id="snapping">Snapping</h3>
         <p>
-          You can play withe the demo controls to change the snapping. Thanks
-          to the css styles, the carousel items will snap naturally when
-          performing a regular scroll. But when you drag to scroll on desktop,
-          this behavior is not a given. You have to implement it yourself by
+          You can play withe the demo controls to change the snapping. Thanks to
+          the css styles, the carousel items will snap naturally when performing
+          a regular scroll. But when you drag to scroll on desktop, this
+          behavior is not a given. You have to implement it yourself by
           adjusting the deceleration factor for the velocity, so that the
           velocity reaches 0 towards the snap point. Snapping is also respected
           when using pagination or whn tabbing.
