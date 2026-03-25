@@ -11,7 +11,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "pnpm lint:js && pnpm lint:ts && pnpm lint:css",
-    "lint:fix": "pnpm lint:js:fix; pnpm  lint:css:fix",
+    "lint:fix": "pnpm lint:js:fix; pnpm lint:css:fix",
     "lint:ts": "tsc --noEmit",
     "lint:js": "next lint --dir .",
     "lint:js:fix": "next lint --fix --dir .",
@@ -23,7 +23,7 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@daformat/react-headless-carousel": "^1.0.3",
+    "@daformat/react-headless-carousel": "^1.0.5",
     "next": "15.3.6",
     "next-seo": "^6.8.0",
     "radix-ui": "^1.4.3",

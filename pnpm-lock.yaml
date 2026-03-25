@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@daformat/react-headless-carousel':
-        specifier: ^1.0.3
-        version: 1.0.3(react@19.2.1)
+        specifier: ^1.0.5
+        version: 1.0.5(react@19.2.1)
       next:
         specifier: 15.3.6
         version: 15.3.6(@babel/core@7.28.5)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(sass@1.93.2)
@@ -306,8 +306,8 @@ packages:
     peerDependencies:
       postcss-selector-parser: ^6.0.13
 
-  '@daformat/react-headless-carousel@1.0.3':
-    resolution: {integrity: sha512-Z6IEpBkftxflDf8zuBNjWR9+m8ahyRjGa4HaIwSWlxUypGhBW+I/bV2k0ouw6DqALC5FIUj+vMB810cvhgiA0Q==}
+  '@daformat/react-headless-carousel@1.0.5':
+    resolution: {integrity: sha512-TIO8oCCQUhKNPamP9i4bSOqG9L7QU3fGdVmJvUEcUhXtE7dLUbRBdX9FcHN8U1XHwbfUU7WQ8f1PY9+6HcrwJA==}
     peerDependencies:
       react: '>=18'
 
@@ -4533,7 +4533,7 @@ snapshots:
     dependencies:
       postcss-selector-parser: 6.1.2
 
-  '@daformat/react-headless-carousel@1.0.3(react@19.2.1)':
+  '@daformat/react-headless-carousel@1.0.5(react@19.2.1)':
     dependencies:
       react: 19.2.1
 
