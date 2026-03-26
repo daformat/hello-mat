@@ -2,8 +2,9 @@ import { Carousel } from "@daformat/react-headless-carousel";
 import { GetStaticProps } from "next";
 import Link from "next/link";
 import {
+  ComponentPropsWithoutRef,
   CSSProperties,
-  PropsWithChildren,
+  MouseEventHandler,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -135,7 +136,7 @@ const images: { light: string; dark: string }[] = [
   },
 ];
 
-const Button = ({ children }: PropsWithChildren) => {
+const Button = ({ children, onClick, ...props }: ComponentPropsWithoutRef<'button'>) => {
   const [showFeedback, setShowFeedback] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -151,32 +152,36 @@ const Button = ({ children }: PropsWithChildren) => {
     }, 1500);
   }, []);
 
-  const handleClick = useCallback(async () => {
-    const img = buttonRef.current?.querySelector("img");
-    const darkSource = buttonRef.current?.querySelector(
-      "source[media='(prefers-color-scheme: dark)']"
-    ) as HTMLSourceElement | null;
-    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const src = isDark && darkSource?.srcset ? darkSource.srcset : img?.src;
-    if (src) {
-      try {
-        // Pass the Promise directly so clipboard.write() is called synchronously
-        // within the user gesture — required by Safari.
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            "image/png": fetch(src).then((r) => r.blob()),
-          }),
-        ]);
-      } catch {
-        // clipboard write not supported or failed, skip feedback
-        return;
+  const handleClick = useCallback<MouseEventHandler<HTMLButtonElement>>(
+    async (event) => {
+      onClick?.(event);
+      const img = buttonRef.current?.querySelector("img");
+      const darkSource = buttonRef.current?.querySelector(
+        "source[media='(prefers-color-scheme: dark)']"
+      ) as HTMLSourceElement | null;
+      const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const src = isDark && darkSource?.srcset ? darkSource.srcset : img?.src;
+      if (src) {
+        try {
+          // Pass the Promise directly so clipboard.write() is called synchronously
+          // within the user gesture — required by Safari.
+          await navigator.clipboard.write([
+            new ClipboardItem({
+              "image/png": fetch(src).then((r) => r.blob()),
+            }),
+          ]);
+        } catch {
+          // clipboard write not supported or failed, skip feedback
+          return;
+        }
+      } else {
+        const text = buttonRef.current?.textContent ?? "";
+        await navigator.clipboard.writeText(text);
       }
-    } else {
-      const text = buttonRef.current?.textContent ?? "";
-      await navigator.clipboard.writeText(text);
-    }
-    triggerFeedback();
-  }, [triggerFeedback]);
+      triggerFeedback();
+    },
+    [triggerFeedback, onClick]
+  );
 
   return (
     <button
@@ -260,11 +265,15 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
           , a one-stop shop for wealth management. Play with the component, and
           try changing the card size.
         </p>
-        <div
+        <section
           ref={carouselRef}
           className={styles.wrapper}
           style={{ marginBottom: 32 }}
         >
+          <h1 className="sr_only">Example carousel</h1>
+          <a href="#things-to-try" className="sr_only">
+            Skip the carousel
+          </a>
           <Carousel.Root
             className={styles.carousel}
             data-snap-align={snapAlign}
@@ -287,7 +296,7 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
               <Carousel.Content className={styles.carousel_content}>
                 {images.map((image, index) => (
                   <Carousel.Item key={index} className={styles.carousel_item}>
-                    <Button>
+                    <Button aria-label={`Copy image ${index + 1}`}>
                       <picture
                         style={
                           { fontSize: 0, "--size": `${size}` } as CSSProperties
@@ -335,10 +344,10 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
                 </div>
               </div>
               <div className={styles.controls}>
-                <Carousel.PrevPage className={styles.button}>
+                <Carousel.PrevPage className={styles.button} aria-label="Previous">
                   <FaChevronLeft size={12} />
                 </Carousel.PrevPage>
-                <Carousel.NextPage className={styles.button}>
+                <Carousel.NextPage className={styles.button} aria-label="Next">
                   <FaChevronRight size={12} />
                 </Carousel.NextPage>
               </div>
@@ -429,7 +438,7 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
               </div>
             </div>
           </Carousel.Root>
-        </div>
+        </section>
         <h2 id="things-to-try">Things to try</h2>
         <h3 id="momentum-scrolling">Momentum scrolling</h3>
         <p>

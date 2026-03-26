@@ -520,3 +520,12 @@ input[type="range"]:focus::-ms-thumb {
 input[type="range"]:focus-visible::-ms-thumb {
   outline: 2px solid var(--color-border-1-outline);
 }
+
+.sr_only {
+  height: 1px;
+  left: -10000px;
+  overflow: hidden;
+  position: absolute;
+  top: auto;
+  width: 1px;
+}
