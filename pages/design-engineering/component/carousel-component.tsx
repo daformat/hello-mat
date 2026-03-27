@@ -136,7 +136,7 @@ const images: { light: string; dark: string }[] = [
   },
 ];
 
-const Button = ({ children, onClick, ...props }: ComponentPropsWithoutRef<'button'>) => {
+const Button = ({ children, style, onClick, ...props }: ComponentPropsWithoutRef<'button'>) => {
   const [showFeedback, setShowFeedback] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -186,12 +186,29 @@ const Button = ({ children, onClick, ...props }: ComponentPropsWithoutRef<'butto
   return (
     <button
       ref={buttonRef}
-      style={{ position: "relative", display: "block" }}
+      style={{ position: "relative", display: "block", ...style }}
       onClick={handleClick}
       tabIndex={0}
+      {...props}
     >
       {children}
       <span
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        style={{
+          position: "absolute",
+          width: "1px",
+          height: "1px",
+          overflow: "hidden",
+          clip: "rect(0 0 0 0)",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {showFeedback ? "Copied!" : ""}
+      </span>
+      <span
+        aria-hidden="true"
         className={styles.feedback}
         style={{
           scale: showFeedback ? 1 : 0.7,
