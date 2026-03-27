@@ -140,6 +140,20 @@
 
     @include mixins.remove-transition;
   }
+
+  &.feedback_error {
+    stroke-dasharray: 110%;
+
+    path {
+      transition: stroke-dashoffset 0.15s var(--ease-in-out-cubic) 0.1s;
+
+      @include mixins.remove-transition;
+
+      &:nth-child(2) {
+        transition-delay: 0.2s;
+      }
+    }
+  }
 }
 
 .button {

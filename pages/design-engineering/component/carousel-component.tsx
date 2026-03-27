@@ -136,19 +136,26 @@ const images: { light: string; dark: string }[] = [
   },
 ];
 
-const Button = ({ children, style, onClick, ...props }: ComponentPropsWithoutRef<'button'>) => {
-  const [showFeedback, setShowFeedback] = useState(false);
+const Button = ({
+  children,
+  style,
+  onClick,
+  ...props
+}: ComponentPropsWithoutRef<"button">) => {
+  const [feedback, setFeedback] = useState<"success" | "error" | null>(null);
+  const lastFeedbackRef = useRef<"success" | "error">("success");
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const triggerFeedback = useCallback(() => {
+  const triggerFeedback = useCallback((type: "success" | "error") => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    setShowFeedback(true);
+    lastFeedbackRef.current = type;
+    setFeedback(type);
     timeoutRef.current = setTimeout(() => {
-      setShowFeedback(false);
+      setFeedback(null);
     }, 1500);
   }, []);
 
@@ -171,14 +178,19 @@ const Button = ({ children, style, onClick, ...props }: ComponentPropsWithoutRef
             }),
           ]);
         } catch {
-          // clipboard write not supported or failed, skip feedback
+          triggerFeedback("error");
           return;
         }
       } else {
-        const text = buttonRef.current?.textContent ?? "";
-        await navigator.clipboard.writeText(text);
+        try {
+          const text = buttonRef.current?.textContent ?? "";
+          await navigator.clipboard.writeText(text);
+        } catch {
+          triggerFeedback("error");
+          return;
+        }
       }
-      triggerFeedback();
+      triggerFeedback("success");
     },
     [triggerFeedback, onClick]
   );
@@ -205,14 +217,31 @@ const Button = ({ children, style, onClick, ...props }: ComponentPropsWithoutRef
           whiteSpace: "nowrap",
         }}
       >
-        {showFeedback ? "Copied!" : ""}
+        {feedback === "success" ? "Copied!" : ""}
+      </span>
+      <span
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+        style={{
+          position: "absolute",
+          width: "1px",
+          height: "1px",
+          overflow: "hidden",
+          clip: "rect(0 0 0 0)",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {feedback === "error" ? "Failed to copy" : ""}
       </span>
       <span
         aria-hidden="true"
-        className={styles.feedback}
+        className={`${styles.feedback} ${
+          lastFeedbackRef.current === "error" ? styles.feedback_error : ""
+        }`}
         style={{
-          scale: showFeedback ? 1 : 0.7,
-          opacity: showFeedback ? 1 : 0,
+          scale: feedback !== null ? 1 : 0.7,
+          opacity: feedback !== null ? 1 : 0,
         }}
       >
         <svg
@@ -222,14 +251,33 @@ const Button = ({ children, style, onClick, ...props }: ComponentPropsWithoutRef
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          <path
-            d="M3.5 7.5L6 10.5L10.5 3.5"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ strokeDashoffset: showFeedback ? "0" : "100%" }}
-          />
+          {lastFeedbackRef.current === "error" ? (
+            <>
+              <path
+                d="M3.5 3.5L10.5 10.5"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                style={{ strokeDashoffset: feedback !== null ? "0" : "100%" }}
+              />
+              <path
+                d="M10.5 3.5L3.5 10.5"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                style={{ strokeDashoffset: feedback !== null ? "0" : "100%" }}
+              />
+            </>
+          ) : (
+            <path
+              d="M3.5 7.5L6 10.5L10.5 3.5"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ strokeDashoffset: feedback !== null ? "0" : "100%" }}
+            />
+          )}
         </svg>
       </span>
     </button>
@@ -361,7 +409,10 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
                 </div>
               </div>
               <div className={styles.controls}>
-                <Carousel.PrevPage className={styles.button} aria-label="Previous">
+                <Carousel.PrevPage
+                  className={styles.button}
+                  aria-label="Previous"
+                >
                   <FaChevronLeft size={12} />
                 </Carousel.PrevPage>
                 <Carousel.NextPage className={styles.button} aria-label="Next">
