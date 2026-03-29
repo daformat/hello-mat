@@ -136,11 +136,14 @@ const SwipeableCardsPageContent = () => {
   };
 
   const AddMoreButton = () => {
-    const { setStack } = SwipeableCards.useSwipeableCardsContext();
+    const { setStack, stack } = SwipeableCards.useSwipeableCardsContext();
     return (
       <button
         className="button"
         onClick={() => {
+          if (stack.length === 0) {
+            setAnimate(true);
+          }
           setStack((prev) => [
             ...cards.map(({ id, ...rest }) => ({
               id: id + Math.random(),
