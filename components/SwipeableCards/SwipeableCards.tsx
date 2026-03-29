@@ -128,21 +128,32 @@ const animateReturnToStack = (state: DraggingState, element: HTMLElement) => {
 };
 
 /**
- * Returns the element's bounding rect with all transforms temporarily stripped,
- * falling back to `rect` if there is no element on the drag state.
+ * Temporarily clears all inline transform-related styles, reads the bounding
+ * rect, then restores the styles. Use this wherever the "true" undeformed
+ * dimensions of an element are needed.
  */
-const getUnrotatedRect = (state: DraggingState, fallback: DOMRect): DOMRect => {
-  if (!state.element) {
-    return fallback;
-  }
-  const { rotate: prevRotate, translate: prevTranslate } = state.element.style;
-  state.element.style.rotate = "0deg";
-  state.element.style.translate = "none";
-  const unrotated = state.element.getBoundingClientRect();
-  state.element.style.rotate = prevRotate;
-  state.element.style.translate = prevTranslate;
-  return unrotated;
+const getElementRectWithoutTransforms = (element: HTMLElement): DOMRect => {
+  const {
+    transform: prevTransform,
+    translate: prevTranslate,
+    rotate: prevRotate,
+  } = element.style;
+  element.style.transform = "";
+  element.style.translate = "";
+  element.style.rotate = "";
+  const rect = element.getBoundingClientRect();
+  element.style.transform = prevTransform;
+  element.style.translate = prevTranslate;
+  element.style.rotate = prevRotate;
+  return rect;
 };
+
+/**
+ * Returns the element's bounding rect with all transforms temporarily stripped,
+ * falling back to `fallback` if there is no element on the drag state.
+ */
+const getUnrotatedRect = (state: DraggingState, fallback: DOMRect): DOMRect =>
+  state.element ? getElementRectWithoutTransforms(state.element) : fallback;
 
 /**
  * Ensures `state.velocityX` is large enough to carry the element past the
@@ -169,12 +180,12 @@ const adjustHorizontalVelocityForExit = (
         Math.abs(rotatedRect.left - originalRect.left) +
         (rotatedRect.width - originalRect.width);
 
-  const minVelocity = travelDistance / animationDuration;
+  const minExitVelocity = travelDistance / animationDuration;
   if (
-    Math.abs(state.velocityX) < minVelocity ||
+    Math.abs(state.velocityX) < minExitVelocity ||
     discardStyle === "sendToBack"
   ) {
-    state.velocityX = Math.sign(state.lastX - state.startX) * minVelocity;
+    state.velocityX = Math.sign(state.lastX - state.startX) * minExitVelocity;
   }
 
   if (pass === 1 && discardStyle === "sendToBack") {
@@ -232,12 +243,12 @@ const adjustVerticalVelocityForExit = (
         Math.abs(rotatedRect.top - originalRect.top) +
         (rotatedRect.height - originalRect.height);
 
-  const minVelocity = travelDistance / 200;
+  const minExitVelocity = travelDistance / 200;
   if (
-    Math.abs(state.velocityY) < minVelocity ||
+    Math.abs(state.velocityY) < minExitVelocity ||
     discardStyle === "sendToBack"
   ) {
-    state.velocityY = Math.sign(state.lastY - state.startY) * minVelocity;
+    state.velocityY = Math.sign(state.lastY - state.startY) * minExitVelocity;
   }
 
   if (pass === 1 && discardStyle === "sendToBack") {
@@ -422,16 +433,9 @@ const animateSwipedElement = (
     state,
     animationDuration
   );
-  const prevTransform = element.style.transform;
   const prevTranslate = element.style.translate;
   const prevRotate = element.style.rotate;
-  element.style.transform = "";
-  element.style.translate = "";
-  element.style.rotate = "";
-  const originalRect = element.getBoundingClientRect();
-  element.style.transform = prevTransform;
-  element.style.translate = prevTranslate;
-  element.style.rotate = prevRotate;
+  const originalRect = getElementRectWithoutTransforms(element);
   element.style.transformOrigin = `${
     state.pivotX * originalRect.width + originalRect.width / 2
   }px ${state.pivotY * originalRect.height + originalRect.height / 2}px`;
@@ -564,6 +568,40 @@ const shouldReturnToStack = (state: DraggingState, rect: DOMRect) => {
     Math.hypot(state.startX - state.lastX, state.startY - state.lastY) <
       rect.width * minDistanceThreshold
   );
+};
+
+/**
+ * Returns a `trigger` function and the current `discardStyle` for use inside
+ * programmatic swipe buttons. `trigger` handles finding the top card element,
+ * wiring up the drag state, and committing the swipe — the callback only needs
+ * to set the velocity/pivot/position values that differ per direction.
+ */
+const useProgrammaticSwipe = () => {
+  const { discardedCardId, stack, dragStateRef, commitSwipe, discardStyle } =
+    useContext(SwipeableCardsContext);
+
+  const trigger = useCallback(
+    (configure: (state: DraggingState, rect: DOMRect) => void) => {
+      const last = stack[stack.length - 1];
+      if (discardedCardId || !last) {
+        return;
+      }
+      const element = document.querySelector(`[data-id="${last.id}"]`);
+      if (!(element instanceof HTMLElement)) {
+        return;
+      }
+      const rect = element.getBoundingClientRect();
+      const state = dragStateRef.current;
+      state.element = element;
+      state.dragging = true;
+      state.draggingId = last.id;
+      configure(state, rect);
+      commitSwipe(true);
+    },
+    [commitSwipe, discardedCardId, dragStateRef, stack]
+  );
+
+  return { trigger, discardStyle };
 };
 
 const useSwipeableCards = (
@@ -852,9 +890,7 @@ const SwipeableCardsDeclineButton = forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement>
 >(({ children, className, onClick, ...rest }, ref) => {
-  const { discardedCardId, stack, dragStateRef, commitSwipe, discardStyle } =
-    useContext(SwipeableCardsContext);
-
+  const { trigger, discardStyle } = useProgrammaticSwipe();
   return (
     <button
       ref={ref}
@@ -862,18 +898,8 @@ const SwipeableCardsDeclineButton = forwardRef<
       className={[styles.button, className].filter(Boolean).join(" ")}
       onClick={(event) => {
         onClick?.(event);
-        const last = stack[stack.length - 1];
-        if (discardedCardId || !last) {
-          return;
-        }
-        const element = document.querySelector(`[data-id="${last.id}"]`);
-        if (element instanceof HTMLElement) {
-          const rect = element.getBoundingClientRect();
+        trigger((state, rect) => {
           const xModifier = rect.width / 442;
-          const state = dragStateRef.current;
-          state.element = element;
-          state.dragging = true;
-          state.draggingId = last.id;
           state.velocityX =
             discardStyle === "fling"
               ? -(Math.random() * 2 + 3) * xModifier
@@ -884,8 +910,7 @@ const SwipeableCardsDeclineButton = forwardRef<
           state.pivotY = Math.random() * 0.25 + 0.25;
           state.startX = 0;
           state.lastX = -1;
-          commitSwipe(true);
-        }
+        });
       }}
     >
       {children}
@@ -899,9 +924,7 @@ const SwipeableCardsAcceptButton = forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement>
 >(({ children, className, onClick, ...rest }, ref) => {
-  const { discardedCardId, stack, dragStateRef, commitSwipe, discardStyle } =
-    useContext(SwipeableCardsContext);
-
+  const { trigger, discardStyle } = useProgrammaticSwipe();
   return (
     <button
       ref={ref}
@@ -909,18 +932,8 @@ const SwipeableCardsAcceptButton = forwardRef<
       className={[styles.button, className].filter(Boolean).join(" ")}
       onClick={(event) => {
         onClick?.(event);
-        const last = stack[stack.length - 1];
-        if (discardedCardId || !last) {
-          return;
-        }
-        const element = document.querySelector(`[data-id="${last.id}"]`);
-        if (element instanceof HTMLElement) {
-          const rect = element.getBoundingClientRect();
+        trigger((state, rect) => {
           const xModifier = rect.width / 442;
-          const state = dragStateRef.current;
-          state.element = element;
-          state.dragging = true;
-          state.draggingId = last.id;
           state.velocityX =
             discardStyle === "fling"
               ? (Math.random() * 2 + 3) * xModifier
@@ -931,8 +944,7 @@ const SwipeableCardsAcceptButton = forwardRef<
           state.pivotY = Math.random() * 0.25 + 0.25;
           state.startX = 0;
           state.lastX = 1;
-          commitSwipe(true);
-        }
+        });
       }}
     >
       {children}
@@ -946,9 +958,7 @@ const SwipeableCardsStarButton = forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement>
 >(({ children, className, onClick, ...rest }, ref) => {
-  const { discardedCardId, stack, dragStateRef, commitSwipe, discardStyle } =
-    useContext(SwipeableCardsContext);
-
+  const { trigger, discardStyle } = useProgrammaticSwipe();
   return (
     <button
       ref={ref}
@@ -956,18 +966,8 @@ const SwipeableCardsStarButton = forwardRef<
       className={[styles.button, className].filter(Boolean).join(" ")}
       onClick={(event) => {
         onClick?.(event);
-        const last = stack[stack.length - 1];
-        if (discardedCardId || !last) {
-          return;
-        }
-        const element = document.querySelector(`[data-id="${last.id}"]`);
-        if (element instanceof HTMLElement) {
-          const rect = element.getBoundingClientRect();
+        trigger((state, rect) => {
           const yModifier = rect.height / 442;
-          const state = dragStateRef.current;
-          state.element = element;
-          state.dragging = true;
-          state.draggingId = last.id;
           state.velocityX =
             discardStyle === "fling"
               ? Math.random() * 2 - 1
@@ -982,8 +982,7 @@ const SwipeableCardsStarButton = forwardRef<
           state.lastX = 0;
           state.startY = 0;
           state.lastY = -1;
-          commitSwipe(true);
-        }
+        });
       }}
     >
       {children}
