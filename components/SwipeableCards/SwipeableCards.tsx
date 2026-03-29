@@ -1,6 +1,9 @@
 import {
+  ButtonHTMLAttributes,
   createContext,
   CSSProperties,
+  forwardRef,
+  HTMLAttributes,
   JSX,
   PropsWithChildren,
   ReactNode,
@@ -23,7 +26,6 @@ const maxRotation = 32;
 const minDistanceThreshold = 0.3;
 const minVelocity = 0.15;
 const rotationBasis = 250;
-const debug = false;
 const sendToBackMargin = 16;
 
 export type DraggingState = {
@@ -58,29 +60,28 @@ export type CardWithId = {
   card: JSX.Element;
 };
 
-export type BaseSwipeableCardsProps = {
+export type BaseSwipeableCardsProps = PropsWithChildren<{
   cards: CardWithId[];
   visibleStackLength: number;
   onSwipe?: (direction: SwipeDirection, cardId: string) => void;
-};
+  discardStyle?: DiscardStyle;
+}>;
 
 export type DiscardStyle = "fling" | "sendToBack";
 
 export type NotLoopingSwipeableProps = BaseSwipeableCardsProps & {
   loop?: false;
   emptyView: ReactNode;
-  discardStyle?: never;
 };
 
 export type LoopingSwipeableProps = BaseSwipeableCardsProps & {
   loop: true;
   emptyView?: never;
-  discardStyle?: DiscardStyle;
 };
 
-export type SwipeableCardsProps = PropsWithChildren<
-  NotLoopingSwipeableProps | LoopingSwipeableProps
->;
+export type SwipeableCardsProps =
+  | NotLoopingSwipeableProps
+  | LoopingSwipeableProps;
 
 const defaultDragState: DraggingState = {
   dragging: false,
@@ -126,25 +127,6 @@ const animateReturnToStack = (state: DraggingState, element: HTMLElement) => {
   };
 };
 
-const drawRect = (id: string, rect: DOMRect, color: string) => {
-  const scroll = document.documentElement.scrollTop;
-  const prev = document.body.querySelector(`[data-temp='${id}']`);
-  prev?.remove();
-  const div = document.createElement("div");
-  if (debug) {
-    div.style.position = "absolute";
-    div.style.top = `${rect.top + scroll}px`;
-    div.style.left = `${rect.left}px`;
-    div.style.width = `${rect.width}px`;
-    div.style.height = `${rect.height}px`;
-    div.style.outline = `1px dashed ${color}`;
-    div.dataset.temp = id;
-    div.style.zIndex = "10000";
-    div.style.pointerEvents = "none";
-    document.body.appendChild(div);
-  }
-  return div;
-};
 /**
  * Boost the velocity so that the element animates out of the viewport
  * TODO this is a mess and I'm not proud of the code, but it works
@@ -180,9 +162,6 @@ const adjustVelocityForExit = (
     state.pivotY
   );
 
-  drawRect("original", originalRect, "red");
-  drawRect("rect", rect, "orange");
-
   if (
     Math.abs(state.velocityX) >= Math.abs(state.velocityY) ||
     Math.abs(state.startX - state.lastX) >= Math.abs(state.startY - state.lastY)
@@ -198,7 +177,6 @@ const adjustVelocityForExit = (
           Math.abs(rotatedRect.left - originalRect.left) +
           (rotatedRect.width - originalRect.width);
 
-    console.log({ travelDistance });
     const minVelocityForExit = travelDistance / animationDuration;
     if (
       Math.abs(state.velocityX) < minVelocityForExit ||
@@ -226,7 +204,6 @@ const adjustVelocityForExit = (
         0
       );
       const newTravelDistance = travelDistance - d + sendToBackMargin;
-      console.log("hop", newTravelDistance);
       const minVelocityForExit = newTravelDistance / animationDuration;
       if (
         Math.abs(state.velocityX) < minVelocityForExit ||
@@ -235,37 +212,12 @@ const adjustVelocityForExit = (
         state.velocityX =
           Math.sign(state.lastX - state.startX) * minVelocityForExit;
       }
-      drawRect(
-        "rotated-destination",
-        new DOMRect(
-          rect2.x - d + sendToBackMargin * Math.sign(state.velocityX),
-          rect2.y,
-          rect2.width,
-          rect2.height
-        ),
-        "purple"
-      );
-      const { rotation: newRotation } = getAnimationValues(
-        state,
-        animationDuration
-      );
-      const div = drawRect("initial-destination", originalRect, "yellow");
-      div.style.transform = `translate(${
-        newTravelDistance * Math.sign(state.velocityX)
-      }px, ${yDistance}px) rotate(${newRotation}deg)`;
-      div.style.transformOrigin = `${
-        state.pivotX * originalRect.width + originalRect.width / 2
-      }px ${state.pivotY * originalRect.height + originalRect.height / 2}px`;
     }
   } else {
     const minEdgeDistance = Math.min(
       rect.top,
       window.innerHeight - (rect.top + rect.height)
     );
-    // const travelDistance =
-    //   discardStyle === "fling"
-    //     ? minEdgeDistance + rect.height
-    //     : originalRect.height - Math.abs(rotatedRect.top - originalRect.top) / 2
 
     const travelDistance =
       discardStyle === "fling"
@@ -305,10 +257,7 @@ const adjustVelocityForExit = (
           (Math.sign(state.velocityY) === 1 ? paddingTop : 0),
         0
       );
-      console.log({ paddingTop });
       const newTravelDistance = travelDistance - d + sendToBackMargin;
-      console.log({ travelDistance, d, sendToBackMargin, newTravelDistance });
-      console.log("hop", newTravelDistance);
       const minVelocityForExit = newTravelDistance / animationDuration;
       if (
         Math.abs(state.velocityY) < minVelocityForExit ||
@@ -317,27 +266,10 @@ const adjustVelocityForExit = (
         state.velocityY =
           Math.sign(state.lastY - state.startY) * minVelocityForExit;
       }
-      drawRect(
-        "rotated-destination",
-        new DOMRect(rect2.x, rect2.y - d, rect2.width, rect2.height),
-        "purple"
-      );
-      const { rotation: newRotation } = getAnimationValues(
-        state,
-        animationDuration
-      );
-      const div = drawRect("initial-destination", originalRect, "yellow");
-      div.style.transform = `translate(${xDistance}px, ${
-        (travelDistance - d) * Math.sign(state.velocityY)
-      }px) rotate(${newRotation}deg)`;
-      div.style.transformOrigin = `${
-        state.pivotX * originalRect.width + originalRect.width / 2
-      }px ${state.pivotY * originalRect.height + originalRect.height / 2}px`;
     }
   }
 
   if (pass === 0 && discardStyle === "sendToBack") {
-    console.log("new pass");
     adjustVelocityForExit(
       state,
       rect,
@@ -387,6 +319,7 @@ const getRotation = (
       100;
   return Math.sign(rotation) * Math.min(Math.abs(rotation), maxRotation);
 };
+
 /**
  * @returns the final animations values
  */
@@ -434,7 +367,6 @@ const animateSwipedElement = (
   const prevTransform = element.style.transform;
   const prevTranslate = element.style.translate;
   const prevRotate = element.style.rotate;
-  console.log({ prevTransform, prevTranslate, prevRotate });
   element.style.transform = "";
   element.style.translate = "";
   element.style.rotate = "";
@@ -453,15 +385,6 @@ const animateSwipedElement = (
       Math.abs(translateX) >= Math.abs(distanceX)) ||
     (Math.abs(distanceX) < Math.abs(distanceY) &&
       Math.abs(translateY) >= Math.abs(distanceY));
-  console.log({
-    isTranslatedEnough,
-    translateX,
-    distanceX,
-    translateY,
-    distanceY,
-    prevRotate,
-    prevTransform,
-  });
   const options: KeyframeAnimationOptions = {
     duration: animationDuration,
     easing: manual
@@ -474,12 +397,6 @@ const animateSwipedElement = (
       scale: discardStyle === "fling" ? [0.9] : [1],
       rotate: ["0deg"],
       translate: ["none"],
-      // rotate: [`${rotation}deg`],
-      // translate: [
-      //   `${isTranslatedEnough ? translateX : distanceX}px ${
-      //     isTranslatedEnough ? translateY : distanceY
-      //   }px`,
-      // ],
       transform: [
         `translate(${isTranslatedEnough ? translateX : distanceX}px, ${
           isTranslatedEnough ? translateY : distanceY
@@ -508,6 +425,7 @@ const animateSwipedElement = (
             paddingTop: [
               firstChildStyle?.getPropertyValue("padding-top") ?? "0",
             ],
+            marginTop: [firstChildStyle?.getPropertyValue("margin-top") ?? "0"],
           },
           {
             ...options,
@@ -525,25 +443,6 @@ export const rotate = (point: Position, center: Position, radians: number) => {
     nx = cos * (point.x - center.x) + sin * (point.y - center.y) + center.x,
     ny = cos * (point.y - center.y) - sin * (point.x - center.x) + center.y;
   return { x: nx, y: ny };
-};
-
-export const drawPoint = (id: string, point: Position, color = "green") => {
-  const prev = document.body.querySelector(`[data-point="${id}"]`);
-  prev?.remove();
-  const div = document.createElement("div");
-  if (debug) {
-    div.style.position = "absolute";
-    div.style.left = `${point.x - 4}px`;
-    div.style.top = `${point.y - 4}px`;
-    div.style.width = "8px";
-    div.style.height = "8px";
-    div.style.borderRadius = "50%";
-    div.style.backgroundColor = color;
-    div.style.zIndex = "10000";
-    div.dataset.point = id;
-    document.body.appendChild(div);
-  }
-  return div;
 };
 
 function getRotatedBoundingBox(
@@ -573,9 +472,6 @@ function getRotatedBoundingBox(
     rotatedBottomLeft,
     rotatedBottomRight,
   ];
-  points.forEach((point, index) => {
-    drawPoint(`rotated-bbox-point-${index}`, point);
-  });
   return getPointsBoundingBox(points);
 }
 
@@ -776,35 +672,66 @@ export const SwipeableCardsRoot = ({
   );
 };
 
-export type SwipeableCardsCardsProps = {
+export type SwipeableCardsCardsProps = HTMLAttributes<HTMLDivElement> & {
   visibleStackLength?: number;
   cardsTopDistance?: string;
 };
 
-const SwipeableCardsCards = ({
-  visibleStackLength = 4,
-  cardsTopDistance = "clamp(16px, 1vw, 32px)",
-}: SwipeableCardsCardsProps) => {
-  const { stack, emptyView } = useContext(SwipeableCardsContext);
+const SwipeableCardsCards = forwardRef<
+  HTMLDivElement,
+  SwipeableCardsCardsProps
+>(
+  (
+    {
+      visibleStackLength = 4,
+      cardsTopDistance = "clamp(16px, 1vw, 32px)",
+      className,
+      style,
+      ...rest
+    },
+    ref
+  ) => {
+    const { stack, emptyView, discardedCardId, loop } = useContext(
+      SwipeableCardsContext
+    );
 
-  return (
-    <div
-      className={styles.swipeable_cards}
-      style={
-        {
-          "--visible-stack-length": visibleStackLength - 1,
-          "--stack-length": stack.length,
-          "--card-top-distance": cardsTopDistance,
-        } as CSSProperties
-      }
-    >
-      <div className={styles.empty_card}>{emptyView ?? null}</div>
-      {stack.map((card) => (
-        <SwipeableCardsCard card={card} key={card.id} />
-      ))}
-    </div>
-  );
-};
+    const shouldOffset =
+      stack.length <= visibleStackLength && discardedCardId && !loop;
+
+    return (
+      <div
+        ref={ref}
+        {...rest}
+        className={[styles.swipeable_cards, className]
+          .filter(Boolean)
+          .join(" ")}
+        style={
+          {
+            "--visible-stack-length": Math.max(
+              Math.min(visibleStackLength, stack.length) -
+                1 -
+                (shouldOffset ? 1 : 0),
+              0
+            ),
+            "--stack-length": Math.max(
+              stack.length - (shouldOffset ? 1 : 0),
+              0
+            ),
+            "--card-top-distance": cardsTopDistance,
+            ...style,
+          } as CSSProperties
+        }
+      >
+        <div className={styles.empty_card}>{emptyView ?? null}</div>
+        {stack.map((card) => (
+          <SwipeableCardsCard card={card} key={card.id} />
+        ))}
+      </div>
+    );
+  }
+);
+
+SwipeableCardsCards.displayName = "SwipeableCardsCards";
 
 const SwipeableCardsCard = ({ card }: { card: CardWithId }) => {
   const { discardedCardId, stack, dragStateRef, animationRef } = useContext(
@@ -816,11 +743,12 @@ const SwipeableCardsCard = ({ card }: { card: CardWithId }) => {
   const stackIndex =
     stack.length - (index + (isDiscarding && !isBeingDiscarded ? 1 : 0));
   const stackIndex0 = stackIndex - 1;
+
   return (
     <div
-      key={card.id}
       className={styles.card}
       data-id={card.id}
+      data-top-card={stackIndex0 ? "false" : "true"}
       style={
         {
           "--stack-index": stackIndex,
@@ -862,14 +790,20 @@ const SwipeableCardsCard = ({ card }: { card: CardWithId }) => {
   );
 };
 
-const SwipeableCardsDeclineButton = ({ children }: PropsWithChildren) => {
+const SwipeableCardsDeclineButton = forwardRef<
+  HTMLButtonElement,
+  ButtonHTMLAttributes<HTMLButtonElement>
+>(({ children, className, onClick, ...rest }, ref) => {
   const { discardedCardId, stack, dragStateRef, commitSwipe, discardStyle } =
     useContext(SwipeableCardsContext);
 
   return (
     <button
-      className={styles.button}
-      onClick={() => {
+      ref={ref}
+      {...rest}
+      className={[styles.button, className].filter(Boolean).join(" ")}
+      onClick={(event) => {
+        onClick?.(event);
         const last = stack[stack.length - 1];
         if (discardedCardId || !last) {
           return;
@@ -899,16 +833,24 @@ const SwipeableCardsDeclineButton = ({ children }: PropsWithChildren) => {
       {children}
     </button>
   );
-};
+});
 
-const SwipeableCardsAcceptButton = ({ children }: PropsWithChildren) => {
+SwipeableCardsDeclineButton.displayName = "SwipeableCardsDeclineButton";
+
+const SwipeableCardsAcceptButton = forwardRef<
+  HTMLButtonElement,
+  ButtonHTMLAttributes<HTMLButtonElement>
+>(({ children, className, onClick, ...rest }, ref) => {
   const { discardedCardId, stack, dragStateRef, commitSwipe, discardStyle } =
     useContext(SwipeableCardsContext);
 
   return (
     <button
-      className={styles.button}
-      onClick={() => {
+      ref={ref}
+      {...rest}
+      className={[styles.button, className].filter(Boolean).join(" ")}
+      onClick={(event) => {
+        onClick?.(event);
         const last = stack[stack.length - 1];
         if (discardedCardId || !last) {
           return;
@@ -938,16 +880,24 @@ const SwipeableCardsAcceptButton = ({ children }: PropsWithChildren) => {
       {children}
     </button>
   );
-};
+});
 
-const SwipeableCardsStarButton = ({ children }: PropsWithChildren) => {
+SwipeableCardsAcceptButton.displayName = "SwipeableCardsAcceptButton";
+
+const SwipeableCardsStarButton = forwardRef<
+  HTMLButtonElement,
+  ButtonHTMLAttributes<HTMLButtonElement>
+>(({ children, className, onClick, ...rest }, ref) => {
   const { discardedCardId, stack, dragStateRef, commitSwipe, discardStyle } =
     useContext(SwipeableCardsContext);
 
   return (
     <button
-      className={styles.button}
-      onClick={() => {
+      ref={ref}
+      {...rest}
+      className={[styles.button, className].filter(Boolean).join(" ")}
+      onClick={(event) => {
+        onClick?.(event);
         const last = stack[stack.length - 1];
         if (discardedCardId || !last) {
           return;
@@ -981,7 +931,9 @@ const SwipeableCardsStarButton = ({ children }: PropsWithChildren) => {
       {children}
     </button>
   );
-};
+});
+
+SwipeableCardsStarButton.displayName = "SwipeableCardsStarButton";
 
 export const SwipeableCards = {
   Root: SwipeableCardsRoot,
@@ -990,4 +942,5 @@ export const SwipeableCards = {
   AcceptButton: SwipeableCardsAcceptButton,
   DeclineButton: SwipeableCardsDeclineButton,
   StarButton: SwipeableCardsStarButton,
+  useSwipeableCardsContext: () => useContext(SwipeableCardsContext),
 };

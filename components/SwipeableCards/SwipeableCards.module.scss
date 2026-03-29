@@ -1,34 +1,51 @@
 @use "styles/lib/mixins.scss";
 
+@keyframes grow {
+  from {
+    opacity: 0.75;
+    scale: 0.5;
+  }
+}
+
 .swipeable_cards {
   display: grid;
+  grid-template-columns: 1fr;
   place-content: center;
   position: relative;
   touch-action: none;
   z-index: 1;
 
   .card {
+    --p: calc(
+      var(--card-top-distance, 0) *
+        max(var(--visible-stack-length) - var(--stack-index0), 0)
+    );
+    --m: calc(
+      var(--card-top-distance, 0) *
+        (
+          var(--visible-stack-length) -
+            max(var(--visible-stack-length) - var(--stack-index0), 0)
+        )
+    );
+    align-self: center;
     grid-area: 1 / 1;
+    margin-top: calc(var(--m) * -1);
     opacity: calc(
       1 - clamp(0, var(--stack-index0) - var(--visible-stack-length), 1)
     );
-    padding-top: calc(
-      var(--card-top-distance, 0) *
-        max(
-          (
-            min(var(--stack-length) - 1, var(--visible-stack-length)) -
-              var(--stack-index0)
-          ),
-          0
-        )
-    );
+    padding-top: calc(var(--p));
     scale: calc(
       100% - min(var(--stack-index0), var(--visible-stack-length)) * 10%
     );
     touch-action: none;
     transform-origin: center 0;
     transition: all 0.2s var(--ease-out-cubic);
-    transition-property: opacity, scale, padding-top;
+    transition-property: opacity, scale, padding-top, margin-top;
+    width: 100%;
+
+    &[data-top-card="true"] {
+      //align-self: center;
+    }
   }
 
   .empty_card {
@@ -38,6 +55,18 @@
     place-content: center;
     transition: opacity 0.2s var(--ease-out-cubic);
     width: 100%;
+  }
+
+  &[data-animate-card="true"] {
+    .card {
+      animation: grow 0.2s var(--ease-out-cubic);
+    }
+  }
+
+  &[data-loop="false"] {
+    .card {
+      //animation: grow 0.2s var(--ease-out-cubic);
+    }
   }
 }
 

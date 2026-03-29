@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { FaCheck, FaXmark } from "react-icons/fa6";
 import { PiStarBold } from "react-icons/pi";
 
@@ -10,6 +17,7 @@ import {
   SwipeableCards,
   SwipeDirection,
 } from "@/components/SwipeableCards/SwipeableCards";
+import styles from "@/components/SwipeableCards/SwipeableCards.module.scss";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
 import {
@@ -37,6 +45,8 @@ const SwipeableCardsPageContent = () => {
   const contentRef = useRef<HTMLDivElement>(null);
   const demoRef = useRef<HTMLDivElement>(null);
   const [discardStyle, setDiscardStyle] = useState<DiscardStyle>("fling");
+  const [loop, setLoop] = useState(true);
+  const [animate, setAnimate] = useState(false);
   useCssSizeVariables(demoRef);
   const [_swipedCards, setSwipedCards] = useState<
     Record<SwipeDirection, string[]>
@@ -91,7 +101,7 @@ const SwipeableCardsPageContent = () => {
       dark: "/media/design-engineering/carousel/og-carousel-dark.png",
       light: "/media/design-engineering/carousel/og-carousel-light.png",
     },
-  ];
+  ].reverse();
 
   const cards = cardsSources.map(({ id, light, dark }, index) => ({
     id,
@@ -99,13 +109,51 @@ const SwipeableCardsPageContent = () => {
       <picture
         key={index}
         className="card flat shadow"
-        style={{ display: "inline-block", fontSize: 0, padding: 8 }}
+        style={{
+          display: "inline-block",
+          fontSize: 0,
+          padding: 8,
+          width: "100%",
+        }}
       >
         <source media="(prefers-color-scheme: dark)" srcSet={dark} />
-        <img src={light} alt="" style={{ aspectRatio: "1200 / 630" }} />
+        <img
+          src={light}
+          alt=""
+          style={{ aspectRatio: "1200 / 630", width: "100%" }}
+        />
       </picture>
     ),
   }));
+
+  const StackStat = () => {
+    const { stack } = SwipeableCards.useSwipeableCardsContext();
+    return (
+      <small style={{ opacity: 0.8 }}>
+        {stack.length} card{stack.length > 1 ? "s" : ""}
+      </small>
+    );
+  };
+
+  const AddMoreButton = () => {
+    const { setStack } = SwipeableCards.useSwipeableCardsContext();
+    return (
+      <button
+        className="button"
+        onClick={() => {
+          setStack((prev) => [
+            ...cards.map(({ id, ...rest }) => ({
+              id: id + Math.random(),
+              ...rest,
+            })),
+            ...prev,
+          ]);
+        }}
+      >
+        Add more cards
+      </button>
+    );
+  };
 
   return (
     <>
@@ -157,10 +205,20 @@ const SwipeableCardsPageContent = () => {
                 return newSwipedCards;
               });
             }}
-            loop
-            // emptyView={<EmptyView />}
+            {...(loop
+              ? { loop }
+              : { loop, emptyView: <EmptyView setAnimate={setAnimate} /> })}
           >
-            <SwipeableCards.Cards />
+            <SwipeableCards.Cards
+              style={{ aspectRatio: "650 / 400" }}
+              data-loop={loop ? "true" : "false"}
+              data-animate-card={animate ? "true" : "false"}
+              onAnimationEnd={(event) => {
+                if (event.animationName === styles.grow) {
+                  setAnimate(false);
+                }
+              }}
+            />
             <p
               style={{
                 textAlign: "center",
@@ -186,19 +244,41 @@ const SwipeableCardsPageContent = () => {
                 textAlign: "center",
                 display: "flex",
                 justifyContent: "center",
+                gap: 8,
               }}
             >
               <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <Checkbox
-                  defaultChecked={discardStyle === "sendToBack"}
-                  onChange={(event) =>
+                  checked={discardStyle === "sendToBack"}
+                  onChange={(event) => {
                     setDiscardStyle(
                       event.target.checked ? "sendToBack" : "fling"
-                    )
-                  }
+                    );
+                  }}
                 />
-                <small style={{ opacity: 0.8 }}>send cards to back</small>
+                <small style={{ opacity: 0.8 }}>send to back</small>
               </label>
+              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Checkbox
+                  checked={loop}
+                  onChange={(event) => {
+                    setLoop(event.target.checked);
+                  }}
+                />
+                <small style={{ opacity: 0.8 }}>loop</small>
+              </label>
+            </p>
+            <p
+              style={{
+                textAlign: "center",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <StackStat />
+              <AddMoreButton />
             </p>
           </SwipeableCards.Root>
         </div>
@@ -240,33 +320,44 @@ const SwipeableCardsPageContent = () => {
 };
 
 // Unused component - kept for potential future use
-// const EmptyView = () => {
-//   const { setStack, cards } = useContext(SwipeableCards.Context)
-//   return (
-//     <div style={{ padding: 8 }}>
-//       <div
-//         style={{
-//           textAlign: "center",
-//           padding: "8px 16px",
-//           borderRadius: 8,
-//           border: "2px dashed var(--color-border-1)",
-//           width: "var(--inline-size)",
-//           aspectRatio: "1200 / 630",
-//           display: "flex",
-//           alignItems: "center",
-//           justifyContent: "center",
-//           flexDirection: "column",
-//           boxSizing: "border-box",
-//           gap: 8,
-//         }}
-//       >
-//         No more cards to show
-//         <button className="button" onClick={() => setStack(cards)}>
-//           Reset stack
-//         </button>
-//       </div>
-//     </div>
-//   )
-// }
+const EmptyView = ({
+  setAnimate,
+}: {
+  setAnimate: Dispatch<SetStateAction<boolean>>;
+}) => {
+  const { setStack, cards } = useContext(SwipeableCards.Context);
+  return (
+    <div>
+      <div
+        style={{
+          backgroundColor: "var(--color-background)",
+          textAlign: "center",
+          padding: "8px 16px",
+          borderRadius: 8,
+          border: "2px dashed var(--color-border-1)",
+          width: "var(--inline-size)",
+          aspectRatio: "1200 / 630",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexDirection: "column",
+          boxSizing: "border-box",
+          gap: 8,
+        }}
+      >
+        No more cards to show
+        <button
+          className="button"
+          onClick={() => {
+            setAnimate(true);
+            setStack(cards);
+          }}
+        >
+          Reset stack
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default SwipeableCardsPage;
