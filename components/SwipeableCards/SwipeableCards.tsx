@@ -128,8 +128,156 @@ const animateReturnToStack = (state: DraggingState, element: HTMLElement) => {
 };
 
 /**
- * Boost the velocity so that the element animates out of the viewport
- * TODO this is a mess and I'm not proud of the code, but it works
+ * Returns the element's bounding rect with all transforms temporarily stripped,
+ * falling back to `rect` if there is no element on the drag state.
+ */
+const getUnrotatedRect = (state: DraggingState, fallback: DOMRect): DOMRect => {
+  if (!state.element) {
+    return fallback;
+  }
+  const { rotate: prevRotate, translate: prevTranslate } = state.element.style;
+  state.element.style.rotate = "0deg";
+  state.element.style.translate = "none";
+  const unrotated = state.element.getBoundingClientRect();
+  state.element.style.rotate = prevRotate;
+  state.element.style.translate = prevTranslate;
+  return unrotated;
+};
+
+/**
+ * Ensures `state.velocityX` is large enough to carry the element past the
+ * horizontal edge. On the second pass (`pass === 1`) the travel distance is
+ * refined by accounting for the gap between the rotated rect and the edge.
+ */
+const adjustHorizontalVelocityForExit = (
+  state: DraggingState,
+  rect: DOMRect,
+  originalRect: DOMRect,
+  rotatedRect: DOMRect,
+  animationDuration: number,
+  discardStyle: DiscardStyle,
+  pass: number
+) => {
+  const minEdgeDistance = Math.min(
+    rect.left,
+    window.innerWidth - (rect.left + rect.width)
+  );
+  const travelDistance =
+    discardStyle === "fling"
+      ? minEdgeDistance + rect.width * 1.5
+      : originalRect.width -
+        Math.abs(rotatedRect.left - originalRect.left) +
+        (rotatedRect.width - originalRect.width);
+
+  const minVelocity = travelDistance / animationDuration;
+  if (
+    Math.abs(state.velocityX) < minVelocity ||
+    discardStyle === "sendToBack"
+  ) {
+    state.velocityX = Math.sign(state.lastX - state.startX) * minVelocity;
+  }
+
+  if (pass === 1 && discardStyle === "sendToBack") {
+    const yDistance = state.velocityY * animationDuration;
+    const { rotation } = getAnimationValues(state, animationDuration);
+    const refinedRect = getRotatedBoundingBox(
+      new DOMRect(
+        originalRect.x + travelDistance * Math.sign(state.velocityX),
+        originalRect.y + yDistance,
+        originalRect.width,
+        originalRect.height
+      ),
+      rotation,
+      state.pivotX,
+      state.pivotY
+    );
+    const gap = Math.max(
+      refinedRect.left - (originalRect.left + originalRect.width),
+      0
+    );
+    const refinedTravelDistance = travelDistance - gap + sendToBackMargin;
+    const refinedMinVelocity = refinedTravelDistance / animationDuration;
+    if (
+      Math.abs(state.velocityX) < refinedMinVelocity ||
+      discardStyle === "sendToBack"
+    ) {
+      state.velocityX =
+        Math.sign(state.lastX - state.startX) * refinedMinVelocity;
+    }
+  }
+};
+
+/**
+ * Ensures `state.velocityY` is large enough to carry the element past the
+ * vertical edge. On the second pass (`pass === 1`) the travel distance is
+ * refined by accounting for the gap between the rotated rect and the edge.
+ */
+const adjustVerticalVelocityForExit = (
+  state: DraggingState,
+  rect: DOMRect,
+  originalRect: DOMRect,
+  rotatedRect: DOMRect,
+  animationDuration: number,
+  discardStyle: DiscardStyle,
+  pass: number
+) => {
+  const minEdgeDistance = Math.min(
+    rect.top,
+    window.innerHeight - (rect.top + rect.height)
+  );
+  const travelDistance =
+    discardStyle === "fling"
+      ? minEdgeDistance + rect.height * 1.5
+      : originalRect.height -
+        Math.abs(rotatedRect.top - originalRect.top) +
+        (rotatedRect.height - originalRect.height);
+
+  const minVelocity = travelDistance / 200;
+  if (
+    Math.abs(state.velocityY) < minVelocity ||
+    discardStyle === "sendToBack"
+  ) {
+    state.velocityY = Math.sign(state.lastY - state.startY) * minVelocity;
+  }
+
+  if (pass === 1 && discardStyle === "sendToBack") {
+    const xDistance = state.velocityX * animationDuration;
+    const { rotation } = getAnimationValues(state, animationDuration);
+    const refinedRect = getRotatedBoundingBox(
+      new DOMRect(
+        originalRect.x + xDistance,
+        originalRect.y + travelDistance * Math.sign(state.velocityY),
+        originalRect.width,
+        originalRect.height
+      ),
+      rotation,
+      state.pivotX,
+      state.pivotY
+    );
+    const paddingTop = state.element
+      ? parseFloat(getComputedStyle(state.element).paddingTop)
+      : 0;
+    const gap = Math.max(
+      refinedRect.top -
+        (originalRect.top + originalRect.height) +
+        (Math.sign(state.velocityY) === 1 ? paddingTop : 0),
+      0
+    );
+    const refinedTravelDistance = travelDistance - gap + sendToBackMargin;
+    const refinedMinVelocity = refinedTravelDistance / animationDuration;
+    if (
+      Math.abs(state.velocityY) < refinedMinVelocity ||
+      discardStyle === "sendToBack"
+    ) {
+      state.velocityY =
+        Math.sign(state.lastY - state.startY) * refinedMinVelocity;
+    }
+  }
+};
+
+/**
+ * Boosts the velocity so that the element animates out of the viewport.
+ * Called twice for `sendToBack` (pass 0 then pass 1) to refine the result.
  */
 const adjustVelocityForExit = (
   state: DraggingState,
@@ -138,18 +286,8 @@ const adjustVelocityForExit = (
   discardStyle: DiscardStyle,
   pass = 0
 ) => {
+  const originalRect = getUnrotatedRect(state, rect);
   const { rotation } = getAnimationValues(state, animationDuration);
-  let originalRect = rect;
-  if (state.element) {
-    const prevRotate = state.element.style.rotate;
-    const prevTranslate = state.element.style.translate;
-    state.element.style.rotate = `${0}deg`;
-    state.element.style.translate = "none";
-    originalRect = state.element.getBoundingClientRect();
-    state.element.style.rotate = prevRotate;
-    state.element.style.translate = prevTranslate;
-  }
-
   const rotatedRect = getRotatedBoundingBox(
     new DOMRect(
       originalRect.x,
@@ -162,111 +300,31 @@ const adjustVelocityForExit = (
     state.pivotY
   );
 
-  if (
+  const isHorizontal =
     Math.abs(state.velocityX) >= Math.abs(state.velocityY) ||
-    Math.abs(state.startX - state.lastX) >= Math.abs(state.startY - state.lastY)
-  ) {
-    const minEdgeDistance = Math.min(
-      rect.left,
-      window.innerWidth - (rect.left + rect.width)
-    );
-    const travelDistance =
-      discardStyle === "fling"
-        ? minEdgeDistance + rect.width * 1.5
-        : originalRect.width -
-          Math.abs(rotatedRect.left - originalRect.left) +
-          (rotatedRect.width - originalRect.width);
+    Math.abs(state.startX - state.lastX) >=
+      Math.abs(state.startY - state.lastY);
 
-    const minVelocityForExit = travelDistance / animationDuration;
-    if (
-      Math.abs(state.velocityX) < minVelocityForExit ||
-      discardStyle === "sendToBack"
-    ) {
-      state.velocityX =
-        Math.sign(state.lastX - state.startX) * minVelocityForExit;
-    }
-    const yDistance = state.velocityY * animationDuration;
-    if (pass === 1 && discardStyle === "sendToBack") {
-      const { rotation } = getAnimationValues(state, animationDuration);
-      const rect2 = getRotatedBoundingBox(
-        new DOMRect(
-          originalRect.x + travelDistance * Math.sign(state.velocityX),
-          originalRect.y + yDistance,
-          originalRect.width,
-          originalRect.height
-        ),
-        rotation,
-        state.pivotX,
-        state.pivotY
-      );
-      const d = Math.max(
-        rect2.left - (originalRect.left + originalRect.width),
-        0
-      );
-      const newTravelDistance = travelDistance - d + sendToBackMargin;
-      const minVelocityForExit = newTravelDistance / animationDuration;
-      if (
-        Math.abs(state.velocityX) < minVelocityForExit ||
-        discardStyle === "sendToBack"
-      ) {
-        state.velocityX =
-          Math.sign(state.lastX - state.startX) * minVelocityForExit;
-      }
-    }
+  if (isHorizontal) {
+    adjustHorizontalVelocityForExit(
+      state,
+      rect,
+      originalRect,
+      rotatedRect,
+      animationDuration,
+      discardStyle,
+      pass
+    );
   } else {
-    const minEdgeDistance = Math.min(
-      rect.top,
-      window.innerHeight - (rect.top + rect.height)
+    adjustVerticalVelocityForExit(
+      state,
+      rect,
+      originalRect,
+      rotatedRect,
+      animationDuration,
+      discardStyle,
+      pass
     );
-
-    const travelDistance =
-      discardStyle === "fling"
-        ? minEdgeDistance + rect.height * 1.5
-        : originalRect.height -
-          Math.abs(rotatedRect.top - originalRect.top) +
-          (rotatedRect.height - originalRect.height);
-    const minVelocityForExit = travelDistance / 200;
-    if (
-      Math.abs(state.velocityY) < minVelocityForExit ||
-      discardStyle === "sendToBack"
-    ) {
-      state.velocityY =
-        Math.sign(state.lastY - state.startY) * minVelocityForExit;
-    }
-
-    const xDistance = state.velocityX * animationDuration;
-    if (pass === 1 && discardStyle === "sendToBack") {
-      const { rotation } = getAnimationValues(state, animationDuration);
-      const rect2 = getRotatedBoundingBox(
-        new DOMRect(
-          originalRect.x + xDistance,
-          originalRect.y + travelDistance * Math.sign(state.velocityY),
-          originalRect.width,
-          originalRect.height
-        ),
-        rotation,
-        state.pivotX,
-        state.pivotY
-      );
-      const paddingTop = state.element
-        ? parseFloat(getComputedStyle(state.element).paddingTop)
-        : 0;
-      const d = Math.max(
-        rect2.top -
-          (originalRect.top + originalRect.height) +
-          (Math.sign(state.velocityY) === 1 ? paddingTop : 0),
-        0
-      );
-      const newTravelDistance = travelDistance - d + sendToBackMargin;
-      const minVelocityForExit = newTravelDistance / animationDuration;
-      if (
-        Math.abs(state.velocityY) < minVelocityForExit ||
-        discardStyle === "sendToBack"
-      ) {
-        state.velocityY =
-          Math.sign(state.lastY - state.startY) * minVelocityForExit;
-      }
-    }
   }
 
   if (pass === 0 && discardStyle === "sendToBack") {
