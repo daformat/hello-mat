@@ -26,7 +26,6 @@
 
 .carousel_item {
   --radius: clamp(6px, calc(1vw * var(--size, 1)), 10px);
-  scroll-margin-inline: calc(var(--margin-inline) * -1);
   scroll-snap-align: center;
 
   button {
@@ -50,25 +49,18 @@
 .carousel {
   &[data-snap-align="center"] {
     .carousel_item {
-      scroll-margin-inline: calc(var(--margin-inline) * -1);
       scroll-snap-align: center;
     }
   }
 
   &[data-snap-align="start"] {
     .carousel_item {
-      scroll-margin-inline: calc(
-        var(--margin-inline) * -1 + var(--carousel-fade-size)
-      );
       scroll-snap-align: start;
     }
   }
 
   &[data-snap-align="end"] {
     .carousel_item {
-      scroll-margin-inline: calc(
-        var(--margin-inline) * -1 + var(--carousel-fade-size)
-      );
       scroll-snap-align: end;
     }
   }
