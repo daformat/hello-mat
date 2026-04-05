@@ -42,6 +42,7 @@ export const Tabs = ({
         attributes: true,
         attributeFilter: ["data-state"],
       });
+      const tabs = tabList.querySelectorAll<HTMLElement>(":scope > *");
       const resizeObserver = new ResizeObserver(() => {
         const active = tabList.querySelector<HTMLElement>(
           "[data-state=active]"
@@ -51,6 +52,9 @@ export const Tabs = ({
         }
       });
       resizeObserver.observe(tabList);
+      tabs.forEach((tab) => {
+        resizeObserver.observe(tab);
+      });
       return () => {
         mutationObserver.disconnect();
         resizeObserver.disconnect();
