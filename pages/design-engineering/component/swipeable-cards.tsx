@@ -19,13 +19,13 @@ import {
 } from "@/components/SwipeableCards/SwipeableCards";
 import styles from "@/components/SwipeableCards/SwipeableCards.module.scss";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
+import { Tabs } from "@/components/Tabs/Tabs";
 import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
 import {
   ComponentId,
   COMPONENTS,
 } from "@/constants/design-engineering/components";
 import { useCssSizeVariables } from "@/hooks/useCssSizeVariables";
-import { Tabs } from "@/components/Tabs/Tabs";
 
 const componentId: ComponentId = "swipeable-cards";
 
