@@ -25,6 +25,7 @@ import {
   COMPONENTS,
 } from "@/constants/design-engineering/components";
 import { useCssSizeVariables } from "@/hooks/useCssSizeVariables";
+import { Tabs } from "@/components/Tabs/Tabs";
 
 const componentId: ComponentId = "swipeable-cards";
 
@@ -38,6 +39,100 @@ const SwipeableCardsPage = () => {
       </TableOfContents.Provider>
     </>
   );
+};
+
+const cardsSources = [
+  {
+    id: "2bc312dc-803e-4ab2-b727-aabff8aec505",
+    dark: "/media/hello-mat-dark.png",
+    light: "/media/hello-mat-light.png",
+    rotation: 1,
+  },
+  {
+    id: "a7e24cb8-16da-4215-bbef-83b59718244c",
+    dark: "/media/design-engineering/details/og-details-dark.png",
+    light: "/media/design-engineering/details/og-details-light.png",
+    rotation: -3.5,
+  },
+  // {
+  //   id: "040147cc-f129-49d0-8551-cc2b399498cd",
+  //   dark: "/media/design-engineering/images-and-embeds/og-media-dark.png",
+  //   light: "/media/design-engineering/images-and-embeds/og-media-light.png",
+  // },
+  {
+    id: "85623db9-de4d-43bc-8be6-df7a5f9905a1",
+    dark: "/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-dark.png",
+    light:
+      "/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png",
+    rotation: 3.5,
+  },
+  // {
+  //   id: "278f0eb3-bf92-41ad-ad62-17a0e5752e05",
+  //   dark: "/media/design-engineering/publish-button/og-publish-button-dark.png",
+  //   light:
+  //     "/media/design-engineering/publish-button/og-publish-button-light.png",
+  // },
+  {
+    id: "d3519545-e090-414f-a62c-49de2cbc6482",
+    dark: "/media/design-engineering/dock/og-dock-dark.png",
+    light: "/media/design-engineering/dock/og-dock-light.png",
+    rotation: -3,
+  },
+  {
+    id: "320fc292-94fb-4e72-ada0-33911abce69f",
+    dark: "/media/design-engineering/carousel/og-carousel-dark.png",
+    light: "/media/design-engineering/carousel/og-carousel-light.png",
+    rotation: 3,
+  },
+  {
+    id: "320fc292-94fb-4e72-ada0-33911abce697",
+    dark: "/media/design-engineering/stacking-cards/og-stacking-cards-dark.png",
+    light:
+      "/media/design-engineering/stacking-cards/og-stacking-cards-light.png",
+    rotation: -3,
+  },
+].reverse();
+
+const cards = cardsSources.map(({ id, light, dark, rotation }, index) => ({
+  id,
+  card: (
+    <picture
+      key={index}
+      className="card flat shadow"
+      style={{
+        display: "inline-block",
+        fontSize: 0,
+        padding: 8,
+        width: "100%",
+      }}
+    >
+      <source media="(prefers-color-scheme: dark)" srcSet={dark} />
+      <img
+        src={light}
+        alt=""
+        style={{ aspectRatio: "1200 / 630", width: "100%" }}
+      />
+    </picture>
+  ),
+  rotation,
+}));
+
+const SwipeableCards2 = () => {
+  const stack = SwipeableCards.useSwipeableCardsStack();
+  return stack.map((card) => {
+    return (
+      <SwipeableCards.Card key={card.id} card={card} className={styles.card2}>
+        <div
+          style={{
+            transformOrigin: "center",
+            rotate: `${cards.find((c) => c.id === card.id.split("#")[0])?.rotation}deg`,
+          }}
+        >
+          {card.card}
+        </div>
+      </SwipeableCards.Card>
+    );
+  });
 };
 
 const SwipeableCardsPageContent = () => {
@@ -63,69 +158,6 @@ const SwipeableCardsPageContent = () => {
     }
   });
 
-  const cardsSources = [
-    {
-      id: "2bc312dc-803e-4ab2-b727-aabff8aec505",
-      dark: "/media/hello-mat-dark.png",
-      light: "/media/hello-mat-light.png",
-    },
-    {
-      id: "a7e24cb8-16da-4215-bbef-83b59718244c",
-      dark: "/media/design-engineering/details/og-details-dark.png",
-      light: "/media/design-engineering/details/og-details-light.png",
-    },
-    // {
-    //   id: "040147cc-f129-49d0-8551-cc2b399498cd",
-    //   dark: "/media/design-engineering/images-and-embeds/og-media-dark.png",
-    //   light: "/media/design-engineering/images-and-embeds/og-media-light.png",
-    // },
-    {
-      id: "85623db9-de4d-43bc-8be6-df7a5f9905a1",
-      dark: "/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-dark.png",
-      light:
-        "/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png",
-    },
-    // {
-    //   id: "278f0eb3-bf92-41ad-ad62-17a0e5752e05",
-    //   dark: "/media/design-engineering/publish-button/og-publish-button-dark.png",
-    //   light:
-    //     "/media/design-engineering/publish-button/og-publish-button-light.png",
-    // },
-    {
-      id: "d3519545-e090-414f-a62c-49de2cbc6482",
-      dark: "/media/design-engineering/dock/og-dock-dark.png",
-      light: "/media/design-engineering/dock/og-dock-light.png",
-    },
-    {
-      id: "320fc292-94fb-4e72-ada0-33911abce69f",
-      dark: "/media/design-engineering/carousel/og-carousel-dark.png",
-      light: "/media/design-engineering/carousel/og-carousel-light.png",
-    },
-  ].reverse();
-
-  const cards = cardsSources.map(({ id, light, dark }, index) => ({
-    id,
-    card: (
-      <picture
-        key={index}
-        className="card flat shadow"
-        style={{
-          display: "inline-block",
-          fontSize: 0,
-          padding: 8,
-          width: "100%",
-        }}
-      >
-        <source media="(prefers-color-scheme: dark)" srcSet={dark} />
-        <img
-          src={light}
-          alt=""
-          style={{ aspectRatio: "1200 / 630", width: "100%" }}
-        />
-      </picture>
-    ),
-  }));
-
   const StackStat = () => {
     const { stack } = SwipeableCards.useSwipeableCardsContext();
     return (
@@ -146,7 +178,7 @@ const SwipeableCardsPageContent = () => {
           }
           setStack((prev) => [
             ...cards.map(({ id, ...rest }) => ({
-              id: id + Math.random(),
+              id: id + "#" + Math.random(),
               ...rest,
             })),
             ...prev,
@@ -177,113 +209,280 @@ const SwipeableCardsPageContent = () => {
           and that is not so common in desktop apps. It’s so much fun to use, go
           ahead and drag / swipe cards around and see what happens.
         </p>
-        <div
-          ref={demoRef}
-          className="demo"
-          style={{ marginBlock: 32, maxWidth: 650, marginInline: "auto" }}
-        >
-          <SwipeableCards.Root
-            cards={[...cards]}
-            visibleStackLength={3}
-            discardStyle={discardStyle}
-            onSwipe={(direction, cardId) => {
-              setSwipedCards((prev) => {
-                const newSwipedCards = { ...prev };
-                if (newSwipedCards[direction].includes(cardId)) {
-                  return prev;
-                } else {
-                  Object.entries(newSwipedCards).forEach(([key, value]) => {
-                    if (key !== direction) {
-                      newSwipedCards[key as SwipeDirection] = value.filter(
-                        (id) => id !== cardId
-                      );
-                    } else {
-                      newSwipedCards[key as SwipeDirection] = [
-                        ...value,
-                        cardId,
-                      ];
-                    }
-                  });
-                }
-                return newSwipedCards;
-              });
-            }}
-            {...(loop
-              ? { loop }
-              : { loop, emptyView: <EmptyView setAnimate={setAnimate} /> })}
-          >
-            <SwipeableCards.Cards
-              style={{ aspectRatio: "650 / 400" }}
-              data-loop={loop ? "true" : "false"}
-              data-animate-card={animate ? "true" : "false"}
-              onAnimationEnd={(event) => {
-                if (event.animationName === styles.grow) {
-                  setAnimate(false);
-                }
-              }}
-            />
-            <p
-              style={{
-                textAlign: "center",
-                display: "flex",
-                gap: 8,
-                justifyContent: "center",
-              }}
-            >
-              <span>
-                <SwipeableCards.DeclineButton>
-                  <FaXmark />
-                </SwipeableCards.DeclineButton>{" "}
-                <SwipeableCards.StarButton>
-                  <PiStarBold />
-                </SwipeableCards.StarButton>{" "}
-                <SwipeableCards.AcceptButton>
-                  <FaCheck />
-                </SwipeableCards.AcceptButton>
-              </span>
-            </p>
-            <p
-              style={{
-                textAlign: "center",
-                display: "flex",
-                justifyContent: "center",
-                gap: 8,
-              }}
-            >
-              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Checkbox
-                  checked={discardStyle === "sendToBack"}
-                  onChange={(event) => {
-                    setDiscardStyle(
-                      event.target.checked ? "sendToBack" : "fling"
-                    );
-                  }}
-                />
-                <small style={{ opacity: 0.8 }}>send to back</small>
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Checkbox
-                  checked={loop}
-                  onChange={(event) => {
-                    setLoop(event.target.checked);
-                  }}
-                />
-                <small style={{ opacity: 0.8 }}>loop</small>
-              </label>
-            </p>
-            <p
-              style={{
-                textAlign: "center",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <StackStat />
-              <AddMoreButton />
-            </p>
-          </SwipeableCards.Root>
+        <div ref={demoRef} className="demo">
+          <Tabs
+            defaultValue="stackedOffset"
+            tabs={[
+              {
+                id: "stackedOffset",
+                trigger: "Stacked with offset",
+                content: (
+                  <div
+                    style={{
+                      marginBlock: 32,
+                      maxWidth: 650,
+                      marginInline: "auto",
+                    }}
+                  >
+                    <SwipeableCards.Root
+                      cards={[...cards]}
+                      discardStyle={discardStyle}
+                      onSwipe={(direction, cardId) => {
+                        setSwipedCards((prev) => {
+                          const newSwipedCards = { ...prev };
+                          if (newSwipedCards[direction].includes(cardId)) {
+                            return prev;
+                          } else {
+                            Object.entries(newSwipedCards).forEach(
+                              ([key, value]) => {
+                                if (key !== direction) {
+                                  newSwipedCards[key as SwipeDirection] =
+                                    value.filter((id) => id !== cardId);
+                                } else {
+                                  newSwipedCards[key as SwipeDirection] = [
+                                    ...value,
+                                    cardId,
+                                  ];
+                                }
+                              }
+                            );
+                          }
+                          return newSwipedCards;
+                        });
+                      }}
+                      {...(loop
+                        ? { loop }
+                        : {
+                            loop,
+                            emptyView: <EmptyView setAnimate={setAnimate} />,
+                          })}
+                    >
+                      <SwipeableCards.Cards
+                        visibleStackLength={4}
+                        style={{ aspectRatio: "650 / 400" }}
+                        data-loop={loop ? "true" : "false"}
+                        data-animate-card={animate ? "true" : "false"}
+                        className={styles.swipeable_cards}
+                        onAnimationEnd={(event) => {
+                          if (event.animationName === styles.grow) {
+                            setAnimate(false);
+                          }
+                        }}
+                      />
+                      <p
+                        style={{
+                          textAlign: "center",
+                          display: "flex",
+                          gap: 8,
+                          justifyContent: "center",
+                        }}
+                      >
+                        <span>
+                          <SwipeableCards.DeclineButton>
+                            <FaXmark />
+                          </SwipeableCards.DeclineButton>{" "}
+                          <SwipeableCards.StarButton>
+                            <PiStarBold />
+                          </SwipeableCards.StarButton>{" "}
+                          <SwipeableCards.AcceptButton>
+                            <FaCheck />
+                          </SwipeableCards.AcceptButton>
+                        </span>
+                      </p>
+                      <p
+                        style={{
+                          textAlign: "center",
+                          display: "flex",
+                          justifyContent: "center",
+                          gap: 8,
+                        }}
+                      >
+                        <label
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <Checkbox
+                            checked={discardStyle === "sendToBack"}
+                            onChange={(event) => {
+                              setDiscardStyle(
+                                event.target.checked ? "sendToBack" : "fling"
+                              );
+                            }}
+                          />
+                          <small style={{ opacity: 0.8 }}>send to back</small>
+                        </label>
+                        <label
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <Checkbox
+                            checked={loop}
+                            onChange={(event) => {
+                              setLoop(event.target.checked);
+                            }}
+                          />
+                          <small style={{ opacity: 0.8 }}>loop</small>
+                        </label>
+                      </p>
+                      <p
+                        style={{
+                          textAlign: "center",
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          gap: 8,
+                        }}
+                      >
+                        <StackStat />
+                        <AddMoreButton />
+                      </p>
+                    </SwipeableCards.Root>
+                  </div>
+                ),
+              },
+              {
+                id: "stackedRotation",
+                trigger: "Stacked with rotation",
+                content: (
+                  <div
+                    style={{
+                      marginBlock: 32,
+                      maxWidth: 650,
+                      marginInline: "auto",
+                    }}
+                  >
+                    <SwipeableCards.Root
+                      cards={[...cards]}
+                      discardStyle={discardStyle}
+                      onSwipe={(direction, cardId) => {
+                        setSwipedCards((prev) => {
+                          const newSwipedCards = { ...prev };
+                          if (newSwipedCards[direction].includes(cardId)) {
+                            return prev;
+                          } else {
+                            Object.entries(newSwipedCards).forEach(
+                              ([key, value]) => {
+                                if (key !== direction) {
+                                  newSwipedCards[key as SwipeDirection] =
+                                    value.filter((id) => id !== cardId);
+                                } else {
+                                  newSwipedCards[key as SwipeDirection] = [
+                                    ...value,
+                                    cardId,
+                                  ];
+                                }
+                              }
+                            );
+                          }
+                          return newSwipedCards;
+                        });
+                      }}
+                      {...(loop
+                        ? { loop }
+                        : {
+                            loop,
+                            emptyView: <EmptyView setAnimate={setAnimate} />,
+                          })}
+                    >
+                      <SwipeableCards.Cards
+                        visibleStackLength={5}
+                        style={{ aspectRatio: "650 / 400" }}
+                        data-loop={loop ? "true" : "false"}
+                        data-animate-card={animate ? "true" : "false"}
+                        className={styles.swipeable_cards}
+                        onAnimationEnd={(event) => {
+                          if (event.animationName === styles.grow) {
+                            setAnimate(false);
+                          }
+                        }}
+                      >
+                        <SwipeableCards2 />
+                      </SwipeableCards.Cards>
+                      <p
+                        style={{
+                          textAlign: "center",
+                          display: "flex",
+                          gap: 8,
+                          justifyContent: "center",
+                        }}
+                      >
+                        <span>
+                          <SwipeableCards.DeclineButton>
+                            <FaXmark />
+                          </SwipeableCards.DeclineButton>{" "}
+                          <SwipeableCards.StarButton>
+                            <PiStarBold />
+                          </SwipeableCards.StarButton>{" "}
+                          <SwipeableCards.AcceptButton>
+                            <FaCheck />
+                          </SwipeableCards.AcceptButton>
+                        </span>
+                      </p>
+                      <p
+                        style={{
+                          textAlign: "center",
+                          display: "flex",
+                          justifyContent: "center",
+                          gap: 8,
+                        }}
+                      >
+                        <label
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <Checkbox
+                            checked={discardStyle === "sendToBack"}
+                            onChange={(event) => {
+                              setDiscardStyle(
+                                event.target.checked ? "sendToBack" : "fling"
+                              );
+                            }}
+                          />
+                          <small style={{ opacity: 0.8 }}>send to back</small>
+                        </label>
+                        <label
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <Checkbox
+                            checked={loop}
+                            onChange={(event) => {
+                              setLoop(event.target.checked);
+                            }}
+                          />
+                          <small style={{ opacity: 0.8 }}>loop</small>
+                        </label>
+                      </p>
+                      <p
+                        style={{
+                          textAlign: "center",
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          gap: 8,
+                        }}
+                      >
+                        <StackStat />
+                        <AddMoreButton />
+                      </p>
+                    </SwipeableCards.Root>
+                  </div>
+                ),
+              },
+            ]}
+          />
         </div>
 
         <h2 id="swipe-gesture">Swipe gestures</h2>
@@ -322,7 +521,6 @@ const SwipeableCardsPageContent = () => {
   );
 };
 
-// Unused component - kept for potential future use
 const EmptyView = ({
   setAnimate,
 }: {
@@ -330,35 +528,33 @@ const EmptyView = ({
 }) => {
   const { setStack, cards } = useContext(SwipeableCards.Context);
   return (
-    <div>
-      <div
-        style={{
-          backgroundColor: "var(--color-background)",
-          textAlign: "center",
-          padding: "8px 16px",
-          borderRadius: 8,
-          border: "2px dashed var(--color-border-1)",
-          width: "var(--inline-size)",
-          aspectRatio: "1200 / 630",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexDirection: "column",
-          boxSizing: "border-box",
-          gap: 8,
+    <div
+      style={{
+        backgroundColor: "var(--color-background)",
+        textAlign: "center",
+        padding: "8px 16px",
+        borderRadius: 8,
+        border: "2px dashed var(--color-border-1)",
+        width: "100%",
+        aspectRatio: "1200 / 630",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "column",
+        boxSizing: "border-box",
+        gap: 8,
+      }}
+    >
+      No more cards to show
+      <button
+        className="button"
+        onClick={() => {
+          setAnimate(true);
+          setStack(cards);
         }}
       >
-        No more cards to show
-        <button
-          className="button"
-          onClick={() => {
-            setAnimate(true);
-            setStack(cards);
-          }}
-        >
-          Reset stack
-        </button>
-      </div>
+        Reset stack
+      </button>
     </div>
   );
 };

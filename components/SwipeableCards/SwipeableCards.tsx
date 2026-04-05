@@ -2,14 +2,17 @@ import {
   ButtonHTMLAttributes,
   createContext,
   CSSProperties,
+  ForwardedRef,
   forwardRef,
   HTMLAttributes,
   JSX,
   PropsWithChildren,
   ReactNode,
+  RefObject,
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -60,12 +63,11 @@ export type CardWithId = {
   card: JSX.Element;
 };
 
-export type BaseSwipeableCardsProps = PropsWithChildren<{
+export type BaseSwipeableCardsProps = HTMLAttributes<HTMLDivElement> & {
   cards: CardWithId[];
-  visibleStackLength: number;
   onSwipe?: (direction: SwipeDirection, cardId: string) => void;
   discardStyle?: DiscardStyle;
-}>;
+};
 
 export type DiscardStyle = "fling" | "sendToBack";
 
@@ -96,6 +98,23 @@ const defaultDragState: DraggingState = {
   pivotX: 0,
   pivotY: 0,
   element: null,
+};
+
+/**
+ * Combines the given refs into a single ref
+ */
+const combineRefs = <T,>(
+  ...refs: (ForwardedRef<T> | RefObject<T> | undefined)[]
+): ((node: T | null) => void) => {
+  return (node) => {
+    refs.forEach((ref) => {
+      if (typeof ref === "function") {
+        ref(node);
+      } else if (ref != null) {
+        (ref as { current: T | null }).current = node;
+      }
+    });
+  };
 };
 
 /**
@@ -577,8 +596,14 @@ const shouldReturnToStack = (state: DraggingState, rect: DOMRect) => {
  * to set the velocity/pivot/position values that differ per direction.
  */
 const useProgrammaticSwipe = () => {
-  const { discardedCardId, stack, dragStateRef, commitSwipe, discardStyle } =
-    useContext(SwipeableCardsContext);
+  const {
+    discardedCardId,
+    stack,
+    dragStateRef,
+    commitSwipe,
+    discardStyle,
+    rootRef,
+  } = useContext(SwipeableCardsContext);
 
   const trigger = useCallback(
     (configure: (state: DraggingState, rect: DOMRect) => void) => {
@@ -586,7 +611,7 @@ const useProgrammaticSwipe = () => {
       if (discardedCardId || !last) {
         return;
       }
-      const element = document.querySelector(`[data-id="${last.id}"]`);
+      const element = rootRef.current?.querySelector(`[data-id="${last.id}"]`);
       if (!(element instanceof HTMLElement)) {
         return;
       }
@@ -598,7 +623,7 @@ const useProgrammaticSwipe = () => {
       configure(state, rect);
       commitSwipe(true);
     },
-    [commitSwipe, discardedCardId, dragStateRef, stack]
+    [commitSwipe, discardedCardId, dragStateRef, rootRef, stack]
   );
 
   return { trigger, discardStyle };
@@ -613,8 +638,9 @@ const useSwipeableCards = (
 ) => {
   const [stack, setStack] = useState(cards);
   const [discardedCardId, setDiscardedCardId] = useState<string>("");
-  const dragStateRef = useRef<DraggingState>(defaultDragState);
+  const dragStateRef = useRef<DraggingState>({ ...defaultDragState });
   const animationRef = useRef<Animation[]>([]);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   /**
    * Update the stack when the animations are finished and reset styles
@@ -693,6 +719,7 @@ const useSwipeableCards = (
     animationRef,
     commitSwipe,
     discardStyle,
+    rootRef,
   };
 };
 
@@ -710,68 +737,77 @@ const SwipeableCardsContext = createContext<
   animationRef: { current: [] },
   commitSwipe: () => undefined,
   discardStyle: "fling",
+  rootRef: { current: null },
 });
 
-export const SwipeableCardsRoot = ({
-  cards,
-  loop,
-  onSwipe,
-  emptyView,
-  discardStyle,
-  children,
-}: SwipeableCardsProps) => {
-  const context = useSwipeableCards(
-    cards,
-    loop,
-    emptyView,
-    onSwipe,
-    discardStyle
-  );
-  const { dragStateRef, commitSwipe } = context;
+export const SwipeableCardsRoot = forwardRef<
+  HTMLDivElement,
+  SwipeableCardsProps
+>(
+  (
+    { cards, loop, onSwipe, emptyView, discardStyle, children, ...rest },
+    ref
+  ) => {
+    const context = useSwipeableCards(
+      cards,
+      loop,
+      emptyView,
+      onSwipe,
+      discardStyle
+    );
+    const { dragStateRef, commitSwipe } = context;
 
-  useEffect(() => {
-    const handlePointerMove = (event: PointerEvent) => {
-      const state = dragStateRef.current;
-      if (!state.dragging || !state.element) {
-        return;
-      }
-      event.preventDefault();
-      computeVelocity(state, event);
-      const translateX = state.lastX - state.startX;
-      const translateY = state.lastY - state.startY;
-      const rotation = getRotation(
-        translateX,
-        translateY,
-        state.pivotX,
-        state.pivotY
-      );
-      state.element.style.translate = `${translateX}px ${translateY}px`;
-      state.element.style.rotate = `${rotation}deg`;
-    };
+    useEffect(() => {
+      const handlePointerMove = (event: PointerEvent) => {
+        const state = dragStateRef.current;
+        if (!state.dragging || !state.element) {
+          return;
+        }
+        event.preventDefault();
+        computeVelocity(state, event);
+        const translateX = state.lastX - state.startX;
+        const translateY = state.lastY - state.startY;
+        const rotation = getRotation(
+          translateX,
+          translateY,
+          state.pivotX,
+          state.pivotY
+        );
+        state.element.style.translate = `${translateX}px ${translateY}px`;
+        state.element.style.rotate = `${rotation}deg`;
+      };
 
-    const handlePointerUp = (event: PointerEvent) => {
-      commitSwipe(false, event);
-    };
+      const handlePointerUp = (event: PointerEvent) => {
+        if (dragStateRef.current.dragging) {
+          commitSwipe(false, event);
+        }
+      };
 
-    document.addEventListener("pointermove", handlePointerMove);
-    document.addEventListener("pointerup", handlePointerUp);
-    return () => {
-      document.removeEventListener("pointermove", handlePointerMove);
-      document.removeEventListener("pointerup", handlePointerUp);
-    };
-  }, [commitSwipe, dragStateRef]);
+      document.addEventListener("pointermove", handlePointerMove);
+      document.addEventListener("pointerup", handlePointerUp);
+      return () => {
+        document.removeEventListener("pointermove", handlePointerMove);
+        document.removeEventListener("pointerup", handlePointerUp);
+      };
+    }, [commitSwipe, dragStateRef]);
 
-  return (
-    <SwipeableCardsContext.Provider value={context}>
-      {children}
-    </SwipeableCardsContext.Provider>
-  );
-};
+    return (
+      <SwipeableCardsContext.Provider value={context}>
+        <div ref={combineRefs(ref, context.rootRef)} {...rest}>
+          {children}
+        </div>
+      </SwipeableCardsContext.Provider>
+    );
+  }
+);
 
-export type SwipeableCardsCardsProps = HTMLAttributes<HTMLDivElement> & {
-  visibleStackLength?: number;
-  cardsTopDistance?: string;
-};
+SwipeableCardsRoot.displayName = "SwipeableCardsRoot";
+
+export type SwipeableCardsCardsProps = HTMLAttributes<HTMLDivElement> &
+  PropsWithChildren<{
+    visibleStackLength?: number;
+    cardsTopDistance?: string;
+  }>;
 
 const SwipeableCardsCards = forwardRef<
   HTMLDivElement,
@@ -781,8 +817,8 @@ const SwipeableCardsCards = forwardRef<
     {
       visibleStackLength = 4,
       cardsTopDistance = "clamp(16px, 1vw, 32px)",
-      className,
       style,
+      children,
       ...rest
     },
     ref
@@ -798,11 +834,9 @@ const SwipeableCardsCards = forwardRef<
       <div
         ref={ref}
         {...rest}
-        className={[styles.swipeable_cards, className]
-          .filter(Boolean)
-          .join(" ")}
         style={
           {
+            ...style,
             "--visible-stack-length": Math.max(
               Math.min(visibleStackLength, stack.length) -
                 1 -
@@ -814,14 +848,12 @@ const SwipeableCardsCards = forwardRef<
               0
             ),
             "--card-top-distance": cardsTopDistance,
-            ...style,
           } as CSSProperties
         }
       >
-        <div className={styles.empty_card}>{emptyView ?? null}</div>
-        {stack.map((card) => (
-          <SwipeableCardsCard card={card} key={card.id} />
-        ))}
+        <div data-empty={""}>{emptyView ?? null}</div>
+        {children ??
+          stack.map((card) => <SwipeableCardsCard card={card} key={card.id} />)}
       </div>
     );
   }
@@ -829,62 +861,76 @@ const SwipeableCardsCards = forwardRef<
 
 SwipeableCardsCards.displayName = "SwipeableCardsCards";
 
-const SwipeableCardsCard = ({ card }: { card: CardWithId }) => {
-  const { discardedCardId, stack, dragStateRef, animationRef } = useContext(
-    SwipeableCardsContext
-  );
-  const isBeingDiscarded = discardedCardId === card.id;
-  const isDiscarding = !!discardedCardId;
-  const index = stack.findIndex((stackCard) => stackCard.id === card.id);
-  const stackIndex =
-    stack.length - (index + (isDiscarding && !isBeingDiscarded ? 1 : 0));
-  const stackIndex0 = stackIndex - 1;
+export type SwipeableCardsCardProps = HTMLAttributes<HTMLDivElement> &
+  PropsWithChildren<{
+    card: CardWithId;
+  }>;
 
-  return (
-    <div
-      className={styles.card}
-      data-id={card.id}
-      data-top-card={stackIndex0 ? "false" : "true"}
-      style={
-        {
-          "--stack-index": stackIndex,
-          "--stack-index0": stackIndex0,
-        } as CSSProperties
-      }
-      onDragStart={(event) => {
-        event.preventDefault();
-      }}
-      onPointerDown={(event) => {
-        event.preventDefault();
-        event.currentTarget.setPointerCapture(event.pointerId);
-        const dragState = dragStateRef.current;
-        const rect = event.currentTarget.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        dragState.dragging = true;
-        dragState.startX = event.clientX;
-        dragState.startY = event.clientY;
-        dragState.lastX = event.clientX;
-        dragState.lastY = event.clientY;
-        dragState.velocityX = 0;
-        dragState.velocityY = 0;
-        dragState.lastTime = Date.now();
-        dragState.draggingId = card.id;
-        dragState.pivotX = (event.clientX - centerX) / rect.width / 2;
-        dragState.pivotY = (event.clientY - centerY) / rect.height / 2;
-        dragState.element = event.currentTarget;
-        event.currentTarget.style.transformOrigin = `${
-          event.clientX - rect.left
-        }px ${event.clientY - rect.top}px`;
-        animationRef.current.forEach((animation) => {
-          animation.finish();
-        });
-      }}
-    >
-      {card.card}
-    </div>
-  );
-};
+const SwipeableCardsCard = forwardRef<HTMLDivElement, SwipeableCardsCardProps>(
+  ({ card, onDragStart, onPointerDown, style, children, ...rest }, ref) => {
+    const { discardedCardId, stack, dragStateRef, animationRef } = useContext(
+      SwipeableCardsContext
+    );
+    const isBeingDiscarded = discardedCardId === card.id;
+    const isDiscarding = !!discardedCardId;
+    const index = stack.findIndex((stackCard) => stackCard.id === card.id);
+    const stackIndex =
+      stack.length - (index + (isDiscarding && !isBeingDiscarded ? 1 : 0));
+    const stackIndex0 = stackIndex - 1;
+
+    return (
+      <div
+        ref={ref}
+        data-card={""}
+        data-id={card.id}
+        data-top-card={stackIndex0 ? "false" : "true"}
+        style={
+          {
+            ...style,
+            "--stack-index": stackIndex,
+            "--stack-index0": stackIndex0,
+          } as CSSProperties
+        }
+        {...rest}
+        onDragStart={(event) => {
+          event.preventDefault();
+          onDragStart?.(event);
+        }}
+        onPointerDown={(event) => {
+          event.preventDefault();
+          event.currentTarget.setPointerCapture(event.pointerId);
+          const dragState = dragStateRef.current;
+          const rect = event.currentTarget.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          dragState.dragging = true;
+          dragState.startX = event.clientX;
+          dragState.startY = event.clientY;
+          dragState.lastX = event.clientX;
+          dragState.lastY = event.clientY;
+          dragState.velocityX = 0;
+          dragState.velocityY = 0;
+          dragState.lastTime = Date.now();
+          dragState.draggingId = card.id;
+          dragState.pivotX = (event.clientX - centerX) / rect.width / 2;
+          dragState.pivotY = (event.clientY - centerY) / rect.height / 2;
+          dragState.element = event.currentTarget;
+          event.currentTarget.style.transformOrigin = `${
+            event.clientX - rect.left
+          }px ${event.clientY - rect.top}px`;
+          animationRef.current.forEach((animation) => {
+            animation.finish();
+          });
+          onPointerDown?.(event);
+        }}
+      >
+        {children ?? card.card}
+      </div>
+    );
+  }
+);
+
+SwipeableCardsCard.displayName = "SwipeableCardsCard";
 
 const SwipeableCardsDeclineButton = forwardRef<
   HTMLButtonElement,
@@ -996,8 +1042,13 @@ export const SwipeableCards = {
   Root: SwipeableCardsRoot,
   Context: SwipeableCardsContext,
   Cards: SwipeableCardsCards,
+  Card: SwipeableCardsCard,
   AcceptButton: SwipeableCardsAcceptButton,
   DeclineButton: SwipeableCardsDeclineButton,
   StarButton: SwipeableCardsStarButton,
   useSwipeableCardsContext: () => useContext(SwipeableCardsContext),
+  useSwipeableCardsStack: () => {
+    const { stack } = useContext(SwipeableCardsContext);
+    return useMemo(() => stack, [stack]);
+  },
 };

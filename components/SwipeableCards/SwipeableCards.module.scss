@@ -15,7 +15,7 @@
   touch-action: none;
   z-index: 1;
 
-  .card {
+  [data-card] {
     --p: calc(
       var(--card-top-distance, 0) *
         max(var(--visible-stack-length) - var(--stack-index0), 0)
@@ -48,17 +48,28 @@
     }
   }
 
-  .empty_card {
+  .card2 {
+    margin-top: 0;
+    //opacity: 1;
+    padding-top: 0;
+    //scale: 100%;
+    scale: calc(
+      100% - min(var(--stack-index0), var(--visible-stack-length)) * 5%
+    );
+  }
+
+  [data-empty] {
+    align-items: center;
+    align-self: center;
     display: grid;
     grid-area: 1 / 1;
-    opacity: max(1 - var(--stack-length) + 1, 0);
-    place-content: center;
+    opacity: max(1 - var(--stack-length), 0);
     transition: opacity 0.2s var(--ease-out-cubic);
     width: 100%;
   }
 
   &[data-animate-card="true"] {
-    .card {
+    [data-card] {
       animation: grow 0.2s var(--ease-out-cubic);
     }
   }

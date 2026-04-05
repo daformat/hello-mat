@@ -27,7 +27,7 @@ export const Checkbox = ({
       <input
         type="checkbox"
         className={[className, styles.input].filter(isNonNullable).join(" ")}
-        id={id}
+        id={id || generatedId}
         {...props}
       />
       <span className={styles.checkmark}>
