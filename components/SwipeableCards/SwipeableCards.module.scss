@@ -42,6 +42,7 @@
     transition: all 0.2s var(--ease-out-cubic);
     transition-property: opacity, scale, padding-top, margin-top;
     width: 100%;
+    will-change: opacity, scale, padding-top, margin-top, transform;
 
     &[data-top-card="true"] {
       //align-self: center;
