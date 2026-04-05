@@ -13,7 +13,12 @@ import {
 } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 import { IoChevronDownOutline } from "react-icons/io5";
-import { codeToHtml } from "shiki";
+import {
+  BundledLanguage,
+  BundledTheme,
+  CodeToHastOptions,
+  codeToHtml,
+} from "shiki";
 
 import { Dropdown } from "@/components/ButtonGroup/Dropdown/Dropdown";
 import { DropdownItem } from "@/components/ButtonGroup/Dropdown/DropdownItem";
@@ -21,6 +26,7 @@ import styles from "@/components/Carousel/Carousel.module.scss";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
+import { Tabs } from "@/components/Tabs/Tabs";
 import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
 import {
   ComponentId,
@@ -30,9 +36,25 @@ import { useCssSizeVariables } from "@/hooks/useCssSizeVariables";
 
 interface CodeBlocks {
   highlightedCode: string;
+  installInstructionsNpm: string;
+  installInstructionsYarn: string;
+  installInstructionsPnpm: string;
+  installInstructionsBun: string;
+  installInstructionsDeno: string;
 }
 
 export const getStaticProps: GetStaticProps<CodeBlocks> = async () => {
+  const getOptions = (
+    lang: BundledLanguage
+  ): CodeToHastOptions<BundledLanguage, BundledTheme> => ({
+    lang,
+    themes: {
+      light: "vitesse-light",
+      dark: "houston",
+    },
+    tabindex: false,
+  });
+
   const codeSnippet = `
 {/* Provides context to the carousel components */}
 <Carousel.Root>
@@ -51,18 +73,56 @@ export const getStaticProps: GetStaticProps<CodeBlocks> = async () => {
   <Carousel.NextPage />
 </Carousel.Root>
   `.trim();
-  const highlightedCode = await codeToHtml(codeSnippet, {
-    lang: "tsx",
-    themes: {
-      light: "vitesse-light",
-      dark: "houston",
-    },
-    tabindex: false,
-  });
+  const highlightedCode = await codeToHtml(codeSnippet, getOptions("tsx"));
+
+  const installInstructionsSourceNpm = `
+npm install @daformat/react-headless-carousel
+  `.trim();
+  const installInstructionsNpm = await codeToHtml(
+    installInstructionsSourceNpm,
+    getOptions("bash")
+  );
+
+  const installInstructionsSourceYarn = `
+yarn add @daformat/react-headless-carousel
+  `.trim();
+  const installInstructionsYarn = await codeToHtml(
+    installInstructionsSourceYarn,
+    getOptions("bash")
+  );
+
+  const installInstructionsSourcePnpm = `
+pnpm add @daformat/react-headless-carousel
+  `.trim();
+  const installInstructionsPnpm = await codeToHtml(
+    installInstructionsSourcePnpm,
+    getOptions("bash")
+  );
+
+  const installInstructionsSourceBun = `
+bun add @daformat/react-headless-carousel
+  `.trim();
+  const installInstructionsBun = await codeToHtml(
+    installInstructionsSourceBun,
+    getOptions("bash")
+  );
+
+  const installInstructionsSourceDeno = `
+deno add npm:@daformat/react-headless-carousel
+  `.trim();
+  const installInstructionsDeno = await codeToHtml(
+    installInstructionsSourceDeno,
+    getOptions("bash")
+  );
 
   return {
     props: {
       highlightedCode,
+      installInstructionsNpm,
+      installInstructionsYarn,
+      installInstructionsPnpm,
+      installInstructionsBun,
+      installInstructionsDeno,
     },
   };
 };
@@ -507,6 +567,93 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
             </div>
           </Carousel.Root>
         </section>
+        <h2 id="install">Install</h2>
+        <Tabs
+          defaultValue="install-npm"
+          tabs={[
+            {
+              id: "install-npm",
+              trigger: (
+                <h4 id="install-npm" data-no-toc={""}>
+                  npm
+                </h4>
+              ),
+              content: (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: props.installInstructionsNpm,
+                  }}
+                />
+              ),
+            },
+            {
+              id: "install-yarn",
+              trigger: (
+                <h4 id="install-yarn" data-no-toc={""}>
+                  yarn
+                </h4>
+              ),
+              content: (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: props.installInstructionsYarn,
+                  }}
+                />
+              ),
+            },
+            {
+              id: "install-pnpm",
+              trigger: (
+                <h4 id="install-pnpm" data-no-toc={""}>
+                  pnpm
+                </h4>
+              ),
+              content: (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: props.installInstructionsPnpm,
+                  }}
+                />
+              ),
+            },
+            {
+              id: "install-bun",
+              trigger: (
+                <h4 id="install-bun" data-no-toc={""}>
+                  bun
+                </h4>
+              ),
+              content: (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: props.installInstructionsBun,
+                  }}
+                />
+              ),
+            },
+            {
+              id: "install-deno",
+              trigger: (
+                <h4 id="install-deno" data-no-toc={""}>
+                  deno
+                </h4>
+              ),
+              content: (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: props.installInstructionsDeno,
+                  }}
+                />
+              ),
+            },
+          ]}
+        />
+        <p>
+          Open the repo in{" "}
+          <a href="https://github.com/daformat/react-headless-carousel" target="_blank" rel="noopener">
+            Github
+          </a>
+        </p>
         <h2 id="things-to-try">Things to try</h2>
         <h3 id="momentum-scrolling">Momentum scrolling</h3>
         <p>

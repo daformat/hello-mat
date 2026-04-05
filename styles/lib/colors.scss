@@ -45,7 +45,7 @@
   --color-card-background-tertiary: #{rgba(palette.$light-desert-sky-2, 0.9)};
 
   --color-link: var(--text-primary-hover);
-  --color-link-hover: var(--text-secondary-hover);
+  --color-link-hover: #{mix(palette.$light-ivory-1, #000, 0.75)};
   --color-link-underline: var(--text-primary-hover);
 
   --color-empty: #{rgba(palette.$light-ivory-5, 0.25)};

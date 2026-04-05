@@ -1,0 +1,51 @@
+@use "/styles/lib/mixins.scss";
+
+.tabs {
+  .list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    position: relative;
+
+    &::before {
+      background-color: currentColor;
+      content: "";
+      height: 2px;
+      left: var(--active-tab-left);
+      pointer-events: none;
+      position: absolute;
+      top: calc(var(--active-tab-top) + var(--active-tab-height));
+      transition: all 0.2s var(--ease-out-cubic);
+      transition-property: left, width, height, top;
+      width: var(--active-tab-width);
+      z-index: 0;
+
+      @include mixins.remove-transition;
+    }
+  }
+
+  .trigger {
+    all: unset;
+    padding: 0.25em 0;
+    position: relative;
+    transition: color 0.2s var(--ease-out-cubic);
+    z-index: 1;
+
+    &[data-state="active"] {
+      color: var(--color-link);
+    }
+
+    &:focus-visible {
+      color: var(--color-link-hover);
+    }
+
+    > * {
+      font-weight: 400;
+      margin: 0;
+    }
+  }
+
+  .content {
+    outline: none;
+  }
+}
