@@ -15,14 +15,6 @@ export const Checkbox = ({
       className={styles.checkbox}
       htmlFor={id || generatedId}
       aria-label="Checkbox"
-      onClick={(event) => {
-        const checkbox = event.currentTarget.querySelector(
-          "input[type='checkbox']"
-        );
-        if (checkbox instanceof HTMLInputElement && !checkbox.disabled) {
-          checkbox.click();
-        }
-      }}
     >
       <input
         type="checkbox"
