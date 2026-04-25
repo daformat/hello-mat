@@ -7,8 +7,12 @@ import {
   useRef,
   useState,
 } from "react";
-import { FaCheck, FaXmark } from "react-icons/fa6";
-import { PiStarBold } from "react-icons/pi";
+import {
+  PiArrowFatDownBold,
+  PiArrowFatLeftBold,
+  PiArrowFatRightBold,
+  PiArrowFatUpBold,
+} from "react-icons/pi";
 
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
@@ -125,7 +129,9 @@ const SwipeableCards2 = () => {
         <div
           style={{
             transformOrigin: "center",
-            rotate: `${cards.find((c) => c.id === card.id.split("#")[0])?.rotation}deg`,
+            rotate: `${
+              cards.find((c) => c.id === card.id.split("#")[0])?.rotation
+            }deg`,
           }}
         >
           {card.card}
@@ -278,15 +284,18 @@ const SwipeableCardsPageContent = () => {
                         }}
                       >
                         <span>
-                          <SwipeableCards.DeclineButton>
-                            <FaXmark />
-                          </SwipeableCards.DeclineButton>{" "}
-                          <SwipeableCards.StarButton>
-                            <PiStarBold />
-                          </SwipeableCards.StarButton>{" "}
-                          <SwipeableCards.AcceptButton>
-                            <FaCheck />
-                          </SwipeableCards.AcceptButton>
+                          <SwipeableCards.SwipeLeftButton>
+                            <PiArrowFatLeftBold />
+                          </SwipeableCards.SwipeLeftButton>{" "}
+                          <SwipeableCards.SwipeUpButton>
+                            <PiArrowFatUpBold />
+                          </SwipeableCards.SwipeUpButton>{" "}
+                          <SwipeableCards.SwipeDownButton>
+                            <PiArrowFatDownBold />
+                          </SwipeableCards.SwipeDownButton>{" "}
+                          <SwipeableCards.SwipeRightButton>
+                            <PiArrowFatRightBold />
+                          </SwipeableCards.SwipeRightButton>
                         </span>
                       </p>
                       <p
@@ -413,15 +422,18 @@ const SwipeableCardsPageContent = () => {
                         }}
                       >
                         <span>
-                          <SwipeableCards.DeclineButton>
-                            <FaXmark />
-                          </SwipeableCards.DeclineButton>{" "}
-                          <SwipeableCards.StarButton>
-                            <PiStarBold />
-                          </SwipeableCards.StarButton>{" "}
-                          <SwipeableCards.AcceptButton>
-                            <FaCheck />
-                          </SwipeableCards.AcceptButton>
+                          <SwipeableCards.SwipeLeftButton>
+                            <PiArrowFatLeftBold />
+                          </SwipeableCards.SwipeLeftButton>{" "}
+                          <SwipeableCards.SwipeUpButton>
+                            <PiArrowFatUpBold />
+                          </SwipeableCards.SwipeUpButton>{" "}
+                          <SwipeableCards.SwipeDownButton>
+                            <PiArrowFatDownBold />
+                          </SwipeableCards.SwipeDownButton>{" "}
+                          <SwipeableCards.SwipeRightButton>
+                            <PiArrowFatRightBold />
+                          </SwipeableCards.SwipeRightButton>
                         </span>
                       </p>
                       <p

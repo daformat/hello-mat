@@ -18,9 +18,7 @@ import {
 } from "react";
 
 import { MaybeNull } from "@/components/Media/utils/maybe";
-import { getPointsBoundingBox } from "@/utils/boundingBox";
 import { cssEasing } from "@/utils/cssEasing";
-import { Position } from "@/utils/geometry";
 
 import styles from "./SwipeableCards.module.scss";
 
@@ -29,7 +27,8 @@ const maxRotation = 32;
 const minDistanceThreshold = 0.3;
 const minVelocity = 0.15;
 const rotationBasis = 250;
-const sendToBackMargin = 16;
+// const sendToBackMargin = 0;
+const DEBUG = false;
 
 export type DraggingState = {
   // whether a card is being dragged
@@ -100,6 +99,10 @@ const defaultDragState: DraggingState = {
   element: null,
 };
 
+const getCard = (element: Element) => {
+  return element.firstElementChild ?? element;
+};
+
 /**
  * Combines the given refs into a single ref
  */
@@ -147,11 +150,62 @@ const animateReturnToStack = (state: DraggingState, element: HTMLElement) => {
 };
 
 /**
+ * Returns the visual bounding box of the given element, taking into account
+ * any transforms applied to it or it's children.
+ */
+const getVisualBoundingBox = (
+  element: Element | Element[],
+  // list of elements to exclude from the bounding box calculation
+  elementsToExclude: Element[] = [],
+  // whether we should also exclude elements contained in the excluded elements
+  strict = true
+) => {
+  const cache = new Map<Element, string>();
+  elementsToExclude.forEach((el) => {
+    if (el instanceof HTMLElement && el !== element) {
+      cache.set(el, el.style.position);
+      el.style.position = "absolute";
+    }
+  });
+  const rects = (
+    Array.isArray(element)
+      ? element.flatMap((element) => [
+          element,
+          ...element.querySelectorAll("*"),
+        ])
+      : [element, ...element.querySelectorAll("*")]
+  )
+    .filter(
+      (e) =>
+        !elementsToExclude.includes(e) &&
+        (strict
+          ? elementsToExclude.every((excluded) => !excluded.contains(e))
+          : true)
+    )
+    .map((el) => ({ element: el, rect: el.getBoundingClientRect() }));
+  elementsToExclude.forEach((el) => {
+    if (el instanceof HTMLElement && el !== element) {
+      el.style.position = cache.get(el) ?? "";
+    }
+  });
+
+  const top = Math.min(...rects.map((r) => r.rect.top));
+  const left = Math.min(...rects.map((r) => r.rect.left));
+  const bottom = Math.max(...rects.map((r) => r.rect.bottom));
+  const right = Math.max(...rects.map((r) => r.rect.right));
+
+  return new DOMRect(left, top, right - left, bottom - top);
+};
+
+/**
  * Temporarily clears all inline transform-related styles, reads the bounding
  * rect, then restores the styles. Use this wherever the "true" undeformed
  * dimensions of an element are needed.
  */
-const getElementRectWithoutTransforms = (element: HTMLElement): DOMRect => {
+const getElementRectWithoutTransforms = (
+  element: HTMLElement,
+  visualBoundingBox?: boolean
+): DOMRect => {
   const {
     transform: prevTransform,
     translate: prevTranslate,
@@ -160,7 +214,9 @@ const getElementRectWithoutTransforms = (element: HTMLElement): DOMRect => {
   element.style.transform = "";
   element.style.translate = "";
   element.style.rotate = "";
-  const rect = element.getBoundingClientRect();
+  const rect = visualBoundingBox
+    ? getVisualBoundingBox(element)
+    : element.getBoundingClientRect();
   element.style.transform = prevTransform;
   element.style.translate = prevTranslate;
   element.style.rotate = prevRotate;
@@ -171,138 +227,226 @@ const getElementRectWithoutTransforms = (element: HTMLElement): DOMRect => {
  * Returns the element's bounding rect with all transforms temporarily stripped,
  * falling back to `fallback` if there is no element on the drag state.
  */
-const getUnrotatedRect = (state: DraggingState, fallback: DOMRect): DOMRect =>
-  state.element ? getElementRectWithoutTransforms(state.element) : fallback;
+const getUnrotatedRect = (state: DraggingState, fallback: DOMRect): DOMRect => {
+  if (state.element) {
+    const card = getCard(state.element);
+    if (card instanceof HTMLElement) {
+      return getElementRectWithoutTransforms(card, true);
+    }
+  }
+  return fallback;
+};
 
-/**
- * Ensures `state.velocityX` is large enough to carry the element past the
- * horizontal edge. On the second pass (`pass === 1`) the travel distance is
- * refined by accounting for the gap between the rotated rect and the edge.
- */
-const adjustHorizontalVelocityForExit = (
-  state: DraggingState,
-  rect: DOMRect,
-  originalRect: DOMRect,
-  rotatedRect: DOMRect,
-  animationDuration: number,
-  discardStyle: DiscardStyle,
-  pass: number
-) => {
-  const minEdgeDistance = Math.min(
-    rect.left,
-    window.innerWidth - (rect.left + rect.width)
-  );
-  const travelDistance =
-    discardStyle === "fling"
-      ? minEdgeDistance + rect.width * 1.5
-      : originalRect.width -
-        Math.abs(rotatedRect.left - originalRect.left) +
-        (rotatedRect.width - originalRect.width);
-
-  const minExitVelocity = travelDistance / animationDuration;
-  if (
-    Math.abs(state.velocityX) < minExitVelocity ||
-    discardStyle === "sendToBack"
-  ) {
-    state.velocityX = Math.sign(state.lastX - state.startX) * minExitVelocity;
+const stringToColor = (str: string): string => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    hash |= 0;
   }
 
-  if (pass === 1 && discardStyle === "sendToBack") {
-    const yDistance = state.velocityY * animationDuration;
-    const { rotation } = getAnimationValues(state, animationDuration);
-    const refinedRect = getRotatedBoundingBox(
-      new DOMRect(
-        originalRect.x + travelDistance * Math.sign(state.velocityX),
-        originalRect.y + yDistance,
-        originalRect.width,
-        originalRect.height
-      ),
-      rotation,
-      state.pivotX,
-      state.pivotY
-    );
-    const gap = Math.max(
-      refinedRect.left - (originalRect.left + originalRect.width),
-      0
-    );
-    const refinedTravelDistance = travelDistance - gap + sendToBackMargin;
-    const refinedMinVelocity = refinedTravelDistance / animationDuration;
-    if (
-      Math.abs(state.velocityX) < refinedMinVelocity ||
-      discardStyle === "sendToBack"
-    ) {
-      state.velocityX =
-        Math.sign(state.lastX - state.startX) * refinedMinVelocity;
+  const hue = Math.abs(hash) % 360;
+  const saturation = 60 + (Math.abs(hash >> 8) % 20); // 60–80%
+  const lightness = 40 + (Math.abs(hash >> 16) % 20); // 40–60%
+
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+};
+
+const drawRect = (
+  element: HTMLElement | DOMRect,
+  id = "rect",
+  color?: string
+) => {
+  const prevRect = document.getElementById(id);
+  if (prevRect) {
+    prevRect.remove();
+  }
+  const rect =
+    element instanceof HTMLElement ? getVisualBoundingBox(element) : element;
+  const rectElement = document.createElement("div");
+  rectElement.dataset.debug = "";
+  rectElement.style.position = "absolute";
+  rectElement.style.top = `${
+    (document.scrollingElement?.scrollTop ?? 0) + rect.top
+  }px`;
+  rectElement.style.left = `${
+    (document.scrollingElement?.scrollLeft ?? 0) + rect.left
+  }px`;
+  rectElement.style.width = `${rect.width}px`;
+  rectElement.style.height = `${rect.height}px`;
+  rectElement.style.outline = `1px dashed ${color ?? stringToColor(id)}`;
+  rectElement.style.pointerEvents = "none";
+  rectElement.id = id;
+  document.body.appendChild(rectElement);
+  return { element: rectElement, rect };
+};
+
+/**
+ * Returns the future stack rect (after swiping the current card), so we can use
+ * it to prevent collisions with the current card.
+ */
+const getStackFutureBoundingBox = (
+  cards: HTMLElement,
+  swipedCard: HTMLElement
+) => {
+  const cache = new Map<
+    HTMLElement,
+    {
+      animation: CSSProperties["animationDuration"];
+      transition: CSSProperties["transitionDuration"];
+      index1: string;
+      index0: string;
     }
+  >();
+  const cardsElements = cards.querySelectorAll<HTMLElement>("[data-card]");
+  // shift indices and disable animations to ensure final size is correct
+  cardsElements.forEach((el, index, list) => {
+    cache.set(el, {
+      animation: el.style.animationDuration,
+      transition: el.style.transitionDuration,
+      index1: el.style.getPropertyValue("--stack-index"),
+      index0: el.style.getPropertyValue("--stack-index0"),
+    });
+    const index1 = list.length - 1 - index;
+    const index0 = index1 - 1;
+    el.style.setProperty("--stack-index", index1.toString());
+    el.style.setProperty("--stack-index0", index0.toString());
+    el.style.animationDuration = "0s";
+    el.style.transitionDuration = "0s";
+  });
+  // measure the stack, excluding the element being swiped
+  const cardsRect = getVisualBoundingBox([...cardsElements], [swipedCard]);
+  // restore indices
+  cardsElements.forEach((el) => {
+    el.style.setProperty("--stack-index", cache.get(el)?.index1 ?? "");
+    el.style.setProperty("--stack-index0", cache.get(el)?.index0 ?? "");
+  });
+  // force a reflow to ensure cards don't animate back to their original index
+  void cards.offsetHeight;
+  // re-enable animations
+  cardsElements.forEach((el) => {
+    el.style.animationDuration = cache.get(el)?.animation ?? "";
+    el.style.transitionDuration = cache.get(el)?.transition ?? "";
+  });
+  return cardsRect;
+};
+
+const adjustHorizontalVelocityForExit = (
+  state: DraggingState,
+  nextCardsRect: DOMRect,
+  innerRect: DOMRect,
+  animationDuration: number,
+  discardStyle: DiscardStyle
+) => {
+  const isLeft = state.startX > state.lastX;
+  const cardStackKey: keyof DOMRect = isLeft ? "left" : "right";
+  const innerKey: keyof DOMRect = isLeft ? "right" : "left";
+  const minDistance =
+    discardStyle === "sendToBack"
+      ? 0
+      : isLeft
+      ? nextCardsRect.right
+      : window.innerWidth - nextCardsRect.left;
+  const maxDistance = discardStyle === "sendToBack" ? 0 : Infinity;
+  const currentDistance =
+    (nextCardsRect[cardStackKey] - innerRect[innerKey]) * (isLeft ? 1 : -1);
+  if (currentDistance < minDistance) {
+    // boost velocity
+    // console.log("BOOSTING currentDistance", currentDistance);
+    if (discardStyle === "sendToBack") {
+      state.velocityX +=
+        (currentDistance / animationDuration) * (isLeft ? 1 : -1);
+    } else {
+      state.velocityX =
+        (window.innerWidth / animationDuration) * (isLeft ? -1 : 1);
+    }
+  } else if (currentDistance > maxDistance) {
+    // console.log("LOWERING currentDistance", currentDistance);
+    // lower velocity
+    state.velocityX +=
+      (currentDistance / animationDuration) * (isLeft ? 1 : -1);
+  }
+};
+
+const adjustVerticalVelocityForExit = (
+  state: DraggingState,
+  nextCardsRect: DOMRect,
+  innerRect: DOMRect,
+  animationDuration: number,
+  discardStyle: DiscardStyle
+) => {
+  const isTop = state.startY > state.lastY;
+  const cardStackKey: keyof DOMRect = isTop ? "top" : "bottom";
+  const innerKey: keyof DOMRect = isTop ? "bottom" : "top";
+  const minDistance =
+    discardStyle === "sendToBack"
+      ? 0
+      : isTop
+      ? nextCardsRect.bottom
+      : window.innerHeight - nextCardsRect.top;
+  const maxDistance = discardStyle === "sendToBack" ? 0 : Infinity;
+  const currentDistance =
+    (nextCardsRect[cardStackKey] - innerRect[innerKey]) * (isTop ? 1 : -1);
+  if (currentDistance < minDistance) {
+    // console.log("BOOSTING currentDistance", currentDistance);
+    // boost velocity
+    if (discardStyle === "sendToBack") {
+      state.velocityY +=
+        (currentDistance / animationDuration) * (isTop ? 1 : -1);
+    } else {
+      state.velocityY =
+        (window.innerHeight / animationDuration) * (isTop ? -1 : 1);
+    }
+  } else if (currentDistance > maxDistance) {
+    // console.log("LOWERING currentDistance", currentDistance);
+    // lower velocity
+    state.velocityY += (currentDistance / animationDuration) * (isTop ? 1 : -1);
   }
 };
 
 /**
- * Ensures `state.velocityY` is large enough to carry the element past the
- * vertical edge. On the second pass (`pass === 1`) the travel distance is
- * refined by accounting for the gap between the rotated rect and the edge.
+ * Returns the final rect for the dragged element, after applying velocity qnd rotation
+ * @param state
+ * @param rect
+ * @param animationDuration
  */
-const adjustVerticalVelocityForExit = (
-  state: DraggingState,
+const getCurrentFinalRect = (
+  state: DraggingState & { element: HTMLElement },
   rect: DOMRect,
-  originalRect: DOMRect,
-  rotatedRect: DOMRect,
-  animationDuration: number,
-  discardStyle: DiscardStyle,
-  pass: number
+  animationDuration: number
 ) => {
-  const minEdgeDistance = Math.min(
-    rect.top,
-    window.innerHeight - (rect.top + rect.height)
+  const unrotatedCardRect = getUnrotatedRect(state, rect);
+  const { rotation, distanceX, distanceY } = getAnimationValues(
+    state,
+    animationDuration
   );
-  const travelDistance =
-    discardStyle === "fling"
-      ? minEdgeDistance + rect.height * 1.5
-      : originalRect.height -
-        Math.abs(rotatedRect.top - originalRect.top) +
-        (rotatedRect.height - originalRect.height);
-
-  const minExitVelocity = travelDistance / 200;
-  if (
-    Math.abs(state.velocityY) < minExitVelocity ||
-    discardStyle === "sendToBack"
-  ) {
-    state.velocityY = Math.sign(state.lastY - state.startY) * minExitVelocity;
-  }
-
-  if (pass === 1 && discardStyle === "sendToBack") {
-    const xDistance = state.velocityX * animationDuration;
-    const { rotation } = getAnimationValues(state, animationDuration);
-    const refinedRect = getRotatedBoundingBox(
-      new DOMRect(
-        originalRect.x + xDistance,
-        originalRect.y + travelDistance * Math.sign(state.velocityY),
-        originalRect.width,
-        originalRect.height
-      ),
-      rotation,
-      state.pivotX,
-      state.pivotY
-    );
-    const paddingTop = state.element
-      ? parseFloat(getComputedStyle(state.element).paddingTop)
-      : 0;
-    const gap = Math.max(
-      refinedRect.top -
-        (originalRect.top + originalRect.height) +
-        (Math.sign(state.velocityY) === 1 ? paddingTop : 0),
-      0
-    );
-    const refinedTravelDistance = travelDistance - gap + sendToBackMargin;
-    const refinedMinVelocity = refinedTravelDistance / animationDuration;
-    if (
-      Math.abs(state.velocityY) < refinedMinVelocity ||
-      discardStyle === "sendToBack"
-    ) {
-      state.velocityY =
-        Math.sign(state.lastY - state.startY) * refinedMinVelocity;
-    }
-  }
+  const prevTranslate = state.element.style.translate;
+  const prevRotate = state.element.style.rotate;
+  const prevScale = state.element.style.scale;
+  const prevTransform = state.element.style.transform;
+  const prevOrigin = state.element.style.transformOrigin;
+  const origin = `${
+    state.pivotX * unrotatedCardRect.width + unrotatedCardRect.width / 2
+  }px ${
+    state.pivotY * unrotatedCardRect.height + unrotatedCardRect.height / 2
+  }px`;
+  const transform = `translate(${distanceX}px, ${distanceY}px) rotate(${rotation}deg)`;
+  state.element.style.transformOrigin = origin;
+  state.element.style.transform = transform;
+  state.element.style.rotate = "0deg";
+  state.element.style.translate = "none";
+  state.element.style.scale = "1";
+  const boundingRect = getVisualBoundingBox(
+    state.element,
+    [state.element],
+    false
+  );
+  // const innerRect = s;
+  state.element.style.transformOrigin = prevOrigin;
+  state.element.style.transform = prevTransform;
+  state.element.style.rotate = prevRotate;
+  state.element.style.translate = prevTranslate;
+  state.element.style.scale = prevScale;
+  return { boundingRect, origin, transform, unrotatedCardRect };
 };
 
 /**
@@ -314,57 +458,103 @@ const adjustVelocityForExit = (
   rect: DOMRect,
   animationDuration: number,
   discardStyle: DiscardStyle,
+  cards: HTMLElement,
   pass = 0
 ) => {
-  const originalRect = getUnrotatedRect(state, rect);
-  const { rotation } = getAnimationValues(state, animationDuration);
-  const rotatedRect = getRotatedBoundingBox(
-    new DOMRect(
-      originalRect.x,
-      originalRect.y,
-      originalRect.width,
-      originalRect.height
-    ),
-    rotation,
-    state.pivotX,
-    state.pivotY
+  if (!state.element) {
+    return;
+  }
+  const nextCardsRect = getStackFutureBoundingBox(cards, state.element);
+  const { boundingRect } = getCurrentFinalRect(
+    state as DraggingState & { element: HTMLElement },
+    rect,
+    animationDuration
   );
 
+  if (DEBUG) {
+    drawRect(nextCardsRect, "original-rect");
+  }
+
   const isHorizontal =
-    Math.abs(state.velocityX) >= Math.abs(state.velocityY) ||
     Math.abs(state.startX - state.lastX) >=
-      Math.abs(state.startY - state.lastY);
+    Math.abs(state.startY - state.lastY);
 
   if (isHorizontal) {
     adjustHorizontalVelocityForExit(
       state,
-      rect,
-      originalRect,
-      rotatedRect,
+      nextCardsRect,
+      boundingRect,
       animationDuration,
-      discardStyle,
-      pass
+      discardStyle
     );
   } else {
     adjustVerticalVelocityForExit(
       state,
-      rect,
-      originalRect,
-      rotatedRect,
+      nextCardsRect,
+      boundingRect,
       animationDuration,
-      discardStyle,
-      pass
+      discardStyle
     );
   }
 
-  if (pass === 0 && discardStyle === "sendToBack") {
+  const iterations = 3;
+  if (pass <= iterations && discardStyle === "sendToBack") {
     adjustVelocityForExit(
       state,
       rect,
       animationDuration,
       discardStyle,
+      cards,
       pass + 1
     );
+  }
+
+  if (DEBUG) {
+    const { boundingRect, origin, transform } = getCurrentFinalRect(
+      state as DraggingState & { element: HTMLElement },
+      rect,
+      animationDuration
+    );
+    drawRect(boundingRect, "bounding-rect");
+    const card = getCard(state.element);
+    if (card instanceof HTMLElement) {
+      const wrapperRect = getElementRectWithoutTransforms(state.element);
+      const { element: wrapper } = drawRect(
+        wrapperRect,
+        "wrapper",
+        "transparent"
+      );
+      wrapper.style.transformOrigin = origin;
+      wrapper.style.transform = transform;
+      wrapper.style.rotate = "0deg";
+      wrapper.style.translate = "none";
+      wrapper.style.scale = "1";
+      const prevTranslate = state.element.style.translate;
+      const prevRotate = state.element.style.rotate;
+      const prevScale = state.element.style.scale;
+      const prevTransform = state.element.style.transform;
+      state.element.style.translate = "none";
+      state.element.style.rotate = "0deg";
+      state.element.style.scale = "1";
+      state.element.style.transform = "none";
+      const rect = getElementRectWithoutTransforms(card, true);
+      const top = rect.top - wrapperRect.top;
+      const left = rect.left - wrapperRect.left;
+      const { element: div } = drawRect(rect, "rect");
+      div.style.position = "absolute";
+      div.style.left = `${left}px`;
+      div.style.top = `${top}px`;
+      div.style.transform = card.style.transform;
+      div.style.transformOrigin = card.style.transformOrigin;
+      div.style.rotate = card.style.rotate;
+      div.style.translate = card.style.translate;
+      div.style.scale = card.style.scale;
+      wrapper.appendChild(div);
+      state.element.style.translate = prevTranslate;
+      state.element.style.rotate = prevRotate;
+      state.element.style.scale = prevScale;
+      state.element.style.transform = prevTransform;
+    }
   }
 };
 
@@ -454,10 +644,15 @@ const animateSwipedElement = (
   );
   const prevTranslate = element.style.translate;
   const prevRotate = element.style.rotate;
-  const originalRect = getElementRectWithoutTransforms(element);
-  element.style.transformOrigin = `${
+  const card = getCard(element);
+  const originalRect =
+    card instanceof HTMLElement
+      ? getElementRectWithoutTransforms(card, true)
+      : getElementRectWithoutTransforms(element, true);
+  const origin = `${
     state.pivotX * originalRect.width + originalRect.width / 2
   }px ${state.pivotY * originalRect.height + originalRect.height / 2}px`;
+  element.style.transformOrigin = origin;
   const [translateX = 0, translateY = 0] = prevTranslate
     .split(" ")
     .map((v) => parseFloat(v));
@@ -473,21 +668,22 @@ const animateSwipedElement = (
       : cssEasing["--ease-out-cubic"],
     fill: "forwards",
   };
+  const transform = `translate(${
+    isTranslatedEnough ? translateX : distanceX
+  }px, ${isTranslatedEnough ? translateY : distanceY}px) rotate(${
+    isTranslatedEnough ? parseFloat(prevRotate) : rotation
+  }deg)`;
+
   const animation = element.animate(
     {
       scale: discardStyle === "fling" ? [0.9] : [1],
       rotate: ["0deg"],
       translate: ["none"],
-      transform: [
-        `translate(${isTranslatedEnough ? translateX : distanceX}px, ${
-          isTranslatedEnough ? translateY : distanceY
-        }px) rotate(${
-          isTranslatedEnough ? parseFloat(prevRotate) : rotation
-        }deg)`,
-      ],
+      transform: [transform],
     },
     { ...options, duration: isTranslatedEnough ? 0 : animationDuration }
   );
+
   const animation2 =
     discardStyle === "fling"
       ? element.animate(
@@ -518,44 +714,6 @@ const animateSwipedElement = (
   return { animations };
 };
 
-export const rotate = (point: Position, center: Position, radians: number) => {
-  const cos = Math.cos(radians),
-    sin = Math.sin(radians),
-    nx = cos * (point.x - center.x) + sin * (point.y - center.y) + center.x,
-    ny = cos * (point.y - center.y) - sin * (point.x - center.x) + center.y;
-  return { x: nx, y: ny };
-};
-
-function getRotatedBoundingBox(
-  rect: DOMRect,
-  rotationDegrees: number,
-  pivotX = 0,
-  pivotY = 0
-) {
-  const radians = -(rotationDegrees * Math.PI) / 180;
-  const centerX = rect.x + rect.width / 2;
-  const centerY = rect.y + rect.height / 2;
-  // pivotX and pivotY are percentages from -0.5 to 0.5 relative to the center
-  const pivotPointX = centerX + pivotX * rect.width;
-  const pivotPointY = centerY + pivotY * rect.height;
-  const topLeft = { x: rect.x, y: rect.y };
-  const topRight = { x: rect.x + rect.width, y: rect.y };
-  const bottomLeft = { x: rect.x, y: rect.y + rect.height };
-  const bottomRight = { x: rect.x + rect.width, y: rect.y + rect.height };
-  const pivot = { x: pivotPointX, y: pivotPointY };
-  const rotatedTopLeft = rotate(topLeft, pivot, radians);
-  const rotatedTopRight = rotate(topRight, pivot, radians);
-  const rotatedBottomLeft = rotate(bottomLeft, pivot, radians);
-  const rotatedBottomRight = rotate(bottomRight, pivot, radians);
-  const points = [
-    rotatedTopLeft,
-    rotatedTopRight,
-    rotatedBottomLeft,
-    rotatedBottomRight,
-  ];
-  return getPointsBoundingBox(points);
-}
-
 /**
  * Compute the velocity of the swipe gesture for the given pointer event
  */
@@ -580,6 +738,10 @@ const computeVelocity = (state: DraggingState, event: PointerEvent) => {
   state.lastTime = currentTime;
 };
 
+/**
+ * Returns true if the card should be returned to the stack, based on
+ * the velocity and drag distance
+ */
 const shouldReturnToStack = (state: DraggingState, rect: DOMRect) => {
   return (
     Math.abs(state.velocityX) < minVelocity &&
@@ -616,6 +778,7 @@ const useProgrammaticSwipe = () => {
         return;
       }
       const rect = element.getBoundingClientRect();
+      dragStateRef.current = { ...defaultDragState };
       const state = dragStateRef.current;
       state.element = element;
       state.dragging = true;
@@ -681,12 +844,26 @@ const useSwipeableCards = (
       if (!state.dragging || !element) {
         return;
       }
-      const rect = element.getBoundingClientRect();
+      const rect = getCard(element).getBoundingClientRect();
+      // const rect = getVisualBoundingBox(element, [element]);
       if (shouldReturnToStack(state, rect)) {
         animateReturnToStack(state, element);
         return;
       }
-      adjustVelocityForExit(state, rect, animationDuration, discardStyle);
+      const cards = rootRef.current?.querySelector<HTMLElement>(
+        "[data-swipeable-cards]"
+      );
+      if (!cards) {
+        throw new Error("No cards container found");
+      }
+      adjustVelocityForExit(
+        state,
+        rect,
+        animationDuration,
+        discardStyle,
+        cards,
+        0
+      );
       const discardedCardId = element.dataset.id ?? "";
       setDiscardedCardId(discardedCardId);
       const { animations } = animateSwipedElement(
@@ -833,6 +1010,7 @@ const SwipeableCardsCards = forwardRef<
     return (
       <div
         ref={ref}
+        data-swipeable-cards={""}
         {...rest}
         style={
           {
@@ -897,6 +1075,9 @@ const SwipeableCardsCard = forwardRef<HTMLDivElement, SwipeableCardsCardProps>(
           onDragStart?.(event);
         }}
         onPointerDown={(event) => {
+          if (stackIndex0 !== 0) {
+            return;
+          }
           event.preventDefault();
           event.currentTarget.setPointerCapture(event.pointerId);
           const dragState = dragStateRef.current;
@@ -932,7 +1113,7 @@ const SwipeableCardsCard = forwardRef<HTMLDivElement, SwipeableCardsCardProps>(
 
 SwipeableCardsCard.displayName = "SwipeableCardsCard";
 
-const SwipeableCardsDeclineButton = forwardRef<
+const SwipeableCardsSwipeLeftButton = forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement>
 >(({ children, className, onClick, ...rest }, ref) => {
@@ -956,6 +1137,8 @@ const SwipeableCardsDeclineButton = forwardRef<
           state.pivotY = Math.random() * 0.25 + 0.25;
           state.startX = 0;
           state.lastX = -1;
+          state.startY = 0;
+          state.lastY = 0;
         });
       }}
     >
@@ -964,9 +1147,9 @@ const SwipeableCardsDeclineButton = forwardRef<
   );
 });
 
-SwipeableCardsDeclineButton.displayName = "SwipeableCardsDeclineButton";
+SwipeableCardsSwipeLeftButton.displayName = "SwipeableCardsSwipeLeftButton";
 
-const SwipeableCardsAcceptButton = forwardRef<
+const SwipeableCardsSwipeRightButton = forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement>
 >(({ children, className, onClick, ...rest }, ref) => {
@@ -998,9 +1181,9 @@ const SwipeableCardsAcceptButton = forwardRef<
   );
 });
 
-SwipeableCardsAcceptButton.displayName = "SwipeableCardsAcceptButton";
+SwipeableCardsSwipeRightButton.displayName = "SwipeableCardsSwipeRightButton";
 
-const SwipeableCardsStarButton = forwardRef<
+const SwipeableCardsSwipeUpButton = forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement>
 >(({ children, className, onClick, ...rest }, ref) => {
@@ -1022,7 +1205,7 @@ const SwipeableCardsStarButton = forwardRef<
             discardStyle === "fling"
               ? -(Math.random() * 2 + 3) * yModifier
               : -0.15;
-          state.pivotX = Math.random() * 0.125 - 0.25;
+          state.pivotX = Math.random() * 0.25 * (Math.random() > 0.5 ? 1 : -1);
           state.pivotY = -(Math.random() * 0.25 + 0.25);
           state.startX = 0;
           state.lastX = 0;
@@ -1036,16 +1219,55 @@ const SwipeableCardsStarButton = forwardRef<
   );
 });
 
-SwipeableCardsStarButton.displayName = "SwipeableCardsStarButton";
+SwipeableCardsSwipeUpButton.displayName = "SwipeableCardsSwipeUpButton";
+
+const SwipeableCardsSwipeDownButton = forwardRef<
+  HTMLButtonElement,
+  ButtonHTMLAttributes<HTMLButtonElement>
+>(({ children, className, onClick, ...rest }, ref) => {
+  const { trigger, discardStyle } = useProgrammaticSwipe();
+  return (
+    <button
+      ref={ref}
+      {...rest}
+      className={[styles.button, className].filter(Boolean).join(" ")}
+      onClick={(event) => {
+        onClick?.(event);
+        trigger((state, rect) => {
+          const yModifier = rect.height / 442;
+          state.velocityX =
+            discardStyle === "fling"
+              ? Math.random() * 2 - 1
+              : Math.random() * 0.1 - 0.1;
+          state.velocityY =
+            discardStyle === "fling"
+              ? (Math.random() * 2 + 3) * yModifier
+              : 0.15;
+          state.pivotX = Math.random() * 0.25 * (Math.random() > 0.5 ? 1 : -1);
+          state.pivotY = -(Math.random() * 0.25 + 0.25);
+          state.startX = 0;
+          state.lastX = 0;
+          state.startY = 0;
+          state.lastY = 1;
+        });
+      }}
+    >
+      {children}
+    </button>
+  );
+});
+
+SwipeableCardsSwipeDownButton.displayName = "SwipeableCardsSwipeDownButton";
 
 export const SwipeableCards = {
   Root: SwipeableCardsRoot,
   Context: SwipeableCardsContext,
   Cards: SwipeableCardsCards,
   Card: SwipeableCardsCard,
-  AcceptButton: SwipeableCardsAcceptButton,
-  DeclineButton: SwipeableCardsDeclineButton,
-  StarButton: SwipeableCardsStarButton,
+  SwipeRightButton: SwipeableCardsSwipeRightButton,
+  SwipeLeftButton: SwipeableCardsSwipeLeftButton,
+  SwipeUpButton: SwipeableCardsSwipeUpButton,
+  SwipeDownButton: SwipeableCardsSwipeDownButton,
   useSwipeableCardsContext: () => useContext(SwipeableCardsContext),
   useSwipeableCardsStack: () => {
     const { stack } = useContext(SwipeableCardsContext);
