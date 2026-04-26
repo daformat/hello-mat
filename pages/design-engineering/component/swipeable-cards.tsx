@@ -17,9 +17,9 @@ import {
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import {
-  DiscardStyle,
   SwipeableCards,
   SwipeDirection,
+  swipeStyle,
 } from "@/components/SwipeableCards/SwipeableCards";
 import styles from "@/components/SwipeableCards/SwipeableCards.module.scss";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
@@ -145,7 +145,7 @@ const SwipeableCardsPageContent = () => {
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const demoRef = useRef<HTMLDivElement>(null);
-  const [discardStyle, setDiscardStyle] = useState<DiscardStyle>("fling");
+  const [swipeStyle, setswipeStyle] = useState<swipeStyle>("discard");
   const [loop, setLoop] = useState(true);
   const [animate, setAnimate] = useState(false);
   useCssSizeVariables(demoRef);
@@ -232,7 +232,11 @@ const SwipeableCardsPageContent = () => {
                   >
                     <SwipeableCards.Root
                       cards={[...cards]}
-                      discardStyle={discardStyle}
+                      swipeStyle={swipeStyle}
+                      sendToBackMargin={0}
+                      getCardElement={(element) => {
+                        return element.firstElementChild ?? element;
+                      }}
                       onSwipe={(direction, cardId) => {
                         setSwipedCards((prev) => {
                           const newSwipedCards = { ...prev };
@@ -314,10 +318,10 @@ const SwipeableCardsPageContent = () => {
                           }}
                         >
                           <Checkbox
-                            checked={discardStyle === "sendToBack"}
+                            checked={swipeStyle === "sendToBack"}
                             onChange={(event) => {
-                              setDiscardStyle(
-                                event.target.checked ? "sendToBack" : "fling"
+                              setswipeStyle(
+                                event.target.checked ? "sendToBack" : "discard"
                               );
                             }}
                           />
@@ -368,7 +372,10 @@ const SwipeableCardsPageContent = () => {
                   >
                     <SwipeableCards.Root
                       cards={[...cards]}
-                      discardStyle={discardStyle}
+                      swipeStyle={swipeStyle}
+                      getCardElement={(element) => {
+                        return element.firstElementChild ?? element;
+                      }}
                       onSwipe={(direction, cardId) => {
                         setSwipedCards((prev) => {
                           const newSwipedCards = { ...prev };
@@ -452,10 +459,10 @@ const SwipeableCardsPageContent = () => {
                           }}
                         >
                           <Checkbox
-                            checked={discardStyle === "sendToBack"}
+                            checked={swipeStyle === "sendToBack"}
                             onChange={(event) => {
-                              setDiscardStyle(
-                                event.target.checked ? "sendToBack" : "fling"
+                              setswipeStyle(
+                                event.target.checked ? "sendToBack" : "discard"
                               );
                             }}
                           />

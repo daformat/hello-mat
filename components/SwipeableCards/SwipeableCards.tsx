@@ -22,13 +22,18 @@ import { cssEasing } from "@/utils/cssEasing";
 
 import styles from "./SwipeableCards.module.scss";
 
+// Scales the pivot-weighted rotation so small drags don't over-rotate
 const rotationFactor = 0.1;
+// Maximum tilt angle (degrees) a card can reach while dragging or flying out
 const maxRotation = 32;
+// Minimum drag distance (as a fraction of card width) required to commit a swipe
 const minDistanceThreshold = 0.3;
+// Minimum pointer velocity (px/ms) required to commit a swipe on release
 const minVelocity = 0.15;
+// Reference length (px) used to normalise pivot offset in the rotation formula
 const rotationBasis = 250;
-// const sendToBackMargin = 0;
-const DEBUG = false;
+// Whether to enable debug mode (draws debug rectangles)
+const DEBUG = true;
 
 export type DraggingState = {
   // whether a card is being dragged
@@ -62,21 +67,39 @@ export type CardWithId = {
   card: JSX.Element;
 };
 
+export type SwipeDirection = "left" | "right" | "up" | "down";
+
+export type swipeStyle = "discard" | "sendToBack";
+
+export type GetCardElement = (element: Element) => Element;
+
 export type BaseSwipeableCardsProps = HTMLAttributes<HTMLDivElement> & {
+  // The initial cards to display in the stack
   cards: CardWithId[];
+  // Callback that is run when the user swipes a card
   onSwipe?: (direction: SwipeDirection, cardId: string) => void;
-  discardStyle?: DiscardStyle;
+  // The discard style when swiping,
+  swipeStyle?: swipeStyle;
+  // The optional margin to apply when swiping to the back, in pixels. Default is 0
+  sendToBackMargin?: number;
+  // Function that receives the Card element and returns the element to use for
+  // collision detection. For example, if you use padding around the actual card,
+  // by default we will include the padding in the collision detection.
+  // Returning a different element allows you to override this behavior.
+  getCardElement?: GetCardElement;
 };
 
-export type DiscardStyle = "fling" | "sendToBack";
-
 export type NotLoopingSwipeableProps = BaseSwipeableCardsProps & {
+  // Whether to loop the cards.
   loop?: false;
+  // The view to display when there are no more cards in the stack.
   emptyView: ReactNode;
 };
 
 export type LoopingSwipeableProps = BaseSwipeableCardsProps & {
+  // Whether to loop the cards.
   loop: true;
+  // The view to display when there are no more cards in the stack.
   emptyView?: never;
 };
 
@@ -99,8 +122,8 @@ const defaultDragState: DraggingState = {
   element: null,
 };
 
-const getCard = (element: Element) => {
-  return element.firstElementChild ?? element;
+const defaultGetCard: GetCardElement = (element) => {
+  return element;
 };
 
 /**
@@ -151,7 +174,7 @@ const animateReturnToStack = (state: DraggingState, element: HTMLElement) => {
 
 /**
  * Returns the visual bounding box of the given element, taking into account
- * any transforms applied to it or it's children.
+ * any transforms applied to it or its children.
  */
 const getVisualBoundingBox = (
   element: Element | Element[],
@@ -227,7 +250,11 @@ const getElementRectWithoutTransforms = (
  * Returns the element's bounding rect with all transforms temporarily stripped,
  * falling back to `fallback` if there is no element on the drag state.
  */
-const getUnrotatedRect = (state: DraggingState, fallback: DOMRect): DOMRect => {
+const getUnrotatedRect = (
+  state: DraggingState,
+  fallback: DOMRect,
+  getCard: GetCardElement
+): DOMRect => {
   if (state.element) {
     const card = getCard(state.element);
     if (card instanceof HTMLElement) {
@@ -237,6 +264,9 @@ const getUnrotatedRect = (state: DraggingState, fallback: DOMRect): DOMRect => {
   return fallback;
 };
 
+/**
+ * Returns a stable color derived from the given string
+ */
 const stringToColor = (str: string): string => {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -251,8 +281,14 @@ const stringToColor = (str: string): string => {
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 };
 
+/**
+ * Draws a rectangle on the page, with the given id and with an optional color.
+ * If the color is not provided, it will be derived from the id.
+ * If an element with the same id already exists, it will be replaced.
+ * @returns the element and the rect
+ */
 const drawRect = (
-  element: HTMLElement | DOMRect,
+  elementOrRect: HTMLElement | DOMRect,
   id = "rect",
   color?: string
 ) => {
@@ -261,7 +297,9 @@ const drawRect = (
     prevRect.remove();
   }
   const rect =
-    element instanceof HTMLElement ? getVisualBoundingBox(element) : element;
+    elementOrRect instanceof HTMLElement
+      ? getVisualBoundingBox(elementOrRect)
+      : elementOrRect;
   const rectElement = document.createElement("div");
   rectElement.dataset.debug = "";
   rectElement.style.position = "absolute";
@@ -282,7 +320,7 @@ const drawRect = (
 
 /**
  * Returns the future stack rect (after swiping the current card), so we can use
- * it to prevent collisions with the current card.
+ * it to prevent collisions with the card being swiped.
  */
 const getStackFutureBoundingBox = (
   cards: HTMLElement,
@@ -298,7 +336,7 @@ const getStackFutureBoundingBox = (
     }
   >();
   const cardsElements = cards.querySelectorAll<HTMLElement>("[data-card]");
-  // shift indices and disable animations to ensure final size is correct
+  // shift indices and disable animations to ensure final rect is accurate
   cardsElements.forEach((el, index, list) => {
     cache.set(el, {
       animation: el.style.animationDuration,
@@ -330,91 +368,105 @@ const getStackFutureBoundingBox = (
   return cardsRect;
 };
 
+/**
+ * Adjust the state horizontal velocity to ensure the element animates far
+ * enough (or close enough), so that
+ * - the element does not clip with the stack when `swipeStyle` is `sendToBack`
+ * - the element animates out of the viewport when `swipeStyle` is `discard`
+ */
 const adjustHorizontalVelocityForExit = (
   state: DraggingState,
   nextCardsRect: DOMRect,
   innerRect: DOMRect,
   animationDuration: number,
-  discardStyle: DiscardStyle
+  swipeStyle: swipeStyle,
+  sendToBackMargin: number,
+  maxOnly = false
 ) => {
   const isLeft = state.startX > state.lastX;
   const cardStackKey: keyof DOMRect = isLeft ? "left" : "right";
   const innerKey: keyof DOMRect = isLeft ? "right" : "left";
   const minDistance =
-    discardStyle === "sendToBack"
-      ? 0
+    swipeStyle === "sendToBack"
+      ? sendToBackMargin
       : isLeft
       ? nextCardsRect.right
       : window.innerWidth - nextCardsRect.left;
-  const maxDistance = discardStyle === "sendToBack" ? 0 : Infinity;
+  const maxDistance = swipeStyle === "sendToBack" ? sendToBackMargin : Infinity;
   const currentDistance =
     (nextCardsRect[cardStackKey] - innerRect[innerKey]) * (isLeft ? 1 : -1);
-  if (currentDistance < minDistance) {
+  if (currentDistance < minDistance && !maxOnly) {
     // boost velocity
-    // console.log("BOOSTING currentDistance", currentDistance);
-    if (discardStyle === "sendToBack") {
+    if (swipeStyle === "sendToBack") {
       state.velocityX +=
-        (currentDistance / animationDuration) * (isLeft ? 1 : -1);
+        ((minDistance - currentDistance) / animationDuration) *
+        (isLeft ? -1 : 1);
     } else {
       state.velocityX =
         (window.innerWidth / animationDuration) * (isLeft ? -1 : 1);
     }
   } else if (currentDistance > maxDistance) {
-    // console.log("LOWERING currentDistance", currentDistance);
     // lower velocity
     state.velocityX +=
-      (currentDistance / animationDuration) * (isLeft ? 1 : -1);
+      ((currentDistance - minDistance) / animationDuration) * (isLeft ? 1 : -1);
   }
 };
 
+/**
+ * Adjust the state vertical velocity to ensure the element animates far
+ * enough (or close enough), so that
+ * - the element does not clip with the stack when `swipeStyle` is `sendToBack`
+ * - the element animates out of the viewport when `swipeStyle` is `discard`
+ */
 const adjustVerticalVelocityForExit = (
   state: DraggingState,
   nextCardsRect: DOMRect,
   innerRect: DOMRect,
   animationDuration: number,
-  discardStyle: DiscardStyle
+  swipeStyle: swipeStyle,
+  sendToBackMargin: number,
+  maxOnly = false
 ) => {
   const isTop = state.startY > state.lastY;
   const cardStackKey: keyof DOMRect = isTop ? "top" : "bottom";
   const innerKey: keyof DOMRect = isTop ? "bottom" : "top";
   const minDistance =
-    discardStyle === "sendToBack"
-      ? 0
+    swipeStyle === "sendToBack"
+      ? sendToBackMargin
       : isTop
       ? nextCardsRect.bottom
       : window.innerHeight - nextCardsRect.top;
-  const maxDistance = discardStyle === "sendToBack" ? 0 : Infinity;
+  const maxDistance = swipeStyle === "sendToBack" ? sendToBackMargin : Infinity;
   const currentDistance =
     (nextCardsRect[cardStackKey] - innerRect[innerKey]) * (isTop ? 1 : -1);
-  if (currentDistance < minDistance) {
-    // console.log("BOOSTING currentDistance", currentDistance);
+  if (currentDistance < minDistance && !maxOnly) {
     // boost velocity
-    if (discardStyle === "sendToBack") {
+    if (swipeStyle === "sendToBack") {
       state.velocityY +=
-        (currentDistance / animationDuration) * (isTop ? 1 : -1);
+        ((minDistance - currentDistance) / animationDuration) *
+        (isTop ? -1 : 1);
     } else {
       state.velocityY =
         (window.innerHeight / animationDuration) * (isTop ? -1 : 1);
     }
   } else if (currentDistance > maxDistance) {
-    // console.log("LOWERING currentDistance", currentDistance);
     // lower velocity
-    state.velocityY += (currentDistance / animationDuration) * (isTop ? 1 : -1);
+    state.velocityY +=
+      ((currentDistance - minDistance) / animationDuration) * (isTop ? 1 : -1);
   }
 };
 
 /**
- * Returns the final rect for the dragged element, after applying velocity qnd rotation
- * @param state
- * @param rect
- * @param animationDuration
+ * Returns the final rect for the swiped element, after applying velocity and
+ * rotation, so we can proceed with collision detection and velocity adjustment.
  */
 const getCurrentFinalRect = (
   state: DraggingState & { element: HTMLElement },
   rect: DOMRect,
-  animationDuration: number
+  animationDuration: number,
+  getCard: GetCardElement
 ) => {
-  const unrotatedCardRect = getUnrotatedRect(state, rect);
+  const unrotatedCardRect = getUnrotatedRect(state, rect, getCard);
   const { rotation, distanceX, distanceY } = getAnimationValues(
     state,
     animationDuration
@@ -437,28 +489,31 @@ const getCurrentFinalRect = (
   state.element.style.scale = "1";
   const boundingRect = getVisualBoundingBox(
     state.element,
-    [state.element],
+    getCard(state.element) !== state.element ? [state.element] : [],
     false
   );
-  // const innerRect = s;
   state.element.style.transformOrigin = prevOrigin;
   state.element.style.transform = prevTransform;
   state.element.style.rotate = prevRotate;
   state.element.style.translate = prevTranslate;
   state.element.style.scale = prevScale;
-  return { boundingRect, origin, transform, unrotatedCardRect };
+  return { boundingRect, origin, transform, unrotatedCardRect, rotation };
 };
 
 /**
- * Boosts the velocity so that the element animates out of the viewport.
- * Called twice for `sendToBack` (pass 0 then pass 1) to refine the result.
+ * Boosts the velocity, so that:
+ * - the element animates out of the viewport when `swipeStyle` is `discard`.
+ * - the element does not clip with the stack when `swipeStyle` is `sendToBack`.
+ * Called recursively for `sendToBack` (pass 0 then pass 1) to refine the result.
  */
 const adjustVelocityForExit = (
   state: DraggingState,
   rect: DOMRect,
   animationDuration: number,
-  discardStyle: DiscardStyle,
+  swipeStyle: swipeStyle,
   cards: HTMLElement,
+  getCard: GetCardElement,
+  sendToBackMargin: number,
   pass = 0
 ) => {
   if (!state.element) {
@@ -468,7 +523,8 @@ const adjustVelocityForExit = (
   const { boundingRect } = getCurrentFinalRect(
     state as DraggingState & { element: HTMLElement },
     rect,
-    animationDuration
+    animationDuration,
+    getCard
   );
 
   if (DEBUG) {
@@ -485,35 +541,62 @@ const adjustVelocityForExit = (
       nextCardsRect,
       boundingRect,
       animationDuration,
-      discardStyle
+      swipeStyle,
+      sendToBackMargin
     );
+    if (swipeStyle === "sendToBack") {
+      adjustVerticalVelocityForExit(
+        state,
+        nextCardsRect,
+        boundingRect,
+        animationDuration,
+        swipeStyle,
+        sendToBackMargin,
+        true
+      );
+    }
   } else {
     adjustVerticalVelocityForExit(
       state,
       nextCardsRect,
       boundingRect,
       animationDuration,
-      discardStyle
+      swipeStyle,
+      sendToBackMargin
     );
+    if (swipeStyle === "sendToBack") {
+      adjustHorizontalVelocityForExit(
+        state,
+        nextCardsRect,
+        boundingRect,
+        animationDuration,
+        swipeStyle,
+        sendToBackMargin,
+        true
+      );
+    }
   }
 
   const iterations = 3;
-  if (pass <= iterations && discardStyle === "sendToBack") {
+  if (pass <= iterations && swipeStyle === "sendToBack") {
     adjustVelocityForExit(
       state,
       rect,
       animationDuration,
-      discardStyle,
+      swipeStyle,
       cards,
+      getCard,
+      sendToBackMargin,
       pass + 1
     );
   }
 
   if (DEBUG) {
-    const { boundingRect, origin, transform } = getCurrentFinalRect(
+    const { boundingRect, origin, transform, rotation } = getCurrentFinalRect(
       state as DraggingState & { element: HTMLElement },
       rect,
-      animationDuration
+      animationDuration,
+      getCard
     );
     drawRect(boundingRect, "bounding-rect");
     const card = getCard(state.element);
@@ -541,7 +624,6 @@ const adjustVelocityForExit = (
       const top = rect.top - wrapperRect.top;
       const left = rect.left - wrapperRect.left;
       const { element: div } = drawRect(rect, "rect");
-      div.style.position = "absolute";
       div.style.left = `${left}px`;
       div.style.top = `${top}px`;
       div.style.transform = card.style.transform;
@@ -558,20 +640,39 @@ const adjustVelocityForExit = (
   }
 };
 
-export type SwipeDirection = "left" | "right" | "up" | "down";
-
 /**
- * @returns the direction of the swipe, based on velocity
+ * @returns the direction of the swipe, based on velocity or on distance from
+ * the start position
  */
-const getSwipeDirection = (state: DraggingState): SwipeDirection => {
-  if (Math.abs(state.velocityX) >= Math.abs(state.velocityY)) {
-    if (state.velocityX > 0) {
+const getSwipeDirection = (
+  state: DraggingState,
+  useVelocity = true
+): SwipeDirection => {
+  if (useVelocity) {
+    if (Math.abs(state.velocityX) >= Math.abs(state.velocityY)) {
+      if (state.velocityX > 0) {
+        return "right";
+      } else {
+        return "left";
+      }
+    } else {
+      if (state.velocityY > 0) {
+        return "down";
+      } else {
+        return "up";
+      }
+    }
+  }
+  if (
+    Math.abs(state.lastX - state.startX) > Math.abs(state.lastY - state.startY)
+  ) {
+    if (state.lastX > state.startX) {
       return "right";
     } else {
       return "left";
     }
   } else {
-    if (state.velocityY > 0) {
+    if (state.lastY > state.startY) {
       return "down";
     } else {
       return "up";
@@ -580,8 +681,8 @@ const getSwipeDirection = (state: DraggingState): SwipeDirection => {
 };
 
 /**
- * Calculate rotation based on horizontal movement and pivot point, the further
- * from the center the pivot is, the more rotation per pixel moved
+ * Calculate rotation based on horizontal movement and pivot point. The further
+ * from the center the pivot is, the greater the rotation is
  */
 const getRotation = (
   distanceX: number,
@@ -599,7 +700,7 @@ const getRotation = (
 };
 
 /**
- * @returns the final animations values
+ * @returns the final animations values for card animating away from the stack animation
  */
 const getAnimationValues = (
   state: DraggingState,
@@ -633,7 +734,8 @@ const animateSwipedElement = (
   element: HTMLElement,
   state: DraggingState,
   animationDuration: number,
-  discardStyle: DiscardStyle,
+  swipeStyle: swipeStyle,
+  getCard: GetCardElement,
   manual?: boolean
 ) => {
   const [_emptyView, firstChild] = element.parentElement?.children ?? [];
@@ -676,7 +778,7 @@ const animateSwipedElement = (
 
   const animation = element.animate(
     {
-      scale: discardStyle === "fling" ? [0.9] : [1],
+      scale: swipeStyle === "discard" ? [0.9] : [1],
       rotate: ["0deg"],
       translate: ["none"],
       transform: [transform],
@@ -685,7 +787,7 @@ const animateSwipedElement = (
   );
 
   const animation2 =
-    discardStyle === "fling"
+    swipeStyle === "discard"
       ? element.animate(
           { opacity: [0] },
           { ...options, easing: cssEasing["--ease-in-cubic"] }
@@ -743,16 +845,19 @@ const computeVelocity = (state: DraggingState, event: PointerEvent) => {
  * the velocity and drag distance
  */
 const shouldReturnToStack = (state: DraggingState, rect: DOMRect) => {
+  const deltaX = state.startX - state.lastX;
+  const deltaY = state.startY - state.lastY;
+  const dominantDimension =
+    Math.abs(deltaX) >= Math.abs(deltaY) ? rect.width : rect.height;
   return (
     Math.abs(state.velocityX) < minVelocity &&
     Math.abs(state.velocityY) < minVelocity &&
-    Math.hypot(state.startX - state.lastX, state.startY - state.lastY) <
-      rect.width * minDistanceThreshold
+    Math.hypot(deltaX, deltaY) < dominantDimension * minDistanceThreshold
   );
 };
 
 /**
- * Returns a `trigger` function and the current `discardStyle` for use inside
+ * Returns a `trigger` function and the current `swipeStyle` for use inside
  * programmatic swipe buttons. `trigger` handles finding the top card element,
  * wiring up the drag state, and committing the swipe — the callback only needs
  * to set the velocity/pivot/position values that differ per direction.
@@ -763,7 +868,7 @@ const useProgrammaticSwipe = () => {
     stack,
     dragStateRef,
     commitSwipe,
-    discardStyle,
+    swipeStyle,
     rootRef,
   } = useContext(SwipeableCardsContext);
 
@@ -789,7 +894,7 @@ const useProgrammaticSwipe = () => {
     [commitSwipe, discardedCardId, dragStateRef, rootRef, stack]
   );
 
-  return { trigger, discardStyle };
+  return { trigger, swipeStyle };
 };
 
 const useSwipeableCards = (
@@ -797,7 +902,9 @@ const useSwipeableCards = (
   loop?: boolean,
   emptyView?: ReactNode,
   onSwipe?: (direction: SwipeDirection, cardId: string) => void,
-  discardStyle: DiscardStyle = "fling"
+  swipeStyle: swipeStyle = "discard",
+  getCardElement: GetCardElement = defaultGetCard,
+  sendToBackMargin = 0
 ) => {
   const [stack, setStack] = useState(cards);
   const [discardedCardId, setDiscardedCardId] = useState<string>("");
@@ -844,7 +951,7 @@ const useSwipeableCards = (
       if (!state.dragging || !element) {
         return;
       }
-      const rect = getCard(element).getBoundingClientRect();
+      const rect = getCardElement(element).getBoundingClientRect();
       // const rect = getVisualBoundingBox(element, [element]);
       if (shouldReturnToStack(state, rect)) {
         animateReturnToStack(state, element);
@@ -854,14 +961,18 @@ const useSwipeableCards = (
         "[data-swipeable-cards]"
       );
       if (!cards) {
-        throw new Error("No cards container found");
+        throw new Error(
+          "No cards container found, did you wrap cards within <SwipeableCards.Cards>?"
+        );
       }
       adjustVelocityForExit(
         state,
         rect,
         animationDuration,
-        discardStyle,
+        swipeStyle,
         cards,
+        getCardElement,
+        sendToBackMargin,
         0
       );
       const discardedCardId = element.dataset.id ?? "";
@@ -870,7 +981,8 @@ const useSwipeableCards = (
         element,
         state,
         animationDuration,
-        discardStyle,
+        swipeStyle,
+        getCardElement,
         manual
       );
       handleAnimationsFinished(animations, element);
@@ -881,7 +993,13 @@ const useSwipeableCards = (
       const swipeDirection = getSwipeDirection(state);
       onSwipe?.(swipeDirection, discardedCardId);
     },
-    [discardStyle, handleAnimationsFinished, onSwipe]
+    [
+      swipeStyle,
+      getCardElement,
+      handleAnimationsFinished,
+      onSwipe,
+      sendToBackMargin,
+    ]
   );
 
   return {
@@ -895,7 +1013,9 @@ const useSwipeableCards = (
     dragStateRef,
     animationRef,
     commitSwipe,
-    discardStyle,
+    swipeStyle,
+    getCardElement,
+    sendToBackMargin,
     rootRef,
   };
 };
@@ -913,8 +1033,10 @@ const SwipeableCardsContext = createContext<
   dragStateRef: { current: defaultDragState },
   animationRef: { current: [] },
   commitSwipe: () => undefined,
-  discardStyle: "fling",
+  swipeStyle: "discard",
   rootRef: { current: null },
+  getCardElement: defaultGetCard,
+  sendToBackMargin: 0,
 });
 
 export const SwipeableCardsRoot = forwardRef<
@@ -922,7 +1044,17 @@ export const SwipeableCardsRoot = forwardRef<
   SwipeableCardsProps
 >(
   (
-    { cards, loop, onSwipe, emptyView, discardStyle, children, ...rest },
+    {
+      cards,
+      loop,
+      onSwipe,
+      emptyView,
+      swipeStyle,
+      children,
+      getCardElement,
+      sendToBackMargin,
+      ...rest
+    },
     ref
   ) => {
     const context = useSwipeableCards(
@@ -930,7 +1062,9 @@ export const SwipeableCardsRoot = forwardRef<
       loop,
       emptyView,
       onSwipe,
-      discardStyle
+      swipeStyle,
+      getCardElement,
+      sendToBackMargin
     );
     const { dragStateRef, commitSwipe } = context;
 
@@ -1117,7 +1251,7 @@ const SwipeableCardsSwipeLeftButton = forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement>
 >(({ children, className, onClick, ...rest }, ref) => {
-  const { trigger, discardStyle } = useProgrammaticSwipe();
+  const { trigger, swipeStyle } = useProgrammaticSwipe();
   return (
     <button
       ref={ref}
@@ -1128,11 +1262,11 @@ const SwipeableCardsSwipeLeftButton = forwardRef<
         trigger((state, rect) => {
           const xModifier = rect.width / 442;
           state.velocityX =
-            discardStyle === "fling"
+            swipeStyle === "discard"
               ? -(Math.random() * 2 + 3) * xModifier
               : -0.15;
           state.velocityY =
-            discardStyle === "fling" ? -Math.random() : Math.random() * -0.14;
+            swipeStyle === "discard" ? -Math.random() : Math.random() * -0.14;
           state.pivotX = -(Math.random() * 0.25 + 0.25);
           state.pivotY = Math.random() * 0.25 + 0.25;
           state.startX = 0;
@@ -1153,7 +1287,7 @@ const SwipeableCardsSwipeRightButton = forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement>
 >(({ children, className, onClick, ...rest }, ref) => {
-  const { trigger, discardStyle } = useProgrammaticSwipe();
+  const { trigger, swipeStyle } = useProgrammaticSwipe();
   return (
     <button
       ref={ref}
@@ -1164,11 +1298,11 @@ const SwipeableCardsSwipeRightButton = forwardRef<
         trigger((state, rect) => {
           const xModifier = rect.width / 442;
           state.velocityX =
-            discardStyle === "fling"
+            swipeStyle === "discard"
               ? (Math.random() * 2 + 3) * xModifier
               : 0.15;
           state.velocityY =
-            discardStyle === "fling" ? Math.random() : Math.random() * 0.14;
+            swipeStyle === "discard" ? Math.random() : Math.random() * 0.14;
           state.pivotX = Math.random() * 0.25 + 0.25;
           state.pivotY = Math.random() * 0.25 + 0.25;
           state.startX = 0;
@@ -1187,7 +1321,7 @@ const SwipeableCardsSwipeUpButton = forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement>
 >(({ children, className, onClick, ...rest }, ref) => {
-  const { trigger, discardStyle } = useProgrammaticSwipe();
+  const { trigger, swipeStyle } = useProgrammaticSwipe();
   return (
     <button
       ref={ref}
@@ -1198,11 +1332,11 @@ const SwipeableCardsSwipeUpButton = forwardRef<
         trigger((state, rect) => {
           const yModifier = rect.height / 442;
           state.velocityX =
-            discardStyle === "fling"
+            swipeStyle === "discard"
               ? Math.random() * 2 - 1
               : Math.random() * 0.1 - 0.1;
           state.velocityY =
-            discardStyle === "fling"
+            swipeStyle === "discard"
               ? -(Math.random() * 2 + 3) * yModifier
               : -0.15;
           state.pivotX = Math.random() * 0.25 * (Math.random() > 0.5 ? 1 : -1);
@@ -1225,7 +1359,7 @@ const SwipeableCardsSwipeDownButton = forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement>
 >(({ children, className, onClick, ...rest }, ref) => {
-  const { trigger, discardStyle } = useProgrammaticSwipe();
+  const { trigger, swipeStyle } = useProgrammaticSwipe();
   return (
     <button
       ref={ref}
@@ -1236,11 +1370,11 @@ const SwipeableCardsSwipeDownButton = forwardRef<
         trigger((state, rect) => {
           const yModifier = rect.height / 442;
           state.velocityX =
-            discardStyle === "fling"
+            swipeStyle === "discard"
               ? Math.random() * 2 - 1
               : Math.random() * 0.1 - 0.1;
           state.velocityY =
-            discardStyle === "fling"
+            swipeStyle === "discard"
               ? (Math.random() * 2 + 3) * yModifier
               : 0.15;
           state.pivotX = Math.random() * 0.25 * (Math.random() > 0.5 ? 1 : -1);
@@ -1273,4 +1407,5 @@ export const SwipeableCards = {
     const { stack } = useContext(SwipeableCardsContext);
     return useMemo(() => stack, [stack]);
   },
+  useProgrammaticSwipe,
 };
