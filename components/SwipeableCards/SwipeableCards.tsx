@@ -33,7 +33,7 @@ const minVelocity = 0.15;
 // Reference length (px) used to normalise pivot offset in the rotation formula
 const rotationBasis = 250;
 // Whether to enable debug mode (draws debug rectangles)
-const DEBUG = true;
+const DEBUG = false;
 
 export type DraggingState = {
   // whether a card is being dragged
