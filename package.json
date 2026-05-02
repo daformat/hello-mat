@@ -23,7 +23,7 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@daformat/react-headless-carousel": "^1.0.11",
+    "@daformat/react-headless-carousel": "^1.0.14",
     "next": "15.3.6",
     "next-seo": "^6.8.0",
     "radix-ui": "^1.4.3",

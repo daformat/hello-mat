@@ -650,7 +650,11 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
         />
         <p>
           Open the repo in{" "}
-          <a href="https://github.com/daformat/react-headless-carousel" target="_blank" rel="noopener">
+          <a
+            href="https://github.com/daformat/react-headless-carousel"
+            target="_blank"
+            rel="noopener"
+          >
             Github
           </a>
         </p>

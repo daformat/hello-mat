@@ -17,6 +17,7 @@
   // stylelint-disable-next-line
   -webkit-user-select: none;
   user-select: none;
+  z-index: 100;
 
   &:global {
     animation: scale-in 0.1s ease-out both, fade-in 0.1s ease-out both;

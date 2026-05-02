@@ -10,8 +10,6 @@
 }
 
 .carousel_viewport {
-  scroll-snap-type: x mandatory;
-
   &::-webkit-scrollbar {
     display: none; /* Older Safari and Chromium */
   }
