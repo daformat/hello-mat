@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  ComponentPropsWithoutRef,
   Dispatch,
   SetStateAction,
   useContext,
@@ -121,25 +122,50 @@ const cards = cardsSources.map(({ id, light, dark, rotation }, index) => ({
   rotation,
 }));
 
-const SwipeableCards2 = () => {
-  const stack = SwipeableCards.useSwipeableCardsStack();
-  return stack.map((card) => {
-    return (
-      <SwipeableCards.Card key={card.id} card={card} className={styles.card2}>
-        <div
-          style={{
-            transformOrigin: "center",
-            rotate: `${
-              cards.find((c) => c.id === card.id.split("#")[0])?.rotation
-            }deg`,
-          }}
-        >
-          {card.card}
-        </div>
-      </SwipeableCards.Card>
-    );
-  });
-};
+const cards2 = cardsSources.map(({ id, light, dark, rotation }, index) => ({
+  id,
+  card: (
+    <picture
+      key={index}
+      className="card flat shadow"
+      style={{
+        display: "inline-block",
+        fontSize: 0,
+        padding: 8,
+        width: "100%",
+        transformOrigin: "center",
+        rotate: `${rotation}deg`,
+      }}
+    >
+      <source media="(prefers-color-scheme: dark)" srcSet={dark} />
+      <img
+        src={light}
+        alt=""
+        style={{ aspectRatio: "1200 / 630", width: "100%" }}
+      />
+    </picture>
+  ),
+}));
+
+// const SwipeableCards2 = () => {
+//   const stack = SwipeableCards.useSwipeableCardsStack();
+//   return stack.map((card) => {
+//     return (
+//       <SwipeableCards.CardWrapper key={card.id} card={card} className={styles.card2}>
+//         <div
+//           style={{
+//             transformOrigin: "center",
+//             rotate: `${
+//               cards.find((c) => c.id === card.id.split("#")[0])?.rotation
+//             }deg`,
+//           }}
+//         >
+//           {card.card}
+//         </div>
+//       </SwipeableCards.CardWrapper>
+//     );
+//   });
+// };
 
 const SwipeableCardsPageContent = () => {
   const tocContext = TableOfContents.useToc();
@@ -231,6 +257,8 @@ const SwipeableCardsPageContent = () => {
                     }}
                   >
                     <SwipeableCards.Root
+                      className={styles.cards_root}
+                      data-style={"stacked-offset"}
                       cards={[...cards]}
                       swipeStyle={swipeStyle}
                       sendToBackMargin={0}
@@ -371,7 +399,9 @@ const SwipeableCardsPageContent = () => {
                     }}
                   >
                     <SwipeableCards.Root
-                      cards={[...cards]}
+                      data-style={"stacked-rotation"}
+                      cards={[...cards2]}
+                      className={styles.cards_root}
                       swipeStyle={swipeStyle}
                       getCardElement={(element) => {
                         return element.firstElementChild ?? element;
@@ -417,9 +447,158 @@ const SwipeableCardsPageContent = () => {
                             setAnimate(false);
                           }
                         }}
+                      />
+                      <p
+                        style={{
+                          textAlign: "center",
+                          display: "flex",
+                          gap: 8,
+                          justifyContent: "center",
+                        }}
                       >
-                        <SwipeableCards2 />
-                      </SwipeableCards.Cards>
+                        <span>
+                          <SwipeableCards.SwipeLeftButton>
+                            <PiArrowFatLeftBold />
+                          </SwipeableCards.SwipeLeftButton>{" "}
+                          <SwipeableCards.SwipeUpButton>
+                            <PiArrowFatUpBold />
+                          </SwipeableCards.SwipeUpButton>{" "}
+                          <SwipeableCards.SwipeDownButton>
+                            <PiArrowFatDownBold />
+                          </SwipeableCards.SwipeDownButton>{" "}
+                          <SwipeableCards.SwipeRightButton>
+                            <PiArrowFatRightBold />
+                          </SwipeableCards.SwipeRightButton>
+                        </span>
+                      </p>
+                      <p
+                        style={{
+                          textAlign: "center",
+                          display: "flex",
+                          justifyContent: "center",
+                          gap: 8,
+                        }}
+                      >
+                        <label
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <Checkbox
+                            checked={swipeStyle === "sendToBack"}
+                            onChange={(event) => {
+                              setswipeStyle(
+                                event.target.checked ? "sendToBack" : "discard"
+                              );
+                            }}
+                          />
+                          <small style={{ opacity: 0.8 }}>send to back</small>
+                        </label>
+                        <label
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <Checkbox
+                            checked={loop}
+                            onChange={(event) => {
+                              setLoop(event.target.checked);
+                            }}
+                          />
+                          <small style={{ opacity: 0.8 }}>loop</small>
+                        </label>
+                      </p>
+                      <p
+                        style={{
+                          textAlign: "center",
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          gap: 8,
+                        }}
+                      >
+                        <StackStat />
+                        <AddMoreButton />
+                      </p>
+                    </SwipeableCards.Root>
+                  </div>
+                ),
+              },
+              {
+                id: "minimal",
+                trigger: "Minimal",
+                content: (
+                  <div
+                    style={{
+                      marginBlock: 32,
+                      maxWidth: 650,
+                      marginInline: "auto",
+                    }}
+                  >
+                    <SwipeableCards.Root
+                      data-style={"minimal"}
+                      className={styles.cards_root}
+                      sendToBackMargin={16}
+                      style={{
+                        margin: "auto",
+                        aspectRatio: "650 / 400",
+                      }}
+                      cards={[...cards]}
+                      swipeStyle={swipeStyle}
+                      getCardElement={(element) => {
+                        return element.firstElementChild ?? element;
+                      }}
+                      onSwipe={(direction, cardId) => {
+                        setSwipedCards((prev) => {
+                          const newSwipedCards = { ...prev };
+                          if (newSwipedCards[direction].includes(cardId)) {
+                            return prev;
+                          } else {
+                            Object.entries(newSwipedCards).forEach(
+                              ([key, value]) => {
+                                if (key !== direction) {
+                                  newSwipedCards[key as SwipeDirection] =
+                                    value.filter((id) => id !== cardId);
+                                } else {
+                                  newSwipedCards[key as SwipeDirection] = [
+                                    ...value,
+                                    cardId,
+                                  ];
+                                }
+                              }
+                            );
+                          }
+                          return newSwipedCards;
+                        });
+                      }}
+                      {...(loop
+                        ? { loop }
+                        : {
+                            loop,
+                            emptyView: (
+                              <EmptyView
+                                setAnimate={setAnimate}
+                                style={{ aspectRatio: "650 / 349" }}
+                              />
+                            ),
+                          })}
+                    >
+                      <SwipeableCards.Cards
+                        visibleStackLength={3}
+                        style={{ aspectRatio: "650 / 400" }}
+                        data-loop={loop ? "true" : "false"}
+                        data-animate-card={animate ? "true" : "false"}
+                        className={styles.swipeable_cards}
+                        onAnimationEnd={(event) => {
+                          if (event.animationName === styles.grow) {
+                            setAnimate(false);
+                          }
+                        }}
+                      />
                       <p
                         style={{
                           textAlign: "center",
@@ -542,9 +721,11 @@ const SwipeableCardsPageContent = () => {
 
 const EmptyView = ({
   setAnimate,
+  style,
+  ...props
 }: {
   setAnimate: Dispatch<SetStateAction<boolean>>;
-}) => {
+} & ComponentPropsWithoutRef<"div">) => {
   const { setStack, cards } = useContext(SwipeableCards.Context);
   return (
     <div
@@ -562,7 +743,9 @@ const EmptyView = ({
         flexDirection: "column",
         boxSizing: "border-box",
         gap: 8,
+        ...style,
       }}
+      {...props}
     >
       No more cards to show
       <button

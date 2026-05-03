@@ -335,7 +335,9 @@ const getStackFutureBoundingBox = (
       index0: string;
     }
   >();
-  const cardsElements = cards.querySelectorAll<HTMLElement>("[data-card]");
+  const cardsElements = cards.querySelectorAll<HTMLElement>(
+    "[data-swipeable-cards-card-wrapper]"
+  );
   // shift indices and disable animations to ensure final rect is accurate
   cardsElements.forEach((el, index, list) => {
     cache.set(el, {
@@ -878,7 +880,9 @@ const useProgrammaticSwipe = () => {
       if (discardedCardId || !last) {
         return;
       }
-      const element = rootRef.current?.querySelector(`[data-id="${last.id}"]`);
+      const element = rootRef.current?.querySelector(
+        `[data-swipeable-cards-id="${last.id}"]`
+      );
       if (!(element instanceof HTMLElement)) {
         return;
       }
@@ -958,7 +962,7 @@ const useSwipeableCards = (
         return;
       }
       const cards = rootRef.current?.querySelector<HTMLElement>(
-        "[data-swipeable-cards]"
+        "[data-swipeable-cards-cards]"
       );
       if (!cards) {
         throw new Error(
@@ -975,7 +979,7 @@ const useSwipeableCards = (
         sendToBackMargin,
         0
       );
-      const discardedCardId = element.dataset.id ?? "";
+      const discardedCardId = element.dataset.swipeableCardsId ?? "";
       setDiscardedCardId(discardedCardId);
       const { animations } = animateSwipedElement(
         element,
@@ -1104,7 +1108,11 @@ export const SwipeableCardsRoot = forwardRef<
 
     return (
       <SwipeableCardsContext.Provider value={context}>
-        <div ref={combineRefs(ref, context.rootRef)} {...rest}>
+        <div
+          ref={combineRefs(ref, context.rootRef)}
+          {...rest}
+          data-swipeable-cards-root={""}
+        >
           {children}
         </div>
       </SwipeableCardsContext.Provider>
@@ -1144,7 +1152,7 @@ const SwipeableCardsCards = forwardRef<
     return (
       <div
         ref={ref}
-        data-swipeable-cards={""}
+        data-swipeable-cards-cards={""}
         {...rest}
         style={
           {
@@ -1165,7 +1173,9 @@ const SwipeableCardsCards = forwardRef<
       >
         <div data-empty={""}>{emptyView ?? null}</div>
         {children ??
-          stack.map((card) => <SwipeableCardsCard card={card} key={card.id} />)}
+          stack.map((card) => (
+            <SwipeableCardsCardWrapper card={card} key={card.id} />
+          ))}
       </div>
     );
   }
@@ -1173,79 +1183,80 @@ const SwipeableCardsCards = forwardRef<
 
 SwipeableCardsCards.displayName = "SwipeableCardsCards";
 
-export type SwipeableCardsCardProps = HTMLAttributes<HTMLDivElement> &
+export type SwipeableCardsCardWrapperProps = HTMLAttributes<HTMLDivElement> &
   PropsWithChildren<{
     card: CardWithId;
   }>;
 
-const SwipeableCardsCard = forwardRef<HTMLDivElement, SwipeableCardsCardProps>(
-  ({ card, onDragStart, onPointerDown, style, children, ...rest }, ref) => {
-    const { discardedCardId, stack, dragStateRef, animationRef } = useContext(
-      SwipeableCardsContext
-    );
-    const isBeingDiscarded = discardedCardId === card.id;
-    const isDiscarding = !!discardedCardId;
-    const index = stack.findIndex((stackCard) => stackCard.id === card.id);
-    const stackIndex =
-      stack.length - (index + (isDiscarding && !isBeingDiscarded ? 1 : 0));
-    const stackIndex0 = stackIndex - 1;
+const SwipeableCardsCardWrapper = forwardRef<
+  HTMLDivElement,
+  SwipeableCardsCardWrapperProps
+>(({ card, onDragStart, onPointerDown, style, children, ...rest }, ref) => {
+  const { discardedCardId, stack, dragStateRef, animationRef } = useContext(
+    SwipeableCardsContext
+  );
+  const isBeingDiscarded = discardedCardId === card.id;
+  const isDiscarding = !!discardedCardId;
+  const index = stack.findIndex((stackCard) => stackCard.id === card.id);
+  const stackIndex =
+    stack.length - (index + (isDiscarding && !isBeingDiscarded ? 1 : 0));
+  const stackIndex0 = stackIndex - 1;
 
-    return (
-      <div
-        ref={ref}
-        data-card={""}
-        data-id={card.id}
-        data-top-card={stackIndex0 ? "false" : "true"}
-        style={
-          {
-            ...style,
-            "--stack-index": stackIndex,
-            "--stack-index0": stackIndex0,
-          } as CSSProperties
+  return (
+    <div
+      ref={ref}
+      data-swipeable-cards-card-wrapper={""}
+      data-swipeable-cards-id={card.id}
+      data-swipeable-cards-top-card={stackIndex0 ? "false" : "true"}
+      style={
+        {
+          ...style,
+          "--stack-index": stackIndex,
+          "--stack-index0": stackIndex0,
+        } as CSSProperties
+      }
+      {...rest}
+      onDragStart={(event) => {
+        event.preventDefault();
+        onDragStart?.(event);
+      }}
+      onPointerDown={(event) => {
+        if (stackIndex0 !== 0) {
+          return;
         }
-        {...rest}
-        onDragStart={(event) => {
-          event.preventDefault();
-          onDragStart?.(event);
-        }}
-        onPointerDown={(event) => {
-          if (stackIndex0 !== 0) {
-            return;
-          }
-          event.preventDefault();
-          event.currentTarget.setPointerCapture(event.pointerId);
-          const dragState = dragStateRef.current;
-          const rect = event.currentTarget.getBoundingClientRect();
-          const centerX = rect.left + rect.width / 2;
-          const centerY = rect.top + rect.height / 2;
-          dragState.dragging = true;
-          dragState.startX = event.clientX;
-          dragState.startY = event.clientY;
-          dragState.lastX = event.clientX;
-          dragState.lastY = event.clientY;
-          dragState.velocityX = 0;
-          dragState.velocityY = 0;
-          dragState.lastTime = Date.now();
-          dragState.draggingId = card.id;
-          dragState.pivotX = (event.clientX - centerX) / rect.width / 2;
-          dragState.pivotY = (event.clientY - centerY) / rect.height / 2;
-          dragState.element = event.currentTarget;
-          event.currentTarget.style.transformOrigin = `${
-            event.clientX - rect.left
-          }px ${event.clientY - rect.top}px`;
-          animationRef.current.forEach((animation) => {
-            animation.finish();
-          });
-          onPointerDown?.(event);
-        }}
-      >
-        {children ?? card.card}
-      </div>
-    );
-  }
-);
+        event.preventDefault();
+        event.currentTarget.setPointerCapture(event.pointerId);
+        const dragState = dragStateRef.current;
+        const rect = event.currentTarget.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        dragState.dragging = true;
+        dragState.startX = event.clientX;
+        dragState.startY = event.clientY;
+        dragState.lastX = event.clientX;
+        dragState.lastY = event.clientY;
+        dragState.velocityX = 0;
+        dragState.velocityY = 0;
+        dragState.lastTime = Date.now();
+        dragState.draggingId = card.id;
+        dragState.pivotX = (event.clientX - centerX) / rect.width / 2;
+        dragState.pivotY = (event.clientY - centerY) / rect.height / 2;
+        dragState.element = event.currentTarget;
+        event.currentTarget.style.transformOrigin = `${
+          event.clientX - rect.left
+        }px ${event.clientY - rect.top}px`;
+        animationRef.current.forEach((animation) => {
+          animation.finish();
+        });
+        onPointerDown?.(event);
+      }}
+    >
+      {children ?? card.card}
+    </div>
+  );
+});
 
-SwipeableCardsCard.displayName = "SwipeableCardsCard";
+SwipeableCardsCardWrapper.displayName = "SwipeableCardsCard";
 
 const SwipeableCardsSwipeLeftButton = forwardRef<
   HTMLButtonElement,
@@ -1397,7 +1408,7 @@ export const SwipeableCards = {
   Root: SwipeableCardsRoot,
   Context: SwipeableCardsContext,
   Cards: SwipeableCardsCards,
-  Card: SwipeableCardsCard,
+  CardWrapper: SwipeableCardsCardWrapper,
   SwipeRightButton: SwipeableCardsSwipeRightButton,
   SwipeLeftButton: SwipeableCardsSwipeLeftButton,
   SwipeUpButton: SwipeableCardsSwipeUpButton,
