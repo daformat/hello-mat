@@ -1,3 +1,8 @@
+import {
+  SwipeableCards,
+  SwipeDirection,
+  SwipeStyle,
+} from "@daformat/react-swipeable-cards";
 import Link from "next/link";
 import {
   ComponentPropsWithoutRef,
@@ -17,11 +22,6 @@ import {
 
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
-import {
-  SwipeableCards,
-  SwipeDirection,
-  swipeStyle,
-} from "@/components/SwipeableCards/SwipeableCards";
 import styles from "@/components/SwipeableCards/SwipeableCards.module.scss";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { Tabs } from "@/components/Tabs/Tabs";
@@ -171,7 +171,7 @@ const SwipeableCardsPageContent = () => {
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const demoRef = useRef<HTMLDivElement>(null);
-  const [swipeStyle, setswipeStyle] = useState<swipeStyle>("discard");
+  const [swipeStyle, setswipeStyle] = useState<SwipeStyle>("discard");
   const [loop, setLoop] = useState(true);
   const [animate, setAnimate] = useState(false);
   useCssSizeVariables(demoRef);
@@ -268,7 +268,7 @@ const SwipeableCardsPageContent = () => {
                       onSwipe={(direction, cardId) => {
                         setSwipedCards((prev) => {
                           const newSwipedCards = { ...prev };
-                          if (newSwipedCards[direction].includes(cardId)) {
+                          if (newSwipedCards[direction]?.includes(cardId)) {
                             return prev;
                           } else {
                             Object.entries(newSwipedCards).forEach(
@@ -316,16 +316,24 @@ const SwipeableCardsPageContent = () => {
                         }}
                       >
                         <span>
-                          <SwipeableCards.SwipeLeftButton>
+                          <SwipeableCards.SwipeLeftButton
+                            className={styles.button}
+                          >
                             <PiArrowFatLeftBold />
                           </SwipeableCards.SwipeLeftButton>{" "}
-                          <SwipeableCards.SwipeUpButton>
+                          <SwipeableCards.SwipeUpButton
+                            className={styles.button}
+                          >
                             <PiArrowFatUpBold />
                           </SwipeableCards.SwipeUpButton>{" "}
-                          <SwipeableCards.SwipeDownButton>
+                          <SwipeableCards.SwipeDownButton
+                            className={styles.button}
+                          >
                             <PiArrowFatDownBold />
                           </SwipeableCards.SwipeDownButton>{" "}
-                          <SwipeableCards.SwipeRightButton>
+                          <SwipeableCards.SwipeRightButton
+                            className={styles.button}
+                          >
                             <PiArrowFatRightBold />
                           </SwipeableCards.SwipeRightButton>
                         </span>
@@ -409,7 +417,7 @@ const SwipeableCardsPageContent = () => {
                       onSwipe={(direction, cardId) => {
                         setSwipedCards((prev) => {
                           const newSwipedCards = { ...prev };
-                          if (newSwipedCards[direction].includes(cardId)) {
+                          if (newSwipedCards[direction]?.includes(cardId)) {
                             return prev;
                           } else {
                             Object.entries(newSwipedCards).forEach(
@@ -457,16 +465,24 @@ const SwipeableCardsPageContent = () => {
                         }}
                       >
                         <span>
-                          <SwipeableCards.SwipeLeftButton>
+                          <SwipeableCards.SwipeLeftButton
+                            className={styles.button}
+                          >
                             <PiArrowFatLeftBold />
                           </SwipeableCards.SwipeLeftButton>{" "}
-                          <SwipeableCards.SwipeUpButton>
+                          <SwipeableCards.SwipeUpButton
+                            className={styles.button}
+                          >
                             <PiArrowFatUpBold />
                           </SwipeableCards.SwipeUpButton>{" "}
-                          <SwipeableCards.SwipeDownButton>
+                          <SwipeableCards.SwipeDownButton
+                            className={styles.button}
+                          >
                             <PiArrowFatDownBold />
                           </SwipeableCards.SwipeDownButton>{" "}
-                          <SwipeableCards.SwipeRightButton>
+                          <SwipeableCards.SwipeRightButton
+                            className={styles.button}
+                          >
                             <PiArrowFatRightBold />
                           </SwipeableCards.SwipeRightButton>
                         </span>
@@ -555,7 +571,7 @@ const SwipeableCardsPageContent = () => {
                       onSwipe={(direction, cardId) => {
                         setSwipedCards((prev) => {
                           const newSwipedCards = { ...prev };
-                          if (newSwipedCards[direction].includes(cardId)) {
+                          if (newSwipedCards[direction]?.includes(cardId)) {
                             return prev;
                           } else {
                             Object.entries(newSwipedCards).forEach(
@@ -608,16 +624,24 @@ const SwipeableCardsPageContent = () => {
                         }}
                       >
                         <span>
-                          <SwipeableCards.SwipeLeftButton>
+                          <SwipeableCards.SwipeLeftButton
+                            className={styles.button}
+                          >
                             <PiArrowFatLeftBold />
                           </SwipeableCards.SwipeLeftButton>{" "}
-                          <SwipeableCards.SwipeUpButton>
+                          <SwipeableCards.SwipeUpButton
+                            className={styles.button}
+                          >
                             <PiArrowFatUpBold />
                           </SwipeableCards.SwipeUpButton>{" "}
-                          <SwipeableCards.SwipeDownButton>
+                          <SwipeableCards.SwipeDownButton
+                            className={styles.button}
+                          >
                             <PiArrowFatDownBold />
                           </SwipeableCards.SwipeDownButton>{" "}
-                          <SwipeableCards.SwipeRightButton>
+                          <SwipeableCards.SwipeRightButton
+                            className={styles.button}
+                          >
                             <PiArrowFatRightBold />
                           </SwipeableCards.SwipeRightButton>
                         </span>

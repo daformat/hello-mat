@@ -20,8 +20,6 @@ import {
 import { MaybeNull } from "@/components/Media/utils/maybe";
 import { cssEasing } from "@/utils/cssEasing";
 
-import styles from "./SwipeableCards.module.scss";
-
 // Scales the pivot-weighted rotation so small drags don't over-rotate
 const rotationFactor = 0.1;
 // Maximum tilt angle (degrees) a card can reach while dragging or flying out
@@ -1122,11 +1120,19 @@ export const SwipeableCardsRoot = forwardRef<
 
 SwipeableCardsRoot.displayName = "SwipeableCardsRoot";
 
-export type SwipeableCardsCardsProps = HTMLAttributes<HTMLDivElement> &
-  PropsWithChildren<{
-    visibleStackLength?: number;
-    cardsTopDistance?: string;
-  }>;
+export type StackRenderer = (stack: CardWithId[]) => ReactNode;
+
+export type SwipeableCardsCardsProps = HTMLAttributes<HTMLDivElement> & {
+  visibleStackLength?: number;
+  cardsTopDistance?: string;
+  children?: ReactNode | StackRenderer;
+};
+
+const defaultStackRenderer: StackRenderer = (stack) => {
+  return stack.map((card) => (
+    <SwipeableCardsCardWrapper card={card} key={card.id} />
+  ));
+};
 
 const SwipeableCardsCards = forwardRef<
   HTMLDivElement,
@@ -1137,7 +1143,7 @@ const SwipeableCardsCards = forwardRef<
       visibleStackLength = 4,
       cardsTopDistance = "clamp(16px, 1vw, 32px)",
       style,
-      children,
+      children = defaultStackRenderer,
       ...rest
     },
     ref
@@ -1172,10 +1178,7 @@ const SwipeableCardsCards = forwardRef<
         }
       >
         <div data-empty={""}>{emptyView ?? null}</div>
-        {children ??
-          stack.map((card) => (
-            <SwipeableCardsCardWrapper card={card} key={card.id} />
-          ))}
+        {typeof children === "function" ? children(stack) : children}
       </div>
     );
   }
@@ -1261,13 +1264,12 @@ SwipeableCardsCardWrapper.displayName = "SwipeableCardsCard";
 const SwipeableCardsSwipeLeftButton = forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement>
->(({ children, className, onClick, ...rest }, ref) => {
+>(({ children, onClick, ...rest }, ref) => {
   const { trigger, swipeStyle } = useProgrammaticSwipe();
   return (
     <button
       ref={ref}
       {...rest}
-      className={[styles.button, className].filter(Boolean).join(" ")}
       onClick={(event) => {
         onClick?.(event);
         trigger((state, rect) => {
@@ -1297,13 +1299,12 @@ SwipeableCardsSwipeLeftButton.displayName = "SwipeableCardsSwipeLeftButton";
 const SwipeableCardsSwipeRightButton = forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement>
->(({ children, className, onClick, ...rest }, ref) => {
+>(({ children, onClick, ...rest }, ref) => {
   const { trigger, swipeStyle } = useProgrammaticSwipe();
   return (
     <button
       ref={ref}
       {...rest}
-      className={[styles.button, className].filter(Boolean).join(" ")}
       onClick={(event) => {
         onClick?.(event);
         trigger((state, rect) => {
@@ -1331,13 +1332,12 @@ SwipeableCardsSwipeRightButton.displayName = "SwipeableCardsSwipeRightButton";
 const SwipeableCardsSwipeUpButton = forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement>
->(({ children, className, onClick, ...rest }, ref) => {
+>(({ children, onClick, ...rest }, ref) => {
   const { trigger, swipeStyle } = useProgrammaticSwipe();
   return (
     <button
       ref={ref}
       {...rest}
-      className={[styles.button, className].filter(Boolean).join(" ")}
       onClick={(event) => {
         onClick?.(event);
         trigger((state, rect) => {
@@ -1369,13 +1369,12 @@ SwipeableCardsSwipeUpButton.displayName = "SwipeableCardsSwipeUpButton";
 const SwipeableCardsSwipeDownButton = forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement>
->(({ children, className, onClick, ...rest }, ref) => {
+>(({ children, onClick, ...rest }, ref) => {
   const { trigger, swipeStyle } = useProgrammaticSwipe();
   return (
     <button
       ref={ref}
       {...rest}
-      className={[styles.button, className].filter(Boolean).join(" ")}
       onClick={(event) => {
         onClick?.(event);
         trigger((state, rect) => {

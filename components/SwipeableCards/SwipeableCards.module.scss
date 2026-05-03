@@ -42,7 +42,7 @@
     }
 
     &[data-animate-card="true"] {
-      [data-card] {
+      [data-swipeable-cards-card-wrapper] {
         animation: grow 0.2s var(--ease-out-cubic);
       }
     }
