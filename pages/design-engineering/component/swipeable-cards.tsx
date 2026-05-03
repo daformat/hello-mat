@@ -963,7 +963,7 @@ const SwipeableCardsPageContent = (props: CodeBlocks) => {
           ]}
         />
 
-        <h2 id="install">Code sample</h2>
+        <h2 id="code-sample">Code sample</h2>
         <p>
           Below is a minimal example to reproduce the examples above, view the
           full{" "}
