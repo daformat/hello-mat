@@ -568,6 +568,17 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
           </Carousel.Root>
         </section>
         <h2 id="install">Install</h2>
+        <p>
+          Open the repo in{" "}
+          <a
+            href="https://github.com/daformat/react-headless-carousel"
+            target="_blank"
+            rel="noopener"
+          >
+            Github
+          </a>{" "}
+          (and drop a star if you like it!)
+        </p>
         <Tabs
           defaultValue="install-npm"
           tabs={[
@@ -648,16 +659,6 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
             },
           ]}
         />
-        <p>
-          Open the repo in{" "}
-          <a
-            href="https://github.com/daformat/react-headless-carousel"
-            target="_blank"
-            rel="noopener"
-          >
-            Github
-          </a>
-        </p>
         <h2 id="things-to-try">Things to try</h2>
         <h3 id="momentum-scrolling">Momentum scrolling</h3>
         <p>

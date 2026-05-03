@@ -3,6 +3,7 @@ import {
   SwipeDirection,
   SwipeStyle,
 } from "@daformat/react-swipeable-cards";
+import { GetStaticProps } from "next";
 import Link from "next/link";
 import {
   ComponentPropsWithoutRef,
@@ -19,6 +20,12 @@ import {
   PiArrowFatRightBold,
   PiArrowFatUpBold,
 } from "react-icons/pi";
+import {
+  BundledLanguage,
+  BundledTheme,
+  CodeToHastOptions,
+  codeToHtml,
+} from "shiki";
 
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
@@ -32,15 +39,174 @@ import {
 } from "@/constants/design-engineering/components";
 import { useCssSizeVariables } from "@/hooks/useCssSizeVariables";
 
+const tsxSource = `
+// full source: https://github.com/daformat/hello-mat/blob/master/pages/design-engineering/component/swipeable-cards.tsx
+
+<SwipeableCards.Root
+  cards={[...cards /* omitted for brevity */ ]}
+  className={styles.cards_root}
+  data-style={"stacked-offset" /* "stacked-rotation" | "minimal" */}
+  swipeStyle={"sendToBack"}
+  sendToBackMargin={16}
+  loop
+>
+  <SwipeableCards.Cards
+    visibleStackLength={4}
+    style={{ aspectRatio: "650 / 400" }}
+  />
+</SwipeableCards.Root>
+`.trim();
+
+const cssSource = `
+/* full source: https://github.com/daformat/hello-mat/blob/master/components/SwipeableCards/SwipeableCards.module.scss */
+
+.cards_root {
+  --ease-out-cubic: cubic-bezier(0.215, 0.61, 0.355, 1);
+
+  [data-swipeable-cards-cards] {
+    display: grid;
+    grid-template-columns: 1fr;
+    place-content: center;
+    position: relative;
+    touch-action: none;
+    z-index: 1;
+
+    [data-swipeable-cards-card-wrapper] {
+      align-content: center;
+      align-self: center;
+      grid-area: 1 / 1;
+      opacity: calc(
+        1 - clamp(0, var(--stack-index0) - var(--visible-stack-length), 1)
+      );
+      touch-action: none;
+      transform-origin: center 0;
+      transition: all 0.2s var(--ease-out-cubic);
+      transition-property: opacity, scale, padding-top, margin-top;
+      width: 100%;
+      will-change: opacity, scale, padding-top, margin-top, transform;
+    }
+  }
+
+  &:is([data-style="stacked-offset"], [data-style="stacked-rotation"]) {
+    [data-swipeable-cards-cards] {
+      [data-swipeable-cards-card-wrapper] {
+        scale: calc(
+          100% - min(var(--stack-index0), var(--visible-stack-length)) * 10%
+        );
+      }
+    }
+  }
+
+  &[data-style="stacked-offset"] {
+    [data-swipeable-cards-cards] {
+      [data-swipeable-cards-card-wrapper] {
+        --p: calc(
+          var(--card-top-distance, 0) *
+            max(var(--visible-stack-length) - var(--stack-index0), 0)
+        );
+        --m: calc(
+          var(--card-top-distance, 0) *
+            (
+              var(--visible-stack-length) -
+                max(var(--visible-stack-length) - var(--stack-index0), 0)
+            )
+        );
+        margin-top: calc(var(--m) * -1);
+        padding-top: calc(var(--p));
+      }
+    }
+  }
+}
+`.trim();
+
+interface CodeBlocks {
+  tsx: string;
+  css: string;
+  installInstructionsNpm: string;
+  installInstructionsYarn: string;
+  installInstructionsPnpm: string;
+  installInstructionsBun: string;
+  installInstructionsDeno: string;
+}
+
+export const getStaticProps: GetStaticProps<CodeBlocks> = async () => {
+  const getOptions = (
+    lang: BundledLanguage
+  ): CodeToHastOptions<BundledLanguage, BundledTheme> => ({
+    lang,
+    themes: {
+      light: "vitesse-light",
+      dark: "houston",
+    },
+    tabindex: false,
+  });
+
+  const tsx = await codeToHtml(tsxSource, getOptions("tsx"));
+
+  const css = await codeToHtml(cssSource, getOptions("css"));
+
+  const installInstructionsSourceNpm = `
+npm install @daformat/react-swipeable-cards
+  `.trim();
+  const installInstructionsNpm = await codeToHtml(
+    installInstructionsSourceNpm,
+    getOptions("bash")
+  );
+
+  const installInstructionsSourceYarn = `
+yarn add @daformat/react-swipeable-cards
+  `.trim();
+  const installInstructionsYarn = await codeToHtml(
+    installInstructionsSourceYarn,
+    getOptions("bash")
+  );
+
+  const installInstructionsSourcePnpm = `
+pnpm add @daformat/react-swipeable-cards
+  `.trim();
+  const installInstructionsPnpm = await codeToHtml(
+    installInstructionsSourcePnpm,
+    getOptions("bash")
+  );
+
+  const installInstructionsSourceBun = `
+bun add @daformat/react-swipeable-cards
+  `.trim();
+  const installInstructionsBun = await codeToHtml(
+    installInstructionsSourceBun,
+    getOptions("bash")
+  );
+
+  const installInstructionsSourceDeno = `
+deno add npm:@daformat/react-swipeable-cards
+  `.trim();
+  const installInstructionsDeno = await codeToHtml(
+    installInstructionsSourceDeno,
+    getOptions("bash")
+  );
+
+  return {
+    props: {
+      tsx,
+      css,
+      installInstructionsNpm,
+      installInstructionsYarn,
+      installInstructionsPnpm,
+      installInstructionsBun,
+      installInstructionsDeno,
+    },
+  };
+};
+
 const componentId: ComponentId = "swipeable-cards";
 
-const SwipeableCardsPage = () => {
+const SwipeableCardsPage = (props: CodeBlocks) => {
   const component = COMPONENTS[componentId];
   return (
     <>
       <PageMetas {...component.metas} />
       <TableOfContents.Provider>
-        <SwipeableCardsPageContent />
+        <SwipeableCardsPageContent {...props} />
       </TableOfContents.Provider>
     </>
   );
@@ -167,7 +333,7 @@ const cards2 = cardsSources.map(({ id, light, dark, rotation }, index) => ({
 //   });
 // };
 
-const SwipeableCardsPageContent = () => {
+const SwipeableCardsPageContent = (props: CodeBlocks) => {
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const demoRef = useRef<HTMLDivElement>(null);
@@ -300,7 +466,6 @@ const SwipeableCardsPageContent = () => {
                         style={{ aspectRatio: "650 / 400" }}
                         data-loop={loop ? "true" : "false"}
                         data-animate-card={animate ? "true" : "false"}
-                        className={styles.swipeable_cards}
                         onAnimationEnd={(event) => {
                           if (event.animationName === styles.grow) {
                             setAnimate(false);
@@ -449,7 +614,6 @@ const SwipeableCardsPageContent = () => {
                         style={{ aspectRatio: "650 / 400" }}
                         data-loop={loop ? "true" : "false"}
                         data-animate-card={animate ? "true" : "false"}
-                        className={styles.swipeable_cards}
                         onAnimationEnd={(event) => {
                           if (event.animationName === styles.grow) {
                             setAnimate(false);
@@ -608,7 +772,6 @@ const SwipeableCardsPageContent = () => {
                         style={{ aspectRatio: "650 / 400" }}
                         data-loop={loop ? "true" : "false"}
                         data-animate-card={animate ? "true" : "false"}
-                        className={styles.swipeable_cards}
                         onAnimationEnd={(event) => {
                           if (event.animationName === styles.grow) {
                             setAnimate(false);
@@ -707,6 +870,160 @@ const SwipeableCardsPageContent = () => {
           />
         </div>
 
+        <h2 id="install">Install</h2>
+        <p>
+          Open the repo in{" "}
+          <a
+            href="https://github.com/daformat/react-swipeable-cards"
+            target="_blank"
+            rel="noopener"
+          >
+            Github
+          </a>{" "}
+          (and drop a star if you like it!)
+        </p>
+        <Tabs
+          defaultValue="install-npm"
+          tabs={[
+            {
+              id: "install-npm",
+              trigger: (
+                <h4 id="install-npm" data-no-toc={""}>
+                  npm
+                </h4>
+              ),
+              content: (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: props.installInstructionsNpm,
+                  }}
+                />
+              ),
+            },
+            {
+              id: "install-yarn",
+              trigger: (
+                <h4 id="install-yarn" data-no-toc={""}>
+                  yarn
+                </h4>
+              ),
+              content: (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: props.installInstructionsYarn,
+                  }}
+                />
+              ),
+            },
+            {
+              id: "install-pnpm",
+              trigger: (
+                <h4 id="install-pnpm" data-no-toc={""}>
+                  pnpm
+                </h4>
+              ),
+              content: (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: props.installInstructionsPnpm,
+                  }}
+                />
+              ),
+            },
+            {
+              id: "install-bun",
+              trigger: (
+                <h4 id="install-bun" data-no-toc={""}>
+                  bun
+                </h4>
+              ),
+              content: (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: props.installInstructionsBun,
+                  }}
+                />
+              ),
+            },
+            {
+              id: "install-deno",
+              trigger: (
+                <h4 id="install-deno" data-no-toc={""}>
+                  deno
+                </h4>
+              ),
+              content: (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: props.installInstructionsDeno,
+                  }}
+                />
+              ),
+            },
+          ]}
+        />
+
+        <h2 id="install">Code sample</h2>
+        <p>
+          Below is a minimal example to reproduce the examples above, view the
+          full{" "}
+          <a
+            href={
+              "https://github.com/daformat/hello-mat/blob/master/pages/design-engineering/component/swipeable-cards.tsx"
+            }
+            target="_blank"
+            rel="noopener"
+          >
+            tsx
+          </a>{" "}
+          and{" "}
+          <a
+            href={
+              "https://github.com/daformat/hello-mat/blob/master/components/SwipeableCards/SwipeableCards.module.scss"
+            }
+            target="_blank"
+            rel="noopener"
+          >
+            scss
+          </a>{" "}
+          on github
+        </p>
+        <Tabs
+          defaultValue="tsx"
+          tabs={[
+            {
+              id: "tsx",
+              trigger: (
+                <h4 id="tsx" data-no-toc={""}>
+                  tsx
+                </h4>
+              ),
+              content: (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: props.tsx,
+                  }}
+                />
+              ),
+            },
+            {
+              id: "css",
+              trigger: (
+                <h4 id="css" data-no-toc={""}>
+                  css
+                </h4>
+              ),
+              content: (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: props.css,
+                  }}
+                />
+              ),
+            },
+          ]}
+        />
+
         <h2 id="swipe-gesture">Swipe gestures</h2>
         <p>
           Performing swipe gestures on the web is not a native feature, so
@@ -728,6 +1045,20 @@ const SwipeableCardsPageContent = () => {
           When using buttons, the user didn’t actually perform a swipe gesture,
           so we need to simulate it. We do this by mocking the dragging state,
           so that the card properly animates out.
+        </p>
+        <h2 id="send-to-back">Sending to back</h2>
+        <p>
+          When sending the cards to the back of the stack, we need to ensure the
+          swiped card has travelled enough so that when swapping its z-index,
+          the card doesn’t overlap the stack. Many implementations disregard
+          this issue, as this is not trivial to implement. This package properly
+          ensures that, no more partial clipping when sending a card to the
+          bottom of the stack!
+        </p>
+        <p>
+          The component allows you to customize the margin by using the{" "}
+          <code>sendToBackMargin</code> prop, which is used to specify the
+          pixels-based distance to enforce when sending a card to the back.
         </p>
         <h2 id="conclusion">That’s a wrap</h2>
         <p>
