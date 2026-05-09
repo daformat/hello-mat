@@ -311,7 +311,9 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
           possible to the physical split-flap displays: the flaps really do
           rotate along the drum (try checking the <code>Rotate display</code>{" "}
           option). Even tough there may be shortcomings to this approach,
-          I&nbsp;took it as a chance to practice.
+          I&nbsp;took it as a chance to practice. You can{" "}
+          <a href="#install">install</a> the open-source package and star adding
+          split-flap displays to your site or application
         </p>
 
         <h2 id="install">Install</h2>
@@ -676,7 +678,11 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
           </a>{" "}
           on github
         </p>
-        <p><strong>Note:</strong> you will likely want to set `perspective: 550px;` (or any other value) and `transform-style: preserve-3d;` on the root `<div></p>
+        <p>
+          <strong>Note:</strong> you will likely want to set `perspective:
+          550px;` (or any other value) and `transform-style: preserve-3d;` on
+          the root.
+        </p>
         <Tabs
           defaultValue="tsx"
           tabs={[
