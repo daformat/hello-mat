@@ -12,8 +12,8 @@ importers:
         specifier: ^1.0.14
         version: 1.0.14(react@19.2.1)
       '@daformat/react-swipeable-cards':
-        specifier: ^1.0.1
-        version: 1.0.1(react@19.2.1)
+        specifier: ^1.0.2
+        version: 1.0.2(react@19.2.1)
       next:
         specifier: 15.3.6
         version: 15.3.6(@babel/core@7.28.5)(@playwright/test@1.56.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(sass@1.93.2)
@@ -314,8 +314,8 @@ packages:
     peerDependencies:
       react: '>=18'
 
-  '@daformat/react-swipeable-cards@1.0.1':
-    resolution: {integrity: sha512-DsHmQaEMIpMzvUCRHq3NeRcgw2aW+VIwJlF6J3nLt3Dyn7tfzWj++YdXTBPEgmtIvBMkaiitGIK9BnYojyP87g==}
+  '@daformat/react-swipeable-cards@1.0.2':
+    resolution: {integrity: sha512-GxTEK/O1zjzGV5pFkgvK7fVz/xRtC2iy3iBBVidt2yOPuljjehq5T/ee5proxox/x4pkUrRlwJoN1j6sSFRTTA==}
     peerDependencies:
       react: '>=18'
 
@@ -4545,7 +4545,7 @@ snapshots:
     dependencies:
       react: 19.2.1
 
-  '@daformat/react-swipeable-cards@1.0.1(react@19.2.1)':
+  '@daformat/react-swipeable-cards@1.0.2(react@19.2.1)':
     dependencies:
       react: 19.2.1
 

@@ -337,7 +337,13 @@ const SwipeableCardsPageContent = (props: CodeBlocks) => {
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const demoRef = useRef<HTMLDivElement>(null);
-  const [swipeStyle, setswipeStyle] = useState<SwipeStyle>("discard");
+  const [swipeStyle, setSwipeStyle] = useState<SwipeStyle>("discard");
+  const [allowedDirections, setAllowedDirections] = useState<SwipeDirection[]>([
+    "up",
+    "down",
+    "left",
+    "right",
+  ]);
   const [loop, setLoop] = useState(true);
   const [animate, setAnimate] = useState(false);
   useCssSizeVariables(demoRef);
@@ -388,6 +394,178 @@ const SwipeableCardsPageContent = (props: CodeBlocks) => {
     );
   };
 
+  const buttons = (
+    <p
+      style={{
+        textAlign: "center",
+        display: "flex",
+        gap: 8,
+        justifyContent: "center",
+      }}
+    >
+      <span>
+        <SwipeableCards.SwipeLeftButton className={styles.button}>
+          <PiArrowFatLeftBold />
+        </SwipeableCards.SwipeLeftButton>{" "}
+        <SwipeableCards.SwipeUpButton className={styles.button}>
+          <PiArrowFatUpBold />
+        </SwipeableCards.SwipeUpButton>{" "}
+        <SwipeableCards.SwipeDownButton className={styles.button}>
+          <PiArrowFatDownBold />
+        </SwipeableCards.SwipeDownButton>{" "}
+        <SwipeableCards.SwipeRightButton className={styles.button}>
+          <PiArrowFatRightBold />
+        </SwipeableCards.SwipeRightButton>
+      </span>
+    </p>
+  );
+
+  const controls = (
+    <>
+      <p
+        style={{
+          textAlign: "center",
+          display: "flex",
+          justifyContent: "center",
+          gap: 8,
+        }}
+      >
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <Checkbox
+            checked={swipeStyle === "sendToBack"}
+            onChange={(event) => {
+              setSwipeStyle(event.target.checked ? "sendToBack" : "discard");
+            }}
+          />
+          <small style={{ opacity: 0.8 }}>send to back</small>
+        </label>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <Checkbox
+            checked={loop}
+            onChange={(event) => {
+              setLoop(event.target.checked);
+            }}
+          />
+          <small style={{ opacity: 0.8 }}>loop</small>
+        </label>
+      </p>
+      <p
+        style={{
+          textAlign: "center",
+          display: "flex",
+          justifyContent: "center",
+          gap: 8,
+        }}
+      >
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <small>Allow:</small>
+        </span>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <Checkbox
+            checked={allowedDirections.includes("left")}
+            onChange={(event) => {
+              setAllowedDirections((prev) => {
+                const newValue = prev.filter((p) => p !== "left");
+                return event.target.checked ? [...newValue, "left"] : newValue;
+              });
+            }}
+          />
+          <small style={{ opacity: 0.8 }}>left</small>
+        </label>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <Checkbox
+            checked={allowedDirections.includes("up")}
+            onChange={(event) => {
+              setAllowedDirections((prev) => {
+                const newValue = prev.filter((p) => p !== "up");
+                return event.target.checked ? [...newValue, "up"] : newValue;
+              });
+            }}
+          />
+          <small style={{ opacity: 0.8 }}>up</small>
+        </label>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <Checkbox
+            checked={allowedDirections.includes("down")}
+            onChange={(event) => {
+              setAllowedDirections((prev) => {
+                const newValue = prev.filter((p) => p !== "down");
+                return event.target.checked ? [...newValue, "down"] : newValue;
+              });
+            }}
+          />
+          <small style={{ opacity: 0.8 }}>down</small>
+        </label>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <Checkbox
+            checked={allowedDirections.includes("right")}
+            onChange={(event) => {
+              setAllowedDirections((prev) => {
+                const newValue = prev.filter((p) => p !== "right");
+                return event.target.checked ? [...newValue, "right"] : newValue;
+              });
+            }}
+          />
+          <small style={{ opacity: 0.8 }}>right</small>
+        </label>
+      </p>
+      <p
+        style={{
+          textAlign: "center",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
+        <StackStat />
+        <AddMoreButton />
+      </p>
+    </>
+  );
+
   return (
     <>
       <TableOfContents.Root />
@@ -427,7 +605,8 @@ const SwipeableCardsPageContent = (props: CodeBlocks) => {
                       data-style={"stacked-offset"}
                       cards={[...cards]}
                       swipeStyle={swipeStyle}
-                      sendToBackMargin={0}
+                      swipeDirections={allowedDirections}
+                      sendToBackMargin={16}
                       getCardElement={(element) => {
                         return element.firstElementChild ?? element;
                       }}
@@ -472,90 +651,8 @@ const SwipeableCardsPageContent = (props: CodeBlocks) => {
                           }
                         }}
                       />
-                      <p
-                        style={{
-                          textAlign: "center",
-                          display: "flex",
-                          gap: 8,
-                          justifyContent: "center",
-                        }}
-                      >
-                        <span>
-                          <SwipeableCards.SwipeLeftButton
-                            className={styles.button}
-                          >
-                            <PiArrowFatLeftBold />
-                          </SwipeableCards.SwipeLeftButton>{" "}
-                          <SwipeableCards.SwipeUpButton
-                            className={styles.button}
-                          >
-                            <PiArrowFatUpBold />
-                          </SwipeableCards.SwipeUpButton>{" "}
-                          <SwipeableCards.SwipeDownButton
-                            className={styles.button}
-                          >
-                            <PiArrowFatDownBold />
-                          </SwipeableCards.SwipeDownButton>{" "}
-                          <SwipeableCards.SwipeRightButton
-                            className={styles.button}
-                          >
-                            <PiArrowFatRightBold />
-                          </SwipeableCards.SwipeRightButton>
-                        </span>
-                      </p>
-                      <p
-                        style={{
-                          textAlign: "center",
-                          display: "flex",
-                          justifyContent: "center",
-                          gap: 8,
-                        }}
-                      >
-                        <label
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                          }}
-                        >
-                          <Checkbox
-                            checked={swipeStyle === "sendToBack"}
-                            onChange={(event) => {
-                              setswipeStyle(
-                                event.target.checked ? "sendToBack" : "discard"
-                              );
-                            }}
-                          />
-                          <small style={{ opacity: 0.8 }}>send to back</small>
-                        </label>
-                        <label
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                          }}
-                        >
-                          <Checkbox
-                            checked={loop}
-                            onChange={(event) => {
-                              setLoop(event.target.checked);
-                            }}
-                          />
-                          <small style={{ opacity: 0.8 }}>loop</small>
-                        </label>
-                      </p>
-                      <p
-                        style={{
-                          textAlign: "center",
-                          display: "flex",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          gap: 8,
-                        }}
-                      >
-                        <StackStat />
-                        <AddMoreButton />
-                      </p>
+                      {buttons}
+                      {controls}
                     </SwipeableCards.Root>
                   </div>
                 ),
@@ -576,6 +673,8 @@ const SwipeableCardsPageContent = (props: CodeBlocks) => {
                       cards={[...cards2]}
                       className={styles.cards_root}
                       swipeStyle={swipeStyle}
+                      swipeDirections={allowedDirections}
+                      sendToBackMargin={16}
                       getCardElement={(element) => {
                         return element.firstElementChild ?? element;
                       }}
@@ -620,90 +719,8 @@ const SwipeableCardsPageContent = (props: CodeBlocks) => {
                           }
                         }}
                       />
-                      <p
-                        style={{
-                          textAlign: "center",
-                          display: "flex",
-                          gap: 8,
-                          justifyContent: "center",
-                        }}
-                      >
-                        <span>
-                          <SwipeableCards.SwipeLeftButton
-                            className={styles.button}
-                          >
-                            <PiArrowFatLeftBold />
-                          </SwipeableCards.SwipeLeftButton>{" "}
-                          <SwipeableCards.SwipeUpButton
-                            className={styles.button}
-                          >
-                            <PiArrowFatUpBold />
-                          </SwipeableCards.SwipeUpButton>{" "}
-                          <SwipeableCards.SwipeDownButton
-                            className={styles.button}
-                          >
-                            <PiArrowFatDownBold />
-                          </SwipeableCards.SwipeDownButton>{" "}
-                          <SwipeableCards.SwipeRightButton
-                            className={styles.button}
-                          >
-                            <PiArrowFatRightBold />
-                          </SwipeableCards.SwipeRightButton>
-                        </span>
-                      </p>
-                      <p
-                        style={{
-                          textAlign: "center",
-                          display: "flex",
-                          justifyContent: "center",
-                          gap: 8,
-                        }}
-                      >
-                        <label
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                          }}
-                        >
-                          <Checkbox
-                            checked={swipeStyle === "sendToBack"}
-                            onChange={(event) => {
-                              setswipeStyle(
-                                event.target.checked ? "sendToBack" : "discard"
-                              );
-                            }}
-                          />
-                          <small style={{ opacity: 0.8 }}>send to back</small>
-                        </label>
-                        <label
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                          }}
-                        >
-                          <Checkbox
-                            checked={loop}
-                            onChange={(event) => {
-                              setLoop(event.target.checked);
-                            }}
-                          />
-                          <small style={{ opacity: 0.8 }}>loop</small>
-                        </label>
-                      </p>
-                      <p
-                        style={{
-                          textAlign: "center",
-                          display: "flex",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          gap: 8,
-                        }}
-                      >
-                        <StackStat />
-                        <AddMoreButton />
-                      </p>
+                      {buttons}
+                      {controls}
                     </SwipeableCards.Root>
                   </div>
                 ),
@@ -729,6 +746,7 @@ const SwipeableCardsPageContent = (props: CodeBlocks) => {
                       }}
                       cards={[...cards]}
                       swipeStyle={swipeStyle}
+                      swipeDirections={allowedDirections}
                       getCardElement={(element) => {
                         return element.firstElementChild ?? element;
                       }}
@@ -778,90 +796,8 @@ const SwipeableCardsPageContent = (props: CodeBlocks) => {
                           }
                         }}
                       />
-                      <p
-                        style={{
-                          textAlign: "center",
-                          display: "flex",
-                          gap: 8,
-                          justifyContent: "center",
-                        }}
-                      >
-                        <span>
-                          <SwipeableCards.SwipeLeftButton
-                            className={styles.button}
-                          >
-                            <PiArrowFatLeftBold />
-                          </SwipeableCards.SwipeLeftButton>{" "}
-                          <SwipeableCards.SwipeUpButton
-                            className={styles.button}
-                          >
-                            <PiArrowFatUpBold />
-                          </SwipeableCards.SwipeUpButton>{" "}
-                          <SwipeableCards.SwipeDownButton
-                            className={styles.button}
-                          >
-                            <PiArrowFatDownBold />
-                          </SwipeableCards.SwipeDownButton>{" "}
-                          <SwipeableCards.SwipeRightButton
-                            className={styles.button}
-                          >
-                            <PiArrowFatRightBold />
-                          </SwipeableCards.SwipeRightButton>
-                        </span>
-                      </p>
-                      <p
-                        style={{
-                          textAlign: "center",
-                          display: "flex",
-                          justifyContent: "center",
-                          gap: 8,
-                        }}
-                      >
-                        <label
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                          }}
-                        >
-                          <Checkbox
-                            checked={swipeStyle === "sendToBack"}
-                            onChange={(event) => {
-                              setswipeStyle(
-                                event.target.checked ? "sendToBack" : "discard"
-                              );
-                            }}
-                          />
-                          <small style={{ opacity: 0.8 }}>send to back</small>
-                        </label>
-                        <label
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                          }}
-                        >
-                          <Checkbox
-                            checked={loop}
-                            onChange={(event) => {
-                              setLoop(event.target.checked);
-                            }}
-                          />
-                          <small style={{ opacity: 0.8 }}>loop</small>
-                        </label>
-                      </p>
-                      <p
-                        style={{
-                          textAlign: "center",
-                          display: "flex",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          gap: 8,
-                        }}
-                      >
-                        <StackStat />
-                        <AddMoreButton />
-                      </p>
+                      {buttons}
+                      {controls}
                     </SwipeableCards.Root>
                   </div>
                 ),

@@ -59,6 +59,8 @@
   }
 
   &[data-style="stacked-offset"] {
+    --card-top-distance: clamp(16px, 1vw, 32px);
+
     [data-swipeable-cards-cards] {
       [data-swipeable-cards-card-wrapper] {
         --p: calc(
