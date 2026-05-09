@@ -1,14 +1,13 @@
 import {
   ComponentPropsWithoutRef,
   CSSProperties,
+  forwardRef,
   memo,
   useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
 } from "react";
-
-import styles from "./SplitFlapDisplay.module.scss";
 
 export type SplitFlapDisplayProps = ComponentPropsWithoutRef<"div"> & {
   // current value to display
@@ -23,119 +22,131 @@ export type SplitFlapDisplayProps = ComponentPropsWithoutRef<"div"> & {
   crease?: number | string;
   // css duration of the flip animation, in ms if flipDuration is a number
   flipDuration?: number | string;
+  // css timing function for the flip animation defaults to ease-out-cubic (cubic-bezier(.550, .055, .675, .19))
+  flipTimingFunction?: string;
 };
 
 export const SplitFlapDisplay = memo(
-  ({
-    value,
-    length,
-    characters,
-    style,
-    onFullyFlipped,
-    crease = 1,
-    flipDuration = 800,
-  }: SplitFlapDisplayProps) => {
-    const isOverflowing = value.length > length;
-    const displayValue = (
-      isOverflowing ? value.slice(0, length - 1) + "…" : value
-    ).padEnd(length, " ");
-    const fullyFlippedRef = useRef(0);
-    const lastValueRef = useRef("");
-    const unchangedCount = displayValue
-      .split("")
-      .reduce((unchanged, char, index) => {
-        return lastValueRef.current?.[index] === char
-          ? unchanged + 1
-          : unchanged;
-      }, 0);
-    fullyFlippedRef.current = unchangedCount;
+  forwardRef<HTMLDivElement, SplitFlapDisplayProps>(
+    (
+      {
+        value,
+        length,
+        characters,
+        onFullyFlipped,
+        crease = 1,
+        flipDuration = 800,
+        flipTimingFunction = "cubic-bezier(.550, .055, .675, .19)",
+        style,
+        ...props
+      },
+      ref
+    ) => {
+      const isOverflowing = value.length > length;
+      const displayValue = (
+        isOverflowing ? value.slice(0, length - 1) + "…" : value
+      ).padEnd(length, " ");
+      const fullyFlippedRef = useRef(0);
+      const lastValueRef = useRef("");
+      const unchangedCount = displayValue
+        .split("")
+        .reduce((unchanged, char, index) => {
+          return lastValueRef.current?.[index] === char
+            ? unchanged + 1
+            : unchanged;
+        }, 0);
+      fullyFlippedRef.current = unchangedCount;
 
-    const validateCharacters = () => {
-      const chars = characters instanceof Array ? characters : [characters];
-      const isInvalid = chars.some((chars) => !chars.length);
-      if (isInvalid) {
-        throw new Error(
-          "SplitFlapDisplay: characters must be a non empty string, or an array of non empty strings"
+      const validateCharacters = () => {
+        const chars = characters instanceof Array ? characters : [characters];
+        const isInvalid = chars.some((chars) => !chars.length);
+        if (isInvalid) {
+          throw new Error(
+            "SplitFlapDisplay: characters must be a non empty string, or an array of non empty strings"
+          );
+        }
+        const withDuplicateChars = chars.filter(
+          (charSet) => charSet.length !== new Set(charSet).size
         );
-      }
-      const withDuplicateChars = chars.filter(
-        (charSet) => charSet.length !== new Set(charSet).size
-      );
-      if (withDuplicateChars.length) {
-        throw new Error(
-          `SplitFlapDisplay: all characters in each character set must be unique; found duplicates in ${withDuplicateChars
-            .map((set) => {
-              const duplicates: string[] = [];
-              const seen = new Set<string>();
-              set.split("").forEach((char) => {
-                if (seen.has(char)) {
-                  duplicates.push(char);
-                }
-                seen.add(char);
-              });
-              return `${set} (duplicate${
-                duplicates.length > 1 ? "s" : ""
-              }: ${duplicates.join(", ")})`;
-            })
-            .join(" - ")}`
-        );
-      }
-    };
-    validateCharacters();
+        if (withDuplicateChars.length) {
+          throw new Error(
+            `SplitFlapDisplay: all characters in each character set must be unique; found duplicates in ${withDuplicateChars
+              .map((set) => {
+                const duplicates: string[] = [];
+                const seen = new Set<string>();
+                set.split("").forEach((char) => {
+                  if (seen.has(char)) {
+                    duplicates.push(char);
+                  }
+                  seen.add(char);
+                });
+                return `${set} (duplicate${
+                  duplicates.length > 1 ? "s" : ""
+                }: ${duplicates.join(", ")})`;
+              })
+              .join(" - ")}`
+          );
+        }
+      };
+      validateCharacters();
 
-    useLayoutEffect(() => {
-      if (fullyFlippedRef.current === length) {
-        onFullyFlipped?.();
-      }
-    });
-
-    useLayoutEffect(() => {
-      lastValueRef.current = displayValue;
-    }, [displayValue]);
-
-    const handleFullyFlipped = useCallback(
-      (_char: string, _index: number) => {
-        fullyFlippedRef.current++;
+      useLayoutEffect(() => {
         if (fullyFlippedRef.current === length) {
           onFullyFlipped?.();
         }
-      },
-      [length, onFullyFlipped]
-    );
+      });
 
-    return (
-      <div
-        className={styles.split_flap_display}
-        style={
-          {
-            ...style,
-            "--split-flap-crease":
-              typeof crease === "number" ? `${crease}px` : crease,
-            "--split-flap-flip-duration":
-              typeof flipDuration === "number"
-                ? `${flipDuration}ms`
-                : flipDuration,
-          } as CSSProperties
-        }
-      >
-        {displayValue.split("").map((char, i) => {
-          const chars =
-            characters instanceof Array ? characters[i] : characters;
-          const finalCharacters =
-            chars + (isOverflowing && i === length - 1 ? "…" : "");
-          return (
-            <SplitFlapDisplayChar
-              key={i}
-              index={i}
-              value={char}
-              characters={finalCharacters}
-              onFullyFlipped={handleFullyFlipped}
-            />
-          );
-        })}
-      </div>
-    );
-  }
+      useLayoutEffect(() => {
+        lastValueRef.current = displayValue;
+      }, [displayValue]);
+
+      const handleFullyFlipped = useCallback(
+        (_char: string, _index: number) => {
+          fullyFlippedRef.current++;
+          if (fullyFlippedRef.current === length) {
+            onFullyFlipped?.();
+          }
+        },
+        [length, onFullyFlipped]
+      );
+
+      return (
+        <div
+          ref={ref}
+          style={
+            {
+              transformStyle: "preserve-3d",
+              ...style,
+              "--split-flap-crease":
+                typeof crease === "number" ? `${crease}px` : crease,
+              "--split-flap-flip-duration":
+                typeof flipDuration === "number"
+                  ? `${flipDuration}ms`
+                  : flipDuration,
+              "--split-flap-timing-function": flipTimingFunction,
+            } as CSSProperties
+          }
+          {...props}
+        >
+          {displayValue.split("").map((char, i) => {
+            const chars =
+              characters instanceof Array ? characters[i] : characters;
+            const finalCharacters =
+              chars + (isOverflowing && i === length - 1 ? "…" : "");
+            return (
+              <SplitFlapDisplayChar
+                key={i}
+                index={i}
+                value={char}
+                characters={finalCharacters}
+                onFullyFlipped={handleFullyFlipped}
+              />
+            );
+          })}
+        </div>
+      );
+    }
+  )
 );
 
 SplitFlapDisplay.displayName = "SplitFlapDisplay";
@@ -343,16 +354,30 @@ const SplitFlapDisplayChar = memo(
       lastValueRef.current = value;
     }, [characters, index, onFullyFlipped, value]);
 
+    const flapStyles: CSSProperties = {
+      backfaceVisibility: "hidden",
+      display: "flex",
+      overflow: "hidden",
+      placeContent: "center",
+      position: "relative",
+      transformStyle: "preserve-3d",
+      transition:
+        "transform var(--split-flap-flip-duration) var(--split-flap-timing-function)",
+      willChange: "transform",
+    };
+
     return (
       <span
         ref={charRef}
-        className={styles.slot}
         data-split-flap-slot={""}
         style={
           {
             "--split-flap-current-character-index": currentCharacterIndex,
             "--split-flap-total": characters.length,
             "--split-flap-turn": turnRef.current,
+            display: "inline-grid",
+            placeContent: "center",
+            transformStyle: "preserve-3d",
           } as CSSProperties
         }
       >
@@ -361,7 +386,6 @@ const SplitFlapDisplayChar = memo(
             key={i}
             data-char={char}
             data-index={index}
-            className={styles.character}
             data-split-flap-character={""}
             inert={char !== value}
             style={
@@ -394,19 +418,54 @@ const SplitFlapDisplayChar = memo(
                   "calc(var(--split-flap-abs-offset) * var(--split-flap-direction) * var(--split-flap-angle) + var(--split-flap-past) * 0.5turn - var(--split-flap-turn) * 1turn)",
                 "--split-flap-bottom-flap-angle":
                   "calc(max(var(--split-flap-abs-offset) - 1, 0) * var(--split-flap-direction) * var(--split-flap-angle) + var(--split-flap-future) * 0.5turn - var(--split-flap-turn) * 1turn)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "var(--split-flap-crease)",
+                gridArea: "1 / 1",
+                pointerEvents: "none",
+                position: "relative",
+                transformStyle: "preserve-3d",
+                transition:
+                  "z-index var(--split-flap-flip-duration) var(--split-flap-timing-function)",
+                zIndex:
+                  "calc(var(--split-flap-is-current) * 2 + var(--split-flap-is-previous) + var(--split-flap-is-next))",
               } as CSSProperties
             }
           >
-            <span className={styles.flap} data-split-flap-flap={"top"}>
-              <span>{char}</span>
+            <span
+              data-split-flap-flap={"top"}
+              style={{
+                ...flapStyles,
+                // translateZ(0.1px) fixes Safari backface-visibility bug during animation
+                transform:
+                  "translateZ(calc(var(--split-flap-is-current) * 0.1px)) rotateX(var(--split-flap-top-flap-angle))",
+                transformOrigin:
+                  "center calc(100% + var(--split-flap-crease) * 0.5)",
+              }}
+            >
+              <span
+                style={{ translate: "0 calc(var(--split-flap-crease) * 0.5)" }}
+              >
+                {char}
+              </span>
             </span>
             <span
-              className={styles.flap}
               data-split-flap-flap={"bottom"}
+              style={{
+                ...flapStyles,
+                // translateZ(0.1px) fixes Safari backface-visibility bug during animation
+                transform:
+                  "translateZ(calc(var(--split-flap-is-current) * 0.1px)) rotateX(var(--split-flap-bottom-flap-angle))",
+                transformOrigin: "center calc(var(--split-flap-crease) * -0.5)",
+              }}
               aria-hidden={true}
               inert={true}
             >
-              <span>{char}</span>
+              <span
+                style={{ translate: "0 calc(var(--split-flap-crease) * -0.5)" }}
+              >
+                {char}
+              </span>
             </span>
           </span>
         ))}

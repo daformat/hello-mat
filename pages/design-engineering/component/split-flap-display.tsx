@@ -12,6 +12,7 @@ import { MaybeUndefined } from "@/components/Media/utils/maybe";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { SplitFlapDisplay } from "@/components/SplitFlapDisplay/SplitFlapDisplay";
+import styles from "@/components/SplitFlapDisplay/SplitFlapDisplay.module.scss";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
 import {
@@ -179,7 +180,6 @@ const SplitFlapDisplayPageContent = () => {
                 flexGrow: 1,
                 perspective: "550px",
                 filter: "drop-shadow(0 1px 12px var(--color-shadow-1))",
-                "--speed": `${slow ? 0.1 : 1}`,
               } as CSSProperties
             }
           >
@@ -188,6 +188,8 @@ const SplitFlapDisplayPageContent = () => {
               characters={clockChars}
               value={formatTime(time)}
               style={clockStyle}
+              flipDuration={800 / (slow ? 0.1 : 1)}
+              className={styles.split_flap_display}
             />
           </div>
           <footer
@@ -310,17 +312,17 @@ const SplitFlapDisplayPageContent = () => {
                 flexGrow: 1,
                 perspective: "550px",
                 filter: "drop-shadow(0 1px 12px var(--color-shadow-1))",
-                "--speed": `${slow2 ? 0.1 : 1}`,
               } as CSSProperties
             }
           >
             <SplitFlapDisplay
               length={5}
               characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ "
-              // value={formatSeconds(timeInSeconds).split("").reverse().join("")}
               value={message}
               style={alphaStyle}
               onFullyFlipped={handleFullyFlipped}
+              flipDuration={800 / (slow2 ? 0.1 : 1)}
+              className={styles.split_flap_display}
             />
           </div>
           <footer
