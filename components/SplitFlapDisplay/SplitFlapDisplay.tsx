@@ -1,4 +1,5 @@
 import {
+  ComponentPropsWithoutRef,
   CSSProperties,
   memo,
   useCallback,
@@ -9,13 +10,19 @@ import {
 
 import styles from "./SplitFlapDisplay.module.scss";
 
-export type SplitFlapDisplayProps = {
+export type SplitFlapDisplayProps = ComponentPropsWithoutRef<"div"> & {
+  // current value to display
   value: string;
+  // number of characters to display, including the ellipsis if the value overflows
   length: number;
+  // characters to include in the display, can be a string or an array of strings representing each slot's characters
   characters: string | string[];
-  style?: CSSProperties;
-  autoSkip?: boolean;
+  // callback that will be run when all characters are flipped
   onFullyFlipped?: () => void;
+  // css length of the crease between top and bottom flaps, in pixels if crease is a number
+  crease?: number | string;
+  // css duration of the flip animation, in ms if flipDuration is a number
+  flipDuration?: number | string;
 };
 
 export const SplitFlapDisplay = memo(
@@ -24,8 +31,9 @@ export const SplitFlapDisplay = memo(
     length,
     characters,
     style,
-    autoSkip,
     onFullyFlipped,
+    crease = 1,
+    flipDuration = 800,
   }: SplitFlapDisplayProps) => {
     const isOverflowing = value.length > length;
     const displayValue = (
@@ -48,6 +56,28 @@ export const SplitFlapDisplay = memo(
       if (isInvalid) {
         throw new Error(
           "SplitFlapDisplay: characters must be a non empty string, or an array of non empty strings"
+        );
+      }
+      const withDuplicateChars = chars.filter(
+        (charSet) => charSet.length !== new Set(charSet).size
+      );
+      if (withDuplicateChars.length) {
+        throw new Error(
+          `SplitFlapDisplay: all characters in each character set must be unique; found duplicates in ${withDuplicateChars
+            .map((set) => {
+              const duplicates: string[] = [];
+              const seen = new Set<string>();
+              set.split("").forEach((char) => {
+                if (seen.has(char)) {
+                  duplicates.push(char);
+                }
+                seen.add(char);
+              });
+              return `${set} (duplicate${
+                duplicates.length > 1 ? "s" : ""
+              }: ${duplicates.join(", ")})`;
+            })
+            .join(" - ")}`
         );
       }
     };
@@ -74,7 +104,20 @@ export const SplitFlapDisplay = memo(
     );
 
     return (
-      <div className={styles.split_flap_display} style={style}>
+      <div
+        className={styles.split_flap_display}
+        style={
+          {
+            ...style,
+            "--split-flap-crease":
+              typeof crease === "number" ? `${crease}px` : crease,
+            "--split-flap-flip-duration":
+              typeof flipDuration === "number"
+                ? `${flipDuration}ms`
+                : flipDuration,
+          } as CSSProperties
+        }
+      >
         {displayValue.split("").map((char, i) => {
           const chars =
             characters instanceof Array ? characters[i] : characters;
@@ -86,7 +129,6 @@ export const SplitFlapDisplay = memo(
               index={i}
               value={char}
               characters={finalCharacters}
-              autoSkip={autoSkip}
               onFullyFlipped={handleFullyFlipped}
             />
           );
@@ -103,13 +145,11 @@ const SplitFlapDisplayChar = memo(
     value,
     index,
     characters,
-    autoSkip,
     onFullyFlipped,
   }: {
     index: number;
     value: string;
     characters: string;
-    autoSkip?: boolean;
     onFullyFlipped?: (char: string, index: number) => void;
   }) => {
     const lastValueRef = useRef<string>("");
@@ -144,14 +184,14 @@ const SplitFlapDisplayChar = memo(
       const isGoingForwards = newCharIndex > lastCharIndex;
 
       if (!isMountedRef.current) {
-        charRef.current?.style.setProperty("--flip-duration", "0ms");
+        charRef.current?.style.setProperty("--split-flap-flip-duration", "0ms");
         charRef.current?.style.setProperty(
-          "--current-character-index",
+          "--split-flap-current-character-index",
           `${newCharIndex}`
         );
         lastValueRef.current = value;
         requestAnimationFrame(() => {
-          charRef.current?.style.removeProperty("--flip-duration");
+          charRef.current?.style.removeProperty("--split-flap-flip-duration");
           onFullyFlipped?.(value, index);
         });
         return;
@@ -169,18 +209,21 @@ const SplitFlapDisplayChar = memo(
           // this also avoids potential number overflow for very large turn values
           // const SAFARI_BUGGY_TURN_VALUES = [
           //   11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25, 26, 30, 34, 52, 57, 60,
-          //   65, 68, 73, 76, 81, 93, 109, 114, 125, 146, /*?*/ 187,
+          //   65, 68, 73, 76, 81, 93, 109, 114, 125, 146, /*?*/ 187, //...
           // ];
           if (turnRef.current === 3) {
             turnRef.current = 1;
           }
           charRef.current?.style.setProperty(
-            "--current-character-index",
+            "--split-flap-current-character-index",
             `${prevIndex}`
           );
-          charRef.current?.style.setProperty("--flip-duration", "0ms");
           charRef.current?.style.setProperty(
-            "--turn",
+            "--split-flap-flip-duration",
+            "0ms"
+          );
+          charRef.current?.style.setProperty(
+            "--split-flap-turn",
             `${turnRef.current - 1}`
           );
           requestAnimationFrame(() => {
@@ -188,152 +231,36 @@ const SplitFlapDisplayChar = memo(
             requestAnimationFrame(() => {
               if (duration) {
                 charRef.current?.style.setProperty(
-                  "--flip-duration",
+                  "--split-flap-flip-duration",
                   `${duration}ms`
                 );
               } else {
-                charRef.current?.style.removeProperty("--flip-duration");
+                charRef.current?.style.removeProperty(
+                  "--split-flap-flip-duration"
+                );
               }
               charRef.current?.style.setProperty(
-                "--turn",
+                "--split-flap-turn",
                 `${turnRef.current}`
               );
               charRef.current?.style.setProperty(
-                "--current-character-index",
+                "--split-flap-current-character-index",
                 `${nextIndex}`
               );
             });
           });
-          // const lastKnownSafariBuggyTurn =
-          //   SAFARI_BUGGY_TURN_VALUES[SAFARI_BUGGY_TURN_VALUES.length - 1];
-          // if (SAFARI_BUGGY_TURN_VALUES.includes(turnRef.current)) {
-          //   while (SAFARI_BUGGY_TURN_VALUES.includes(turnRef.current)) {
-          //     console.log("skipping turn", turnRef.current);
-          //     turnRef.current++;
-          //   }
-          //   if (turnRef.current - 1 === lastKnownSafariBuggyTurn) {
-          //     turnRef.current = 1;
-          //   }
-          //   charRef.current?.style.setProperty(
-          //     "--current-character-index",
-          //     `${lastCharIndex}`
-          //   );
-          //   charRef.current?.style.setProperty("--flip-duration", "0ms");
-          //   charRef.current?.style.setProperty(
-          //     "--turn",
-          //     `${turnRef.current - 1}`
-          //   );
-          //   requestAnimationFrame(() => {
-          //     charRef.current?.style.removeProperty("--flip-duration");
-          //     charRef.current?.style.setProperty(
-          //       "--turn",
-          //       `${turnRef.current}`
-          //     );
-          //     charRef.current?.style.setProperty(
-          //       "--current-character-index",
-          //       `${newCharIndex}`
-          //     );
-          //   });
-          // } else {
-          //   charRef.current?.style.setProperty("--turn", `${turnRef.current}`);
-          // }
           updatedTurn = true;
         }
       };
 
-      if (autoSkip && newCharIndex < lastCharIndex) {
-        const remainingChars = characters.slice(lastCharIndex + 1, undefined);
-        const precedingChars = characters.slice(0, newCharIndex);
-        const charsToDisplay = characters
-          .split("")
-          .filter(
-            (char) =>
-              !remainingChars.includes(char) && !precedingChars.includes(char)
-          );
-        const charsToDisplayCount = charsToDisplay.length;
-        const shouldSkip =
-          (remainingChars.length || precedingChars.length) &&
-          charsToDisplayCount >= 4;
-        if (shouldSkip) {
-          charRef.current?.style.setProperty(
-            "--current-character-index",
-            `${lastCharIndex}`
-          );
-          charRef.current?.style.setProperty("--flip-duration", "0ms");
-          charRef.current?.style.setProperty(
-            "--total",
-            `${charsToDisplayCount}`
-          );
-          [...remainingChars, ...precedingChars].forEach((char) => {
-            const span = charRef.current?.querySelector(
-              `[data-char="${char}"]`
-            );
-            if (span instanceof HTMLElement) {
-              span.style.setProperty("--index", "-1");
-              span.style.setProperty("display", "none");
-            }
-          });
-          charsToDisplay.forEach((char, index) => {
-            const span = charRef.current?.querySelector(
-              `[data-char="${char}"]`
-            );
-            if (span instanceof HTMLElement) {
-              span.style.setProperty("--index", `${index}`);
-            }
-          });
-          charRef.current?.style.setProperty(
-            "--current-character-index",
-            `${charsToDisplay.indexOf(lastValueRef.current)}`
-          );
-          requestAnimationFrame(() => {
-            charRef.current?.style.removeProperty("--flip-duration");
-            charRef.current?.style.setProperty(
-              "--current-character-index",
-              `${charsToDisplay.indexOf(value)}`
-            );
-            charRef.current?.addEventListener(
-              "transitionend",
-              () => {
-                charRef.current?.style.setProperty("--flip-duration", "0ms");
-                charRef.current?.style.setProperty(
-                  "--total",
-                  `${characters.length}`
-                );
-                [...characters].forEach((char) => {
-                  const span = charRef.current?.querySelector(
-                    `[data-char="${char}"]`
-                  );
-                  if (span instanceof HTMLElement) {
-                    span.style.setProperty(
-                      "--index",
-                      `${characters.indexOf(char)}`
-                    );
-                    span.style.removeProperty("display");
-                  }
-                });
-                charRef.current?.style.setProperty(
-                  "--current-character-index",
-                  `${charsToDisplay.indexOf(lastValueRef.current)}`
-                );
-                requestAnimationFrame(() => {
-                  charRef.current?.style.removeProperty("--flip-duration");
-                });
-              },
-              { once: true }
-            );
-            updateTurn();
-          });
-        } else {
-          updateTurn();
-        }
-      } else if (isGoingBackwards || isGoingForwards) {
+      if (isGoingBackwards || isGoingForwards) {
         if (flippingThroughTimeout.current) {
           clearTimeout(flippingThroughTimeout.current);
         }
         const animationTiming = charRef.current
           ? parseFloat(
               getComputedStyle(charRef.current).getPropertyValue(
-                "--flip-duration"
+                "--split-flap-flip-duration"
               )
             )
           : 0;
@@ -360,11 +287,11 @@ const SplitFlapDisplayChar = memo(
           if (transitoryChar) {
             transitoryIndex = characters.indexOf(transitoryChar);
             charRef.current?.style.setProperty(
-              "--flip-duration",
+              "--split-flap-flip-duration",
               intervalTime + "ms"
             );
             charRef.current?.style.setProperty(
-              "--current-character-index",
+              "--split-flap-current-character-index",
               `${transitoryIndex}`
             );
             if (precedingChar) {
@@ -377,7 +304,7 @@ const SplitFlapDisplayChar = memo(
             flippingThroughTimeout.current = setTimeout(update, intervalTime);
           } else {
             charRef.current?.style.setProperty(
-              "--current-character-index",
+              "--split-flap-current-character-index",
               `${characters.indexOf(value)}`
             );
             if (isGoingBackwards) {
@@ -390,12 +317,16 @@ const SplitFlapDisplayChar = memo(
               if (animations?.length) {
                 Promise.allSettled(animations.map((a) => a.finished)).then(
                   () => {
-                    charRef.current?.style.removeProperty("--flip-duration");
+                    charRef.current?.style.removeProperty(
+                      "--split-flap-flip-duration"
+                    );
                     onFullyFlipped?.(value, index);
                   }
                 );
               } else {
-                charRef.current?.style.removeProperty("--flip-duration");
+                charRef.current?.style.removeProperty(
+                  "--split-flap-flip-duration"
+                );
                 onFullyFlipped?.(value, index);
               }
               charRef.current?.removeEventListener(
@@ -408,44 +339,78 @@ const SplitFlapDisplayChar = memo(
           }
         };
         update();
-        // updateTurn();
       }
       lastValueRef.current = value;
-    }, [autoSkip, characters, index, onFullyFlipped, value]);
+    }, [characters, index, onFullyFlipped, value]);
 
     return (
-      <div
+      <span
         ref={charRef}
         className={styles.slot}
+        data-split-flap-slot={""}
         style={
           {
-            "--current-character-index": currentCharacterIndex,
-            "--total": characters.length,
-            "--turn": turnRef.current,
+            "--split-flap-current-character-index": currentCharacterIndex,
+            "--split-flap-total": characters.length,
+            "--split-flap-turn": turnRef.current,
           } as CSSProperties
         }
       >
         {characters.split("").map((char, i) => (
-          <div
+          <span
             key={i}
             data-char={char}
             data-index={index}
             className={styles.character}
+            data-split-flap-character={""}
+            inert={char !== value}
             style={
               {
-                "--index": i,
+                // whole bunch of css variables to compute the angles
+                "--split-flap-index": i,
+                "--split-flap-total0": "calc(var(--split-flap-total) - 1)",
+                "--split-flap-offset":
+                  "calc(var(--split-flap-index) - var(--split-flap-current-character-index))",
+                "--split-flap-abs-offset":
+                  "max(var(--split-flap-offset), calc(var(--split-flap-offset) * -1))",
+                // Prevent division by zero
+                "--split-flap-safe-abs-offset":
+                  "max(var(--split-flap-abs-offset), 0.001)",
+                "--split-flap-direction":
+                  "calc(var(--split-flap-offset) / var(--split-flap-safe-abs-offset))",
+                "--split-flap-past": "min(0, var(--split-flap-direction))",
+                "--split-flap-future": "max(0, var(--split-flap-direction))",
+                "--split-flap-is-current":
+                  "clamp(0, calc(1 - var(--split-flap-abs-offset) * 1000),1)",
+                "--split-flap-is-not-current":
+                  "clamp(0,calc(1 - var(--split-flap-is-current)),1)",
+                "--split-flap-is-previous":
+                  "clamp(0, calc(1 - max(var(--split-flap-offset) + 1, (var(--split-flap-offset) + 1) * -1) * 1000), 1)",
+                "--split-flap-is-next":
+                  "clamp(0, calc(1 - max(var(--split-flap-offset) - 1, (var(--split-flap-offset) - 1) * -1) * 1000), 1)",
+                "--split-flap-angle":
+                  "calc((0.5 / var(--split-flap-total0)) * 1turn)",
+                "--split-flap-top-flap-angle":
+                  "calc(var(--split-flap-abs-offset) * var(--split-flap-direction) * var(--split-flap-angle) + var(--split-flap-past) * 0.5turn - var(--split-flap-turn) * 1turn)",
+                "--split-flap-bottom-flap-angle":
+                  "calc(max(var(--split-flap-abs-offset) - 1, 0) * var(--split-flap-direction) * var(--split-flap-angle) + var(--split-flap-future) * 0.5turn - var(--split-flap-turn) * 1turn)",
               } as CSSProperties
             }
           >
-            <div className={styles.flap}>
-              <div>{char}</div>
-            </div>
-            <div className={styles.flap} aria-hidden={true}>
-              <div>{char}</div>
-            </div>
-          </div>
+            <span className={styles.flap} data-split-flap-flap={"top"}>
+              <span>{char}</span>
+            </span>
+            <span
+              className={styles.flap}
+              data-split-flap-flap={"bottom"}
+              aria-hidden={true}
+              inert={true}
+            >
+              <span>{char}</span>
+            </span>
+          </span>
         ))}
-      </div>
+      </span>
     );
   }
 );

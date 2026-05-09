@@ -1,12 +1,9 @@
 @use "/styles/lib/mixins.scss";
 
 .split_flap_display {
-  --split-flap-crease: 1px;
   --chars-gap: 2px;
-  --flip-duration: 800ms;
 
   display: flex;
-  //filter: drop-shadow(0 1px 12px var(--color-shadow-1));
   font-size: 1.5em;
   gap: var(--chars-gap);
   position: relative;
@@ -17,65 +14,12 @@
     font-size: clamp(1.5em, 5vw, 3.5em);
   }
 
-  .slot {
-    display: grid;
+  [data-split-flap-slot] {
+    display: inline-grid;
     place-content: center;
     transform-style: preserve-3d;
 
-    + .slot {
-      position: relative;
-
-      //&::before {
-      //  background-color: var(--color-background);
-      //  border-radius: 3px;
-      //  content: "";
-      //  height: 100%;
-      //  left: calc(var(--chars-gap) * -1);
-      //  position: absolute;
-      //  width: var(--chars-gap);
-      //  z-index: -1;
-      //}
-    }
-
-    .character {
-      // Calculate absolute distance from current character
-      --total0: calc(var(--total) - 1);
-      --offset: calc(var(--index) - var(--current-character-index));
-      --abs-offset: max(var(--offset), calc(var(--offset) * -1));
-      --safe-abs-offset: max(var(--abs-offset), 0.001); /* Prevent zero */
-      --direction: calc(var(--offset) / var(--safe-abs-offset));
-      //--direction: calc(var(--offset) / var(--abs-offset));
-      --past: min(0, var(--direction));
-      --future: max(0, var(--direction));
-      --is-current: clamp(0, calc(1 - var(--abs-offset) * 1000), 1);
-      --is-not-current: clamp(0, calc(1 - var(--is-current)), 1);
-      --is-previous: clamp(
-        0,
-        calc(1 - max(var(--offset) + 1, (var(--offset) + 1) * -1) * 1000),
-        1
-      );
-      --is-next: clamp(
-        0,
-        calc(1 - max(var(--offset) - 1, (var(--offset) - 1) * -1) * 1000),
-        1
-      );
-      //--is-other: clamp(
-      //  0,
-      //  calc(1 - var(--is-current) - var(--is-previous) - var(--is-next)),
-      //  1
-      //);
-      //--flip: clamp(0, var(--offset), 1);
-      --angle: calc((0.5 / var(--total0)) * 1turn);
-      --a: calc(
-        var(--abs-offset) * var(--direction) * var(--angle) + var(--past) *
-          0.5turn - var(--turn) * 1turn
-      );
-      --a2: calc(
-        max(var(--abs-offset) - 1, 0) * var(--direction) * var(--angle) +
-          var(--future) * 0.5turn - var(--turn) * 1turn
-      );
-      //--a2: calc(var(--abs-offset) * var(--angle) * -1);
-
+    [data-split-flap-character] {
       display: flex;
       flex-direction: column;
       gap: var(--split-flap-crease);
@@ -83,10 +27,12 @@
       pointer-events: none;
       position: relative;
       transform-style: preserve-3d;
-      transition: z-index calc(var(--flip-duration) / var(--speed, 1))
+      transition: z-index
+        calc(var(--split-flap-flip-duration) / var(--speed, 1))
         var(--ease-out-cubic);
       z-index: calc(
-        var(--is-current) * 2 + var(--is-previous) + var(--is-next)
+        var(--split-flap-is-current) * 2 + var(--split-flap-is-previous) +
+          var(--split-flap-is-next)
       );
 
       &::after {
@@ -100,7 +46,7 @@
         width: 100%;
       }
 
-      > .flap {
+      > [data-split-flap-flap] {
         backface-visibility: hidden;
         background: var(--color-background);
         border-radius: 3px;
@@ -114,7 +60,8 @@
         place-content: center;
         position: relative;
         transform-style: preserve-3d;
-        transition: transform calc(var(--flip-duration) / var(--speed, 1))
+        transition: transform
+          calc(var(--split-flap-flip-duration) / var(--speed, 1))
           var(--ease-out-cubic);
         vertical-align: middle;
         width: 1em;
@@ -122,19 +69,22 @@
 
         > * {
           @media (prefers-color-scheme: dark) {
-            opacity: calc(var(--is-current) * 1 + var(--is-next) * 0.5);
+            opacity: calc(
+              var(--split-flap-is-current) * 1 + var(--split-flap-is-next) * 0.5
+            );
           }
-          transition: opacity calc(var(--flip-duration) / var(--speed, 1))
+          transition: opacity
+            calc(var(--split-flap-flip-duration) / var(--speed, 1))
             var(--ease-out-circ);
         }
 
         // Top flap - flips down
-        &:first-child {
+        &[data-split-flap-flap="top"] {
           align-items: flex-start;
           padding-top: 0.25em;
           // translateZ(0.1px) fixes Safari backface-visibility bug during animation
-          transform: translateZ(calc(var(--is-current) * 0.1px))
-            rotateX(var(--a));
+          transform: translateZ(calc(var(--split-flap-is-current) * 0.1px))
+            rotateX(var(--split-flap-top-flap-angle));
           transform-origin: center calc(100% + var(--split-flap-crease) * 0.5);
 
           > * {
@@ -142,13 +92,13 @@
           }
         }
 
-        // Bottom flap
-        &:last-child {
+        // Bottom flap - flips up
+        &[data-split-flap-flap="bottom"] {
           align-items: flex-end;
           padding-bottom: 0.25em;
-
-          transform: translateZ(calc(var(--is-current) * 0.1px))
-            rotateX(var(--a2));
+          // translateZ(0.1px) fixes Safari backface-visibility bug during animation
+          transform: translateZ(calc(var(--split-flap-is-current) * 0.1px))
+            rotateX(var(--split-flap-bottom-flap-angle));
           transform-origin: center calc(var(--split-flap-crease) * -0.5);
 
           > * {

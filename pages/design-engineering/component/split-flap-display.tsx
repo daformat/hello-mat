@@ -67,7 +67,6 @@ const SplitFlapDisplayPageContent = () => {
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const [time, setTime] = useState(() => new Date());
-  // const [time, setTime] = useState(() => new Date("Mon, 29 Dec 2025 23:59:55"));
   const [clockRunning, setClockRunning] = useState(true);
   const [rotateDisplay, setRotateDisplay] = useState(false);
   const [message, setMessage] = useState<string>(messages[0] ?? "HELLO");
@@ -156,16 +155,13 @@ const SplitFlapDisplayPageContent = () => {
         <p>
           A traditional split-flap clock, cycling through digits as time passes,
           a timeless design if you ask me. For this one I’m simply passing the
-          digits and the <code>:</code> character, and there’s a helpful prop
-          that allows to skip intermediary characters in order to only have
-          digits where appropriate without defining a different character range
+          digits for each slot and the <code>:</code> character.
         </p>
         <div
           className="demo card alt"
           style={{
             marginBlock: 32,
             padding: 0,
-            // maxWidth: 650,
             marginInline: "auto",
             display: "flex",
             flexDirection: "column",
@@ -190,9 +186,7 @@ const SplitFlapDisplayPageContent = () => {
             <SplitFlapDisplay
               length={8}
               characters={clockChars}
-              // value={formatSeconds(timeInSeconds).split("").reverse().join("")}
               value={formatTime(time)}
-              autoSkip
               style={clockStyle}
             />
           </div>
@@ -229,15 +223,6 @@ const SplitFlapDisplayPageContent = () => {
               >
                 +1 second
               </button>
-              {/*<button*/}
-              {/*  className="button alt"*/}
-              {/*  onClick={incrementTime2}*/}
-              {/*  style={{*/}
-              {/*    padding: "8px 12px",*/}
-              {/*  }}*/}
-              {/*>*/}
-              {/*  +15 minutes*/}
-              {/*</button>*/}
               <label
                 style={{
                   display: "inline-flex",
@@ -367,12 +352,6 @@ const SplitFlapDisplayPageContent = () => {
                 onClick={incrementMessage}
                 style={{
                   padding: "8px 12px",
-                  // borderRadius: 4,
-                  // border: "1px solid var(--color-border-2)",
-                  // background: "var(--color-background)",
-                  // color: "inherit",
-                  // cursor: "pointer",
-                  // fontSize: "0.875rem",
                 }}
               >
                 Next message
@@ -425,10 +404,6 @@ const SplitFlapDisplayPageContent = () => {
           </li>
           <li>
             <code>characters</code>: the character range to use
-          </li>
-          <li>
-            <code>autoSkip</code>: whether to skip the in-between characters
-            when the new character isn’t the natural next character
           </li>
           <li>
             <code>onFullyFlipped</code>: a callback that will be called when the
