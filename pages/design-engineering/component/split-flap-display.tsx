@@ -304,7 +304,8 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
           Design engineering: a split-flap display component
         </h1>
         <p>
-          An animated split-flap display component, bringing back some nostalgic
+          An animated split-flap display component, like the ones you'd see in
+          old train stations and airports, bringing back some nostalgic
           memories. This component is inspired by a similar component I made
           back in 2012, with many improvements. Instead of faking the physical
           spool like many implementations do, I decided to stay as close as
