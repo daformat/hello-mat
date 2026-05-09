@@ -676,6 +676,7 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
           </a>{" "}
           on github
         </p>
+        <p><strong>Note:</strong> you will likely want to set `perspective: 550px;` (or any other value) and `transform-style: preserve-3d;` on the root `<div></p>
         <Tabs
           defaultValue="tsx"
           tabs={[
