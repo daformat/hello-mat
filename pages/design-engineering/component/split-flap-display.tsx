@@ -1,3 +1,5 @@
+import { SplitFlapDisplay } from "@daformat/react-split-flap-display";
+import { GetStaticProps } from "next";
 import Link from "next/link";
 import {
   CSSProperties,
@@ -7,28 +9,188 @@ import {
   useRef,
   useState,
 } from "react";
+import {
+  BundledLanguage,
+  BundledTheme,
+  CodeToHastOptions,
+  codeToHtml,
+} from "shiki";
 
 import { MaybeUndefined } from "@/components/Media/utils/maybe";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
-import { SplitFlapDisplay } from "@/components/SplitFlapDisplay/SplitFlapDisplay";
 import styles from "@/components/SplitFlapDisplay/SplitFlapDisplay.module.scss";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
+import { Tabs } from "@/components/Tabs/Tabs";
 import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
 import {
   ComponentId,
   COMPONENTS,
 } from "@/constants/design-engineering/components";
 
+const tsxSource = `
+import { useEffect, useState } from "react";
+import { SplitFlapDisplay } from "@daformat/react-split-flap-display";
+import styles from "./styles.module.css";
+
+const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const WORDS = ["HELLO", "WORLD", "REACT", "FLIP"];
+
+export const Demo = () => {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setIndex((i) => (i + 1) % WORDS.length), 3000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <SplitFlapDisplay
+      value={WORDS[index]}
+      length={5}
+      characters={CHARS}
+      flipDuration={800}
+      className={styles.split_flap_display}
+    />
+  );
+};
+`.trim();
+
+const cssSource = `
+.split_flap_display {
+  --ease-out-cubic: cubic-bezier(.215, .61, .355, 1);
+  display: flex;
+  font-size: 3.5em;
+  gap: 2px; /* gap between characters */
+  transition: transform 500ms var(--ease-out-cubic);
+
+  [data-split-flap-character] {
+    /* prevent elements from showing through the crease */
+    &::after {
+      background-color: var(--color-background);
+      content: "";
+      display: block;
+      height: var(--split-flap-crease);
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 100%;
+    }
+
+    > [data-split-flap-flap] {
+      background: var(--color-background);
+      border-radius: 3px;
+      box-shadow: inset 0 0 2px 0.75px var(--color-border-2),
+      inset 0 0 0 1px var(--color-border-1);
+      box-sizing: content-box;
+      height: 0.5em;
+      line-height: 1;
+      width: 1em;
+
+      /* Top flap - flips down */
+      &[data-split-flap-flap="top"] {
+        align-items: flex-start;
+        padding-top: 0.25em;
+      }
+
+      /* Bottom flap - flips up */
+      &[data-split-flap-flap="bottom"] {
+        align-items: flex-end;
+        padding-bottom: 0.25em;
+      }
+    }
+  }
+}
+`.trim();
+
+interface CodeBlocks {
+  tsx: string;
+  css: string;
+  installInstructionsNpm: string;
+  installInstructionsYarn: string;
+  installInstructionsPnpm: string;
+  installInstructionsBun: string;
+  installInstructionsDeno: string;
+}
+
+export const getStaticProps: GetStaticProps<CodeBlocks> = async () => {
+  const getOptions = (
+    lang: BundledLanguage
+  ): CodeToHastOptions<BundledLanguage, BundledTheme> => ({
+    lang,
+    themes: {
+      light: "vitesse-light",
+      dark: "houston",
+    },
+    tabindex: false,
+  });
+
+  const tsx = await codeToHtml(tsxSource, getOptions("tsx"));
+
+  const css = await codeToHtml(cssSource, getOptions("css"));
+
+  const installInstructionsSourceNpm = `
+npm install @daformat/react-split-flap-display
+  `.trim();
+  const installInstructionsNpm = await codeToHtml(
+    installInstructionsSourceNpm,
+    getOptions("bash")
+  );
+
+  const installInstructionsSourceYarn = `
+yarn add @daformat/react-split-flap-display
+  `.trim();
+  const installInstructionsYarn = await codeToHtml(
+    installInstructionsSourceYarn,
+    getOptions("bash")
+  );
+
+  const installInstructionsSourcePnpm = `
+pnpm add @daformat/react-split-flap-display
+  `.trim();
+  const installInstructionsPnpm = await codeToHtml(
+    installInstructionsSourcePnpm,
+    getOptions("bash")
+  );
+
+  const installInstructionsSourceBun = `
+bun add @daformat/react-split-flap-display
+  `.trim();
+  const installInstructionsBun = await codeToHtml(
+    installInstructionsSourceBun,
+    getOptions("bash")
+  );
+
+  const installInstructionsSourceDeno = `
+deno add npm:@daformat/react-split-flap-display
+  `.trim();
+  const installInstructionsDeno = await codeToHtml(
+    installInstructionsSourceDeno,
+    getOptions("bash")
+  );
+
+  return {
+    props: {
+      tsx,
+      css,
+      installInstructionsNpm,
+      installInstructionsYarn,
+      installInstructionsPnpm,
+      installInstructionsBun,
+      installInstructionsDeno,
+    },
+  };
+};
+
 const componentId: ComponentId = "split-flap-display";
 
-const SplitFlapDisplayPage = () => {
+const SplitFlapDisplayPage = (props: CodeBlocks) => {
   const component = COMPONENTS[componentId];
   return (
     <>
       <PageMetas {...component.metas} />
       <TableOfContents.Provider>
-        <SplitFlapDisplayPageContent />
+        <SplitFlapDisplayPageContent {...props} />
       </TableOfContents.Provider>
     </>
   );
@@ -64,7 +226,7 @@ const formatTime = (date: Date) => {
   return `${hours}:${minutes}:${seconds}`;
 };
 
-const SplitFlapDisplayPageContent = () => {
+const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
   const [time, setTime] = useState(() => new Date());
@@ -138,7 +300,7 @@ const SplitFlapDisplayPageContent = () => {
         <Link href="/design-engineering" className="back_link">
           Back to gallery
         </Link>
-        <h1 id="design-engineering-a-swipeable-cards-carousel">
+        <h1 id="design-engineering-a-split-flap-display">
           Design engineering: a split-flap display component
         </h1>
         <p>
@@ -151,6 +313,100 @@ const SplitFlapDisplayPageContent = () => {
           option). Even tough there may be shortcomings to this approach,
           I&nbsp;took it as a chance to practice.
         </p>
+
+        <h2 id="install">Install</h2>
+        <p>
+          Open the repo in{" "}
+          <a
+            href="https://github.com/daformat/react-swipeable-cards"
+            target="_blank"
+            rel="noopener"
+          >
+            Github
+          </a>{" "}
+          (and drop a star if you like it!), view{" "}
+          <a href="#quick-start">quick-start</a> to get started
+        </p>
+        <Tabs
+          defaultValue="install-npm"
+          tabs={[
+            {
+              id: "install-npm",
+              trigger: (
+                <h4 id="install-npm" data-no-toc={""}>
+                  npm
+                </h4>
+              ),
+              content: (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: props.installInstructionsNpm,
+                  }}
+                />
+              ),
+            },
+            {
+              id: "install-yarn",
+              trigger: (
+                <h4 id="install-yarn" data-no-toc={""}>
+                  yarn
+                </h4>
+              ),
+              content: (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: props.installInstructionsYarn,
+                  }}
+                />
+              ),
+            },
+            {
+              id: "install-pnpm",
+              trigger: (
+                <h4 id="install-pnpm" data-no-toc={""}>
+                  pnpm
+                </h4>
+              ),
+              content: (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: props.installInstructionsPnpm,
+                  }}
+                />
+              ),
+            },
+            {
+              id: "install-bun",
+              trigger: (
+                <h4 id="install-bun" data-no-toc={""}>
+                  bun
+                </h4>
+              ),
+              content: (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: props.installInstructionsBun,
+                  }}
+                />
+              ),
+            },
+            {
+              id: "install-deno",
+              trigger: (
+                <h4 id="install-deno" data-no-toc={""}>
+                  deno
+                </h4>
+              ),
+              content: (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: props.installInstructionsDeno,
+                  }}
+                />
+              ),
+            },
+          ]}
+        />
 
         <h2 id="split-flap-clock">Fig. 1: a split-flap clock</h2>
         <p>
@@ -394,6 +650,67 @@ const SplitFlapDisplayPageContent = () => {
             10%
           </button>
         </div>
+
+        <h2 id="quick-start">Quick start</h2>
+        <p>
+          Below is a minimal example to reproduce the examples above, view the
+          full{" "}
+          <a
+            href={
+              "https://github.com/daformat/hello-mat/blob/master/pages/design-engineering/component/split-flap-display.tsx"
+            }
+            target="_blank"
+            rel="noopener"
+          >
+            tsx
+          </a>{" "}
+          and{" "}
+          <a
+            href={
+              "https://github.com/daformat/hello-mat/blob/master/components/SplitFlapDisplay/SplitFlapDisplay.module.scss"
+            }
+            target="_blank"
+            rel="noopener"
+          >
+            scss
+          </a>{" "}
+          on github
+        </p>
+        <Tabs
+          defaultValue="tsx"
+          tabs={[
+            {
+              id: "tsx",
+              trigger: (
+                <h4 id="tsx" data-no-toc={""}>
+                  tsx
+                </h4>
+              ),
+              content: (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: props.tsx,
+                  }}
+                />
+              ),
+            },
+            {
+              id: "css",
+              trigger: (
+                <h4 id="css" data-no-toc={""}>
+                  css
+                </h4>
+              ),
+              content: (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: props.css,
+                  }}
+                />
+              ),
+            },
+          ]}
+        />
 
         <h2 id="component-props">Component props</h2>
         <p>This component accepts several props:</p>
