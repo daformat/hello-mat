@@ -98,6 +98,9 @@ const cssSource = `
   }
 
   &[data-style="stacked-offset"] {
+    // Pick whatever vertical step you want between stacked cards.
+    --card-top-distance: clamp(16px, 1vw, 32px);
+
     [data-swipeable-cards-cards] {
       [data-swipeable-cards-card-wrapper] {
         --p: calc(
