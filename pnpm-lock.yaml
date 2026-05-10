@@ -12,8 +12,8 @@ importers:
         specifier: ^1.0.14
         version: 1.0.14(react@19.2.1)
       '@daformat/react-split-flap-display':
-        specifier: 1.0.1
-        version: 1.0.1(react@19.2.1)
+        specifier: 1.0.2
+        version: 1.0.2(react@19.2.1)
       '@daformat/react-swipeable-cards':
         specifier: ^1.0.2
         version: 1.0.2(react@19.2.1)
@@ -317,8 +317,8 @@ packages:
     peerDependencies:
       react: '>=18'
 
-  '@daformat/react-split-flap-display@1.0.1':
-    resolution: {integrity: sha512-fwePjisc2x+MsQVG81dkmu/6CuSpZybT7bzL1HZruinSinNEnuR3+M0C7BJ62QCZ2+Gz+12bG2xljGTV6yQPBQ==}
+  '@daformat/react-split-flap-display@1.0.2':
+    resolution: {integrity: sha512-5S1N1HmwS1bhKx1gM9MVJuGdSGNLDzuCeLb0AbZA0CP9KctDktmgg/aIygK/2uJqqTs3OzbZnWg/oaNLmAfFrA==}
     peerDependencies:
       react: '>=18'
 
@@ -4553,7 +4553,7 @@ snapshots:
     dependencies:
       react: 19.2.1
 
-  '@daformat/react-split-flap-display@1.0.1(react@19.2.1)':
+  '@daformat/react-split-flap-display@1.0.2(react@19.2.1)':
     dependencies:
       react: 19.2.1
 
