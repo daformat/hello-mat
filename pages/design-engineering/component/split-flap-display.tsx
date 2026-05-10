@@ -33,24 +33,40 @@ import { useEffect, useState } from "react";
 import { SplitFlapDisplay } from "@daformat/react-split-flap-display";
 import styles from "./styles.module.css";
 
-const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
 const WORDS = ["HELLO", "WORLD", "REACT", "FLIP"];
 
 export const Demo = () => {
-  const [index, setIndex] = useState(0);
+  const [word, setWord] = useState<string>(WORDS[0] ?? "HELLO");
+  const newMessageTimeoutRef =
+    useRef<ReturnType<typeof setTimeout>>(null);
 
-  useEffect(() => {
-    const id = setInterval(() => setIndex((i) => (i + 1) % WORDS.length), 3000);
-    return () => clearInterval(id);
+  const incrementMessage = useCallback(() => {
+    if (newMessageTimeoutRef.current) {
+      clearTimeout(newMessageTimeoutRef.current);
+      newMessageTimeoutRef.current = null
+    }
+    setWord(
+      (word) =>
+        WORDS[(WORDS.indexOf(word) + 1) % WORDS.length] ?? word
+    );
   }, []);
+
+  const handleFullyFlipped = useCallback(() => {
+    if (newMessageTimeoutRef.current) {
+      clearTimeout(newMessageTimeoutRef.current);
+    }
+    newMessageTimeoutRef.current = setTimeout(incrementMessage, 5000);
+  }, [incrementMessage]);
 
   return (
     <SplitFlapDisplay
-      value={WORDS[index]}
+      value={word}
       length={5}
       characters={CHARS}
       flipDuration={800}
-      className={styles.split_flap_display}
+      onFullyFlipped={handleFullyFlipped}
+      className={styles.split_flap_display
     />
   );
 };
@@ -58,11 +74,15 @@ export const Demo = () => {
 
 const cssSource = `
 .split_flap_display {
-  --ease-out-cubic: cubic-bezier(.215, .61, .355, 1);
+  --ease-out-cubic: cubic-bezier(0.215, 0.61, 0.355, 1);
+  --color-background: #feefe7;
+  --color-border-1: rgba(255, 255, 255, 0.6);
+  --color-border-2: rgba(255, 255, 255, 0.001);
+
   display: flex;
+  filter: drop-shadow(0 1px 12px var(--color-shadow-1));
   font-size: 3.5em;
   gap: 2px; /* gap between characters */
-  transition: transform 500ms var(--ease-out-cubic);
 
   [data-split-flap-character] {
     /* prevent elements from showing through the crease */
@@ -70,6 +90,7 @@ const cssSource = `
       background-color: var(--color-background);
       content: "";
       display: block;
+      /* this variable is set by the component */
       height: var(--split-flap-crease);
       position: absolute;
       top: 50%;
@@ -80,8 +101,9 @@ const cssSource = `
     > [data-split-flap-flap] {
       background: var(--color-background);
       border-radius: 3px;
-      box-shadow: inset 0 0 2px 0.75px var(--color-border-2),
-      inset 0 0 0 1px var(--color-border-1);
+      box-shadow:
+        inset 0 0 2px 0.75px var(--color-border-2),
+        inset 0 0 0 1px var(--color-border-1);
       box-sizing: content-box;
       height: 0.5em;
       line-height: 1;
@@ -226,6 +248,41 @@ const formatTime = (date: Date) => {
   return `${hours}:${minutes}:${seconds}`;
 };
 
+// const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
+// const WORDS = ["HELLO", "WORLD", "REACT", "FLIP"];
+//
+// export const Demo = () => {
+//   const [word, setWord] = useState<string>(WORDS[0] ?? "HELLO");
+//   const newMessageTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
+//
+//   const incrementMessage = useCallback(() => {
+//     if (newMessageTimeoutRef.current) {
+//       clearTimeout(newMessageTimeoutRef.current);
+//       newMessageTimeoutRef.current = null;
+//     }
+//     setWord((word) => WORDS[(WORDS.indexOf(word) + 1) % WORDS.length] ?? word);
+//   }, []);
+//
+//   const handleFullyFlipped = useCallback(() => {
+//     if (newMessageTimeoutRef.current) {
+//       clearTimeout(newMessageTimeoutRef.current);
+//     }
+//     newMessageTimeoutRef.current = setTimeout(incrementMessage, 5000);
+//   }, [incrementMessage]);
+//
+//   return (
+//     <SplitFlapDisplay
+//       value={word}
+//       length={5}
+//       characters={CHARS}
+//       flipDuration={800}
+//       onFullyFlipped={handleFullyFlipped}
+//       className={styles.split_flap_display}
+//       style={{ filter: "drop-shadow(0 1px 12px var(--color-shadow-1))" }}
+//     />
+//   );
+// };
+
 const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
@@ -303,6 +360,7 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
         <h1 id="design-engineering-a-split-flap-display">
           Design engineering: a split-flap display component
         </h1>
+        {/*<Demo />*/}
         <p>
           An animated split-flap display component, like the ones you’d see in
           old train stations and airports, bringing back some nostalgic
@@ -721,21 +779,64 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
         />
 
         <h2 id="component-props">Component props</h2>
-        <p>This component accepts several props:</p>
+        <p>
+          The component renders a <code>&lt;div&gt;</code> and accepts every
+          standard <code>&lt;div&gt;</code> prop (<code>className</code>,{" "}
+          <code>style</code>, <code>aria-*</code>, <code>data-*</code>,{" "}
+          <code>ref</code>, …) on top of the ones below:
+        </p>
         <ul>
           <li>
-            <code>value</code>: the current value to display
+            <code>value</code> (<code>string</code>): the current value to
+            display. Every character must belong to the corresponding character
+            set, otherwise the component will throw. If the value is shorter
+            than <code>length</code>, the component will pad the value with
+            spaces, so it's important you include <code>&quot; &quot;</code> in
+            the character set in this case.
           </li>
           <li>
-            <code>length</code>: the total display length
+            <code>length</code> (<code>number</code>): the number of slots to
+            render. Values shorter than <code>length</code> are right-padded
+            with spaces; values longer than <code>length</code> are truncated
+            and the last slot becomes an ellipsis (<code>…</code>).
           </li>
           <li>
-            <code>characters</code>: the character range to use
+            <code>characters</code> (<code>string | string[]</code>): the set of
+            characters each slot can flip through. Pass a single string to share
+            the same set across every slot, or an array of length{" "}
+            <code>length</code> to give each slot its own set. Each set must be
+            non-empty and contain no duplicates.
           </li>
           <li>
-            <code>onFullyFlipped</code>: a callback that will be called when the
-            display is finished flipping through characters to display the
-            current value
+            <code>onFullyFlipped</code> (<code>{"() => void"}</code>, optional):
+            called once after every slot has finished flipping to the current{" "}
+            <code>value</code>. Fires again on the next value change. Handy for
+            chaining transitions or syncing audio.
+          </li>
+          <li>
+            <code>crease</code> (<code>number | string</code>, default{" "}
+            <code>1</code>): visual gap between the top and bottom flaps. A{" "}
+            <code>number</code> is interpreted as pixels; a <code>string</code>{" "}
+            is passed through verbatim (e.g. <code>&quot;0.5rem&quot;</code>).
+            Exposed to CSS as <code>--split-flap-crease</code>.
+          </li>
+          <li>
+            <code>flipDuration</code> (<code>number | string</code>, default{" "}
+            <code>800</code>): duration of the flip animation. A{" "}
+            <code>number</code> is interpreted as milliseconds; a{" "}
+            <code>string</code> is passed through verbatim (e.g.{" "}
+            <code>&quot;1s&quot;</code>). Exposed to CSS as{" "}
+            <code>--split-flap-flip-duration</code>.
+          </li>
+          <li>
+            <code>flipTimingFunction</code> (<code>string</code>, default{" "}
+            <code>cubic-bezier(.215, .61, .355, 1)</code>): CSS timing function
+            applied to the flip animation. Exposed to CSS as{" "}
+            <code>--split-flap-timing-function</code>.
+          </li>
+          <li>
+            <code>ref</code> (<code>{"Ref<HTMLDivElement>"}</code>, optional):
+            forwarded to the root <code>&lt;div&gt;</code>.
           </li>
         </ul>
 
