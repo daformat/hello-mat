@@ -372,8 +372,8 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
           rotate along the drum (try checking the <code>Rotate display</code>{" "}
           option). Even tough there may be shortcomings to this approach,
           I&nbsp;took it as a chance to practice. You can{" "}
-          <a href="#install">install</a> the open-source package and star adding
-          split-flap displays to your site or application
+          <a href="#install">install</a> the open-source package and start
+          adding beautiful split-flap displays to your site or application.
         </p>
 
         <h2 id="install">Install</h2>
