@@ -28,6 +28,19 @@ import {
   COMPONENTS,
 } from "@/constants/design-engineering/components";
 
+const componentStructureSource = `
+<SplitFlapDisplay.Root>
+  <SplitFlapDisplay.Slot>
+    <SplitFlapDisplay.Character>
+      <SplitFlapDisplay.Flap position="top" />
+      <SplitFlapDisplay.Flap position="bottom" />
+    </SplitFlapDisplay.Character>
+    {/* ...one Character per character in the set */}
+  </SplitFlapDisplay.Slot>
+  {/* ...as many Slot as \`length\` */}
+</SplitFlapDisplay.Root>
+`.trim();
+
 const tsxSource = `
 import { useState } from "react";
 import { SplitFlapDisplay } from "@daformat/react-split-flap-display";
@@ -249,6 +262,7 @@ interface CodeBlocks {
   installInstructionsPnpm: string;
   installInstructionsBun: string;
   installInstructionsDeno: string;
+  componentStructure: string;
 }
 
 export const getStaticProps: GetStaticProps<CodeBlocks> = async () => {
@@ -262,6 +276,11 @@ export const getStaticProps: GetStaticProps<CodeBlocks> = async () => {
     },
     tabindex: false,
   });
+
+  const componentStructure = await codeToHtml(
+    componentStructureSource,
+    getOptions("tsx")
+  );
 
   const tsx = await codeToHtml(tsxSource, getOptions("tsx"));
 
@@ -319,6 +338,7 @@ deno add npm:@daformat/react-split-flap-display
       installInstructionsPnpm,
       installInstructionsBun,
       installInstructionsDeno,
+      componentStructure,
     },
   };
 };
@@ -922,18 +942,11 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
           three exist for when you want to swap any layer for your own markup,
           like in the <code>tailwind</code> tab above.
         </p>
-        <pre>
-          <code>{`<SplitFlapDisplay.Root>
-  <SplitFlapDisplay.Slot>
-    <SplitFlapDisplay.Character>
-      <SplitFlapDisplay.Flap position="top" />
-      <SplitFlapDisplay.Flap position="bottom" />
-    </SplitFlapDisplay.Character>
-    {/* ...one Character per character in the set */}
-  </SplitFlapDisplay.Slot>
-  {/* ...one Slot per \`length\` */}
-</SplitFlapDisplay.Root>`}</code>
-        </pre>
+        <div
+          dangerouslySetInnerHTML={{
+            __html: props.componentStructure,
+          }}
+        />
         <p>
           When you don’t pass a <code>children</code> render-prop to a given
           level, that level renders the level below automatically. So you can
