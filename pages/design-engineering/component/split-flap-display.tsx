@@ -758,7 +758,7 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
           >
             <SplitFlapDisplay.Root
               length={5}
-              characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ "
+              characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ"
               value={message}
               style={alphaStyle}
               onFullyFlipped={handleFullyFlipped}
