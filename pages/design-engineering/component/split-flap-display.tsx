@@ -218,7 +218,7 @@ export const Demo = () => {
                   <SplitFlapDisplay.Flap
                     character={c}
                     position="bottom"
-                    className={\`\${FLAP} items-end pb-[0.25em] transform-3d\`}
+                    className={\`\${FLAP} items-end pb-[0.25em]\`}
                   />
                 </>
               )}
