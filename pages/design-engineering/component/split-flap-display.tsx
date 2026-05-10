@@ -791,7 +791,7 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
             display. Every character must belong to the corresponding character
             set, otherwise the component will throw. If the value is shorter
             than <code>length</code>, the component will pad the value with
-            spaces, so it's important you include <code>&quot; &quot;</code> in
+            spaces, so it’s important you include <code>&quot; &quot;</code> in
             the character set in this case.
           </li>
           <li>
