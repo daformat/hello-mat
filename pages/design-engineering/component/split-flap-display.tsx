@@ -78,6 +78,7 @@ const cssSource = `
   --color-background: #feefe7;
   --color-border-1: rgba(255, 255, 255, 0.6);
   --color-border-2: rgba(255, 255, 255, 0.001);
+  --color-shadow-1: rgba(102, 27, 33, 0.05);
 
   display: flex;
   filter: drop-shadow(0 1px 12px var(--color-shadow-1));
