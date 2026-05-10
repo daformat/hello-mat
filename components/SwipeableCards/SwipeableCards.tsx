@@ -592,7 +592,7 @@ const adjustVelocityForExit = (
   }
 
   if (DEBUG) {
-    const { boundingRect, origin, transform, rotation } = getCurrentFinalRect(
+    const { boundingRect, origin, transform } = getCurrentFinalRect(
       state as DraggingState & { element: HTMLElement },
       rect,
       animationDuration,

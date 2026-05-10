@@ -129,6 +129,11 @@ const cssSource = `
 }
 `.trim();
 
+// this is just to make typescript happy
+const FLAP =
+  "bg-[#feefe7] box-content h-[0.5em] w-[1em] leading-none rounded-[3px] " +
+  "shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6)]";
+
 const tailwindSource = `
 import { useCallback, useRef, useState } from "react";
 import { SplitFlapDisplay } from "@daformat/react-split-flap-display";
