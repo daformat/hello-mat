@@ -142,11 +142,6 @@ const cssSource = `
 }
 `.trim();
 
-// this is just to make typescript happy
-const FLAP =
-  "bg-[#feefe7] box-content h-[0.5em] w-[1em] leading-none rounded-[3px] " +
-  "shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6)]";
-
 const tailwindSource = `
 import { useCallback, useRef, useState } from "react";
 import { SplitFlapDisplay } from "@daformat/react-split-flap-display";
@@ -207,7 +202,7 @@ export const Demo = () => {
                   <SplitFlapDisplay.Flap
                     character={c}
                     position="top"
-                    className={\`${FLAP} items-start pt-[0.25em]\`}
+                    className={\`\${FLAP} items-start pt-[0.25em]\`}
                   />
                   {/*
                     A real <span> instead of an ::after pseudo-element so
@@ -223,7 +218,7 @@ export const Demo = () => {
                   <SplitFlapDisplay.Flap
                     character={c}
                     position="bottom"
-                    className={\`${FLAP} items-end pb-[0.25em] transform-3d\`}
+                    className={\`\${FLAP} items-end pb-[0.25em] transform-3d\`}
                   />
                 </>
               )}
