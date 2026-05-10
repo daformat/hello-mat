@@ -513,7 +513,7 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
         <p>
           Open the repo in{" "}
           <a
-            href="https://github.com/daformat/react-swipeable-cards"
+            href="https://github.com/daformat/react-split-flap-display"
             target="_blank"
             rel="noopener"
           >
