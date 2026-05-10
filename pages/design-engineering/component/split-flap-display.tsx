@@ -230,7 +230,7 @@ export const Demo = () => {
   );
 };
 
-// Then, where you want to use it, set perrspective on the <Demo/> container
+// Then, where you want to use it, set perspective on the <Demo/> container
 // (or any other ancestor),
 // Also if you want the drop shadow filter, it's important it is set on the
 // container, not on the <SplitFlapDisplay.Root/> itself, otherwise this will
