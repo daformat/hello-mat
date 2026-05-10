@@ -363,17 +363,7 @@ const clockChars = [
   "0123456789",
 ];
 
-const messages = [
-  "HELLO",
-  "CIAO",
-  "HALLO",
-  "NIHAO",
-  "SALUT",
-  "HEJ",
-  "PAKA",
-  "HEY",
-  "ALOHA",
-];
+const messages = ["HELLO", "ALOHA", "SALUT", "NIHAO", "SAWUB"];
 
 const formatTime = (date: Date) => {
   const hours = date.getHours().toString().padStart(2, "0");
