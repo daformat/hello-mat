@@ -486,17 +486,18 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
         </h1>
         {/*<Demo />*/}
         <p>
-          An animated split-flap display component, like the ones you’d see in
-          old train stations and airports, bringing back some nostalgic
-          memories. This component is inspired by a similar component I made
-          back in 2012, with many improvements. Instead of faking the physical
-          spool like many implementations do, I decided to stay as close as
-          possible to the physical split-flap displays: the flaps really do
-          rotate along the drum (try checking the <code>Rotate display</code>{" "}
-          option). Even tough there may be shortcomings to this approach,
-          I&nbsp;took it as a chance to practice. You can{" "}
-          <a href="#install">install</a> the open-source package and start
-          adding beautiful split-flap displays to your site or application.
+          An animated split-flap display component, aka Solari board, like the
+          ones you’d see in old train stations and airports, bringing back some
+          nostalgic memories. This component is inspired by a similar component
+          I made back in 2012, with many improvements. Instead of faking the
+          physical spool like many implementations do, I decided to stay as
+          close as possible to the physical split-flap displays: the flaps
+          really do rotate along the drum (try checking the{" "}
+          <code>Rotate display</code> option). Even tough there may be
+          shortcomings to this approach, I&nbsp;took it as a chance to practice.
+          You can <a href="#install">install</a> the open-source package and
+          start adding beautiful split-flap displays to your site or
+          application.
         </p>
 
         <h2 id="install">Install</h2>
