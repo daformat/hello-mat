@@ -11,6 +11,9 @@ importers:
       '@daformat/react-headless-carousel':
         specifier: ^1.0.14
         version: 1.0.14(react@19.2.1)
+      '@daformat/react-number-flow-input':
+        specifier: ^1.0.0
+        version: 1.0.0(react@19.2.1)
       '@daformat/react-split-flap-display':
         specifier: 1.0.2
         version: 1.0.2(react@19.2.1)
@@ -314,6 +317,11 @@ packages:
 
   '@daformat/react-headless-carousel@1.0.14':
     resolution: {integrity: sha512-2SVtAI/COMIj3T8DpYOqG46uxBEqnUhzakEHWj9wUZFoUKmSmEeKuCiH1afW/+MWq+DtjJJ9l/0dAYdFKylbxA==}
+    peerDependencies:
+      react: '>=18'
+
+  '@daformat/react-number-flow-input@1.0.0':
+    resolution: {integrity: sha512-m4Z/Tj5ojrWGFmc9cipY+Xf5popjJ+nvehz9R0K2vnob4x/E4Sq2mKgFK+uM04faLV5vxeQqIFJbktMEgJboqg==}
     peerDependencies:
       react: '>=18'
 
@@ -4550,6 +4558,10 @@ snapshots:
       postcss-selector-parser: 6.1.2
 
   '@daformat/react-headless-carousel@1.0.14(react@19.2.1)':
+    dependencies:
+      react: 19.2.1
+
+  '@daformat/react-number-flow-input@1.0.0(react@19.2.1)':
     dependencies:
       react: 19.2.1
 

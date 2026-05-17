@@ -1,8 +1,10 @@
+import { NumberFlowInput } from "@daformat/react-number-flow-input";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { MaybeUndefined } from "@/components/Media/utils/maybe";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
-import { NumberFlowInput } from "@/components/NumberFlowInput/NumberFlowInput";
+import styles from "@/components/NumberFlowInput/NumberFlowInput.module.scss";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
@@ -10,6 +12,9 @@ import {
   ComponentId,
   COMPONENTS,
 } from "@/constants/design-engineering/components";
+import { isNonNullable } from "@/utils/nullable";
+
+const DEBUG = false;
 
 const useMaxLength = (
   smallScreen: number,
@@ -49,12 +54,24 @@ const NumberFlowInputPageContent = () => {
   const contentRef = useRef<HTMLDivElement>(null);
   const maxLength = useMaxLength(8, 15, 800);
   const [format, setFormat] = useState(true);
+  const [value, setValue] = useState<MaybeUndefined<number>>();
+  const lastValueRef = useRef<MaybeUndefined<number>>(undefined);
 
   useEffect(() => {
     if (contentRef.current) {
       tocContext.setRootElement(contentRef.current);
     }
   });
+
+  const handleRandomize = () => {
+    const randomNumber = Math.floor(
+      Math.random() * 100_000_000 * (Math.random() > 0.5 ? 1 : 0.01)
+    );
+    setValue((prev) => {
+      lastValueRef.current = prev;
+      return randomNumber;
+    });
+  };
 
   return (
     <>
@@ -105,12 +122,31 @@ const NumberFlowInputPageContent = () => {
               flexGrow: 1,
             }}
           >
-            <NumberFlowInput
-              maxLength={maxLength}
-              autoAddLeadingZero
-              placeholder="0"
-              format={format}
-            />
+            <span
+              style={{ display: "inline-flex" }}
+              className={styles.number_flow_input}
+            >
+              <span style={{ opacity: 0.5 }}>
+                <span
+                  style={{
+                    scale: 0.75,
+                    display: "inline-block",
+                    transformOrigin: "top center",
+                    translate: "0 0.05em",
+                  }}
+                >
+                  $
+                </span>
+              </span>
+              <NumberFlowInput
+                value={value}
+                onChange={(newValue) => setValue(newValue)}
+                maxLength={maxLength}
+                autoAddLeadingZero
+                placeholder="0"
+                format={format}
+              />
+            </span>
             <div style={{ textAlign: "center" }}>
               <span style={{ opacity: 0.5 }}>Type in a value above</span>
             </div>
@@ -121,6 +157,8 @@ const NumberFlowInputPageContent = () => {
               backgroundColor: "var(--color-card-background)",
               width: "100%",
               display: "flex",
+              justifyContent: "space-between",
+              gap: 8,
               alignItems: "center",
               borderBottomLeftRadius: "inherit",
               borderBottomRightRadius: "inherit",
@@ -141,6 +179,22 @@ const NumberFlowInputPageContent = () => {
               />
               <small style={{ opacity: 0.8 }}>format</small>
             </label>
+            <span>
+              {DEBUG ? (
+                <small>
+                  {isNonNullable(value)
+                    ? `(${
+                        isNonNullable(lastValueRef.current)
+                          ? `${lastValueRef.current} -> `
+                          : ""
+                      }${value})`
+                    : ""}
+                </small>
+              ) : null}
+              <button className="button" onClick={handleRandomize}>
+                Randomize
+              </button>
+            </span>
           </footer>
         </div>
 
