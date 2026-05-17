@@ -4,6 +4,7 @@
 
   [data-numberflow-input-contenteditable] {
     &:empty::before {
+      content: attr(data-placeholder);
       opacity: 0.3;
     }
   }
