@@ -12,8 +12,8 @@ importers:
         specifier: ^1.0.14
         version: 1.0.14(react@19.2.1)
       '@daformat/react-number-flow-input':
-        specifier: ^1.0.2
-        version: 1.0.2(react@19.2.1)
+        specifier: ^1.0.3
+        version: 1.0.3(react@19.2.1)
       '@daformat/react-split-flap-display':
         specifier: 1.0.2
         version: 1.0.2(react@19.2.1)
@@ -320,8 +320,8 @@ packages:
     peerDependencies:
       react: '>=18'
 
-  '@daformat/react-number-flow-input@1.0.2':
-    resolution: {integrity: sha512-5n9+jmEuduKnqkdl51frC9fWoBJhAT0Mipo86pM5UP6R3q5Z2POVzf0j2NXoHGFv4yyQ+8jO9IEH0sNJCWQTLg==}
+  '@daformat/react-number-flow-input@1.0.3':
+    resolution: {integrity: sha512-VJzCEscOdG3e+VySfi67jsVJKxKD23mZakugVKs/5526ra10L9PYKm7UiVab0grZ4taWjYzX7gLPpyXN0Rsc7A==}
     peerDependencies:
       react: '>=18'
 
@@ -4561,7 +4561,7 @@ snapshots:
     dependencies:
       react: 19.2.1
 
-  '@daformat/react-number-flow-input@1.0.2(react@19.2.1)':
+  '@daformat/react-number-flow-input@1.0.3(react@19.2.1)':
     dependencies:
       react: 19.2.1
 
