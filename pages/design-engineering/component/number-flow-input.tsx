@@ -174,7 +174,8 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
     const randomNumber = Math.floor(
       Math.random() * 100_000_000 * (Math.random() > 0.5 ? 1 : 0.01)
     );
-    const randomDecimal = Math.round(Math.random() > 0.5 ? Math.random() * 100 : 0) / 100;
+    const randomDecimal =
+      Math.round(Math.random() > 0.5 ? Math.random() * 100 : 0) / 100;
     setValue((prev) => {
       lastValueRef.current = prev;
       return randomNumber + randomDecimal;
@@ -255,6 +256,7 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
                 autoAddLeadingZero
                 placeholder="0"
                 format={format}
+                animateOnValueChange={true}
               />
             </span>
             <div style={{ textAlign: "center" }}>
