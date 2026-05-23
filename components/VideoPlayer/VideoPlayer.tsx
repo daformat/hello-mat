@@ -34,6 +34,7 @@ export type VideoPlayerProps = {
   sources: VideoSources;
   /** When true, the video will only play when visible in the viewport */
   autoPlaysWhenVisible?: boolean;
+  autoPlaysOnHover?: boolean;
 } & ComponentProps<"video">;
 
 export const VideoPlayer = ({
@@ -41,6 +42,7 @@ export const VideoPlayer = ({
   className,
   style,
   autoPlaysWhenVisible = false,
+  autoPlaysOnHover = false,
   ...rest
 }: VideoPlayerProps) => {
   const [showSlow, setShowSlow] = useState(false);
@@ -93,7 +95,40 @@ export const VideoPlayer = ({
     });
   }, [isVisible, autoPlaysWhenVisible]);
 
-  const shouldAutoPlay = !autoPlaysWhenVisible;
+  // Play/pause videos based on hover
+  useLayoutEffect(() => {
+    if (!autoPlaysOnHover) {
+      return;
+    }
+
+    const handlePointerEnter = () => {
+      videoRefs.current.forEach((video) => {
+        video.play().catch(() => {
+          // Autoplay may be blocked by browser
+        });
+      });
+    };
+
+    const handlePointerLeave = () => {
+      videoRefs.current.forEach((video) => {
+        video.currentTime = 0;
+        video.pause();
+      });
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener("pointerenter", handlePointerEnter);
+      container.addEventListener("pointerleave", handlePointerLeave);
+
+      return () => {
+        container.removeEventListener("pointerenter", handlePointerEnter);
+        container.removeEventListener("pointerleave", handlePointerLeave);
+      };
+    }
+  }, [isVisible, autoPlaysWhenVisible, autoPlaysOnHover]);
+
+  const shouldAutoPlay = !autoPlaysWhenVisible && !autoPlaysOnHover;
 
   return (
     <section style={{ width: "100%", ...style }}>

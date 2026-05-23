@@ -7,6 +7,7 @@ import {
   COMPONENTS,
   COMPONENTS_ORDER,
 } from "@/constants/design-engineering/components";
+import { Tabs } from "@/components/Tabs/Tabs";
 
 const DesignEngineeringIndex = () => (
   <>
@@ -40,25 +41,83 @@ const DesignEngineeringIndex = () => (
           This will also slow down network requests, if any, so that loading
           states are shown longer
         </p>
+        <p>
+          Some of these components are{" "}
+          <a
+            href={"https://github.com/daformat"}
+            target="_blank"
+            rel="noopener"
+          >
+            open-source
+          </a>
+          , dont be shy and drop a star!
+        </p>
       </div>
-      <div className={styles.card_list} style={{ marginTop: "1.5em" }}>
-        {COMPONENTS_ORDER.map((componentId) => {
-          const component = COMPONENTS[componentId];
-          return (
-            <Link
-              key={componentId}
-              href={component.metas.url}
-              className={styles.card}
-            >
-              <VideoPlayer
-                style={{ aspectRatio: "990/500" }}
-                sources={component.video}
-                autoPlaysWhenVisible
-              />
-              {component.metas.shortTitle}
-            </Link>
-          );
-        })}
+      <div style={{ marginTop: "1.5em" }}>
+        <Tabs
+          defaultValue="all"
+          tabs={[
+            {
+              id: "all",
+              trigger: "All",
+              content: (
+                <div
+                  className={styles.card_list}
+                  style={{ marginTop: "1.5em" }}
+                >
+                  {COMPONENTS_ORDER.map((componentId) => {
+                    const component = COMPONENTS[componentId];
+                    return (
+                      <Link
+                        key={componentId}
+                        href={component.metas.url}
+                        className={styles.card}
+                      >
+                        <VideoPlayer
+                          style={{ aspectRatio: "990/500" }}
+                          sources={component.video}
+                          autoPlaysOnHover
+                        />
+                        {component.metas.shortTitle}
+                      </Link>
+                    );
+                  })}
+                </div>
+              ),
+            },
+            {
+              id: "oss",
+              trigger: "Open source",
+              content: (
+                <div
+                  className={styles.card_list}
+                  style={{ marginTop: "1.5em" }}
+                >
+                  {COMPONENTS_ORDER.map((componentId) => {
+                    const component = COMPONENTS[componentId];
+                    if (!component.oss) {
+                      return null;
+                    }
+                    return (
+                      <Link
+                        key={componentId}
+                        href={component.metas.url}
+                        className={styles.card}
+                      >
+                        <VideoPlayer
+                          style={{ aspectRatio: "990/500" }}
+                          sources={component.video}
+                          autoPlaysOnHover
+                        />
+                        {component.metas.shortTitle}
+                      </Link>
+                    );
+                  })}
+                </div>
+              ),
+            },
+          ]}
+        />
       </div>
     </div>
   </>

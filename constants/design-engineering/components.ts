@@ -3,6 +3,7 @@ import { VideoSourcesWithoutSlowVersions } from "@/components/VideoPlayer/VideoP
 
 export const COMPONENTS = {
   toc: {
+    oss: false,
     video: {
       dark: {
         src: "/media/design-engineering/toc/toc-overview-dark.mp4",
@@ -25,6 +26,7 @@ export const COMPONENTS = {
     },
   },
   details: {
+    oss: false,
     video: {
       dark: {
         src: "/media/design-engineering/details/details-overview-dark.mp4",
@@ -47,6 +49,7 @@ export const COMPONENTS = {
     },
   },
   "images-and-embeds": {
+    oss: false,
     video: {
       dark: {
         src: "/media/design-engineering/images-and-embeds/images-and-embeds-overview-slow-dark.mp4",
@@ -69,6 +72,7 @@ export const COMPONENTS = {
     },
   },
   "collapsible-toolbar": {
+    oss: false,
     video: {
       dark: {
         src: "/media/design-engineering/collapsible-toolbar/collapsible-toolbar-overview-dark.mp4",
@@ -92,6 +96,7 @@ export const COMPONENTS = {
     },
   },
   "publish-button": {
+    oss: false,
     video: {
       dark: {
         src: "/media/design-engineering/publish-button/publish-button-overview-dark.mp4",
@@ -115,6 +120,7 @@ export const COMPONENTS = {
     },
   },
   "dock-component": {
+    oss: false,
     video: {
       dark: {
         src: "/media/design-engineering/dock/dock-overview-dark.mp4",
@@ -137,6 +143,7 @@ export const COMPONENTS = {
     },
   },
   "carousel-component": {
+    oss: true,
     video: {
       dark: {
         src: "/media/design-engineering/carousel/carousel-overview-dark.mp4",
@@ -159,6 +166,7 @@ export const COMPONENTS = {
     },
   },
   "stacking-cards": {
+    oss: false,
     video: {
       dark: {
         src: "/media/design-engineering/stacking-cards/stacking-cards-overview-dark.mp4",
@@ -182,6 +190,7 @@ export const COMPONENTS = {
     },
   },
   "swipeable-cards": {
+    oss: true,
     video: {
       dark: {
         src: "/media/design-engineering/swipeable-cards/swipeable-cards-overview-dark.mp4",
@@ -205,6 +214,7 @@ export const COMPONENTS = {
     },
   },
   "number-flow-input": {
+    oss: true,
     video: {
       dark: {
         src: "/media/design-engineering/number-flow-input/number-flow-input-overview-dark.mp4",
@@ -228,6 +238,7 @@ export const COMPONENTS = {
     },
   },
   "split-flap-display": {
+    oss: true,
     video: {
       dark: {
         src: "/media/design-engineering/split-flap-display/split-flap-display-overview-dark.mp4",
@@ -251,6 +262,7 @@ export const COMPONENTS = {
     },
   },
   slider: {
+    oss: false,
     video: {
       dark: {
         src: "/media/design-engineering/slider/slider-overview-dark.mp4",
@@ -273,6 +285,7 @@ export const COMPONENTS = {
     },
   },
   "tilting-tile": {
+    oss: false,
     video: {
       dark: {
         src: "/media/design-engineering/tilting-tile/tilting-tile-overview-dark.mp4",
@@ -294,14 +307,13 @@ export const COMPONENTS = {
       imageHeight: 630,
     },
   },
-} as const satisfies Record<
-  string,
-  {
-    metas: PageMetasProps;
-    video: VideoSourcesWithoutSlowVersions;
-  }
->;
+} as const satisfies Record<string, Component>;
 
+export type Component = {
+  oss?: boolean;
+  metas: PageMetasProps;
+  video: VideoSourcesWithoutSlowVersions;
+};
 export type ComponentId = keyof typeof COMPONENTS;
 
 type MissingKeys<T extends readonly unknown[]> = Exclude<
@@ -348,7 +360,9 @@ export const COMPONENTS_ORDER = createComponentOrder([
   "tilting-tile",
 ] as const);
 
-export const getNextComponent = (currentComponentId: ComponentId) => {
+export const getNextComponent = (
+  currentComponentId: ComponentId
+): Component => {
   const componentIndex = COMPONENTS_ORDER.findIndex(
     (id) => id === currentComponentId
   );
@@ -357,7 +371,9 @@ export const getNextComponent = (currentComponentId: ComponentId) => {
   return COMPONENTS[nextComponentId];
 };
 
-export const getPreviousComponent = (currentComponentId: ComponentId) => {
+export const getPreviousComponent = (
+  currentComponentId: ComponentId
+): Component => {
   const componentIndex = COMPONENTS_ORDER.findIndex(
     (id) => id === currentComponentId
   );
