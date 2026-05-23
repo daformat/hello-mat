@@ -64,9 +64,77 @@ const cssSource = `
 }
 `.trim();
 
+const stringValueSource = `
+import { useState } from "react";
+import { NumberFlowInput } from "@daformat/react-number-flow-input";
+
+export const PrecisionDemo = () => {
+  // Track the raw string the user typed. This preserves trailing zeros
+  // ("1.50"), integers past Number.MAX_SAFE_INTEGER, and decimals with
+  // more than ~17 significant digits. \`value\` accepts the string back
+  // directly — no parseFloat() round-trip required.
+  const [raw, setRaw] = useState<string | undefined>("12345678901234567890.50");
+
+  return (
+    <>
+      <NumberFlowInput value={raw} onChangeText={setRaw} placeholder="0" />
+      <p>
+        BigInt (integer part):{" "}
+        {raw ? BigInt(raw.split(".")[0] || "0").toString() : "—"}
+      </p>
+    </>
+  );
+};
+`.trim();
+
+const customFormatterSource = `
+import { NumberFlowInput } from "@daformat/react-number-flow-input";
+
+export const CurrencyDemo = () => {
+  return (
+    <NumberFlowInput
+      defaultValue="1234.56"
+      // \`format\` accepts a callback that receives the raw display value
+      // (digits, optional leading "-", optional single ".") and returns
+      // the string you want rendered. Empty / "-" / "." / "-." intermediate
+      // states bypass the callback and render verbatim.
+      format={(raw) => "$ " + raw}
+    />
+  );
+};
+`.trim();
+
+const animateOnValueChangeSource = `
+import { useEffect, useState } from "react";
+import { NumberFlowInput } from "@daformat/react-number-flow-input";
+
+export const RestoreFromServer = () => {
+  const [value, setValue] = useState<number | undefined>();
+
+  // Imagine we re-hydrate from /api/me on mount — we don't want the
+  // initial restore to barrel-roll from 0 to the saved value. Typing
+  // and format/locale toggles still animate normally.
+  useEffect(() => {
+    fetch("/api/me").then((r) => r.json()).then((d) => setValue(d.balance));
+  }, []);
+
+  return (
+    <NumberFlowInput
+      value={value}
+      onChange={setValue}
+      animateOnValueChange={false}
+      format
+    />
+  );
+};
+`.trim();
+
 interface CodeBlocks {
   tsx: string;
   css: string;
+  stringValue: string;
+  customFormatter: string;
+  animateOnValueChange: string;
   installInstructionsNpm: string;
   installInstructionsYarn: string;
   installInstructionsPnpm: string;
@@ -88,6 +156,15 @@ export const getStaticProps: GetStaticProps<CodeBlocks> = async () => {
 
   const tsx = await codeToHtml(tsxSource, getOptions("tsx"));
   const css = await codeToHtml(cssSource, getOptions("css"));
+  const stringValue = await codeToHtml(stringValueSource, getOptions("tsx"));
+  const customFormatter = await codeToHtml(
+    customFormatterSource,
+    getOptions("tsx")
+  );
+  const animateOnValueChange = await codeToHtml(
+    animateOnValueChangeSource,
+    getOptions("tsx")
+  );
 
   const installInstructionsNpm = await codeToHtml(
     "npm install @daformat/react-number-flow-input",
@@ -114,6 +191,9 @@ export const getStaticProps: GetStaticProps<CodeBlocks> = async () => {
     props: {
       tsx,
       css,
+      stringValue,
+      customFormatter,
+      animateOnValueChange,
       installInstructionsNpm,
       installInstructionsYarn,
       installInstructionsPnpm,
@@ -161,8 +241,8 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const maxLength = useMaxLength(8, 15, 800);
   const [format, setFormat] = useState(true);
-  const [value, setValue] = useState<MaybeUndefined<number>>();
-  const lastValueRef = useRef<MaybeUndefined<number>>(undefined);
+  const [value, setValue] = useState<MaybeUndefined<string>>();
+  const lastValueRef = useRef<MaybeUndefined<string>>(undefined);
 
   useEffect(() => {
     if (contentRef.current) {
@@ -178,7 +258,7 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
       Math.round(Math.random() > 0.5 ? Math.random() * 100 : 0) / 100;
     setValue((prev) => {
       lastValueRef.current = prev;
-      return randomNumber + randomDecimal;
+      return (randomNumber + randomDecimal).toString();
     });
   };
 
@@ -251,7 +331,7 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
               </span>
               <NumberFlowInput
                 value={value}
-                onChange={(newValue) => setValue(newValue)}
+                onChangeText={(newValue) => setValue(newValue)}
                 maxLength={maxLength}
                 autoAddLeadingZero
                 placeholder="0"
@@ -496,7 +576,10 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
             <strong>External value updates animate too</strong> — when the{" "}
             <code>value</code> prop changes (e.g. from a parent fetching new
             data), every digit rolls into place as a coordinated barrel-wheel
-            animation. The initial mount never animates.
+            animation. The initial mount never animates, and you can opt out
+            of subsequent prop-driven animations entirely with{" "}
+            <code>{"animateOnValueChange={false}"}</code> — see{" "}
+            <a href="#external-value-updates">External value updates</a>.
           </li>
         </ul>
 
@@ -538,6 +621,90 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
           </li>
         </ul>
 
+        <h3 id="external-value-updates">External value updates</h3>
+        <p>
+          When the <code>value</code> prop changes (e.g. you fetched a new
+          number from your API), every digit barrel-rolls into place by
+          default. To opt out — for instance when re-hydrating from
+          localStorage or restoring a server-driven state — pass{" "}
+          <code>{"animateOnValueChange={false}"}</code> and the next prop
+          update snaps in instantly. Typing and{" "}
+          <code>format</code> / <code>locale</code> toggles still animate.
+        </p>
+        <div
+          dangerouslySetInnerHTML={{
+            __html: props.animateOnValueChange,
+          }}
+        />
+
+        <h3 id="custom-formatter">Custom formatter</h3>
+        <p>
+          The <code>format</code> prop accepts a function in addition to a
+          boolean. The callback receives the raw display value (digits, an
+          optional leading <code>-</code>, an optional single{" "}
+          <code>.</code>) and returns whatever you want rendered. This lets
+          you prefix a currency, group digits in your own way, or pipe the
+          number through a third-party formatter while keeping all of the
+          component’s animation and cursor handling.
+        </p>
+        <div
+          dangerouslySetInnerHTML={{
+            __html: props.customFormatter,
+          }}
+        />
+        <p>
+          For correct cursor positioning and animation diffing, the
+          callback’s output should use the locale’s decimal character (or{" "}
+          <code>.</code> if no locale is set) and preserve the digit order
+          from the raw input. Intermediate states (<code>&quot;&quot;</code>,{" "}
+          <code>&quot;-&quot;</code>, <code>&quot;.&quot;</code>,{" "}
+          <code>&quot;-.&quot;</code>) bypass the callback and render
+          verbatim. If your function throws, the component falls back to a
+          safe locale-decimal-swap output so a buggy formatter can’t break
+          the input.
+        </p>
+
+        <h3 id="precision">Precision &amp; arbitrary-length values</h3>
+        <p>
+          Internally the component is string-based, so what the user types is
+          preserved character-by-character — there is no silent rounding
+          inside the input itself. The boundary is the JavaScript{" "}
+          <code>number</code> type: anything past{" "}
+          <code>Number.MAX_SAFE_INTEGER</code> (~9 × 10<sup>15</sup>) or with
+          more than ~15–17 significant digits cannot be represented exactly.
+          To keep full precision end-to-end, two opt-in mechanisms cooperate:
+        </p>
+        <ul>
+          <li>
+            <code>value</code> and <code>defaultValue</code> accept a
+            numeric <em>string</em> alongside <code>number</code>. Strings
+            are sanitized with the same pipeline as user input — only
+            characters matching{" "}
+            <code>{"/^-?\\d*\\.?\\d*$/"}</code> survive, so junk like{" "}
+            <code>&quot;$1,234.56&quot;</code> collapses to{" "}
+            <code>&quot;1234.56&quot;</code>. Use <code>.</code> as the
+            decimal separator regardless of <code>locale</code>.
+          </li>
+          <li>
+            <code>onChangeText</code> fires alongside <code>onChange</code>{" "}
+            with the raw string representation (e.g.{" "}
+            <code>&quot;12345678901234567890.123&quot;</code>). Pair these
+            two and your parent state never has to touch{" "}
+            <code>parseFloat</code>.
+          </li>
+        </ul>
+        <div
+          dangerouslySetInnerHTML={{
+            __html: props.stringValue,
+          }}
+        />
+        <p>
+          Trailing zeros, big integers, and long decimals all round-trip
+          intact when you wire <code>value</code> ↔ <code>onChangeText</code>.{" "}
+          <code>onChange</code> still receives the parsed{" "}
+          <code>number</code> if you want a numeric view at the same time.
+        </p>
+
         <h3 id="form-integration">Form integration</h3>
         <p>
           The component renders an offscreen, read-only{" "}
@@ -564,30 +731,51 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
         <h3 id="value-props">Value</h3>
         <ul>
           <li>
-            <code>value</code> (<code>number | undefined</code>): controlled
-            value. When provided, changes animate as a coordinated barrel-wheel
-            roll across every digit (except on initial mount).
+            <code>value</code> (
+            <code>number | string | undefined</code>): controlled value. When
+            provided, changes animate as a coordinated barrel-wheel roll
+            across every digit (except on initial mount). Strings are
+            sanitized with the same pipeline as user input (
+            <code>{"/^-?\\d*\\.?\\d*$/"}</code>) — see{" "}
+            <a href="#precision">Precision</a> for the rationale and a code
+            example.
           </li>
           <li>
-            <code>defaultValue</code> (<code>number</code>): uncontrolled
-            starting value. Mutually exclusive with <code>value</code> at the
-            TypeScript level.
+            <code>defaultValue</code> (<code>number | string</code>):
+            uncontrolled starting value. Accepts the same shapes as{" "}
+            <code>value</code>. Mutually exclusive with <code>value</code> at
+            the TypeScript level.
           </li>
           <li>
             <code>onChange</code> (
             <code>{"(value: number | undefined) => void"}</code>): called with
-            the parsed number (or <code>undefined</code> for intermediate states
-            like <code>&quot;&quot;</code>, <code>&quot;-&quot;</code>,{" "}
-            <code>&quot;.&quot;</code>).
+            the parsed number (or <code>undefined</code> for intermediate
+            states like <code>&quot;&quot;</code>,{" "}
+            <code>&quot;-&quot;</code>, <code>&quot;.&quot;</code>,{" "}
+            <code>&quot;-.&quot;</code>).
+          </li>
+          <li>
+            <code>onChangeText</code> (
+            <code>{"(rawText: string) => void"}</code>): fires alongside{" "}
+            <code>onChange</code> with the raw string representation —
+            digits, an optional leading <code>-</code>, an optional single{" "}
+            <code>.</code> (always <code>.</code>, never the locale decimal).
+            Use this when you need exact precision (BigInt math, currency
+            stored as strings, big-decimal libraries, etc). Intermediate
+            states (<code>&quot;&quot;</code>, <code>&quot;-&quot;</code>,{" "}
+            <code>&quot;.&quot;</code>, <code>&quot;-.&quot;</code>) are
+            reported verbatim.
           </li>
         </ul>
 
         <h3 id="formatting-props">Formatting</h3>
         <ul>
           <li>
-            <code>format</code> (<code>boolean</code>, default{" "}
-            <code>false</code>): when true, the display uses{" "}
-            <code>Intl.NumberFormat</code> grouping.
+            <code>format</code> (
+            <code>{"boolean | ((raw: string) => string)"}</code>, default{" "}
+            <code>false</code>): <code>true</code> groups via{" "}
+            <code>Intl.NumberFormat</code>; a function takes full control of
+            the output (see <a href="#custom-formatter">Custom formatter</a>).
           </li>
           <li>
             <code>locale</code> (<code>string | Intl.Locale</code>): locale used
@@ -621,6 +809,18 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
             <code>{"(value: number | null) => boolean"}</code>): predicate that
             gates every change. Return <code>false</code> to reject the
             keystroke before it reaches <code>onChange</code>.
+          </li>
+        </ul>
+
+        <h3 id="behavior-props">Behavior</h3>
+        <ul>
+          <li>
+            <code>animateOnValueChange</code> (<code>boolean</code>, default{" "}
+            <code>true</code>): when <code>false</code>, external{" "}
+            <code>value</code> updates snap instantly — no digit-roll, no
+            separator slide, no flow animation. Typing and{" "}
+            <code>format</code> / <code>locale</code> toggles still animate.
+            See <a href="#external-value-updates">External value updates</a>.
           </li>
         </ul>
 
