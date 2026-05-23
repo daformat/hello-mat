@@ -2,12 +2,12 @@ import Link from "next/link";
 
 import styles from "/styles/DesignEngineeringGallery.module.scss";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { Tabs } from "@/components/Tabs/Tabs";
 import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer";
 import {
   COMPONENTS,
   COMPONENTS_ORDER,
 } from "@/constants/design-engineering/components";
-import { Tabs } from "@/components/Tabs/Tabs";
 
 const DesignEngineeringIndex = () => (
   <>
