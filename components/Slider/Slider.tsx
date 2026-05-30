@@ -35,6 +35,8 @@ const SliderContext = createContext<{
   unregisterMarker: (value: number) => void;
   magnetizeMarkers?: boolean;
   magnetizeThreshold?: number;
+  stretchable: boolean | RefObject<MaybeNull<HTMLElement>>;
+  maxStretchDistance?: number;
 }>({
   values: [],
   onChange: () => {},
@@ -50,6 +52,7 @@ const SliderContext = createContext<{
   unregisterMarker: () => {},
   magnetizeMarkers: undefined,
   magnetizeThreshold: undefined,
+  stretchable: false,
 });
 
 const useSliderContext = () => {
@@ -63,6 +66,17 @@ const getDecimalCount = (value: number) => {
 const roundValue = (value: number, decimalCount: number) => {
   const rounder = Math.pow(10, decimalCount);
   return Math.round(value * rounder) / rounder;
+};
+
+/**
+ * iOS-style rubber-band easing curve. Maps an unbounded `translation` onto an
+ * asymptote of `dimension`, so the user gets diminishing returns past the
+ * limit. `ratio` reduces the eased value (0 = full effect, 1 = none).
+ */
+const iOSRubberBand = (value: number, ratio: number, dimension = 1) => {
+  const constant = 0.55;
+  const easedValue = (1 - 1 / ((value * constant) / dimension + 1)) * dimension;
+  return easedValue * (1 - ratio);
 };
 
 /**
@@ -114,6 +128,16 @@ type SliderUncontrolledProps = {
   defaultValues: SliderValue[];
 };
 
+type SliderNotStretchableProps = {
+  stretchable?: false;
+  maxStretchDistance?: never;
+};
+
+type SliderStretchableProps = {
+  stretchable: true | RefObject<MaybeNull<HTMLElement>>;
+  maxStretchDistance?: number;
+};
+
 type SliderBaseProps = {
   min: number;
   max: number;
@@ -121,7 +145,8 @@ type SliderBaseProps = {
   magnetizeMarkers?: boolean;
   magnetizeThreshold?: number;
   onChange?: (values: SliderValue[]) => void;
-} & (SliderControlledProps | SliderUncontrolledProps);
+} & (SliderControlledProps | SliderUncontrolledProps) &
+  (SliderNotStretchableProps | SliderStretchableProps);
 
 export type SliderProps = SliderBaseProps &
   Omit<ComponentProps<"span">, "onChange">;
@@ -135,6 +160,8 @@ const SliderRoot = ({
   onChange,
   magnetizeMarkers,
   magnetizeThreshold = 8,
+  stretchable = false,
+  maxStretchDistance,
   children,
   ...props
 }: SliderProps) => {
@@ -253,6 +280,8 @@ const SliderRoot = ({
         unregisterMarker,
         magnetizeMarkers,
         magnetizeThreshold,
+        stretchable,
+        maxStretchDistance,
       }}
     >
       <span ref={ref} {...props}>
@@ -438,11 +467,11 @@ const SliderThumb = ({
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
-    if (dragRef.current.lastTime < Date.now()) {
-      const friction = 0.3;
-      const decelerationFactor = 1 - friction;
-      dragRef.current.velocityX *= decelerationFactor;
-    }
+    // if (dragRef.current.lastTime < Date.now()) {
+    const friction = 0.3;
+    const decelerationFactor = 1 - friction;
+    dragRef.current.velocityX *= decelerationFactor;
+    // }
     if (Math.abs(dragRef.current.velocityX) <= 0.01) {
       dragRef.current.velocityX = 0;
     }
@@ -487,6 +516,42 @@ const SliderThumb = ({
           Math.max(event.clientX, rect.left - thumbRect.width / 2),
           rect.left + rect.width + thumbRect.width / 2
         );
+        const stretchableElement = context.stretchable
+          ? typeof context.stretchable !== "boolean"
+            ? context.stretchable.current
+            : context.rootRef.current
+          : null;
+        if (context.stretchable && stretchableElement) {
+          const maxStretchDistance = context.maxStretchDistance ?? 10;
+          const stretchDirection =
+            event.clientX > rect.left + rect.width + thumbRect.width / 2
+              ? 1
+              : event.clientX < rect.left - thumbRect.width / 2
+              ? -1
+              : 0;
+          if (stretchDirection) {
+            const stretchDistance =
+              stretchDirection === 1
+                ? event.clientX - (rect.left + rect.width + thumbRect.width / 2)
+                : stretchDirection === -1
+                ? event.clientX - (rect.left - thumbRect.width / 2)
+                : 0;
+            const easedStretchDistance = iOSRubberBand(
+              stretchDistance * stretchDirection,
+              0,
+              maxStretchDistance
+            );
+            stretchableElement.style.transformOrigin = `${
+              stretchDirection === 1 ? "left" : "right"
+            } center`;
+            stretchableElement.style.scale = `${
+              1 + easedStretchDistance / rect.width
+            } 1`;
+          } else {
+            stretchableElement.style.transformOrigin = "";
+            stretchableElement.style.scale = "";
+          }
+        }
         const delta = clampedClientX - dragRef.current.lastValidX;
         const value = context.values.find(({ id }) => id === valueId);
         const rawNewValue = Math.min(
@@ -567,7 +632,16 @@ const SliderThumb = ({
 
   const handlePointerUp = useCallback(() => {
     dragRef.current.isDragging = false;
-  }, []);
+    const stretchableElement = context.stretchable
+      ? typeof context.stretchable !== "boolean"
+        ? context.stretchable.current
+        : context.rootRef.current
+      : null;
+    if (stretchableElement) {
+      stretchableElement.style.transformOrigin = "";
+      stretchableElement.style.scale = "";
+    }
+  }, [context.rootRef, context.stretchable]);
 
   useEffect(() => {
     document.addEventListener("pointermove", handlePointerMove);

@@ -74,6 +74,9 @@ const SliderPageContent = (props: CodeBlocks) => {
     { id: 3, value: 60, label: "" },
     { id: 4, value: 80, label: "" },
   ]);
+  const wrapperRef1 = useRef<HTMLDivElement>(null);
+  const wrapperRef2 = useRef<HTMLDivElement>(null);
+  const wrapperRef3 = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (contentRef.current) {
@@ -164,7 +167,7 @@ const SliderPageContent = (props: CodeBlocks) => {
             }}
           >
             <small>Markers</small>
-            <div className={StyledSlider.wrapper}>
+            <div className={StyledSlider.wrapper} ref={wrapperRef1}>
               <Slider.Root
                 min={0}
                 max={200}
@@ -173,6 +176,7 @@ const SliderPageContent = (props: CodeBlocks) => {
                 onChange={setValues1}
                 className={StyledSlider.slider}
                 magnetizeMarkers
+                stretchable={wrapperRef1}
               >
                 <Slider.Track className={StyledSlider.track}>
                   <Slider.Range className={StyledSlider.range} />
@@ -250,7 +254,7 @@ const SliderPageContent = (props: CodeBlocks) => {
             }}
           >
             <small>Stepped</small>
-            <div className={StyledSlider.wrapper}>
+            <div className={StyledSlider.wrapper} ref={wrapperRef2}>
               <Slider.Root
                 min={0}
                 max={100}
@@ -258,6 +262,7 @@ const SliderPageContent = (props: CodeBlocks) => {
                 values={values2}
                 onChange={setValues2}
                 className={StyledSlider.slider}
+                stretchable={wrapperRef2}
               >
                 <Slider.Track className={StyledSlider.track}>
                   <Slider.Range className={StyledSlider.range} />
@@ -318,13 +323,14 @@ const SliderPageContent = (props: CodeBlocks) => {
             }}
           >
             <small>Multiple</small>
-            <div className={StyledSlider.wrapper}>
+            <div className={StyledSlider.wrapper} ref={wrapperRef3}>
               <Slider.Root
                 min={0}
                 max={100}
                 values={values3}
                 onChange={setValues3}
                 className={StyledSlider.slider}
+                stretchable={wrapperRef3}
               >
                 <Slider.Track className={StyledSlider.track}>
                   <Slider.Range className={StyledSlider.range} />
