@@ -392,7 +392,7 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
         </p>
         <section
           ref={carouselRef}
-          className={styles.wrapper}
+          className={styles.demo}
           style={{ marginBottom: 32 }}
         >
           <h1 className="sr_only">Example carousel</h1>
@@ -406,7 +406,7 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
             <Carousel.Viewport
               contentFade={contentFade}
               className={styles.carousel_viewport}
-              scrollSnapType={snap ? "x mandatory" : "none"}
+              scrollSnapType="x mandatory"
               style={
                 {
                   "--margin-inline": "-12px",
@@ -567,6 +567,7 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
             </div>
           </Carousel.Root>
         </section>
+
         <h2 id="install">Install</h2>
         <p>
           Open the repo in{" "}
@@ -659,6 +660,67 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
             },
           ]}
         />
+
+        <h2 id="coverflow-carousel-component">A coverflow carousel</h2>
+        <p>
+          The good thing is, this carousel is fully native, headless, and
+          scroll-driven, so you can get creative with scroll driven animations
+          too,{" "}
+          <a
+            href="https://developer.mozilla.org/fr/docs/Web/CSS/Reference/Properties/view-timeline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            provided your browser supports them
+          </a>
+          , here is a coverflow style carousel:
+        </p>
+        <section
+          className={styles.advanced1}
+          style={{ "--size": `${1}` } as CSSProperties}
+        >
+          <Carousel.Root
+            className={styles.carousel}
+            data-snap-align={snapAlign}
+          >
+            <Carousel.Viewport
+              contentFade={contentFade}
+              className={styles.carousel_viewport}
+              scrollSnapType={snap ? "x mandatory" : "none"}
+            >
+              <Carousel.Content className={styles.carousel_content}>
+                {images.map((image, index) => (
+                  <Carousel.Item key={index} className={styles.carousel_item}>
+                    <div
+                      className={styles.slide}
+                      style={{
+                        position: "absolute",
+                        display: "inline-flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <picture
+                        style={{ fontSize: 0 } as CSSProperties}
+                        className={styles.card}
+                      >
+                        <source
+                          media="(prefers-color-scheme: dark)"
+                          srcSet={image.dark}
+                        />
+                        <img
+                          src={image.light}
+                          alt=""
+                          style={{ aspectRatio: "1200 / 630" }}
+                        />
+                      </picture>
+                    </div>
+                  </Carousel.Item>
+                ))}
+              </Carousel.Content>
+            </Carousel.Viewport>
+          </Carousel.Root>
+        </section>
+
         <h2 id="things-to-try">Things to try</h2>
         <h3 id="momentum-scrolling">Momentum scrolling</h3>
         <p>
