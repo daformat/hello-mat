@@ -381,9 +381,9 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
           Design engineering: a carousel component
         </h1>
         <p>
-          A scrollable, and swipeable carousel, even on desktop (complete with
-          snapping, friction, rubber-banding and overscroll). Inspired by
-          a&nbsp;component made at{" "}
+          A zero-dependency, scrollable, and swipeable carousel, even on desktop
+          (complete with snapping, friction, rubber-banding and overscroll).
+          Inspired by a&nbsp;component made at{" "}
           <a href="https://finary.com" target="_blank" rel="noopener">
             Finary
           </a>
