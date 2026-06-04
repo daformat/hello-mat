@@ -241,7 +241,13 @@
   --inset-size: calc(var(--base-inset-size) * var(--multiplier));
   --margin-inline: clamp(-32px, calc(5vw * -1), 0px);
 
+  --padding: clamp(4px, 1vw, 7px);
   background-color: var(--color-toolbar-background);
+  border-radius: calc(1rem + var(--padding));
+  box-shadow: 0 1px 12px var(--color-shadow-1),
+    inset 0 0 2px 0.75px var(--color-border-2),
+    inset 0 0 0 0.75px var(--color-border-1);
+  padding: var(--padding);
 
   @include mixins.up-to-medium {
     --multiplier: 0.5;
@@ -305,7 +311,7 @@
       --padding: clamp(
         4px,
         calc(1vw * var(--size, 1) * var(--multiplier)),
-        7px
+        5px
       );
       --final-size: var(--image-size);
       align-items: center;
@@ -348,6 +354,84 @@
 
     100% {
       transform: translateX(-30%);
+    }
+  }
+}
+
+.advanced2 {
+  --padding: clamp(4px, 1vw, 7px);
+  background-color: var(--color-toolbar-background);
+  border-radius: calc(1rem + var(--padding));
+  box-shadow: 0 1px 12px var(--color-shadow-1),
+    inset 0 0 2px 0.75px var(--color-border-2),
+    inset 0 0 0 0.75px var(--color-border-1);
+  margin: auto;
+
+  max-width: 600px;
+  padding: var(--padding);
+
+  .carousel {
+    aspect-ratio: 1200 / 630;
+    border-radius: 1rem;
+    overflow: clip;
+    width: 100%;
+  }
+
+  .carousel_viewport {
+    background: var(--color-smart-stack-bg);
+    height: 100%;
+    scroll-snap-type: x mandatory;
+
+    .carousel_content {
+      display: grid;
+      grid-auto-columns: 100%;
+      grid-auto-flow: column;
+      height: 100%;
+    }
+
+    .slide {
+      view-timeline: --slide inline 30%;
+
+      .slide_content {
+        animation: slide cubic-bezier(0, 0.5, 1, 0.5) both;
+        animation-range: cover;
+        animation-timeline: --slide;
+      }
+    }
+  }
+
+  .slide {
+    height: 100%;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    width: 100%;
+  }
+
+  .slide_content {
+    border-radius: 1rem;
+    height: 100%;
+    overflow: clip;
+    width: 100%;
+
+    img {
+      height: 100%;
+      width: 100%;
+    }
+  }
+
+  @keyframes slide {
+    0% {
+      scale: 0.8;
+    }
+
+    49%,
+    50%,
+    51% {
+      scale: 1;
+    }
+
+    100% {
+      scale: 0.8;
     }
   }
 }

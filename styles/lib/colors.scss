@@ -72,6 +72,12 @@
   --color-dropdown-active: #{rgba(palette.$light-ivory-2, 0.1)};
   --color-shadow-10: #{rgba(palette.$light-shadow, 0.05)};
   --color-shadow-20: #{rgba(palette.$light-shadow, 0.1)};
+
+  --color-smart-stack-bg: #{color.mix(
+      palette.$light-ivory-5,
+      palette.$light-desert-sky-1,
+      20%
+    )};
 }
 
 @mixin dark-theme {
@@ -145,6 +151,8 @@
   --color-dropdown-active: #{palette.$dark-ivory-5};
   --color-shadow-10: #{rgba(palette.$dark-shadow, 0.25)};
   --color-shadow-20: #{rgba(palette.$dark-shadow, 0.5)};
+
+  --color-smart-stack-bg: #{rgba(palette.$dark-desert-sky-0, 1)};
 
   input[type="checkbox"] {
     color-scheme: dark;
