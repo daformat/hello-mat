@@ -389,8 +389,10 @@
       height: 100%;
     }
 
+    @supports (view-timeline-axis: block) {
     .slide {
       view-timeline: --slide inline 30%;
+
 
       .slide_content {
         animation: slide cubic-bezier(0, 0.5, 1, 0.5) both;
@@ -398,6 +400,7 @@
         animation-timeline: --slide;
       }
     }
+      }
   }
 
   .slide {
