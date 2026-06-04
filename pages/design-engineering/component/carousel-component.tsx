@@ -13,7 +13,12 @@ import {
 } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 import { IoChevronDownOutline } from "react-icons/io5";
-import { BundledLanguage, BundledTheme, CodeToHastOptions, codeToHtml, } from "shiki";
+import {
+  BundledLanguage,
+  BundledTheme,
+  CodeToHastOptions,
+  codeToHtml,
+} from "shiki";
 
 import { Dropdown } from "@/components/ButtonGroup/Dropdown/Dropdown";
 import { DropdownItem } from "@/components/ButtonGroup/Dropdown/DropdownItem";
@@ -23,7 +28,10 @@ import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { Tabs } from "@/components/Tabs/Tabs";
 import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
-import { ComponentId, COMPONENTS, } from "@/constants/design-engineering/components";
+import {
+  ComponentId,
+  COMPONENTS,
+} from "@/constants/design-engineering/components";
 import { useCssSizeVariables } from "@/hooks/useCssSizeVariables";
 
 interface CodeBlocks {
@@ -572,7 +580,7 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
             rel="noopener noreferrer"
           >
             provided your browser supports them
-          </a>
+          </a> (all major browsers support them, except Firefox).
           , here are some examples:
         </p>
 
