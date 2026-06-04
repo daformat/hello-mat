@@ -580,8 +580,17 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
             rel="noopener noreferrer"
           >
             provided your browser supports them
-          </a> (all major browsers support them, except Firefox).
-          , here are some examples:
+          </a>{" "}
+          (all major browsers support them, except Firefox), here are some
+          examples from the awesome{" "}
+          <a
+            href="https://www.blossom-carousel.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            blossom carousel library
+          </a>
+          , which is very similar to this one:
         </p>
 
         <Tabs
