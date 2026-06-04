@@ -371,6 +371,7 @@
   padding: var(--padding);
 
   .carousel {
+    background: var(--color-smart-stack-bg);
     aspect-ratio: 1200 / 630;
     border-radius: 1rem;
     overflow: clip;
@@ -378,7 +379,6 @@
   }
 
   .carousel_viewport {
-    background: var(--color-smart-stack-bg);
     height: 100%;
     scroll-snap-type: x mandatory;
 
