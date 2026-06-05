@@ -158,7 +158,7 @@ export const COMPONENTS = {
       shortTitle: "A carousel component",
       title: "A carousel component with inertia and momentum scrolling",
       description:
-        "Building a scrollable, and swipeable carousel, with momentum scrolling, overscroll and rubber-banding using React, TypeScript, and SCSS.",
+        "A headless, zero-dependency, scrollable and swipeable carousel, with momentum scrolling, overscroll and rubber-banding using React and TypeScript.",
       url: "/design-engineering/component/carousel-component",
       image: "/media/design-engineering/carousel/og-carousel-light.png",
       imageWidth: 1200,
@@ -205,7 +205,7 @@ export const COMPONENTS = {
       shortTitle: "Swipeable cards carousel",
       title: "A swipeable cards carousel component",
       description:
-        "Building a swipeable cards stack with React, TypeScript, and SCSS.",
+        "A zero-dependency, headless, swipeable cards stack with React and TypeScript.",
       url: "/design-engineering/component/swipeable-cards",
       image:
         "/media/design-engineering/swipeable-cards/og-swipeable-cards-light.png",
@@ -229,7 +229,7 @@ export const COMPONENTS = {
       shortTitle: "A Number Flow Input component",
       title: "A number flow input component",
       description:
-        "Building a number flow input component with React, TypeScript, and SCSS. Inspired by Number Flow and the Family wallet",
+        "A number flow input component with React and TypeScript. Inspired by Number Flow and the Family wallet",
       url: "/design-engineering/component/number-flow-input",
       image:
         "/media/design-engineering/number-flow-input/og-number-flow-input-light.png",
@@ -253,7 +253,7 @@ export const COMPONENTS = {
       shortTitle: "A split-flap display component",
       title: "A split-flap display component",
       description:
-        "Building a realistic split-flap display with, React and css",
+        "A realistic split-flap display component with React and Typescript",
       url: "/design-engineering/component/split-flap-display",
       image:
         "/media/design-engineering/split-flap-display/og-split-flap-display-light.png",
