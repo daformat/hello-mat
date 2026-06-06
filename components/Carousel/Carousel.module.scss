@@ -439,11 +439,6 @@
 }
 
 .advanced3 {
-  --base-size: 100px;
-  --base-inset-size: 138px;
-  --multiplier: 1.5;
-  --cover-size: calc(var(--base-size) * var(--size) * var(--multiplier));
-  --inset-size: calc(var(--base-inset-size) * var(--multiplier));
   --margin-inline: clamp(-32px, calc(5vw * -1), 0px);
 
   --padding: clamp(4px, 1vw, 7px);
@@ -464,7 +459,7 @@
   }
 
   .carousel_content {
-    margin-inline: calc(50% - var(--cover-size) / 2);
+    margin-inline: calc(50% - 0.334 / 2 * var(--inline-size) / 2);
     transform-style: preserve-3d;
     white-space: nowrap;
   }
@@ -484,7 +479,7 @@
     view-timeline-axis: inline;
     view-timeline-inset: calc(0);
     view-timeline-name: --slide;
-    width: var(--cover-size);
+    width: calc(0.334 / 2 * var(--inline-size));
   }
 
   .slide {
@@ -513,17 +508,8 @@
     width: 100%;
 
     img {
-      --radius: clamp(
-        6px,
-        calc(1vw * var(--size, 1) * var(--multiplier)),
-        10px
-      );
-      --padding: clamp(
-        4px,
-        calc(1vw * var(--size, 1) * var(--multiplier)),
-        5px
-      );
-      --final-size: var(--image-size);
+      --radius: 7px;
+      --padding: 4px;
       align-items: center;
       background-color: var(--color-toolbar-background);
       border-radius: var(--radius);
@@ -616,6 +602,22 @@
     70%,
     100% {
       z-index: initial;
+    }
+  }
+
+  @keyframes zindex2 {
+    0%,
+    40% {
+      z-index: calc(sibling-count() - sibling-index());
+    }
+
+    50% {
+      z-index: calc(sibling-count());
+    }
+
+    60%,
+    100% {
+      z-index: -1;
     }
   }
 }

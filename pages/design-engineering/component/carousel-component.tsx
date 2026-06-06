@@ -13,7 +13,12 @@ import {
 } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 import { IoChevronDownOutline } from "react-icons/io5";
-import { BundledLanguage, BundledTheme, CodeToHastOptions, codeToHtml, } from "shiki";
+import {
+  BundledLanguage,
+  BundledTheme,
+  CodeToHastOptions,
+  codeToHtml,
+} from "shiki";
 
 import { Dropdown } from "@/components/ButtonGroup/Dropdown/Dropdown";
 import { DropdownItem } from "@/components/ButtonGroup/Dropdown/DropdownItem";
@@ -23,7 +28,10 @@ import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { Tabs } from "@/components/Tabs/Tabs";
 import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
-import { ComponentId, COMPONENTS, } from "@/constants/design-engineering/components";
+import {
+  ComponentId,
+  COMPONENTS,
+} from "@/constants/design-engineering/components";
 import { useCssSizeVariables } from "@/hooks/useCssSizeVariables";
 
 interface CodeBlocks {
@@ -339,6 +347,7 @@ const Button = ({
 const CarouselComponentPageContent = (props: CodeBlocks) => {
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
+  const deckRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(0.7);
   const [contentFade, setContentFade] = useState(true);
   const [snap, setSnap] = useState(true);
@@ -348,6 +357,7 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
   const carouselRef = useRef<HTMLDivElement>(null);
   const restoreSnap = useRef(false);
   useCssSizeVariables(carouselRef);
+  useCssSizeVariables(deckRef);
 
   useEffect(() => {
     if (contentRef.current) {
@@ -585,6 +595,8 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
           , which is very similar to this one:
         </p>
 
+        <div ref={deckRef}>
+
         <Tabs
           defaultValue="coverflow"
           tabs={[
@@ -751,6 +763,7 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
             },
           ]}
         />
+        </div>
 
         <h2 id="install">Install</h2>
         <p>
