@@ -390,17 +390,16 @@
     }
 
     @supports (view-timeline-axis: block) {
-    .slide {
-      view-timeline: --slide inline 30%;
+      .slide {
+        view-timeline: --slide inline 30%;
 
-
-      .slide_content {
-        animation: slide cubic-bezier(0, 0.5, 1, 0.5) both;
-        animation-range: cover;
-        animation-timeline: --slide;
+        .slide_content {
+          animation: slide cubic-bezier(0, 0.5, 1, 0.5) both;
+          animation-range: cover;
+          animation-timeline: --slide;
+        }
       }
     }
-      }
   }
 
   .slide {
@@ -435,6 +434,188 @@
 
     100% {
       scale: 0.8;
+    }
+  }
+}
+
+.advanced3 {
+  --base-size: 100px;
+  --base-inset-size: 138px;
+  --multiplier: 1.5;
+  --cover-size: calc(var(--base-size) * var(--size) * var(--multiplier));
+  --inset-size: calc(var(--base-inset-size) * var(--multiplier));
+  --margin-inline: clamp(-32px, calc(5vw * -1), 0px);
+
+  --padding: clamp(4px, 1vw, 7px);
+  background-color: var(--color-toolbar-background);
+  border-radius: calc(1rem + var(--padding));
+  box-shadow: 0 1px 12px var(--color-shadow-1),
+    inset 0 0 2px 0.75px var(--color-border-2),
+    inset 0 0 0 0.75px var(--color-border-1);
+  padding: var(--padding);
+
+  @include mixins.up-to-medium {
+    --multiplier: 0.5;
+  }
+
+  .carousel_viewport {
+    overflow-y: hidden;
+    transform-style: preserve-3d;
+  }
+
+  .carousel_content {
+    margin-inline: calc(50% - var(--cover-size) / 2);
+    transform-style: preserve-3d;
+    white-space: nowrap;
+  }
+
+  .carousel_item {
+    animation: linear zindex both;
+    animation-range: contain;
+    animation-timeline: --slide;
+    align-items: center;
+    aspect-ratio: 1 / 2;
+    display: inline-flex;
+    justify-content: center;
+    position: relative;
+    scroll-snap-align: center;
+    //scroll-snap-stop: always;
+    transform-style: preserve-3d;
+    view-timeline-axis: inline;
+    view-timeline-inset: calc(0);
+    view-timeline-name: --slide;
+    width: var(--cover-size);
+  }
+
+  .slide {
+    animation: linear slide-cover2 both, linear dodge both;
+    animation-composition: accumulate;
+    animation-range: contain;
+    animation-timeline: --slide;
+    aspect-ratio: 1;
+    background-color: transparent;
+    border: 0;
+    //left: -50%;
+    padding: 0;
+    perspective: calc(500px * var(--multiplier));
+    //position: absolute;
+    //top: 0;
+    transform-style: preserve-3d;
+    width: 200%;
+  }
+
+  .card {
+    animation: linear rotate-cover2 both;
+    animation-range: contain;
+    animation-timeline: --slide;
+    display: inline-block;
+    height: 50%;
+    width: 100%;
+
+    img {
+      --radius: clamp(
+        6px,
+        calc(1vw * var(--size, 1) * var(--multiplier)),
+        10px
+      );
+      --padding: clamp(
+        4px,
+        calc(1vw * var(--size, 1) * var(--multiplier)),
+        5px
+      );
+      --final-size: var(--image-size);
+      align-items: center;
+      background-color: var(--color-toolbar-background);
+      border-radius: var(--radius);
+      box-shadow: 0 1px 12px var(--color-shadow-1),
+        inset 0 0 2px 0.75px var(--color-border-2),
+        inset 0 0 0 0.75px var(--color-border-1);
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-start;
+      padding: var(--padding);
+      transition: mixins.theme-transition(color, background-color, box-shadow);
+      width: 100%;
+    }
+  }
+
+  @keyframes rotate-cover2 {
+    0% {
+      transform: rotateZ(10deg);
+    }
+
+    //49% {
+    //  transform: rotateZ(1deg) rotateY(-90deg);
+    //}
+
+    50% {
+      transform: rotateZ(0deg);
+    }
+
+    100% {
+      transform: rotateZ(-10deg);
+    }
+  }
+
+  @keyframes slide-cover2 {
+    0% {
+      transform: translate(60%, 10%);
+    }
+
+    //35% {
+    //  transform: translate(30%, 10%);
+    //}
+    //
+    //45% {
+    //  transform: translate(60%, 10%);
+    //}
+
+    //45% {
+    //  //transform: translate(6%, 1%) rotateY(90deg);
+    //}
+
+    50% {
+      transform: translate(0, 0) scale(1.2);
+    }
+
+    100% {
+      transform: translate(-60%, 10%);
+    }
+  }
+
+  @keyframes dodge {
+    0%,
+    30% {
+      transform: translateX(0%);
+    }
+
+    40% {
+      transform: translateX(48%) rotateZ(10deg);
+    }
+
+    50% {
+      transform: translateX(0%);
+    }
+
+    70%,
+    100% {
+      transform: translateX(0%);
+    }
+  }
+
+  @keyframes zindex {
+    0%,
+    30% {
+      z-index: calc(sibling-count() - sibling-index());
+    }
+
+    50% {
+      z-index: calc(sibling-count());
+    }
+
+    70%,
+    100% {
+      z-index: initial;
     }
   }
 }
