@@ -119,7 +119,7 @@ const ImageAndEmbedsContent = () => {
           <li>
             <ImageComp
               title="A colorful chameleon"
-              source="https://letsenhance.io/static/8f5e523ee6b2479e26ecc91b9c25261e/bbb97/MainAfter.avif"
+              source="/MainAfter.avif"
               speed={slow ? 0.1 : 1}
             />
           </li>
