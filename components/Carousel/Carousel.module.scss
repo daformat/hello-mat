@@ -255,9 +255,8 @@
 
   .carousel_viewport {
     overflow-y: hidden;
-    transform-style: preserve-3d;
-
     perspective: calc(700px * var(--multiplier));
+    transform-style: preserve-3d;
   }
 
   .carousel_content {
@@ -466,10 +465,10 @@
   }
 
   .carousel_item {
+    align-items: center;
     animation: linear zindex both;
     animation-range: contain;
     animation-timeline: --slide;
-    align-items: center;
     aspect-ratio: 1 / 2;
     display: inline-flex;
     justify-content: center;
