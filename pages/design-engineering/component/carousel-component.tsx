@@ -350,6 +350,8 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
   const deckRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(0.7);
   const [contentFade, setContentFade] = useState(true);
+  const [loop, setLoop] = useState(false);
+  const [autoplay, setAutoplay] = useState(false);
   const [snap, setSnap] = useState(true);
   const [snapAlign, setSnapAlign] = useState<"center" | "start" | "end">(
     "center"
@@ -405,11 +407,13 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
           <Carousel.Root
             className={styles.carousel}
             data-snap-align={snapAlign}
+            loop={loop}
+            autoplay={autoplay}
           >
             <Carousel.Viewport
               contentFade={contentFade}
               className={styles.carousel_viewport}
-              scrollSnapType="x mandatory"
+              scrollSnapType={snap ? "x mandatory" : undefined}
               style={
                 {
                   "--margin-inline": "-12px",
@@ -483,92 +487,122 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
                 </Carousel.NextPage>
               </div>
             </div>
+          </Carousel.Root>
+          <div
+            className={styles.legend_and_controls + " card"}
+            style={{ marginTop: 12, paddingBlock: 10, paddingInline: 12 }}
+          >
             <div
-              className={styles.legend_and_controls + " card"}
-              style={{ marginTop: 12, paddingBlock: 10, paddingInline: 12 }}
+              style={{
+                display: "flex",
+                columnGap: 16,
+                flexWrap: "wrap",
+                rowGap: 8,
+              }}
             >
-              <div
+              <label
                 style={{
-                  display: "flex",
-                  columnGap: 16,
-                  flexWrap: "wrap",
-                  rowGap: 8,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
                 }}
               >
-                <label
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
+                <Checkbox
+                  checked={contentFade}
+                  onChange={(event) => {
+                    setSnap((prev) => {
+                      if (prev) {
+                        restoreSnap.current = true;
+                      }
+                      return false;
+                    });
+                    setContentFade(event.target.checked);
+                  }}
+                />
+                <small style={{ opacity: 0.8 }}>Content fade</small>
+              </label>
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <Checkbox
+                  checked={loop}
+                  onChange={(event) => {
+                    setLoop(event.target.checked);
+                  }}
+                />
+                <small style={{ opacity: 0.8 }}>Loop</small>
+              </label>
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <Checkbox
+                  checked={autoplay}
+                  onChange={(event) => {
+                    setAutoplay(event.target.checked);
+                  }}
+                />
+                <small style={{ opacity: 0.8 }}>Autoplay</small>
+              </label>
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <Checkbox
+                  checked={snap}
+                  onChange={(event) => setSnap(event.target.checked)}
+                />
+                <small style={{ opacity: 0.8 }}>Snap</small>
+              </label>
+              <Dropdown
+                trigger={
+                  <button className={"button"}>
+                    {snapAlign}{" "}
+                    {contentFade && snapAlign !== "center" ? "(+ fade)" : ""}
+                    <IoChevronDownOutline />
+                  </button>
+                }
+              >
+                <DropdownItem
+                  onSelect={() => {
+                    restoreSnap.current = true;
+                    setSnap(false);
+                    setSnapAlign("center");
                   }}
                 >
-                  <Checkbox
-                    checked={contentFade}
-                    onChange={(event) => {
-                      setSnap((prev) => {
-                        if (prev) {
-                          restoreSnap.current = true;
-                        }
-                        return false;
-                      });
-                      setContentFade(event.target.checked);
-                    }}
-                  />
-                  <small style={{ opacity: 0.8 }}>Content fade</small>
-                </label>
-                <label
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
+                  Center
+                </DropdownItem>
+                <DropdownItem
+                  onSelect={() => {
+                    restoreSnap.current = true;
+                    setSnap(false);
+                    setSnapAlign("start");
                   }}
                 >
-                  <Checkbox
-                    checked={snap}
-                    onChange={(event) => setSnap(event.target.checked)}
-                  />
-                  <small style={{ opacity: 0.8 }}>Snap</small>
-                </label>
-                <Dropdown
-                  trigger={
-                    <button className={"button"}>
-                      {snapAlign}{" "}
-                      {contentFade && snapAlign !== "center" ? "(+ fade)" : ""}
-                      <IoChevronDownOutline />
-                    </button>
-                  }
+                  Start {contentFade ? "(+ fade)" : ""}
+                </DropdownItem>
+                <DropdownItem
+                  onSelect={() => {
+                    restoreSnap.current = true;
+                    setSnap(false);
+                    setSnapAlign("end");
+                  }}
                 >
-                  <DropdownItem
-                    onSelect={() => {
-                      restoreSnap.current = true;
-                      setSnap(false);
-                      setSnapAlign("center");
-                    }}
-                  >
-                    Center
-                  </DropdownItem>
-                  <DropdownItem
-                    onSelect={() => {
-                      restoreSnap.current = true;
-                      setSnap(false);
-                      setSnapAlign("start");
-                    }}
-                  >
-                    Start {contentFade ? "(+ fade)" : ""}
-                  </DropdownItem>
-                  <DropdownItem
-                    onSelect={() => {
-                      restoreSnap.current = true;
-                      setSnap(false);
-                      setSnapAlign("end");
-                    }}
-                  >
-                    End {contentFade ? "(+ fade)" : ""}
-                  </DropdownItem>
-                </Dropdown>
-              </div>
+                  End {contentFade ? "(+ fade)" : ""}
+                </DropdownItem>
+              </Dropdown>
             </div>
-          </Carousel.Root>
+          </div>
         </section>
 
         <h2 id="more-demos">More demos</h2>
@@ -596,173 +630,178 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
         </p>
 
         <div ref={deckRef}>
-
-        <Tabs
-          defaultValue="coverflow"
-          tabs={[
-            {
-              id: "coverflow",
-              trigger: "Coverflow carousel",
-              content: (
-                <section
-                  className={styles.advanced1}
-                  style={{ "--size": `${1}`, marginBlock: 24 } as CSSProperties}
-                >
-                  <Carousel.Root
-                    className={styles.carousel}
-                    data-snap-align={"center"}
+          <Tabs
+            defaultValue="coverflow"
+            tabs={[
+              {
+                id: "coverflow",
+                trigger: "Coverflow carousel",
+                content: (
+                  <section
+                    className={styles.advanced1}
+                    style={
+                      { "--size": `${1}`, marginBlock: 24 } as CSSProperties
+                    }
                   >
-                    <Carousel.Viewport
-                      contentFade={true}
-                      className={styles.carousel_viewport}
-                      scrollSnapType="x mandatory"
+                    <Carousel.Root
+                      className={styles.carousel}
+                      data-snap-align={"center"}
                     >
-                      <Carousel.Content className={styles.carousel_content}>
-                        {images.map((image, index) => (
-                          <Carousel.Item
-                            key={index}
-                            className={styles.carousel_item}
-                          >
-                            <div
-                              className={styles.slide}
-                              style={{
-                                position: "absolute",
-                                display: "inline-flex",
-                                alignItems: "center",
-                              }}
-                            >
-                              <picture
-                                style={{ fontSize: 0 } as CSSProperties}
-                                className={styles.card}
-                              >
-                                <source
-                                  media="(prefers-color-scheme: dark)"
-                                  srcSet={image.dark}
-                                />
-                                <img
-                                  src={image.light}
-                                  alt=""
-                                  style={{ aspectRatio: "1200 / 630" }}
-                                />
-                              </picture>
-                            </div>
-                          </Carousel.Item>
-                        ))}
-                      </Carousel.Content>
-                    </Carousel.Viewport>
-                  </Carousel.Root>
-                </section>
-              ),
-            },
-            {
-              id: "smart-stack",
-              trigger: "iOS smart stack",
-              content: (
-                <section
-                  className={styles.advanced2}
-                  style={{ "--size": `${1}`, marginBlock: 24 } as CSSProperties}
-                >
-                  <Carousel.Root
-                    className={styles.carousel}
-                    data-snap-align={"center"}
-                  >
-                    <Carousel.Viewport
-                      contentFade={false}
-                      className={styles.carousel_viewport}
-                      scrollSnapType={"x mandatory"}
-                    >
-                      <Carousel.Content
-                        className={styles.carousel_content}
-                        style={{ width: "initial" }}
+                      <Carousel.Viewport
+                        contentFade={true}
+                        className={styles.carousel_viewport}
+                        scrollSnapType="x mandatory"
                       >
-                        {images.map((image, index) => (
-                          <Carousel.Item
-                            key={index}
-                            className={styles.carousel_item}
-                          >
-                            <div
-                              className={styles.slide}
-                              style={{
-                                position: "absolute",
-                                display: "inline-flex",
-                                alignItems: "center",
-                              }}
+                        <Carousel.Content className={styles.carousel_content}>
+                          {images.map((image, index) => (
+                            <Carousel.Item
+                              key={index}
+                              className={styles.carousel_item}
                             >
-                              <picture
-                                style={{ fontSize: 0 } as CSSProperties}
-                                className={styles.slide_content}
+                              <div
+                                className={styles.slide}
+                                style={{
+                                  position: "absolute",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                }}
                               >
-                                <source
-                                  media="(prefers-color-scheme: dark)"
-                                  srcSet={image.dark}
-                                />
-                                <img src={image.light} alt="" />
-                              </picture>
-                            </div>
-                          </Carousel.Item>
-                        ))}
-                      </Carousel.Content>
-                    </Carousel.Viewport>
-                  </Carousel.Root>
-                </section>
-              ),
-            },
-            {
-              id: "deck",
-              trigger: "Deck",
-              content: (
-                <section
-                  className={styles.advanced3}
-                  style={{ "--size": `${1}`, marginBlock: 24 } as CSSProperties}
-                >
-                  <Carousel.Root
-                    className={styles.carousel}
-                    data-snap-align={"center"}
+                                <picture
+                                  style={{ fontSize: 0 } as CSSProperties}
+                                  className={styles.card}
+                                >
+                                  <source
+                                    media="(prefers-color-scheme: dark)"
+                                    srcSet={image.dark}
+                                  />
+                                  <img
+                                    src={image.light}
+                                    alt=""
+                                    style={{ aspectRatio: "1200 / 630" }}
+                                  />
+                                </picture>
+                              </div>
+                            </Carousel.Item>
+                          ))}
+                        </Carousel.Content>
+                      </Carousel.Viewport>
+                    </Carousel.Root>
+                  </section>
+                ),
+              },
+              {
+                id: "smart-stack",
+                trigger: "iOS smart stack",
+                content: (
+                  <section
+                    className={styles.advanced2}
+                    style={
+                      { "--size": `${1}`, marginBlock: 24 } as CSSProperties
+                    }
                   >
-                    <Carousel.Viewport
-                      contentFade={true}
-                      className={styles.carousel_viewport}
-                      scrollSnapType="x mandatory"
+                    <Carousel.Root
+                      className={styles.carousel}
+                      data-snap-align={"center"}
                     >
-                      <Carousel.Content className={styles.carousel_content}>
-                        {images.map((image, index) => (
-                          <Carousel.Item
-                            key={index}
-                            className={styles.carousel_item}
-                          >
-                            <div
-                              className={styles.slide}
-                              style={{
-                                position: "absolute",
-                                display: "inline-flex",
-                                alignItems: "center",
-                              }}
+                      <Carousel.Viewport
+                        contentFade={false}
+                        className={styles.carousel_viewport}
+                        scrollSnapType={"x mandatory"}
+                      >
+                        <Carousel.Content
+                          className={styles.carousel_content}
+                          style={{ width: "initial" }}
+                        >
+                          {images.map((image, index) => (
+                            <Carousel.Item
+                              key={index}
+                              className={styles.carousel_item}
                             >
-                              <picture
-                                style={{ fontSize: 0 } as CSSProperties}
-                                className={styles.card}
+                              <div
+                                className={styles.slide}
+                                style={{
+                                  position: "absolute",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                }}
                               >
-                                <source
-                                  media="(prefers-color-scheme: dark)"
-                                  srcSet={image.dark}
-                                />
-                                <img
-                                  src={image.light}
-                                  alt=""
-                                  style={{ aspectRatio: "1200 / 630" }}
-                                />
-                              </picture>
-                            </div>
-                          </Carousel.Item>
-                        ))}
-                      </Carousel.Content>
-                    </Carousel.Viewport>
-                  </Carousel.Root>
-                </section>
-              ),
-            },
-          ]}
-        />
+                                <picture
+                                  style={{ fontSize: 0 } as CSSProperties}
+                                  className={styles.slide_content}
+                                >
+                                  <source
+                                    media="(prefers-color-scheme: dark)"
+                                    srcSet={image.dark}
+                                  />
+                                  <img src={image.light} alt="" />
+                                </picture>
+                              </div>
+                            </Carousel.Item>
+                          ))}
+                        </Carousel.Content>
+                      </Carousel.Viewport>
+                    </Carousel.Root>
+                  </section>
+                ),
+              },
+              {
+                id: "deck",
+                trigger: "Deck",
+                content: (
+                  <section
+                    className={styles.advanced3}
+                    style={
+                      { "--size": `${1}`, marginBlock: 24 } as CSSProperties
+                    }
+                  >
+                    <Carousel.Root
+                      className={styles.carousel}
+                      data-snap-align={"center"}
+                    >
+                      <Carousel.Viewport
+                        contentFade={true}
+                        className={styles.carousel_viewport}
+                        scrollSnapType="x mandatory"
+                      >
+                        <Carousel.Content className={styles.carousel_content}>
+                          {images.map((image, index) => (
+                            <Carousel.Item
+                              key={index}
+                              className={styles.carousel_item}
+                            >
+                              <div
+                                className={styles.slide}
+                                style={{
+                                  position: "absolute",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                }}
+                              >
+                                <picture
+                                  style={{ fontSize: 0 } as CSSProperties}
+                                  className={styles.card}
+                                >
+                                  <source
+                                    media="(prefers-color-scheme: dark)"
+                                    srcSet={image.dark}
+                                  />
+                                  <img
+                                    src={image.light}
+                                    alt=""
+                                    style={{ aspectRatio: "1200 / 630" }}
+                                  />
+                                </picture>
+                              </div>
+                            </Carousel.Item>
+                          ))}
+                        </Carousel.Content>
+                      </Carousel.Viewport>
+                    </Carousel.Root>
+                  </section>
+                ),
+              },
+            ]}
+          />
         </div>
 
         <h2 id="install">Install</h2>
@@ -897,6 +936,61 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
           velocity reaches 0 towards the snap point. Snapping is also respected
           when using pagination or whn tabbing.
         </p>
+        <h3 id="looping">Looping</h3>
+        <p>
+          Tick the <em>Loop</em> checkbox and the carousel becomes endless in
+          both directions. Under the hood it renders your items three times over
+          — plus however many extra copies it takes for one set to be wider than
+          a few viewports — and teleports the scroll position back by a whole
+          number of copies whenever it gets close to running out. The position
+          it leaves and the one it lands on show the exact same pixels, so you
+          never see the jump. It starts on your first real item, and the copies
+          are hidden from assistive technology and skipped when tabbing, so only
+          the real ones are ever announced or focused.
+        </p>
+        <p>
+          <strong>
+            Looping and snapping are a best-effort pairing though.
+          </strong>{" "}
+          Every browser drives a wheel scroll towards a snap point it picks when
+          the gesture starts, and none of them take kindly to the scroll
+          position moving underneath: Chromium scrolls back to the item it had
+          chosen, Safari swallows the rest of the momentum without applying it,
+          and Firefox drops the snap it was about to make. So when a wrap
+          disturbs a scroll, the carousel takes snapping off the browser for the
+          rest of that gesture and applies it itself once everything stops,
+          animating to the position your <code>scroll-snap-type</code> asks for.
+          Chromium commits to its target early enough that the whole gesture has
+          to run that way. Dragging is unaffected — it has always managed its
+          own snapping. The upshot: snapping is honoured every time the carousel
+          comes to rest, but exactly <em>how</em> it gets there varies by
+          engine, and a very long fling may still show a seam. If you need
+          snapping to be exact under all circumstances, leave looping off.
+        </p>
+        <h3 id="autoplay">Autoplay</h3>
+        <p>
+          Tick <em>Autoplay</em> and the carousel scrolls on its own. Passing{" "}
+          <code>autoplay</code> on its own steps to the next item every three
+          seconds, or you can pass an object to choose how it moves:{" "}
+          <code>mode</code> is either <code>item</code>, <code>page</code> (the
+          same move the arrows make) or <code>continuous</code>, which scrolls
+          at a steady speed without stopping on items. Stepping takes an{" "}
+          <code>interval</code> in milliseconds, a continuous scroll takes a{" "}
+          <code>speed</code> in pixels per second, and both can go{" "}
+          <code>backwards</code>. A carousel that does not loop also gets to say
+          what happens when it runs out of content with <code>atEnd</code>: go
+          back to the beginning, turn around and play back the way it came, or
+          simply stop — with an optional pause at each end before it does.
+        </p>
+        <p>
+          It also knows when to get out of the way. It pauses while your pointer
+          is over the carousel and while the focus is inside it, and stands
+          aside while you are dragging, while a wheel gesture’s momentum is
+          still running, and while the tab is in the background. And because
+          things moving on their own is the first thing you do not want when you
+          have asked for less of it, autoplay does not run at all under{" "}
+          <code>prefers-reduced-motion: reduce</code>.
+        </p>
         <h3 id="tabbing">Tabbing through the carousel items</h3>
         <p>
           Full support for tabbing through the carousel items, provided the
@@ -921,9 +1015,10 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
         <p>
           While implementing the basic version of the carousel is easy, thanks
           to modern css, implementing momentum scrolling with snapping and
-          overscroll / rubber-banding on desktop isn’t trivial. Maybe I’ll try
-          to enable infinite scrolling at some point, but for now, this is a
-          good start.
+          overscroll / rubber-banding on desktop isn’t trivial. Infinite
+          scrolling is in there now too, along with autoplay — though making a
+          loop and native snapping agree with each other turned out to be a
+          story of its own, one browser at a time.
         </p>
         <PrevNextNavigation currentComponentId={componentId} />
       </div>

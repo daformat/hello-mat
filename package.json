@@ -23,7 +23,7 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@daformat/react-headless-carousel": "^1.0.14",
+    "@daformat/react-headless-carousel": "^1.1.0",
     "@daformat/react-swipeable-cards": "^1.0.2",
     "@daformat/react-split-flap-display": "1.0.2",
     "@daformat/react-number-flow-input": "^1.1.1",
