@@ -352,6 +352,9 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
   const [contentFade, setContentFade] = useState(true);
   const [loop, setLoop] = useState(false);
   const [autoplay, setAutoplay] = useState(false);
+  const [autoplayMode, setAutoplayMode] = useState<
+    "item" | "page" | "continuous"
+  >("item");
   const [snap, setSnap] = useState(true);
   const [snapAlign, setSnapAlign] = useState<"center" | "start" | "end">(
     "center"
@@ -366,6 +369,11 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
       tocContext.setRootElement(contentRef.current);
     }
   });
+
+  const autoplayOptions =
+    autoplayMode === "continuous"
+      ? ({ mode: "continuous" } as const)
+      : ({ mode: autoplayMode } as const);
 
   useLayoutEffect(() => {
     if (restoreSnap.current) {
@@ -408,7 +416,7 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
             className={styles.carousel}
             data-snap-align={snapAlign}
             loop={loop}
-            autoplay={autoplay}
+            autoplay={autoplay ? autoplayOptions : false}
           >
             <Carousel.Viewport
               contentFade={contentFade}
@@ -551,6 +559,26 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
                 />
                 <small style={{ opacity: 0.8 }}>Autoplay</small>
               </label>
+              {autoplay ? (
+                <Dropdown
+                  trigger={
+                    <button className={"button"}>
+                      {autoplayMode}
+                      <IoChevronDownOutline />
+                    </button>
+                  }
+                >
+                  <DropdownItem onSelect={() => setAutoplayMode("item")}>
+                    Item
+                  </DropdownItem>
+                  <DropdownItem onSelect={() => setAutoplayMode("page")}>
+                    Page
+                  </DropdownItem>
+                  <DropdownItem onSelect={() => setAutoplayMode("continuous")}>
+                    Continuous
+                  </DropdownItem>
+                </Dropdown>
+              ) : null}
               <label
                 style={{
                   display: "inline-flex",
@@ -969,7 +997,8 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
         </p>
         <h3 id="autoplay">Autoplay</h3>
         <p>
-          Tick <em>Autoplay</em> and the carousel scrolls on its own. Passing{" "}
+          Tick <em>Autoplay</em> and the carousel scrolls on its own — the
+          dropdown next to it switches between the modes below. Passing{" "}
           <code>autoplay</code> on its own steps to the next item every three
           seconds, or you can pass an object to choose how it moves:{" "}
           <code>mode</code> is either <code>item</code>, <code>page</code> (the
