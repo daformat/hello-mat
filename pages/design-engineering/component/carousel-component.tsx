@@ -232,7 +232,7 @@ const Button = ({
       if (src) {
         try {
           // Pass the Promise directly so clipboard.write() is called synchronously
-          // within the user gesture — required by Safari.
+          // within the user gesture (required by Safari).
           await navigator.clipboard.write([
             new ClipboardItem({
               "image/png": fetch(src).then((r) => r.blob()),
@@ -974,14 +974,54 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
         <h3 id="looping">Looping</h3>
         <p>
           Tick the <em>Loop</em> checkbox and the carousel becomes endless in
-          both directions. Under the hood it renders your items three times over
-          — plus however many extra copies it takes for one set to be wider than
-          a few viewports — and teleports the scroll position back by a whole
-          number of copies whenever it gets close to running out. The position
-          it leaves and the one it lands on show the exact same pixels, so you
-          never see the jump. It starts on your first real item, and the copies
-          are hidden from assistive technology and skipped when tabbing, so only
-          the real ones are ever announced or focused.
+          both directions. Under the hood it renders your items three times
+          over, plus however many extra copies it takes for one set to be wider
+          than a few viewports, then teleports the scroll position back by a
+          whole number of copies whenever it gets close to running out. The
+          position it leaves and the one it lands on show the exact same pixels,
+          so you never see the jump. It starts on your first real item, and
+          every copy gets <code>aria-hidden</code> and{" "}
+          <code>tabindex=&quot;-1&quot;</code>, so screen readers and the tab
+          key skip the copies themselves.
+        </p>
+        <p>
+          That covers each copy, but not what’s inside it. Neither attribute
+          reaches a descendant, so a copy holding a button still has that button
+          in the tab order. That’s usually what you want: a copy you can see is
+          a real part of the carousel as far as you’re concerned, and it stays
+          clickable too. It does mean tabbing walks through the copies in DOM
+          order, which isn’t the order they come round on screen, so there are
+          three bits of help for that:
+        </p>
+        <ul>
+          <li>
+            <strong>Tabbing in goes to what you can see.</strong> The first
+            thing in the tab order lives in the very first copy, right back at
+            the start of the content, and going to fetch it would sweep the
+            carousel all the way there. So the focus is handed to the first
+            fully visible item instead, and nothing moves. Shift-tabbing in
+            takes the last visible one.
+          </li>
+          <li>
+            <strong>Tabbing on never doubles back.</strong> When the next
+            element in the tab order sits a long way behind you, the carousel
+            jumps whole copies towards it first. Both sides of that jump show
+            the same pixels, so you never see the distance, and the small
+            remainder is animated in the direction you were already tabbing. If
+            the scroll can’t go that way because there’s no more content on that
+            side, the focus goes to the copy already within reach and the
+            carousel stays put.
+          </li>
+          <li>
+            <strong>The focus ring follows the jump.</strong> A teleport carries
+            whatever was focused inside a copy off screen with it, so the focus
+            moves to the copy that took its place. Without that, the outline
+            looks like it vanishes a moment after you tab.
+          </li>
+        </ul>
+        <p>
+          All three are keyboard only. Clicking still focuses whatever you
+          clicked, copy or not.
         </p>
         <p>
           <strong>
@@ -996,15 +1036,15 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
           rest of that gesture and applies it itself once everything stops,
           animating to the position your <code>scroll-snap-type</code> asks for.
           Chromium commits to its target early enough that the whole gesture has
-          to run that way. Dragging is unaffected — it has always managed its
-          own snapping. The upshot: snapping is honoured every time the carousel
-          comes to rest, but exactly <em>how</em> it gets there varies by
-          engine, and a very long fling may still show a seam. If you need
+          to run that way. Dragging is unaffected, since it has always managed
+          its own snapping. So the carousel still lands on a snap point every
+          time it comes to rest, but exactly <em>how</em> it gets there varies
+          by engine, and a very long fling can still show a seam. If you need
           snapping to be exact under all circumstances, leave looping off.
         </p>
         <h3 id="autoplay">Autoplay</h3>
         <p>
-          Tick <em>Autoplay</em> and the carousel scrolls on its own — the
+          Tick <em>Autoplay</em> and the carousel scrolls on its own. The
           dropdown next to it switches between the modes below. Passing{" "}
           <code>autoplay</code> on its own steps to the next item every three
           seconds, or you can pass an object to choose how it moves:{" "}
@@ -1016,15 +1056,20 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
           <code>backwards</code>. A carousel that does not loop also gets to say
           what happens when it runs out of content with <code>atEnd</code>: go
           back to the beginning, turn around and play back the way it came, or
-          simply stop — with an optional pause at each end before it does.
+          simply stop, with an optional pause at each end before it does.
         </p>
         <p>
           It also knows when to get out of the way. It pauses while your pointer
-          is over the carousel and while the focus is inside it, and stands
-          aside while you are dragging, while a wheel gesture’s momentum is
-          still running, and while the tab is in the background. And because
-          things moving on their own is the first thing you do not want when you
-          have asked for less of it, autoplay does not run at all under{" "}
+          is over the carousel and while focus is inside it, and it stands aside
+          while a wheel gesture’s momentum is still running, or while the tab is
+          in the background. Hovering and focusing both assume a mouse or a
+          keyboard though, and touch is neither, so scrolling and dragging pause
+          it too. It picks up again a second and a half after you’ve left it
+          alone: a drag counts until you lift your finger, a scroll until it
+          stops. That delay is <code>pauseOnInteraction</code> in milliseconds,
+          and <code>false</code> keeps it playing throughout. And because
+          something moving on its own is the last thing you want when you’ve
+          asked for less of it, autoplay doesn’t run at all under{" "}
           <code>prefers-reduced-motion: reduce</code>.
         </p>
         <h3 id="tabbing">Tabbing through the carousel items</h3>
@@ -1034,8 +1079,10 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
           carousel fully enforces the desired <code>scroll-snap-align</code> and
           makes sure the tabbed item is fully visible instead of being partially
           hidden by the mask, or if you choose to render the prev / next buttons
-          on top of the carousel, you cqn provide a custom{" "}
-          <code>boundaryOffset</code> function to account for these.
+          on top of the carousel, you can provide a custom{" "}
+          <code>boundaryOffset</code> function to account for these. Tabbing
+          through a carousel that loops has a bit more going on, see{" "}
+          <a href="#looping">looping</a> above.
         </p>
         <h3 id="scroll-fade">Scroll fade</h3>
         <p>
@@ -1052,9 +1099,9 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
           While implementing the basic version of the carousel is easy, thanks
           to modern css, implementing momentum scrolling with snapping and
           overscroll / rubber-banding on desktop isn’t trivial. Infinite
-          scrolling is in there now too, along with autoplay — though making a
-          loop and native snapping agree with each other turned out to be a
-          story of its own, one browser at a time.
+          scrolling is in there now too, along with autoplay. Getting a loop and
+          native snapping to agree with each other turned out to be a story of
+          its own, one browser at a time.
         </p>
         <PrevNextNavigation currentComponentId={componentId} />
       </div>
