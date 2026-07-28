@@ -2,6 +2,7 @@ import { Carousel } from "@daformat/react-headless-carousel";
 import { GetStaticProps } from "next";
 import Link from "next/link";
 import {
+  ComponentProps,
   ComponentPropsWithoutRef,
   CSSProperties,
   MouseEventHandler,
@@ -372,8 +373,14 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
 
   const autoplayOptions =
     autoplayMode === "continuous"
-      ? ({ mode: "continuous" } as const)
-      : ({ mode: autoplayMode } as const);
+      ? ({
+          mode: "continuous",
+          atEnd: "reverse",
+          pauseAtEnd: 1500,
+        } as ComponentProps<typeof Carousel.Root>["autoplay"])
+      : ({ mode: autoplayMode } as ComponentProps<
+          typeof Carousel.Root
+        >["autoplay"]);
 
   useLayoutEffect(() => {
     if (restoreSnap.current) {
