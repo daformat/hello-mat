@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@daformat/react-headless-carousel':
-        specifier: ^1.1.3
-        version: 1.1.3(react@19.2.1)
+        specifier: ^1.2.0
+        version: 1.2.0(react@19.2.1)
       '@daformat/react-number-flow-input':
         specifier: ^1.1.1
         version: 1.1.1(react@19.2.1)
@@ -315,8 +315,8 @@ packages:
     peerDependencies:
       postcss-selector-parser: ^6.0.13
 
-  '@daformat/react-headless-carousel@1.1.3':
-    resolution: {integrity: sha512-0wnkN89L/Ws+o58TPJSBnJpXj1gdxlrQlecjIVjz8HtqMBIrftxaO/VU3W8QIXZonC6Oenog6QHFSUjzOXsTWg==}
+  '@daformat/react-headless-carousel@1.2.0':
+    resolution: {integrity: sha512-eOa8DVMKCYteGpT2/IKA4I1fJ40VMXJ2QRbLyyDUOqWEJEC57gP7fVE/SYezI1H+i3g5b6SZOIo8MTMRvc9CJw==}
     peerDependencies:
       react: '>=18'
 
@@ -4557,7 +4557,7 @@ snapshots:
     dependencies:
       postcss-selector-parser: 6.1.2
 
-  '@daformat/react-headless-carousel@1.1.3(react@19.2.1)':
+  '@daformat/react-headless-carousel@1.2.0(react@19.2.1)':
     dependencies:
       react: 19.2.1
 

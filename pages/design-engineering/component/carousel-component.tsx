@@ -14,12 +14,7 @@ import {
 } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 import { IoChevronDownOutline } from "react-icons/io5";
-import {
-  BundledLanguage,
-  BundledTheme,
-  CodeToHastOptions,
-  codeToHtml,
-} from "shiki";
+import { BundledLanguage, BundledTheme, CodeToHastOptions, codeToHtml, } from "shiki";
 
 import { Dropdown } from "@/components/ButtonGroup/Dropdown/Dropdown";
 import { DropdownItem } from "@/components/ButtonGroup/Dropdown/DropdownItem";
@@ -29,10 +24,7 @@ import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { Tabs } from "@/components/Tabs/Tabs";
 import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
-import {
-  ComponentId,
-  COMPONENTS,
-} from "@/constants/design-engineering/components";
+import { ComponentId, COMPONENTS, } from "@/constants/design-engineering/components";
 import { useCssSizeVariables } from "@/hooks/useCssSizeVariables";
 
 interface CodeBlocks {
@@ -497,7 +489,10 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
                 >
                   <FaChevronLeft size={12} />
                 </Carousel.PrevPage>
-                <Carousel.NextPage className={styles.button} aria-label="Next">
+                <Carousel.NextPage
+                  className={styles.button}
+                  aria-label="Next"
+                >
                   <FaChevronRight size={12} />
                 </Carousel.NextPage>
               </div>
@@ -961,6 +956,18 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
           is always fully visible, instead of being partially masked, ensuring
           better pagination.
         </p>
+        <p>
+          How far a click goes is up to you, with a <code>mode</code> on the
+          buttons. The default, <code>page</code>, takes the next item the
+          viewport was cutting off and brings it fully into view, so nothing
+          stays half seen. <code>item</code> steps to the next item along
+          instead, whether or not the current one was fully visible, which suits
+          a carousel showing one card at a time. And <code>viewport</code> moves
+          by exactly what the viewport can show and lets the items fall where
+          they may. Autoplay takes the same three names, so a carousel whose
+          autoplay steps by item and whose buttons page through it says so in
+          the same words.
+        </p>
         <h3 id="snapping">Snapping</h3>
         <p>
           You can play withe the demo controls to change the snapping. Thanks to
@@ -1048,15 +1055,16 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
           dropdown next to it switches between the modes below. Passing{" "}
           <code>autoplay</code> on its own steps to the next item every three
           seconds, or you can pass an object to choose how it moves:{" "}
-          <code>mode</code> is either <code>item</code>, <code>page</code> (the
-          same move the arrows make) or <code>continuous</code>, which scrolls
-          at a steady speed without stopping on items. Stepping takes an{" "}
-          <code>interval</code> in milliseconds, a continuous scroll takes a{" "}
-          <code>speed</code> in pixels per second, and both can go{" "}
-          <code>backwards</code>. A carousel that does not loop also gets to say
-          what happens when it runs out of content with <code>atEnd</code>: go
-          back to the beginning, turn around and play back the way it came, or
-          simply stop, with an optional pause at each end before it does.
+          <code>mode</code> is any of the three the arrows take,{" "}
+          <code>item</code>, <code>page</code> or <code>viewport</code>, plus{" "}
+          <code>continuous</code>, which scrolls at a steady speed without
+          stopping on items. Stepping takes an <code>interval</code> in
+          milliseconds, a continuous scroll takes a <code>speed</code> in pixels
+          per second, and both can go <code>backwards</code>. A carousel that
+          does not loop also gets to say what happens when it runs out of
+          content with <code>atEnd</code>: go back to the beginning, turn around
+          and play back the way it came, or simply stop, with an optional pause
+          at each end before it does.
         </p>
         <p>
           It also knows when to get out of the way. It pauses while your pointer
@@ -1068,10 +1076,29 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
           come to rest, which is later than when you let go: a flick hands over
           to momentum, and the browser may still have snapping to do. That delay
           is <code>pauseOnInteraction</code> in milliseconds, and{" "}
-          <code>false</code> keeps it playing throughout. And because something
-          moving on its own is the last thing you want when you’ve asked for
-          less of it, autoplay doesn’t run at all under{" "}
-          <code>prefers-reduced-motion: reduce</code>.
+          <code>false</code> keeps it playing throughout.
+        </p>
+        <h3 id="reduced-motion">Reduced motion</h3>
+        <p>
+          A carousel sweeps a good part of the screen sideways, which is the
+          kind of movement <code>prefers-reduced-motion: reduce</code> exists
+          for, so it is respected by default in the two places the carousel
+          moves of its own accord. Autoplay doesn’t run at all, rather than
+          merely pausing, since a paused autoplay is still something that starts
+          moving the moment your pointer leaves. And the scrolls the carousel
+          animates arrive instantly instead: the prev and next buttons, tabbing
+          to an item that is off screen, an autoplay rewinding, and the snapping
+          it finishes on the browser’s behalf after a loop wrap. The destination
+          is what you asked for, the journey is the decoration.
+        </p>
+        <p>
+          Dragging is untouched, and so is the momentum that carries on from it.
+          That motion is your own hand, and stopping the carousel dead under
+          your finger would be less control rather than less motion. Same for
+          the rubber-banding at the ends, and for looping, whose copies are
+          structure rather than movement. If your app has already made this
+          decision somewhere else, <code>reducedMotion=&quot;ignore&quot;</code>{" "}
+          opts out of all of it.
         </p>
         <h3 id="tabbing">Tabbing through the carousel items</h3>
         <p>
