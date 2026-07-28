@@ -1064,12 +1064,13 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
           while a wheel gesture’s momentum is still running, or while the tab is
           in the background. Hovering and focusing both assume a mouse or a
           keyboard though, and touch is neither, so scrolling and dragging pause
-          it too. It picks up again a second and a half after you’ve left it
-          alone: a drag counts until you lift your finger, a scroll until it
-          stops. That delay is <code>pauseOnInteraction</code> in milliseconds,
-          and <code>false</code> keeps it playing throughout. And because
-          something moving on its own is the last thing you want when you’ve
-          asked for less of it, autoplay doesn’t run at all under{" "}
+          it too. It picks up again a second and a half after the carousel has
+          come to rest, which is later than when you let go: a flick hands over
+          to momentum, and the browser may still have snapping to do. That delay
+          is <code>pauseOnInteraction</code> in milliseconds, and{" "}
+          <code>false</code> keeps it playing throughout. And because something
+          moving on its own is the last thing you want when you’ve asked for
+          less of it, autoplay doesn’t run at all under{" "}
           <code>prefers-reduced-motion: reduce</code>.
         </p>
         <h3 id="tabbing">Tabbing through the carousel items</h3>
