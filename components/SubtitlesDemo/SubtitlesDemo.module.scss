@@ -293,16 +293,27 @@
   }
 }
 
+/* All three share a bottom edge, which is the one number that cannot move: the
+   caption box sits a fixed distance above it, so if the windows ended at
+   different heights the overlay would straddle a different part of each one and
+   a switch would read as a jump cut. Everything else is free, and is used to
+   push them apart: 82% wide rather than 86, on centres 6% apart rather than 4,
+   and each with its own top edge. They were close enough to read as one window
+   redrawn three times.
+
+   The whole stack then sits 3% of the stage lower than it did — about 15px at
+   the size the screen tops out at — which is the same amount off every top and
+   every bottom, so the shared edge stays shared. */
 .win_meeting {
-  inset: 5% 7% 13.5%;
+  inset: 8% 9% 10.5%;
 }
 
 .win_notes {
-  inset: 8% 3% 13.5% 11%;
+  inset: 12% 3% 10.5% 15%;
 }
 
 .win_player {
-  inset: 3% 11% 13.5% 3%;
+  inset: 5% 15% 10.5% 3%;
 }
 
 /* The handle: a window is dragged by its bar, as on a real desktop, and no

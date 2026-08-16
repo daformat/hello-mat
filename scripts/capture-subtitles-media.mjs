@@ -70,17 +70,17 @@ const OG = { width: 1200, height: 630 };
 // afterwards, it costs no second encode.
 const CUT_OFFSET_MS = 200;
 
-// The windows are 86% of the stage wide on the site, which is right for a page
+// The windows are 82% of the stage wide on the site, which is right for a page
 // but too wide once the screen is stretched edge to edge. These are the same
 // three windows at 84% of that width, each shrunk about its own centre so the
-// stack keeps its offsets: 86 × 0.84 = 72.24, half of it 36.12 either side of
-// centres that sit at 50%, 54% and 46%.
+// stack keeps its offsets: 82 × 0.84 = 68.88, half of it 34.44 either side of
+// centres that sit at 50%, 56% and 44%. The vertical insets are the site's own.
 const NARROWER_WINDOWS = `
   /* The screen's frame is a page detail; the recording is the screen itself. */
   .demo-screen::after { display: none; }
-  .win-meeting { inset: 5% 13.88% 13.5%; }
-  .win-notes   { inset: 8% 9.88% 13.5% 17.88%; }
-  .win-player  { inset: 3% 17.88% 13.5% 9.88%; }
+  .win-meeting { inset: 8% 15.56% 10.5%; }
+  .win-notes   { inset: 12% 9.56% 10.5% 21.56%; }
+  .win-player  { inset: 5% 21.56% 10.5% 9.56%; }
 `;
 
 /** Fills the frame with the fake screen, and marks every wrap-around. */
