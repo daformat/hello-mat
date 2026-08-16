@@ -76,6 +76,8 @@ const CUT_OFFSET_MS = 200;
 // stack keeps its offsets: 86 × 0.84 = 72.24, half of it 36.12 either side of
 // centres that sit at 50%, 54% and 46%.
 const NARROWER_WINDOWS = `
+  /* The screen's frame is a page detail; the recording is the screen itself. */
+  .demo-screen::after { display: none; }
   .win-meeting { inset: 5% 13.88% 13.5%; }
   .win-notes   { inset: 8% 9.88% 13.5% 17.88%; }
   .win-player  { inset: 3% 17.88% 13.5% 9.88%; }
@@ -83,15 +85,24 @@ const NARROWER_WINDOWS = `
 
 /** Fills the frame with the fake screen, and marks every wrap-around. */
 const isolate = (windowRules) => {
-  const screen = document.querySelector(".demo-screen");
-  const menubar = document.querySelector(".demo-menubar");
-  const stage = document.querySelector(".demo-stage");
+  // The whole .demo, not just the screen inside it: the palette is declared on
+  // .demo, so lifting the screen out on its own left every token undefined and
+  // the capture came back as windows with no surfaces on no wallpaper.
+  const demo = document.querySelector(".demo");
+  const screen = demo.querySelector(".demo-screen");
+  const menubar = demo.querySelector(".demo-menubar");
+  const stage = demo.querySelector(".demo-stage");
   for (const child of [...document.body.children]) {
     child.remove();
   }
-  document.body.append(screen);
+  document.body.append(demo);
   document.body.style.cssText =
     "margin:0;height:100vh;overflow:hidden;background:#0c0d11";
+  demo.style.cssText += ";margin:0";
+  // The controls and the sentence under the screen belong to the page, not to
+  // the recording.
+  demo.querySelector(".demo-scenes")?.remove();
+  demo.querySelector(".demo-caption")?.remove();
   screen.style.cssText +=
     ";width:100vw;max-width:none;height:100vh;border:0;border-radius:0;box-shadow:none;margin:0";
   // The stage is 16/9.6 by default; letting it take whatever is left of the
