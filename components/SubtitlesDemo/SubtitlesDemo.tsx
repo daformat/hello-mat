@@ -170,6 +170,8 @@ export const SubtitlesDemo = () => {
     x: number;
     y: number;
     place: Placement;
+    handle: HTMLElement;
+    pointerId: number;
   } | null>(null);
 
   // The loop parks on `paused` instead of returning, because restarting it on
@@ -603,7 +605,9 @@ export const SubtitlesDemo = () => {
     (event: ReactPointerEvent<HTMLDivElement>) => {
       const stage = stageRef.current?.getBoundingClientRect();
       const box = overlayRef.current?.getBoundingClientRect();
-      if (!event.shiftKey || !stage || !box) {
+      // Mouse only, as with the windows — and shift is a key nobody holds on a
+      // phone anyway.
+      if (event.pointerType !== "mouse" || !event.shiftKey || !stage || !box) {
         return;
       }
       event.preventDefault();
@@ -661,7 +665,10 @@ export const SubtitlesDemo = () => {
     (app: AppId, index: number) => (event: ReactPointerEvent<HTMLElement>) => {
       const stage = stageRef.current?.getBoundingClientRect();
       const node = event.currentTarget.parentElement;
-      if (!stage || !node) {
+      // Mouse only. On a phone the title bar is inside a page you are trying to
+      // scroll, and a drag that starts there would take the window with you —
+      // or eat the scroll. Tapping a window still brings it forward.
+      if (event.pointerType !== "mouse" || !stage || !node) {
         return;
       }
       event.preventDefault();
@@ -679,6 +686,8 @@ export const SubtitlesDemo = () => {
         x: (event.clientX - box.left) / stage.width,
         y: (event.clientY - box.top) / stage.height,
         place,
+        handle: event.currentTarget,
+        pointerId: event.pointerId,
       };
       setDraggedWindow(app);
       setPlaced((at) => ({ ...at, [app]: place }));
@@ -695,23 +704,41 @@ export const SubtitlesDemo = () => {
       return;
     }
     const { place } = grab;
-    // Unclamped on purpose: a window can be pushed off the side of the screen
-    // and be clipped by it, which is what happens on a desktop. The caption box
-    // is the one thing held inside, because it is the thing being demonstrated.
+    // Sideways and downwards a window can go where it likes and be clipped by
+    // the screen, which is what happens on a desktop. Upwards it stops at the
+    // top of the stage, which is the underside of the menu bar: on a Mac you
+    // cannot push a window up behind it either.
     setPlaced((at) => ({
       ...at,
       [grab.app]: {
         ...place,
         left: (event.clientX - stage.left) / stage.width - grab.x,
-        top: (event.clientY - stage.top) / stage.height - grab.y,
+        top: Math.max(0, (event.clientY - stage.top) / stage.height - grab.y),
       },
     }));
   }, []);
 
   const endWindowDrag = useCallback(() => {
+    const grab = windowGrabRef.current;
+    if (grab?.handle.hasPointerCapture(grab.pointerId)) {
+      // Ending a drag the pointer has not finished: let go of it, or the button
+      // still being down would keep feeding this window moves it should not get.
+      grab.handle.releasePointerCapture(grab.pointerId);
+    }
     windowGrabRef.current = null;
     setDraggedWindow(null);
   }, []);
+
+  // A window you are holding stops being yours when the demo moves on: the loop
+  // reaches the next scene, brings another window forward, and the one under the
+  // cursor is now behind it. Carrying on dragging it there would be dragging a
+  // window nobody is looking at. The scene the drag itself asked for does not
+  // count, which is what the app check is for.
+  useEffect(() => {
+    if (draggedWindow && SCENES[scene]?.app !== draggedWindow) {
+      endWindowDrag();
+    }
+  }, [draggedWindow, endWindowDrag, scene]);
 
   // The box holds its place as a fraction of the screen, but its own size does
   // not scale with the demo in lockstep — the caption has a floor — so a resize
@@ -797,8 +824,6 @@ export const SubtitlesDemo = () => {
         </div>
 
         <div ref={stageRef} className={styles.stage}>
-          <div className={styles.desktop} />
-
           {/* 1 · the call */}
           <div {...windowProps("meeting", styles.win_meeting)}>
             <div {...titlebarProps("meeting")}>

@@ -94,11 +94,13 @@ const SubtitlesAppPageContent = () => {
         <p>
           The three fake macOS windows are all in the DOM at once, absolutely
           positioned, each with its own inset so they look casually stacked the
-          way a real desktop is. Only one carries the front class at a time; the
-          other two get <code>filter: brightness(0.62) saturate(0.8)</code>,
-          which is a cheap and surprisingly convincing stand-in for &ldquo;this
-          window is not focused&rdquo;. macOS also greys out the traffic lights
-          and dims the title of an inactive window, so the demo does that too.
+          way a real desktop is. Only one carries the front class at a time.
+          Nothing dims the other two, because macOS doesn&rsquo;t dim them
+          either: a background window keeps its own colours, and what tells you
+          it is not the one you are in is its chrome — greyed traffic lights, a
+          faded title — and a shallower shadow than the window on top of it.
+          Copying that is the difference between a stack of windows and a
+          screenshot with something greyed out on it.
         </p>
         <p>
           The insets are not arbitrary: all three share the same bottom edge.
