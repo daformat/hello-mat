@@ -1,0 +1,1018 @@
+/*
+ * The Subtitles demo, ported from the app's landing page (subtitles-live.com).
+ * Everything on screen is CSS: there is no video, no screenshot and no image
+ * file anywhere in here. Three fake macOS windows share a bottom edge so the
+ * caption straddles the same line whichever one is in front.
+ *
+ * The windows are dark whatever the page theme is, because they are standing in
+ * for a desktop. Only the chrome around them (the caption under the screen, the
+ * shadow it casts) follows the site's own tokens.
+ */
+
+.demo {
+  --demo-font: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Inter, system-ui, sans-serif;
+
+  margin-block: 1.5em;
+
+  svg {
+    display: block;
+  }
+}
+
+/* The screen is a container, and everything inside it is drawn in multiples of
+   --u, one hundredth of the screen's own width. The demo is a scale model of a
+   desktop, so it has to behave like one: sized off the viewport, the chrome kept
+   its floors while the screen shrank, and a title bar that is 3.4% of the width
+   at full size was 10% of it in this page's narrow column — the model stopped
+   being to scale and started looking like a toy.
+   --u is capped at the 8.8px it reaches at the 880px the screen tops out at, so
+   nothing changes at full size, and floored at 4px, because a model that scales
+   the whole way down loses its hairlines and its text turns to grain. Below
+   about 400px of screen the demo therefore stops shrinking and simply is what it
+   is: still far closer to scale than the floors it had before. */
+.screen {
+  background: #0c0d11;
+  border: 1px solid var(--color-border-1);
+  border-radius: 14px;
+  box-shadow: 0 1px 12px var(--color-shadow-1),
+    0 24px 60px -22px var(--color-shadow-strong);
+  container-type: inline-size;
+  margin-inline: auto;
+  max-width: 880px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* On the children rather than on .screen: an element's own container is the next
+   one up, so cq units inside the container it establishes have to be resolved by
+   something it contains. */
+.menubar,
+.stage {
+  --u: clamp(4px, 1cqw, 8.8px);
+}
+
+.menubar {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.72);
+  display: flex;
+  font-size: calc(1.25 * var(--u));
+  height: calc(2.95 * var(--u));
+  justify-content: space-between;
+  padding-inline: calc(1.36 * var(--u));
+}
+
+.mb_right {
+  align-items: center;
+  display: inline-flex;
+  gap: calc(1.48 * var(--u));
+}
+
+/* The glyph keeps its colour; the badge is a separate 6pt dot on the glyph's
+   top-right corner, exactly as the app draws it. */
+.mb_glyph {
+  color: rgba(255, 255, 255, 0.82);
+  display: inline-flex;
+  position: relative;
+
+  svg {
+    height: calc(1.48 * var(--u));
+    width: calc(1.7 * var(--u));
+  }
+}
+
+.mb_dot {
+  background: #5856d6;
+  border-radius: 50%;
+  height: calc(0.57 * var(--u));
+  opacity: 0;
+  position: absolute;
+  right: calc(-0.23 * var(--u));
+  top: calc(-0.11 * var(--u));
+  transition: opacity 0.3s ease;
+  width: calc(0.57 * var(--u));
+}
+
+/* 1.8s each way, autoreversed, 1.0 → 0.25 — the app's "live" pulse. */
+.is_live .mb_dot {
+  animation: badge-pulse 3.6s ease-in-out infinite;
+  opacity: 1;
+}
+
+@keyframes badge-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.mb_time {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  min-width: 8ch;
+  text-align: right;
+}
+
+.stage {
+  aspect-ratio: 16 / 9.6;
+  position: relative;
+}
+
+/* desktop wallpaper behind the windows */
+.desktop {
+  background: radial-gradient(
+      60% 70% at 22% 8%,
+      rgba(120, 116, 255, 0.34),
+      transparent 70%
+    ),
+    radial-gradient(52% 60% at 88% 96%, rgba(78, 74, 190, 0.3), transparent 72%),
+    linear-gradient(158deg, #2a2b45 0%, #191a2a 46%, #101019 100%);
+  inset: 0;
+  position: absolute;
+}
+
+/* fake macOS windows — all three stacked, one fronted at a time */
+.demo_window {
+  background: #101116;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: calc(1.25 * var(--u));
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.34),
+    0 14px 34px -10px rgba(0, 0, 0, 0.6);
+  display: flex;
+  filter: brightness(0.62) saturate(0.8);
+  flex-direction: column;
+  overflow: hidden;
+  position: absolute;
+  transition: filter 0.28s ease, box-shadow 0.28s ease;
+  z-index: 1;
+
+  &.is_front {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.36),
+      0 26px 60px -10px rgba(0, 0, 0, 0.72);
+    filter: none;
+    z-index: 4;
+  }
+}
+
+.win_meeting {
+  inset: 5% 7% 13.5%;
+}
+
+.win_notes {
+  inset: 8% 3% 13.5% 11%;
+}
+
+.win_player {
+  inset: 3% 11% 13.5% 3%;
+}
+
+.titlebar {
+  align-items: center;
+  background: linear-gradient(
+    rgba(255, 255, 255, 0.09),
+    rgba(255, 255, 255, 0.045)
+  );
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex: none;
+  height: calc(3.41 * var(--u));
+  padding-inline: calc(1.48 * var(--u));
+  position: relative;
+}
+
+.lights {
+  display: inline-flex;
+  gap: calc(0.68 * var(--u));
+
+  i {
+    border-radius: 50%;
+    display: block;
+    height: calc(1.02 * var(--u));
+    width: calc(1.02 * var(--u));
+  }
+}
+
+.l_close {
+  background: #ff5f57;
+}
+
+.l_min {
+  background: #febc2e;
+}
+
+.l_max {
+  background: #28c840;
+}
+
+.win_title {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: calc(1.36 * var(--u));
+  font-weight: 550;
+  left: 50%;
+  max-width: 55%;
+  overflow: hidden;
+  position: absolute;
+  text-overflow: ellipsis;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+/* macOS greys the traffic lights out on an inactive window, and dims its title.
+   Both rules live after the two they override, so the cascade reads top to
+   bottom rather than by specificity. */
+.demo_window:not(.is_front) {
+  .lights i {
+    background: rgba(255, 255, 255, 0.26);
+  }
+
+  .win_title {
+    color: rgba(255, 255, 255, 0.3);
+  }
+}
+
+.win_content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* An abstract "something is playing" scene — no real video needed. */
+.scene {
+  background: radial-gradient(
+      42% 58% at 26% 32%,
+      rgba(112, 108, 255, 0.44),
+      transparent 66%
+    ),
+    radial-gradient(
+      38% 52% at 74% 28%,
+      rgba(255, 138, 106, 0.26),
+      transparent 68%
+    ),
+    radial-gradient(
+      70% 80% at 50% 110%,
+      rgba(20, 22, 38, 0.92),
+      transparent 70%
+    ),
+    linear-gradient(168deg, #1a1c2b 0%, #101119 52%, #0a0b10 100%);
+  inset: 0;
+  position: absolute;
+
+  &::after {
+    background-image: repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.028) 0 1px,
+      transparent 1px 3px
+    );
+    content: "";
+    inset: 0;
+    mix-blend-mode: overlay;
+    opacity: 0.5;
+    position: absolute;
+  }
+}
+
+/* The podcast window is shaped like a desktop music app: library rail,
+   now-playing pane, transport bar. Still no images: the artwork is a gradient
+   and the waveform is 96 divs with a height each. */
+.pod {
+  display: flex;
+  inset: 0 0 calc(4.77 * var(--u));
+  min-height: 0;
+  position: absolute;
+}
+
+/* library rail */
+.pod_side {
+  background: rgba(0, 0, 0, 0.42);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: calc(1.14 * var(--u));
+  padding: calc(2.05 * var(--u)) calc(1.48 * var(--u));
+  width: calc(8.41 * var(--u));
+}
+
+.pod_nav,
+.pod_item {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 3px;
+  height: calc(0.57 * var(--u));
+}
+
+.pod_nav {
+  width: 78%;
+
+  &.is_on {
+    background: rgba(255, 255, 255, 0.5);
+  }
+}
+
+.pod_item {
+  background: rgba(255, 255, 255, 0.1);
+  width: 92%;
+
+  &:nth-child(even) {
+    width: 70%;
+  }
+}
+
+.pod_sep {
+  background: rgba(255, 255, 255, 0.1);
+  height: 1px;
+  margin: calc(0.68 * var(--u)) 0;
+}
+
+/* now playing */
+.pod_main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: calc(2.73 * var(--u));
+  justify-content: center;
+  min-width: 0;
+  padding: calc(2.27 * var(--u)) calc(2.73 * var(--u));
+}
+
+/* Nothing in this pane may be shrunk to fit. The pane runs out of height before
+   the demo runs out of width — --u stops at its floor while the screen keeps
+   getting shorter — and flex takes what it needs from whichever child has the
+   least to say for itself, which is the waveform: it has no content of its own,
+   so it collapsed from 28px to 2px on a phone while everything around it kept
+   its size. It gives up nothing now; what gives is the layout, below. */
+.pod_head,
+.pod_wave,
+.pod_list {
+  flex: none;
+}
+
+.pod_head {
+  align-items: flex-end;
+  display: flex;
+  gap: calc(1.7 * var(--u));
+  min-width: 0;
+}
+
+.pod_art {
+  aspect-ratio: 1;
+  background: radial-gradient(
+      72% 68% at 30% 24%,
+      rgba(255, 255, 255, 0.32),
+      transparent 70%
+    ),
+    linear-gradient(150deg, #6b68ff 0%, #a95cff 52%, #ff8a6a 100%);
+  border-radius: calc(0.57 * var(--u));
+  box-shadow: 0 10px 26px -8px rgba(0, 0, 0, 0.8);
+  flex: none;
+  width: calc(8.86 * var(--u));
+}
+
+.pod_meta {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+
+  em {
+    color: rgba(255, 255, 255, 0.62);
+    font-size: calc(0.97 * var(--u));
+    font-style: normal;
+    font-weight: 650;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  b {
+    color: rgba(255, 255, 255, 0.96);
+    font-size: calc(2.16 * var(--u));
+    font-weight: 680;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  i {
+    color: rgba(255, 255, 255, 0.52);
+    font-size: calc(1.19 * var(--u));
+    font-style: normal;
+  }
+}
+
+/* Bars are flex children, so the waveform fills whatever width is left at this
+   breakpoint and each one carries its own height as --h. */
+.pod_wave {
+  align-items: center;
+  display: flex;
+  gap: calc(0.17 * var(--u));
+  height: calc(7.05 * var(--u));
+
+  i {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    flex: 1;
+    /* Resting height is held below the row so the loud end of the animation,
+       which scales to 1.24, still has somewhere to go without spilling into the
+       title above it. */
+    height: calc(var(--h) * 0.78);
+    min-height: 2px;
+    min-width: 1px;
+    transform-origin: center;
+  }
+
+  /* Everything left of the playhead has been listened to, kept in step with the
+     scrubber and the clock by the component's own playhead. */
+  i.is_played {
+    background: rgba(157, 153, 255, 0.9);
+  }
+}
+
+/* Only while this window is the one in front, because a waveform moving behind
+   two other windows is noise. The negative per-bar delay starts every bar at a
+   different point of the same cycle, which is what makes it read as audio
+   rather than as one bar repeated. */
+.demo_window.is_front .pod_wave {
+  i {
+    animation: pod-bar 0.34s ease-in-out infinite alternate;
+    animation-delay: calc(var(--i) * -23ms);
+  }
+
+  /* Speech is not periodic. Three durations threaded through the row stop the
+     whole waveform breathing in unison, which is what gave it away as a loop. */
+  i:nth-child(3n) {
+    animation-duration: 0.27s;
+  }
+
+  i:nth-child(4n + 1) {
+    animation-duration: 0.43s;
+  }
+}
+
+@keyframes pod-bar {
+  from {
+    transform: scaleY(0.32);
+  }
+
+  to {
+    transform: scaleY(1.24);
+  }
+}
+
+/* The rest of the show, the way a player lists it under what is playing. */
+.pod_list {
+  display: grid;
+  gap: calc(1.25 * var(--u));
+  padding-top: calc(0.68 * var(--u));
+}
+
+.pod_ep {
+  align-items: center;
+  display: flex;
+  gap: calc(1.59 * var(--u));
+
+  i {
+    background: rgba(255, 255, 255, 0.13);
+    border-radius: 3px;
+    height: calc(0.57 * var(--u));
+    width: var(--w);
+  }
+
+  &:first-child i {
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  em {
+    color: rgba(255, 255, 255, 0.34);
+    font-size: calc(0.97 * var(--u));
+    font-style: normal;
+    font-variant-numeric: tabular-nums;
+    margin-left: auto;
+  }
+}
+
+/* What a desktop player does when you drag its window narrow: it shows less,
+   rather than showing the same things smaller. Below 430px of screen the rest of
+   the show goes, and below 300px the artwork, the gap and the waveform each give
+   up a little so what is playing still fits. The alternative was letting flex
+   crush the waveform, which is the bug this replaced.
+
+   What is playing keeps its name at every size: the head's height is set by the
+   artwork, so the title beside it costs nothing to keep, and a player with no
+   title is not a player. */
+@container (max-width: 430px) {
+  .pod_list {
+    display: none;
+  }
+}
+
+@container (max-width: 300px) {
+  .pod_main {
+    gap: calc(1.5 * var(--u));
+  }
+
+  .pod_art {
+    width: calc(6 * var(--u));
+  }
+
+  .pod_wave {
+    height: calc(5.5 * var(--u));
+  }
+}
+
+/* transport bar across the bottom of the window. A solid strip rather than a
+   gradient fade, the way a desktop player's is. */
+.win_controls {
+  align-items: center;
+  background: rgba(9, 9, 12, 0.94);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  bottom: 0;
+  color: rgba(255, 255, 255, 0.72);
+  display: flex;
+  font-size: calc(1.25 * var(--u));
+  font-variant-numeric: tabular-nums;
+  gap: calc(1.36 * var(--u));
+  left: 0;
+  padding: calc(1.02 * var(--u)) calc(1.82 * var(--u));
+  position: absolute;
+  right: 0;
+}
+
+/* what is playing, pinned left the way every desktop player does it */
+.np_now {
+  align-items: center;
+  display: flex;
+  gap: calc(1.02 * var(--u));
+  min-width: 0;
+  width: calc(17.05 * var(--u));
+}
+
+.np_art {
+  aspect-ratio: 1;
+  background: linear-gradient(150deg, #6b68ff 0%, #a95cff 52%, #ff8a6a 100%);
+  border-radius: 2px;
+  flex: none;
+  width: calc(2.95 * var(--u));
+}
+
+.np_text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+
+  b {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: calc(1.08 * var(--u));
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  i {
+    color: rgba(255, 255, 255, 0.45);
+    font-size: calc(0.97 * var(--u));
+    font-style: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.np_transport {
+  align-items: center;
+  color: rgba(255, 255, 255, 0.86);
+  display: flex;
+  gap: calc(1.25 * var(--u));
+}
+
+.np_skip {
+  height: calc(1.14 * var(--u));
+  opacity: 0.62;
+  width: calc(1.14 * var(--u));
+}
+
+.ctl_play svg {
+  height: calc(1.36 * var(--u));
+  width: calc(1.14 * var(--u));
+}
+
+.ctl_track {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 2px;
+  flex: 1;
+  height: 3px;
+  overflow: hidden;
+
+  i {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 2px;
+    display: block;
+    height: 100%;
+  }
+}
+
+/* ── the call ─────────────────────────────────────────────── */
+
+.win_meeting .win_content {
+  background: #16171d;
+  display: flex;
+  flex-direction: column;
+}
+
+.meet_grid {
+  display: grid;
+  flex: 1;
+  gap: calc(0.8 * var(--u));
+  grid-template-columns: 1fr 1fr;
+  min-height: 0;
+  padding: calc(0.91 * var(--u));
+}
+
+/* The ring a video app puts round whoever is talking, doing what those rings
+   do: riding the voice rather than sitting still. The tile itself transitions
+   so handing the ring to somebody else is a fade, not a jump. */
+.tile {
+  background: linear-gradient(150deg, #262838, #191a24);
+  border: 1.5px solid transparent;
+  border-radius: calc(0.8 * var(--u));
+  display: grid;
+  overflow: hidden;
+  place-items: center;
+  position: relative;
+  transition: border-color 0.25s ease;
+
+  em {
+    bottom: calc(0.57 * var(--u));
+    color: rgba(255, 255, 255, 0.6);
+    font-size: calc(1.14 * var(--u));
+    font-style: normal;
+    left: calc(0.8 * var(--u));
+    position: absolute;
+  }
+
+  &.is_speaking {
+    animation: tile-speak 0.85s ease-in-out infinite alternate;
+    border-color: #5856d6;
+
+    em {
+      color: rgba(255, 255, 255, 0.9);
+    }
+  }
+}
+
+@keyframes tile-speak {
+  from {
+    border-color: rgba(88, 86, 214, 0.5);
+    box-shadow: 0 0 0 0 rgba(88, 86, 214, 0);
+  }
+
+  to {
+    border-color: rgba(128, 126, 255, 1);
+    box-shadow: 0 0 0 2px rgba(88, 86, 214, 0.24);
+  }
+}
+
+.face {
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.92);
+  display: grid;
+  font-size: calc(1.25 * var(--u));
+  font-style: normal;
+  font-weight: 600;
+  height: calc(3.86 * var(--u));
+  letter-spacing: 0.01em;
+  place-items: center;
+  width: calc(3.86 * var(--u));
+}
+
+.f1 {
+  background: linear-gradient(145deg, #6f6ae6, #4f4bc0);
+}
+
+.f2 {
+  background: linear-gradient(145deg, #d97a4e, #b1552f);
+}
+
+.f3 {
+  background: linear-gradient(145deg, #4c9d8c, #33756a);
+}
+
+.f4 {
+  background: linear-gradient(145deg, #8a6fb8, #5f4a8a);
+}
+
+.meet_bar {
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex: none;
+  gap: calc(1.02 * var(--u));
+  justify-content: center;
+  padding: calc(1.02 * var(--u));
+}
+
+.meet_btn {
+  background: rgba(255, 255, 255, 0.13);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.85);
+  display: grid;
+  height: calc(2.73 * var(--u));
+  place-items: center;
+  width: calc(2.73 * var(--u));
+
+  svg {
+    height: 58%;
+    width: 58%;
+  }
+
+  &.is_leave {
+    background: #d9483f;
+    color: #fff;
+  }
+}
+
+/* ── the notes you switch to ──────────────────────────────── */
+
+.win_notes .win_content {
+  background: #17171a;
+}
+
+.notes_body {
+  display: flex;
+  height: 100%;
+}
+
+.notes_side {
+  background: rgba(255, 255, 255, 0.035);
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: calc(1.02 * var(--u));
+  max-width: 130px;
+  padding: calc(1.25 * var(--u)) calc(1.02 * var(--u));
+  width: 22%;
+
+  i {
+    background: rgba(255, 255, 255, 0.13);
+    border-radius: 3px;
+    display: block;
+    height: calc(0.68 * var(--u));
+  }
+
+  i.is_on {
+    background: rgba(255, 255, 255, 0.3);
+    width: 80%;
+  }
+}
+
+.notes_doc {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: calc(1.02 * var(--u));
+  min-width: 0;
+  padding: calc(1.7 * var(--u)) calc(1.93 * var(--u));
+
+  b {
+    color: rgba(255, 255, 255, 0.78);
+    font-size: calc(1.48 * var(--u));
+    font-weight: 600;
+    margin-bottom: calc(0.34 * var(--u));
+  }
+
+  b.sub {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: calc(1.25 * var(--u));
+    margin-top: calc(0.68 * var(--u));
+  }
+
+  i {
+    background: rgba(255, 255, 255, 0.11);
+    border-radius: 3px;
+    display: block;
+    height: calc(0.68 * var(--u));
+  }
+}
+
+.notes_caret {
+  animation: blink 1.05s steps(1) infinite;
+  background: rgba(255, 255, 255, 0.65);
+  height: calc(1.36 * var(--u));
+  margin-top: -2px;
+  width: 1.5px;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ── ⌘-tab ────────────────────────────────────────────────── */
+
+.switcher {
+  align-items: center;
+  backdrop-filter: blur(22px) saturate(160%);
+  background: rgba(38, 38, 44, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: calc(1.93 * var(--u));
+  box-shadow: 0 20px 46px -12px rgba(0, 0, 0, 0.7);
+  display: flex;
+  gap: calc(1.36 * var(--u));
+  left: 50%;
+  opacity: 0;
+  padding: calc(1.59 * var(--u));
+  top: 44%;
+  transform: translate(-50%, -50%) scale(0.94);
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s;
+  visibility: hidden;
+  /* The panel is rasterised once and scaled as a whole. Without it the scale
+     lands and Chromium re-rasterises, and the icons' SVG contents snap to a
+     different subpixel origin than the CSS tiles they sit on — which nobody
+     notices on the two icons drawn as small marks, and everybody notices on the
+     player, whose mark is a white disc across most of its tile. It moved about a
+     pixel against its neighbours every time the panel settled. */
+  will-change: transform;
+  z-index: 6;
+
+  &.is_visible {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    visibility: visible;
+  }
+}
+
+.sw_app {
+  background: transparent;
+  border-radius: calc(1.25 * var(--u));
+  display: grid;
+  padding: calc(0.8 * var(--u));
+  place-items: center;
+  transition: background 0.12s ease;
+
+  &.is_selected {
+    background: rgba(255, 255, 255, 0.22);
+  }
+}
+
+.sw_icon {
+  border-radius: calc(1.25 * var(--u));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 2px 5px rgba(0, 0, 0, 0.3);
+  color: #fff;
+  display: grid;
+  height: calc(5.23 * var(--u));
+  place-items: center;
+  width: calc(5.23 * var(--u));
+
+  svg {
+    height: 62%;
+    width: 62%;
+  }
+}
+
+.i_meet {
+  background: linear-gradient(160deg, #4a8ef0, #2c5fc4);
+}
+
+.i_notes {
+  background: linear-gradient(160deg, #ffd75e, #f0b429);
+}
+
+/* Still an app icon, so it keeps the squircle the other two have. What is round
+   is the play badge inside it, the way a media app draws itself.
+
+   The badge and the mark are one SVG, and they have to stay one. They were a
+   CSS ::before circle with the mark stacked on it in the same grid cell, which
+   is fine until the switcher animates: the panel scales 0.94 → 1, and at the end
+   of that the two rounded to device pixels independently, so the mark jumped
+   about a pixel inside its badge as the panel landed. Inside one SVG they are a
+   single painted thing at any scale, and nothing can drift between them.
+
+   The geometry the CSS used to hold, now in the markup: the badge is 64% of the
+   tile, so r is 32% of a 24 box; the mark is drawn at half size about the
+   centre, which puts it at 32% of the tile tall — half the badge's diameter, the
+   proportion a play button normally uses, and the point at which it stops
+   looking lost in the circle. Rounding a filled shape by stroking it with round
+   joins also dilates it, by the stroke width, so the two are one calculation
+   rather than two: the path is 11.02 wide and 13.76 tall, and stroking it at 1.6
+   makes that 12.62 by 15.36. The 0.522 taken off x is the nudge that was a
+   translate before: the triangle's centroid sits on 12.07 against a centre of
+   12, and this takes a little of that back by eye. Change any of these and the
+   others have to move. */
+.i_player {
+  background: linear-gradient(160deg, #3a3b46, #1e1f27);
+
+  svg {
+    color: #1b1c24;
+    height: 100%;
+    stroke: currentColor;
+    stroke-linejoin: round;
+    stroke-width: 1.6;
+    width: 100%;
+  }
+}
+
+/* The app name sits under the selection, as macOS shows it. */
+.sw_name {
+  /* -2.4 rather than the -1.59 the other conversions use: this one clamped from
+     the other end, its preferred value sitting between the two bounds at full
+     size rather than at the outer one. */
+  bottom: calc(-2.4 * var(--u));
+  color: rgba(255, 255, 255, 0.88);
+  font-size: calc(1.48 * var(--u));
+  font-weight: 500;
+  left: 0;
+  position: absolute;
+  right: 0;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+}
+
+/* The top layer, above every window and above the switcher — that is the whole
+   point of it. Colours, radius, padding and the content-hugging width are the
+   app's own: black at 0.72, white SF Rounded semibold, 14pt radius and 22×14pt
+   insets at its 30pt default, with a floor so short lines don't jitter.
+
+   Scaled with the rest of the model, but with a floor of its own: this is the
+   one thing in the demo anybody actually reads. Sized off the viewport it sat at
+   14px while the screen shrank to 213px in this page's narrow column, and the
+   longest line filled 142% of the stage. The floor is 10px, which is above what
+   the proportion would give below about 385px of stage: the caption stops
+   shrinking there and takes a larger share of the demo, up to roughly 70% at a
+   375px viewport. Anything smaller was unreadable, which is the worse failure of
+   the two. Widening the demo on narrow viewports is what would buy both back. */
+.overlay {
+  background: rgba(0, 0, 0, 0.72);
+  border-radius: 0.47em;
+  bottom: 5.5%;
+  color: #fff;
+  font-family: var(--demo-font);
+  font-size: clamp(10px, calc(2.61 * var(--u)), 23px);
+  font-weight: 600;
+  left: 50%;
+  line-height: 1.34;
+  max-width: min(80%, 640px);
+  min-width: 4.67em;
+  opacity: 0;
+  padding: 0.47em 0.73em;
+  position: absolute;
+  text-align: center;
+  text-wrap: balance;
+  transform: translateX(-50%);
+  transition: opacity 0.4s ease;
+  width: fit-content;
+  z-index: 10;
+
+  &.is_visible {
+    opacity: 1;
+  }
+
+  /* The in-flight word, before the recogniser commits it. */
+  .tentative {
+    color: rgba(255, 255, 255, 0.55);
+  }
+}
+
+/* Qualified with the root on purpose: `.prose p` sets a margin of its own, and
+   it would otherwise win on specificity and swallow the gap below. */
+.demo .caption {
+  color: var(--text-primary);
+  font-size: 0.85em;
+  /* The screen casts a long shadow downwards, so the caption needs more room
+     under it than a plain gap would suggest before it stops feeling attached. */
+  margin-block: 2.4em 0;
+  opacity: 0.7;
+  text-align: center;
+
+  kbd {
+    background: var(--color-card-background);
+    border-radius: 5px;
+    box-shadow: inset 0 0 0 0.75px var(--color-border-1);
+    display: inline-block;
+    font-family: inherit;
+    font-size: 0.9em;
+    line-height: 1;
+    min-width: 1.7em;
+    padding: 0.28em 0.42em;
+    text-align: center;
+  }
+}
+
+/* Everything here is decoration, so reduced motion switches the lot off. The
+   component stops its own timers as well: this only covers the CSS. */
+@media (prefers-reduced-motion: reduce) {
+  .demo {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important; // stylelint-disable-line declaration-no-important
+      animation-iteration-count: 1 !important; // stylelint-disable-line declaration-no-important
+      transition-duration: 0.001ms !important; // stylelint-disable-line declaration-no-important
+    }
+  }
+}

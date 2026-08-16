@@ -307,6 +307,29 @@ export const COMPONENTS = {
       imageHeight: 630,
     },
   },
+  "subtitles-app": {
+    oss: false,
+    video: {
+      dark: {
+        src: "/media/design-engineering/subtitles/subtitles-overview-dark.mp4",
+        type: "video/mp4",
+      },
+      light: {
+        src: "/media/design-engineering/subtitles/subtitles-overview-light.mp4",
+        type: "video/mp4",
+      },
+    },
+    metas: {
+      shortTitle: "The demo for my Subtitles app",
+      title: "The demo for Subtitles, a live captions app for macOS",
+      description:
+        "A looping product demo built entirely in CSS: three fake macOS windows, a caption overlay that types itself out, and an app switch that happens mid-sentence.",
+      url: "/design-engineering/component/subtitles-app",
+      image: "/media/design-engineering/subtitles/og-subtitles-light.png",
+      imageWidth: 1200,
+      imageHeight: 630,
+    },
+  },
 } as const satisfies Record<string, Component>;
 
 export type Component = {
@@ -358,6 +381,7 @@ export const COMPONENTS_ORDER = createComponentOrder([
   "split-flap-display",
   "slider",
   "tilting-tile",
+  "subtitles-app",
 ] as const);
 
 export const getNextComponent = (
