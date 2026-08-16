@@ -1,3 +1,5 @@
+@use "/styles/lib/mixins.scss";
+
 /*
  * The Subtitles demo, ported from the app's landing page (subtitles-live.com).
  * Everything on screen is CSS: there is no video, no screenshot and no image
@@ -14,6 +16,10 @@
     "Segoe UI", Inter, system-ui, sans-serif;
 
   margin-block: 1.5em;
+  /* None of this is text you would want to select: it is a drawing of a screen,
+     and dragging the caption box across it would otherwise sweep a selection
+     through the windows behind. */
+  user-select: none;
 
   svg {
     display: block;
@@ -52,16 +58,25 @@
   --u: clamp(4px, 1cqw, 8.8px);
 }
 
+/* Above the windows and above the ⌘-tab panel, the way a menu bar is, and now
+   that windows can be dragged there is something for it to be above. The one
+   thing that goes over it is the caption overlay, which on a real Mac covers the
+   menu bar too — that is what "above every window" means. */
+/* Opaque, not the white-at-6%-over-the-desktop it used to be: that read the same
+   until a window could be dragged under it, and then the window showed through
+   the bar. These are the two colours that translucency resolved to. */
 .menubar {
   align-items: center;
-  background: rgba(255, 255, 255, 0.06);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: #1b1c1f;
+  border-bottom: 1px solid #1d1e22;
   color: rgba(255, 255, 255, 0.72);
   display: flex;
   font-size: calc(1.25 * var(--u));
   height: calc(2.95 * var(--u));
   justify-content: space-between;
   padding-inline: calc(1.36 * var(--u));
+  position: relative;
+  z-index: 8;
 }
 
 .mb_right {
@@ -158,6 +173,15 @@
     filter: none;
     z-index: 4;
   }
+
+  /* Anything but the front window is a way into its own scene. */
+  &.is_reachable {
+    cursor: pointer;
+  }
+
+  &.is_held .titlebar {
+    cursor: grabbing;
+  }
 }
 
 .win_meeting {
@@ -172,6 +196,9 @@
   inset: 3% 11% 13.5% 3%;
 }
 
+/* The handle: a window is dragged by its bar, as on a real desktop, and no
+   modifier — the caption box needs shift because it is what clicks fall
+   through, and a window is not. */
 .titlebar {
   align-items: center;
   background: linear-gradient(
@@ -179,6 +206,7 @@
     rgba(255, 255, 255, 0.045)
   );
   border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+  cursor: grab;
   display: flex;
   flex: none;
   height: calc(3.41 * var(--u));
@@ -825,6 +853,9 @@
   left: 50%;
   opacity: 0;
   padding: calc(1.59 * var(--u));
+  /* Drawn on top of the windows, but never in the way of clicking one. */
+  pointer-events: none;
+  position: absolute;
   top: 44%;
   transform: translate(-50%, -50%) scale(0.94);
   transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s;
@@ -956,20 +987,43 @@
   font-weight: 600;
   left: 50%;
   line-height: 1.34;
-  max-width: min(80%, 640px);
+  /* Both of these are about the box keeping its shape while it is dragged. A
+     percentage max-width and a fit-content width are both measured against the
+     space left between the box's own left edge and the screen's right one, so
+     carrying it towards an edge squeezed that space and the caption re-wrapped
+     under the cursor. max-content asks the text how wide it wants to be instead,
+     and the cap is the same 80% of the screen expressed in --u, which is one
+     hundredth of it and does not care where the box sits. */
+  max-width: min(calc(80 * var(--u)), 640px);
   min-width: 4.67em;
   opacity: 0;
   padding: 0.47em 0.73em;
+  /* Clicks go through it, which is the app's own behaviour and what lets a click
+     land on the window underneath. Holding shift is what turns it back into
+     something you can grab. */
+  pointer-events: none;
   position: absolute;
   text-align: center;
   text-wrap: balance;
   transform: translateX(-50%);
   transition: opacity 0.4s ease;
-  width: fit-content;
+  width: max-content;
   z-index: 10;
 
   &.is_visible {
     opacity: 1;
+  }
+
+  &.is_movable {
+    cursor: grab;
+    /* Just enough to say it can be picked up now. */
+    outline: 1px dashed rgba(255, 255, 255, 0.2);
+    outline-offset: 3px;
+    pointer-events: auto;
+  }
+
+  &.is_dragging {
+    cursor: grabbing;
   }
 
   /* The in-flight word, before the recogniser commits it. */
@@ -978,14 +1032,97 @@
   }
 }
 
+/* One segment per scene, sitting under the screen and as wide as it. They say
+   how many scenes there are and how far through this one the loop is, and they
+   are the way to skip ahead: the segment is the button. */
+/* Narrower than the screen it sits under, and centred: run the full 880px and
+   three segments read as a layout of their own rather than as a control
+   belonging to the demo above them. */
+.scenes {
+  display: flex;
+  gap: 10px;
+  margin-inline: auto;
+  /* The buttons carry padding of their own, for the hit area, so the gap under
+     the screen is this plus that. The screen casts a shadow downwards, and the
+     bar needs to clear it before it stops looking stuck to the frame. */
+  margin-top: 24px;
+  max-width: min(100%, 520px);
+}
+
+/* Not `.scene`: that name is taken further up by the podcast window's backdrop,
+   which is absolutely positioned and would swallow the button whole.
+
+   The whole segment is the button — track, label, and the space around both —
+   rather than a 4px bar you have to aim at. */
+.scene_button {
+  appearance: none;
+  background: none;
+  border: 0;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: grid;
+  flex: 1;
+  gap: 7px;
+  padding: 6px 0;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-border-1-outline);
+    outline-offset: 4px;
+  }
+
+  /* Clicking the scene you are watching is a no-op, so it does not offer. */
+  &.is_current {
+    cursor: default;
+  }
+}
+
+/* --color-bullet rather than --color-empty, which is the same colour at a
+   quarter alpha and all but disappeared against the page. */
+.scene_track {
+  background: var(--color-bullet);
+  border-radius: 999px;
+  height: 4px;
+  overflow: hidden;
+  transition: mixins.theme-transition(background-color);
+}
+
+/* Scaled rather than widened: the fill is walked across by CSS, on a duration
+   the component hands it per caption, and a transform is the cheap way to do
+   that for four seconds at a time. */
+.scene_fill {
+  background: var(--text-primary);
+  display: block;
+  height: 100%;
+  opacity: 0.55;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition-property: transform;
+  transition-timing-function: linear;
+}
+
+.scene_label {
+  font-size: 1em;
+  opacity: 0.45;
+  text-align: center;
+  transition: mixins.theme-transition(opacity);
+}
+
+/* Hover moves the label and nothing else: brightening the track as well put it
+   within a shade of the fill, and the two stopped reading as track and
+   progress. */
+.scene_button:hover .scene_label,
+.scene_button.is_current .scene_label {
+  opacity: 0.8;
+}
+
 /* Qualified with the root on purpose: `.prose p` sets a margin of its own, and
    it would otherwise win on specificity and swallow the gap below. */
 .demo .caption {
   color: var(--text-primary);
   font-size: 0.85em;
-  /* The screen casts a long shadow downwards, so the caption needs more room
-     under it than a plain gap would suggest before it stops feeling attached. */
-  margin-block: 2.4em 0;
+  /* Less than it was: the scene bar now sits between this and the screen, and
+     carries the gap that used to be needed to clear the screen's shadow. */
+  margin-block: 1.2em 0;
   opacity: 0.7;
   text-align: center;
 

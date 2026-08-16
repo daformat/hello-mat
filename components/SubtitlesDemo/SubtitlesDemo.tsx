@@ -1,4 +1,11 @@
-import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
+import {
+  CSSProperties,
+  PointerEvent as ReactPointerEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import styles from "./SubtitlesDemo.module.scss";
 
@@ -24,12 +31,15 @@ type AppId = keyof typeof APPS;
 
 type Scene = {
   app: AppId;
+  /** Names the scene under the bar, and to a screen reader. */
+  label: string;
   lines: string[];
 };
 
 const SCENES: Scene[] = [
   {
     app: "meeting",
+    label: "The call",
     lines: [
       "Universal subtitles for any app, live on your Mac.",
       "In a meeting, second language or not, one missed word costs you the next three.",
@@ -38,6 +48,7 @@ const SCENES: Scene[] = [
   },
   {
     app: "notes",
+    label: "Your notes",
     lines: [
       "Switch to your notes and the meeting carries on without you watching it.",
       "The overlay stays above every window, so you keep the thread.",
@@ -45,6 +56,7 @@ const SCENES: Scene[] = [
   },
   {
     app: "player",
+    label: "A podcast",
     lines: [
       "The same for a podcast, a lecture, or a video.",
       "And none of it leaves the Mac: it runs on the Neural Engine, on-device.",
@@ -103,11 +115,28 @@ const mmss = (seconds: number) =>
 const cx = (...names: (string | undefined | false)[]) =>
   names.filter(Boolean).join(" ");
 
+/** Capturing can throw on a pointer the browser no longer knows about, and a
+ *  drag that works without capture is better than one that never starts. */
+const capture = (event: ReactPointerEvent<HTMLElement>) => {
+  try {
+    event.currentTarget.setPointerCapture(event.pointerId);
+  } catch {
+    // the pointer went away between the press and this line
+  }
+};
+
+/** A window's place on the screen, as fractions of it. */
+type Placement = { left: number; top: number; width: number; height: number };
+
 /** Thrown to unwind the scene loop when the component goes away. */
 const CANCELLED = Symbol("cancelled");
+/** Thrown to unwind it when somebody picks a different scene. */
+const JUMPED = Symbol("jumped");
 
 export const SubtitlesDemo = () => {
   const rootRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
 
   const [reducedMotion, setReducedMotion] = useState(false);
   const [clock, setClock] = useState("");
@@ -119,12 +148,55 @@ export const SubtitlesDemo = () => {
   const [committed, setCommitted] = useState("");
   const [tentative, setTentative] = useState("");
   const [captionVisible, setCaptionVisible] = useState(false);
+  const [scene, setScene] = useState(0);
+  // How far through the current scene the loop is, and how long the bar has to
+  // get there. The loop sets a target and a duration per caption and CSS walks
+  // it there, rather than the component animating a number frame by frame.
+  const [progress, setProgress] = useState({ value: 0, ms: 0 });
+  // Where the caption box has been dragged to, as the fraction of the screen its
+  // centre sits at — not pixels, so it keeps its place when the demo resizes.
+  // Null until somebody moves it, which leaves the CSS to place it.
+  const [spot, setSpot] = useState<{ x: number; y: number } | null>(null);
+  const [shiftHeld, setShiftHeld] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  /** Where in the box the drag started, so it doesn't jump to the cursor. */
+  const grabRef = useRef<{ x: number; y: number } | null>(null);
+  // Windows that have been dragged off their CSS insets, each held as fractions
+  // of the screen so they keep both their size and their place when it resizes.
+  const [placed, setPlaced] = useState<Partial<Record<AppId, Placement>>>({});
+  const [draggedWindow, setDraggedWindow] = useState<AppId | null>(null);
+  const windowGrabRef = useRef<{
+    app: AppId;
+    x: number;
+    y: number;
+    place: Placement;
+  } | null>(null);
 
   // The loop parks on `paused` instead of returning, because restarting it on
   // every scroll-back stacked a second copy on top of the first and the two
   // raced the caption text.
   const pausedRef = useRef(false);
   const onScreenRef = useRef(true);
+  // Set by a click on a scene button or on one of the windows; the loop unwinds
+  // at its next beat and picks that scene up from the top. `direct` is the
+  // difference between the two: the buttons are a request to go somewhere, and
+  // watching the ⌘-tab get there is the point of them, while clicking a window
+  // is reaching for that window — the machinery in between would be in the way.
+  const jumpRef = useRef<{ index: number; direct: boolean } | null>(null);
+  // Cuts every wait the loop is sitting in short. Without it a click landed
+  // whenever the current wait happened to end, and a finished caption holds for
+  // up to 4.2 seconds — long enough to read as nothing having happened.
+  const wakeRef = useRef<(() => void) | null>(null);
+  // Which window is actually in front, updated at the moment it fronts. The loop
+  // used to carry this in a local it only assigned once a switch had finished,
+  // so a switch interrupted by a second click left it a window behind: the next
+  // ⌘-tab panel then opened on the wrong app and skipped over the real one.
+  const frontRef = useRef<AppId>(SCENES[0]?.app ?? "meeting");
+
+  const showApp = useCallback((app: AppId) => {
+    frontRef.current = app;
+    setFront(app);
+  }, []);
 
   const syncPaused = useCallback(() => {
     pausedRef.current = !onScreenRef.current || document.hidden;
@@ -249,15 +321,28 @@ export const SubtitlesDemo = () => {
 
     let cancelled = false;
     const timers = new Set<ReturnType<typeof setTimeout>>();
+    // Every wait currently in flight, so a click can end them all now rather
+    // than when their timer says so.
+    const waking = new Set<() => void>();
 
     const wait = (ms: number) =>
       new Promise<void>((resolve) => {
-        const timer = setTimeout(() => {
+        const finish = () => {
+          clearTimeout(timer);
           timers.delete(timer);
+          waking.delete(finish);
           resolve();
-        }, ms);
+        };
+        const timer = setTimeout(finish, ms);
         timers.add(timer);
+        waking.add(finish);
       });
+
+    wakeRef.current = () => {
+      for (const finish of [...waking]) {
+        finish();
+      }
+    };
 
     const step = async (ms: number) => {
       await wait(ms);
@@ -267,17 +352,34 @@ export const SubtitlesDemo = () => {
       if (cancelled) {
         throw CANCELLED;
       }
+      if (jumpRef.current !== null) {
+        throw JUMPED;
+      }
     };
 
     // One subtitle box: types out, holds long enough to read, clears. The app
     // pages the same way, and shows the newest word dim until it commits.
-    const say = async (line: string) => {
+    //
+    // `from` and `to` are the slice of the scene's bar this caption is worth.
+    // The bar is walked across it in two moves — one for the typing, one for the
+    // hold — because those are the only two moments the loop knows how long the
+    // next stretch will take. The second starts from wherever the first actually
+    // got to, so the jitter in the typing corrects itself rather than piling up.
+    const say = async (line: string, from: number, to: number) => {
       const words = line.split(" ");
+      const hold = holdFor(words.length);
+      const typing = words.length * (WORD_MS + JITTER / 2);
+      const typed = from + (to - from) * (typing / (typing + hold + GAP_MS));
+
       setCommitted("");
       setTentative("");
       setCaptionVisible(true);
+      setProgress({ value: typed, ms: typing });
 
       for (let i = 0; i < words.length; i++) {
+        if (jumpRef.current !== null) {
+          throw JUMPED;
+        }
         const word = words[i] ?? "";
         setCommitted(i ? `${words.slice(0, i).join(" ")} ` : "");
         setTentative(word);
@@ -289,56 +391,106 @@ export const SubtitlesDemo = () => {
       // Everything commits once the utterance ends.
       setCommitted(line);
       setTentative("");
+      setProgress({ value: to, ms: hold + GAP_MS });
 
-      await step(holdFor(words.length));
+      await step(hold);
       setCaptionVisible(false);
       await step(GAP_MS);
     };
 
     // ⌘-tab: panel up on the current app, selection moves, window fronts as the
     // panel drops — which is when you'd release the key.
-    const switchTo = async (from: AppId, to: AppId) => {
-      setSelected(from);
+    const switchTo = async (to: AppId) => {
+      setSelected(frontRef.current);
       setSwitcherVisible(true);
       await step(340);
       setSelected(to);
       await step(560);
-      setFront(to);
+      showApp(to);
       setSwitcherVisible(false);
       await step(220);
     };
 
-    const loop = async () => {
-      let showing = firstScene.app;
+    // Both halves of a concurrent pair have to finish before the loop moves on,
+    // including when one of them threw: awaiting Promise.all would leave the
+    // other running against a loop that has already unwound, and its rejection
+    // unhandled a beat later.
+    const both = async (a: Promise<void>, b: Promise<void>) => {
+      const results = await Promise.allSettled([a, b]);
+      const failed = results.find((result) => result.status === "rejected");
+      if (failed?.status === "rejected") {
+        throw failed.reason;
+      }
+    };
 
-      for (let i = 0; ; i = (i + 1) % SCENES.length) {
-        const scene = SCENES[i];
-        const opener = scene?.lines[0];
-        if (!scene || !opener) {
+    const loop = async () => {
+      let index = 0;
+      // Set by a jump, cleared by the scene that answers it: the switch that
+      // gets there runs on its own rather than under the first caption.
+      let picked = false;
+
+      for (;;) {
+        const current = SCENES[index];
+        const opener = current?.lines[0];
+        if (!current || !opener) {
           return;
         }
 
-        if (scene.app !== showing) {
-          if (i === 0) {
-            // Coming back round to the top. This one switch runs on its own,
-            // with the captions starting after it lands, so the loop reads as
-            // beginning again rather than as a first line that started while
-            // the previous scene's window was still in front.
-            await switchTo(showing, scene.app);
-            showing = scene.app;
-            await say(opener);
-          } else {
-            // Deliberately concurrent: the caption keeps running straight
-            // through the app switch, which is the whole point being made.
-            await Promise.all([say(opener), switchTo(showing, scene.app)]);
-            showing = scene.app;
-          }
-        } else {
-          await say(opener);
-        }
+        const slice = 1 / current.lines.length;
+        const deliberate = picked;
+        picked = false;
+        setScene(index);
+        // Back to empty before the first caption of the scene, and instantly:
+        // the wrap-around switch runs before any caption does, and the bar would
+        // otherwise sit full through it.
+        setProgress({ value: 0, ms: 0 });
 
-        for (let j = 1; j < scene.lines.length; j++) {
-          await say(scene.lines[j] ?? "");
+        try {
+          // Against what is actually in front, not against what the last switch
+          // meant to leave there: an interrupted one may have fronted its window
+          // already, and this scene's may be it.
+          if (current.app !== frontRef.current) {
+            if (index === 0 || deliberate) {
+              // Coming back round to the top, or somebody picked this scene.
+              // The switch runs on its own, with the captions starting after it
+              // lands: a first line that began while the previous scene's window
+              // was still in front reads as the loop losing its place, and after
+              // a click it would read as the caption belonging to the window you
+              // just left.
+              await switchTo(current.app);
+              await say(opener, 0, slice);
+            } else {
+              // Deliberately concurrent: the caption keeps running straight
+              // through the app switch, which is the whole point being made.
+              await both(say(opener, 0, slice), switchTo(current.app));
+            }
+          } else {
+            await say(opener, 0, slice);
+          }
+
+          for (let j = 1; j < current.lines.length; j++) {
+            await say(current.lines[j] ?? "", j * slice, (j + 1) * slice);
+          }
+
+          index = (index + 1) % SCENES.length;
+        } catch (error) {
+          if (error !== JUMPED) {
+            throw error;
+          }
+          // Somebody picked a scene. Drop whatever was mid-sentence and let the
+          // next turn of the loop get there, which is also what makes a second
+          // click during a switch work: it lands here again. A window click has
+          // already fronted its window, so the next turn finds nothing to switch
+          // and goes straight to the captions.
+          const jump = jumpRef.current;
+          jumpRef.current = null;
+          index = jump?.index ?? index;
+          picked = jump ? !jump.direct : false;
+          setSwitcherVisible(false);
+          setCaptionVisible(false);
+          setCommitted("");
+          setTentative("");
+          setProgress({ value: 0, ms: 0 });
         }
       }
     };
@@ -351,22 +503,286 @@ export const SubtitlesDemo = () => {
 
     return () => {
       cancelled = true;
+      wakeRef.current = null;
       timers.forEach(clearTimeout);
       timers.clear();
+      waking.clear();
     };
-  }, [reducedMotion]);
+  }, [reducedMotion, showApp]);
+
+  // Picking the scene that is already playing does nothing, whether you picked
+  // it from the bar or by clicking its window: restarting it would punish a
+  // click on the thing you are already watching.
+  const jumpTo = useCallback(
+    (index: number, direct = false) => {
+      if (index === scene) {
+        return;
+      }
+      const target = SCENES[index];
+      if (!target) {
+        return;
+      }
+
+      if (reducedMotion) {
+        // No loop to unwind — the scene is just what is on screen.
+        setScene(index);
+        showApp(target.app);
+        setCommitted(target.lines[0] ?? "");
+        setTentative("");
+        setCaptionVisible(true);
+        setProgress({ value: 0, ms: 0 });
+        return;
+      }
+
+      // Waking the loop is what makes this instant: it is otherwise sitting in
+      // whatever wait it started before the click, which for a caption that has
+      // finished typing is a hold of up to 4.2 seconds. Woken, it unwinds on the
+      // next microtask and the ⌘-tab panel is up within the frame.
+      jumpRef.current = { index, direct };
+      setScene(index);
+      setCaptionVisible(false);
+      setProgress({ value: 0, ms: 0 });
+      if (direct) {
+        // Clicking a window is reaching for it: it comes forward now, and the
+        // loop finds it already there and skips the ⌘-tab entirely.
+        showApp(target.app);
+        setSwitcherVisible(false);
+      }
+      wakeRef.current?.();
+    },
+    [reducedMotion, scene, showApp]
+  );
+
+  // ── moving the caption box ───────────────────────────────────────────────
+  //
+  // The app lets the overlay through clicks until you hold shift, at which point
+  // it becomes something you can pick up and put somewhere else. This does the
+  // same, inside the fake screen: shift arms it, the box is dragged by its
+  // centre, and it cannot be dropped outside the screen it belongs to.
+
+  useEffect(() => {
+    const down = (event: KeyboardEvent) => {
+      if (event.key === "Shift") {
+        setShiftHeld(true);
+      }
+    };
+    const up = (event: KeyboardEvent) => {
+      if (event.key === "Shift") {
+        setShiftHeld(false);
+      }
+    };
+    // Tabbing away with the key down would otherwise leave it armed forever.
+    const clear = () => setShiftHeld(false);
+
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    window.addEventListener("blur", clear);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+      window.removeEventListener("blur", clear);
+    };
+  }, []);
+
+  /** Keeps the whole box on the screen, whatever the cursor asks for. */
+  const insideStage = useCallback((x: number, y: number) => {
+    const stage = stageRef.current?.getBoundingClientRect();
+    const box = overlayRef.current?.getBoundingClientRect();
+    if (!stage || !box) {
+      return { x, y };
+    }
+    const halfWide = box.width / 2 / stage.width;
+    const halfTall = box.height / 2 / stage.height;
+    return {
+      x: Math.min(Math.max(x, halfWide), 1 - halfWide),
+      y: Math.min(Math.max(y, halfTall), 1 - halfTall),
+    };
+  }, []);
+
+  const startDrag = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      const stage = stageRef.current?.getBoundingClientRect();
+      const box = overlayRef.current?.getBoundingClientRect();
+      if (!event.shiftKey || !stage || !box) {
+        return;
+      }
+      event.preventDefault();
+      // Captured, so the box keeps receiving the pointer once it leaves it —
+      // and keeps receiving the release, wherever that happens. Paired with
+      // onLostPointerCapture below, which covers the pointer being taken away
+      // rather than let go: without it a release outside the page would leave
+      // the box grabbed forever.
+      capture(event);
+
+      const centre = {
+        x: (box.left + box.width / 2 - stage.left) / stage.width,
+        y: (box.top + box.height / 2 - stage.top) / stage.height,
+      };
+      grabRef.current = {
+        x: centre.x - (event.clientX - stage.left) / stage.width,
+        y: centre.y - (event.clientY - stage.top) / stage.height,
+      };
+      setDragging(true);
+      setSpot(insideStage(centre.x, centre.y));
+    },
+    [insideStage]
+  );
+
+  const onDrag = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      const grab = grabRef.current;
+      const stage = stageRef.current?.getBoundingClientRect();
+      if (!grab || !stage) {
+        return;
+      }
+      setSpot(
+        insideStage(
+          (event.clientX - stage.left) / stage.width + grab.x,
+          (event.clientY - stage.top) / stage.height + grab.y
+        )
+      );
+    },
+    [insideStage]
+  );
+
+  const endDrag = useCallback(() => {
+    grabRef.current = null;
+    setDragging(false);
+  }, []);
+
+  // ── moving the windows ───────────────────────────────────────────────────
+  //
+  // By the title bar, as on a real desktop, and no modifier: the window comes
+  // forward as you take hold of it and cannot be dropped over an edge. Once
+  // dragged, a window is placed in fractions of the screen rather than by the
+  // insets it started with, so it keeps its size and its spot at any width.
+
+  const startWindowDrag = useCallback(
+    (app: AppId, index: number) => (event: ReactPointerEvent<HTMLElement>) => {
+      const stage = stageRef.current?.getBoundingClientRect();
+      const node = event.currentTarget.parentElement;
+      if (!stage || !node) {
+        return;
+      }
+      event.preventDefault();
+      capture(event);
+
+      const box = node.getBoundingClientRect();
+      const place = {
+        left: (box.left - stage.left) / stage.width,
+        top: (box.top - stage.top) / stage.height,
+        width: box.width / stage.width,
+        height: box.height / stage.height,
+      };
+      windowGrabRef.current = {
+        app,
+        x: (event.clientX - box.left) / stage.width,
+        y: (event.clientY - box.top) / stage.height,
+        place,
+      };
+      setDraggedWindow(app);
+      setPlaced((at) => ({ ...at, [app]: place }));
+      // Taking hold of a window raises it, which here means playing its scene.
+      jumpTo(index, true);
+    },
+    [jumpTo]
+  );
+
+  const dragWindow = useCallback((event: ReactPointerEvent<HTMLElement>) => {
+    const grab = windowGrabRef.current;
+    const stage = stageRef.current?.getBoundingClientRect();
+    if (!grab || !stage) {
+      return;
+    }
+    const { place } = grab;
+    // Unclamped on purpose: a window can be pushed off the side of the screen
+    // and be clipped by it, which is what happens on a desktop. The caption box
+    // is the one thing held inside, because it is the thing being demonstrated.
+    setPlaced((at) => ({
+      ...at,
+      [grab.app]: {
+        ...place,
+        left: (event.clientX - stage.left) / stage.width - grab.x,
+        top: (event.clientY - stage.top) / stage.height - grab.y,
+      },
+    }));
+  }, []);
+
+  const endWindowDrag = useCallback(() => {
+    windowGrabRef.current = null;
+    setDraggedWindow(null);
+  }, []);
+
+  // The box holds its place as a fraction of the screen, but its own size does
+  // not scale with the demo in lockstep — the caption has a floor — so a resize
+  // can leave it hanging over an edge. Put it back inside.
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage || !spot) {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      setSpot((at) => (at ? insideStage(at.x, at.y) : at));
+    });
+    observer.observe(stage);
+    return () => observer.disconnect();
+  }, [insideStage, spot]);
 
   const played = Math.round((elapsed / TOTAL) * WAVE.length);
 
-  const windowClass = (app: AppId) =>
-    cx(styles.demo_window, front === app && styles.is_front);
+  // A window is a way into its own scene. The one in front is already there, so
+  // it does nothing; the others come forward when clicked. Mouse-only on
+  // purpose: the screen is hidden from assistive tech, and the scene buttons
+  // under it are the same three destinations, as buttons.
+  const windowProps = (app: AppId, place: string | undefined) => {
+    const index = SCENES.findIndex((item) => item.app === app);
+    const spotted = placed[app];
+    return {
+      className: cx(
+        styles.demo_window,
+        place,
+        front === app && styles.is_front,
+        front !== app && styles.is_reachable,
+        draggedWindow === app && styles.is_held
+      ),
+      onClick: () => jumpTo(index, true),
+      // Placed by its own corner once dragged, rather than by the insets it
+      // was born with; the size comes along so it doesn't reflow mid-drag.
+      style: spotted
+        ? {
+            height: `${spotted.height * 100}%`,
+            inset: "auto",
+            left: `${spotted.left * 100}%`,
+            top: `${spotted.top * 100}%`,
+            width: `${spotted.width * 100}%`,
+          }
+        : undefined,
+    };
+  };
+
+  /** The title bar is the handle, the way it is on a real window. */
+  const titlebarProps = (app: AppId) => ({
+    className: styles.titlebar,
+    onPointerDown: startWindowDrag(
+      app,
+      SCENES.findIndex((item) => item.app === app)
+    ),
+    onPointerMove: dragWindow,
+    onPointerUp: endWindowDrag,
+    onPointerCancel: endWindowDrag,
+    // The pointer being taken away rather than let go — released off the page,
+    // or claimed by something else. Without this the window stays grabbed and
+    // follows the cursor with no button held.
+    onLostPointerCapture: endWindowDrag,
+  });
 
   return (
-    // Decorative through and through: the captions are a scripted loop, not
-    // content, and the windows are drawings of apps. Screen readers get the
-    // page copy instead.
-    <div ref={rootRef} className={styles.demo} aria-hidden="true">
-      <div className={styles.screen}>
+    <div ref={rootRef} className={styles.demo}>
+      {/* The screen is decorative through and through: the captions are a
+          scripted loop, not content, and the windows are drawings of apps.
+          Screen readers get the page copy, and the scene buttons below, which
+          are the only part of this anybody can operate. */}
+      <div className={styles.screen} aria-hidden="true">
         <div className={styles.menubar}>
           <span />
           <span className={styles.mb_right}>
@@ -380,12 +796,12 @@ export const SubtitlesDemo = () => {
           </span>
         </div>
 
-        <div className={styles.stage}>
+        <div ref={stageRef} className={styles.stage}>
           <div className={styles.desktop} />
 
           {/* 1 · the call */}
-          <div className={cx(windowClass("meeting"), styles.win_meeting)}>
-            <div className={styles.titlebar}>
+          <div {...windowProps("meeting", styles.win_meeting)}>
+            <div {...titlebarProps("meeting")}>
               <span className={styles.lights}>
                 <i className={styles.l_close} />
                 <i className={styles.l_min} />
@@ -436,8 +852,8 @@ export const SubtitlesDemo = () => {
           </div>
 
           {/* 2 · what you switch to */}
-          <div className={cx(windowClass("notes"), styles.win_notes)}>
-            <div className={styles.titlebar}>
+          <div {...windowProps("notes", styles.win_notes)}>
+            <div {...titlebarProps("notes")}>
               <span className={styles.lights}>
                 <i className={styles.l_close} />
                 <i className={styles.l_min} />
@@ -471,8 +887,8 @@ export const SubtitlesDemo = () => {
           </div>
 
           {/* 3 · the podcast */}
-          <div className={cx(windowClass("player"), styles.win_player)}>
-            <div className={styles.titlebar}>
+          <div {...windowProps("player", styles.win_player)}>
+            <div {...titlebarProps("player")}>
               <span className={styles.lights}>
                 <i className={styles.l_close} />
                 <i className={styles.l_min} />
@@ -641,17 +1057,73 @@ export const SubtitlesDemo = () => {
           </div>
 
           <div
-            className={cx(styles.overlay, captionVisible && styles.is_visible)}
+            ref={overlayRef}
+            className={cx(
+              styles.overlay,
+              captionVisible && styles.is_visible,
+              shiftHeld && styles.is_movable,
+              dragging && styles.is_dragging
+            )}
+            // Once moved it is placed by its centre, which is also how it is
+            // dragged and how it is kept inside the screen.
+            style={
+              spot
+                ? {
+                    bottom: "auto",
+                    left: `${spot.x * 100}%`,
+                    top: `${spot.y * 100}%`,
+                    transform: "translate(-50%, -50%)",
+                  }
+                : undefined
+            }
+            onPointerDown={startDrag}
+            onPointerMove={onDrag}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
+            onLostPointerCapture={endDrag}
           >
             <span>{committed}</span>
             <span className={styles.tentative}>{tentative}</span>
           </div>
         </div>
       </div>
+
+      {/* One segment per scene: how far through the loop is, and a way out of
+          waiting for it. Each one jumps to the top of its scene; the one already
+          playing does nothing. */}
+      <div className={styles.scenes}>
+        {SCENES.map((item, index) => (
+          <button
+            key={item.app}
+            type="button"
+            className={cx(
+              styles.scene_button,
+              index === scene && styles.is_current
+            )}
+            aria-current={index === scene ? "true" : undefined}
+            onClick={() => jumpTo(index)}
+          >
+            <span className={styles.scene_track}>
+              <span
+                className={styles.scene_fill}
+                style={{
+                  transform: `scaleX(${
+                    index < scene ? 1 : index === scene ? progress.value : 0
+                  })`,
+                  transitionDuration: `${index === scene ? progress.ms : 0}ms`,
+                }}
+              />
+            </span>
+            <span className={styles.scene_label}>{item.label}</span>
+          </button>
+        ))}
+      </div>
+
       <p className={styles.caption}>
         Switch apps and the captions stay: the overlay is above every window,
-        and lets clicks through. In the app itself, holding <kbd>⇧</kbd> lets
-        you move it.
+        and lets clicks through — click a window to bring it forward. Hold{" "}
+        <kbd>⇧</kbd> and drag the captions to move them, as you would in the
+        app.
       </p>
     </div>
   );
