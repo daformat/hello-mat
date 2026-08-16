@@ -8,6 +8,8 @@
   },
   "scripts": {
     "dev": "next dev",
+    "sitemap": "node scripts/generate-sitemap.mjs",
+    "prebuild": "pnpm sitemap",
     "build": "next build",
     "start": "next start",
     "lint": "pnpm lint:js && pnpm lint:ts && pnpm lint:css",
