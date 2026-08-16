@@ -68,3 +68,25 @@
     }
   }
 }
+
+// The listening badge, borrowed from the menu bar icon: same indigo, and the
+// same 1.8s there-and-back so the two read as the same object.
+.listening_badge {
+  animation: listening-pulse 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes listening-pulse {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .listening_badge {
+    animation: none;
+  }
+}
