@@ -87,8 +87,12 @@ const EPISODES = [
   { width: "44%", length: "52:19" },
 ];
 
-const NOTE_LINES_TOP = ["92%", "78%", "85%", "44%"];
-const NOTE_LINES_BOTTOM = ["88%", "73%", "81%", "52%", "86%", "38%"];
+// Scaled so the longest line reaches the text column's right edge. The
+// padding was always even, but the widest line stopped short and left a
+// gutter against nothing on the left, which read as a page set crooked.
+// Every line is scaled by the same 100/92, so the raggedness is unchanged.
+const NOTE_LINES_TOP = ["100%", "84.8%", "92.4%", "47.8%"];
+const NOTE_LINES_BOTTOM = ["95.7%", "79.3%", "88%", "56.5%", "93.5%", "41.3%"];
 
 // The transport runs only while the player is in front, and faster than real
 // time on purpose: a scene lasts about a dozen seconds, and a real playhead
@@ -144,6 +148,8 @@ export const SubtitlesDemo = () => {
   const [selected, setSelected] = useState<AppId>(SCENES[0]?.app ?? "meeting");
   const [switcherVisible, setSwitcherVisible] = useState(false);
   const [speaking, setSpeaking] = useState(0);
+  // Back to front, and the only thing that decides what covers what.
+  const [stack, setStack] = useState<AppId[]>(["notes", "player", "meeting"]);
   const [elapsed, setElapsed] = useState(START);
   const [committed, setCommitted] = useState("");
   const [tentative, setTentative] = useState("");
@@ -198,7 +204,19 @@ export const SubtitlesDemo = () => {
   const showApp = useCallback((app: AppId) => {
     frontRef.current = app;
     setFront(app);
+    // Back to front. The three windows used to share one z-index with the front
+    // one lifted above them, so everything behind fell back on the order it sits
+    // in the markup: raising the notes also carried the podcast over the call.
+    // Whatever is raised goes on top and the rest keep the order they had.
+    setStack((order) => [...order.filter((id) => id !== app), app]);
   }, []);
+
+  // The call keeps talking for as long as it can be seen, which is not the same
+  // as being in front: fronting the notes leaves it in view beside them. It goes
+  // quiet only when the podcast is stacked over it, which is the one arrangement
+  // where a ring pulsing away underneath would claim a meeting is live in a
+  // scene about something else.
+  const callAudible = stack.indexOf("meeting") > stack.indexOf("player");
 
   const syncPaused = useCallback(() => {
     pausedRef.current = !onScreenRef.current || document.hidden;
@@ -272,10 +290,15 @@ export const SubtitlesDemo = () => {
   // never straight back to the same person, and held for an uneven beat,
   // because a fixed rotation reads as a carousel rather than a conversation.
   useEffect(() => {
-    if (front !== "meeting" || reducedMotion) {
+    if (!callAudible) {
       return;
     }
     setSpeaking(0);
+    // Somebody is talking the moment the call can be seen. Reduced motion gets
+    // that as a still ring: it is who is speaking, not an animation.
+    if (reducedMotion) {
+      return;
+    }
     let timer: ReturnType<typeof setTimeout>;
     const step = () => {
       setSpeaking(
@@ -287,7 +310,7 @@ export const SubtitlesDemo = () => {
     };
     timer = setTimeout(step, 1900);
     return () => clearTimeout(timer);
-  }, [front, reducedMotion]);
+  }, [callAudible, reducedMotion]);
 
   // The playhead. Every visit to the scene starts from the same place.
   useEffect(() => {
@@ -775,15 +798,19 @@ export const SubtitlesDemo = () => {
       onClick: () => jumpTo(index, true),
       // Placed by its own corner once dragged, rather than by the insets it
       // was born with; the size comes along so it doesn't reflow mid-drag.
-      style: spotted
-        ? {
-            height: `${spotted.height * 100}%`,
-            inset: "auto",
-            left: `${spotted.left * 100}%`,
-            top: `${spotted.top * 100}%`,
-            width: `${spotted.width * 100}%`,
-          }
-        : undefined,
+      // --z rides along either way: it is the focus order, not the geometry.
+      style: {
+        ["--z"]: stack.indexOf(app) + 1,
+        ...(spotted
+          ? {
+              height: `${spotted.height * 100}%`,
+              inset: "auto",
+              left: `${spotted.left * 100}%`,
+              top: `${spotted.top * 100}%`,
+              width: `${spotted.width * 100}%`,
+            }
+          : {}),
+      } as CSSProperties,
     };
   };
 
@@ -841,10 +868,7 @@ export const SubtitlesDemo = () => {
                     key={person.initials}
                     className={cx(
                       styles.tile,
-                      front === "meeting" &&
-                        !reducedMotion &&
-                        speaking === index &&
-                        styles.is_speaking
+                      callAudible && speaking === index && styles.is_speaking
                     )}
                   >
                     <i className={cx(styles.face, person.face)}>
@@ -1035,6 +1059,7 @@ export const SubtitlesDemo = () => {
                   <path d="M16.8 11.2l3.6-2.6a.7.7 0 0 1 1.1.6v5.6a.7.7 0 0 1-1.1.6l-3.6-2.6z" />
                 </svg>
               </span>
+              <span className={styles.sw_name}>{APPS["meeting"]}</span>
             </span>
             <span
               className={cx(
@@ -1052,6 +1077,7 @@ export const SubtitlesDemo = () => {
                   </g>
                 </svg>
               </span>
+              <span className={styles.sw_name}>{APPS["notes"]}</span>
             </span>
             <span
               className={cx(
@@ -1077,8 +1103,8 @@ export const SubtitlesDemo = () => {
                   />
                 </svg>
               </span>
+              <span className={styles.sw_name}>{APPS["player"]}</span>
             </span>
-            <span className={styles.sw_name}>{APPS[selected]}</span>
           </div>
 
           <div
