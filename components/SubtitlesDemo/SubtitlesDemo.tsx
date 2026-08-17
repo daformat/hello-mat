@@ -211,12 +211,13 @@ export const SubtitlesDemo = () => {
     setStack((order) => [...order.filter((id) => id !== app), app]);
   }, []);
 
-  // The call keeps talking for as long as it can be seen, which is not the same
-  // as being in front: fronting the notes leaves it in view beside them. It goes
-  // quiet only when the podcast is stacked over it, which is the one arrangement
-  // where a ring pulsing away underneath would claim a meeting is live in a
-  // scene about something else.
-  const callAudible = stack.indexOf("meeting") > stack.indexOf("player");
+  // Two of the three windows make a sound, and the higher of those two in the
+  // stack is the one making it. The notes never take it, so switching to them
+  // leaves whatever was playing still playing, and switching between the call
+  // and the podcast hands the sound from one to the other: something is always
+  // going, and only ever one thing. Being in front was never the right test, and
+  // it stopped the screen dead the moment the notes came forward.
+  const callPlaying = stack.indexOf("meeting") > stack.indexOf("player");
 
   const syncPaused = useCallback(() => {
     pausedRef.current = !onScreenRef.current || document.hidden;
@@ -290,7 +291,7 @@ export const SubtitlesDemo = () => {
   // never straight back to the same person, and held for an uneven beat,
   // because a fixed rotation reads as a carousel rather than a conversation.
   useEffect(() => {
-    if (!callAudible) {
+    if (!callPlaying) {
       return;
     }
     setSpeaking(0);
@@ -310,11 +311,11 @@ export const SubtitlesDemo = () => {
     };
     timer = setTimeout(step, 1900);
     return () => clearTimeout(timer);
-  }, [callAudible, reducedMotion]);
+  }, [callPlaying, reducedMotion]);
 
-  // The playhead. Every visit to the scene starts from the same place.
+  // The playhead. Every time the podcast starts playing again, it starts here.
   useEffect(() => {
-    if (front !== "player" || reducedMotion) {
+    if (callPlaying || reducedMotion) {
       return;
     }
     setElapsed(START);
@@ -327,7 +328,10 @@ export const SubtitlesDemo = () => {
       setElapsed((at) => Math.min(TOTAL, at + RATE));
     }, 1000);
     return () => clearInterval(timer);
-  }, [front, reducedMotion]);
+    // On the boolean, not on `front`: keyed to the front window this re-ran on
+    // every switch and reset the episode to 18:24 each time, so it never got
+    // past its first few seconds.
+  }, [callPlaying, reducedMotion]);
 
   // The scene loop itself.
   useEffect(() => {
@@ -793,6 +797,8 @@ export const SubtitlesDemo = () => {
         place,
         front === app && styles.is_front,
         front !== app && styles.is_reachable,
+        (callPlaying ? app === "meeting" : app === "player") &&
+          styles.is_playing,
         draggedWindow === app && styles.is_held
       ),
       onClick: () => jumpTo(index, true),
@@ -868,7 +874,7 @@ export const SubtitlesDemo = () => {
                     key={person.initials}
                     className={cx(
                       styles.tile,
-                      callAudible && speaking === index && styles.is_speaking
+                      callPlaying && speaking === index && styles.is_speaking
                     )}
                   >
                     <i className={cx(styles.face, person.face)}>

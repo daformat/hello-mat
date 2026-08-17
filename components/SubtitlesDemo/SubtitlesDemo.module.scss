@@ -642,11 +642,11 @@
   }
 }
 
-/* Only while this window is the one in front, because a waveform moving behind
-   two other windows is noise. The negative per-bar delay starts every bar at a
-   different point of the same cycle, which is what makes it read as audio
-   rather than as one bar repeated. */
-.demo_window.is_front .pod_wave {
+/* While the window is playing, which is whenever it is the higher of the two
+   that make a sound. The negative per-bar delay starts every bar at a different
+   point of the same cycle, which is what makes it read as audio rather than as
+   one bar repeated. */
+.demo_window.is_playing .pod_wave {
   i {
     animation: pod-bar 0.34s ease-in-out infinite alternate;
     animation-delay: calc(var(--i) * -23ms);
