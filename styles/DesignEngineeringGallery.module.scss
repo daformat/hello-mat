@@ -31,10 +31,6 @@
     }
   }
 
-  video {
-    max-width: 425px;
-  }
-
   @include mixins.above-medium {
     width: calc(50% - 8px);
   }
