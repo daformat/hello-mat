@@ -11,6 +11,23 @@ const nextConfig = {
     locales: ["en"],
     defaultLocale: "en",
   },
+  // The gallery pages used to live one level deeper, under
+  // /design-engineering/component/*. They are now siblings of the gallery
+  // index, and every old link keeps working.
+  async redirects() {
+    return [
+      {
+        source: "/design-engineering/component/:slug",
+        destination: "/design-engineering/:slug",
+        permanent: true,
+      },
+      {
+        source: "/design-engineering/component",
+        destination: "/design-engineering",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

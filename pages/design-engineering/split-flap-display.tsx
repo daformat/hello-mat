@@ -843,7 +843,7 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
           full{" "}
           <a
             href={
-              "https://github.com/daformat/hello-mat/blob/master/pages/design-engineering/component/split-flap-display.tsx"
+              "https://github.com/daformat/hello-mat/blob/master/pages/design-engineering/split-flap-display.tsx"
             }
             target="_blank"
             rel="noopener"

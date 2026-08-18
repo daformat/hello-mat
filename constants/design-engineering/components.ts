@@ -19,7 +19,7 @@ export const COMPONENTS = {
       title: "A table of contents component",
       description:
         "Building a table of contents component, using React, TypeScript, and SCSS.",
-      url: "/design-engineering/component/table-of-contents",
+      url: "/design-engineering/table-of-contents",
       image: "/media/design-engineering/toc/og-toc-light.png",
       imageWidth: 1200,
       imageHeight: 630,
@@ -42,7 +42,7 @@ export const COMPONENTS = {
       title: "A details (or disclosure) component",
       description:
         "Building a details (disclosure) component, using React, TypeScript, and SCSS.",
-      url: "/design-engineering/component/details-disclosure-component",
+      url: "/design-engineering/details-disclosure-component",
       image: "/media/design-engineering/details/og-details-light.png",
       imageWidth: 1200,
       imageHeight: 630,
@@ -65,7 +65,7 @@ export const COMPONENTS = {
       title: "Images and embeds component",
       description:
         "Building a Media component supporting images and embeds using React, TypeScript, and SCSS.",
-      url: "/design-engineering/component/images-and-embeds",
+      url: "/design-engineering/images-and-embeds",
       image: "/media/design-engineering/images-and-embeds/og-media-light.png",
       imageWidth: 1200,
       imageHeight: 630,
@@ -88,7 +88,7 @@ export const COMPONENTS = {
       title: "A collapsible toolbar component",
       description:
         "Building a collapsible / resizable toolbar using React, TypeScript, and SCSS.",
-      url: "/design-engineering/component/collapsible-toolbar",
+      url: "/design-engineering/collapsible-toolbar",
       image:
         "/media/design-engineering/collapsible-toolbar/og-collapsible-toolbar-light.png",
       imageWidth: 1200,
@@ -112,7 +112,7 @@ export const COMPONENTS = {
       title: "A publish button component",
       description:
         "Building a publish button component with feedback, using React, TypeScript, and SCSS.",
-      url: "/design-engineering/component/publish-button",
+      url: "/design-engineering/publish-button",
       image:
         "/media/design-engineering/publish-button/og-publish-button-light.png",
       imageWidth: 1200,
@@ -136,7 +136,7 @@ export const COMPONENTS = {
       title: "A macOS inspired dock component",
       description:
         "Building a macOS-like dock component, using React, TypeScript, and SCSS.",
-      url: "/design-engineering/component/dock-component",
+      url: "/design-engineering/dock-component",
       image: "/media/design-engineering/dock/og-dock-light.png",
       imageWidth: 1200,
       imageHeight: 630,
@@ -159,7 +159,7 @@ export const COMPONENTS = {
       title: "A carousel component with inertia and momentum scrolling",
       description:
         "A headless, zero-dependency, scrollable and swipeable carousel, with momentum scrolling, overscroll and rubber-banding using React and TypeScript.",
-      url: "/design-engineering/component/carousel-component",
+      url: "/design-engineering/carousel-component",
       image: "/media/design-engineering/carousel/og-carousel-light.png",
       imageWidth: 1200,
       imageHeight: 630,
@@ -182,7 +182,7 @@ export const COMPONENTS = {
       title: "Rolling stacking cards component",
       description:
         "Building a rolling stacking cards scroll-driven animation with React, TypeScript, and SCSS.",
-      url: "/design-engineering/component/stacking-cards",
+      url: "/design-engineering/stacking-cards",
       image:
         "/media/design-engineering/stacking-cards/og-stacking-cards-light.png",
       imageWidth: 1200,
@@ -206,7 +206,7 @@ export const COMPONENTS = {
       title: "A swipeable cards carousel component",
       description:
         "A zero-dependency, headless, swipeable cards stack with React and TypeScript.",
-      url: "/design-engineering/component/swipeable-cards",
+      url: "/design-engineering/swipeable-cards",
       image:
         "/media/design-engineering/swipeable-cards/og-swipeable-cards-light.png",
       imageWidth: 1200,
@@ -230,7 +230,7 @@ export const COMPONENTS = {
       title: "A number flow input component",
       description:
         "A number flow input component with React and TypeScript. Inspired by Number Flow and the Family wallet",
-      url: "/design-engineering/component/number-flow-input",
+      url: "/design-engineering/number-flow-input",
       image:
         "/media/design-engineering/number-flow-input/og-number-flow-input-light.png",
       imageWidth: 1200,
@@ -254,7 +254,7 @@ export const COMPONENTS = {
       title: "A split-flap display component",
       description:
         "A realistic split-flap display component with React and Typescript",
-      url: "/design-engineering/component/split-flap-display",
+      url: "/design-engineering/split-flap-display",
       image:
         "/media/design-engineering/split-flap-display/og-split-flap-display-light.png",
       imageWidth: 1200,
@@ -278,7 +278,7 @@ export const COMPONENTS = {
       title: "A composable headless slider component",
       description:
         "Building a headless and composable slider component with React and Css",
-      url: "/design-engineering/component/slider",
+      url: "/design-engineering/slider",
       image: "/media/design-engineering/slider/og-slider-light.png",
       imageWidth: 1200,
       imageHeight: 630,
@@ -301,7 +301,7 @@ export const COMPONENTS = {
       title: "A tilting card component with parallax, just like tvOS",
       description:
         "Building a tvOS inspired tilting card component with parallax using React and Css",
-      url: "/design-engineering/component/tilting-tile",
+      url: "/design-engineering/tilting-tile",
       image: "/media/design-engineering/tilting-tile/og-tilting-tile-light.png",
       imageWidth: 1200,
       imageHeight: 630,
@@ -324,7 +324,7 @@ export const COMPONENTS = {
       title: "The demo for Subtitles, a live captions app for macOS",
       description:
         "A looping product demo built entirely in CSS: three fake macOS windows, a caption overlay that types itself out, and an app switch that happens mid-sentence.",
-      url: "/design-engineering/component/subtitles-app",
+      url: "/design-engineering/subtitles-app",
       image: "/media/design-engineering/subtitles/og-subtitles-light.png",
       imageWidth: 1200,
       imageHeight: 630,

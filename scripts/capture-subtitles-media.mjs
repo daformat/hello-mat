@@ -1,5 +1,5 @@
 // Regenerates the gallery card clips and the OG images for the Subtitles demo
-// (/design-engineering/component/subtitles-app).
+// (/design-engineering/subtitles-app).
 //
 //   node scripts/capture-subtitles-media.mjs            # everything
 //   node scripts/capture-subtitles-media.mjs light      # one theme

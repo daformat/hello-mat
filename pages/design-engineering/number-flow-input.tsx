@@ -489,7 +489,7 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
           Below is a minimal example that mirrors the demo above. View the full{" "}
           <a
             href={
-              "https://github.com/daformat/hello-mat/blob/master/pages/design-engineering/component/number-flow-input.tsx"
+              "https://github.com/daformat/hello-mat/blob/master/pages/design-engineering/number-flow-input.tsx"
             }
             target="_blank"
             rel="noopener"

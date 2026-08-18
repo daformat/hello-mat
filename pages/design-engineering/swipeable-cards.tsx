@@ -40,7 +40,7 @@ import {
 import { useCssSizeVariables } from "@/hooks/useCssSizeVariables";
 
 const tsxSource = `
-// full source: https://github.com/daformat/hello-mat/blob/master/pages/design-engineering/component/swipeable-cards.tsx
+// full source: https://github.com/daformat/hello-mat/blob/master/pages/design-engineering/swipeable-cards.tsx
 
 <SwipeableCards.Root
   cards={[...cards /* omitted for brevity */ ]}
@@ -908,7 +908,7 @@ const SwipeableCardsPageContent = (props: CodeBlocks) => {
           full{" "}
           <a
             href={
-              "https://github.com/daformat/hello-mat/blob/master/pages/design-engineering/component/swipeable-cards.tsx"
+              "https://github.com/daformat/hello-mat/blob/master/pages/design-engineering/swipeable-cards.tsx"
             }
             target="_blank"
             rel="noopener"
