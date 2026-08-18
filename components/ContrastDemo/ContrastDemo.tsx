@@ -53,21 +53,11 @@ import styles from "./ContrastDemo.module.scss";
 const cx = (...names: (string | undefined | false)[]) =>
   names.filter(Boolean).join(" ");
 
-const SCHEMES = {
-  auto: "light dark",
-  light: "light",
-  dark: "dark",
-} as const;
-
-type SchemeId = keyof typeof SCHEMES;
-
 type ContrastContextValue = {
   metric: MetricId;
   setMetric: (next: MetricId) => void;
   target: number;
   setTarget: (next: number) => void;
-  scheme: SchemeId;
-  setScheme: (next: SchemeId) => void;
 };
 
 const ContrastContext = createContext<ContrastContextValue | null>(null);
@@ -85,7 +75,6 @@ const useContrast = () => {
 const Provider = ({ children }: { children: ReactNode }) => {
   const [metric, setMetricState] = useState<MetricId>("wcag");
   const [target, setTarget] = useState(METRICS.wcag.def);
-  const [scheme, setScheme] = useState<SchemeId>("auto");
 
   // Switching metric switches units, so the target has to come along with it:
   // 4.5 means body text under WCAG and nothing at all under APCA.
@@ -95,8 +84,8 @@ const Provider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const value = useMemo(
-    () => ({ metric, setMetric, target, setTarget, scheme, setScheme }),
-    [metric, setMetric, target, scheme]
+    () => ({ metric, setMetric, target, setTarget }),
+    [metric, setMetric, target]
   );
 
   return (
@@ -133,8 +122,7 @@ const readComputedInk = (element: Element): Rgb | null => {
 /* ---------- the shared toolbar ---------- */
 
 const Toolbar = () => {
-  const { metric, setMetric, target, setTarget, scheme, setScheme } =
-    useContrast();
+  const { metric, setMetric, target, setTarget } = useContrast();
   const targetId = useId();
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [stuck, setStuck] = useState(false);
@@ -188,23 +176,6 @@ const Toolbar = () => {
               </option>
             ))}
           </select>
-
-          <div
-            className={styles.segmented}
-            role="group"
-            aria-label="Demo theme"
-          >
-            {(Object.keys(SCHEMES) as SchemeId[]).map((id) => (
-              <button
-                key={id}
-                type="button"
-                aria-pressed={scheme === id}
-                onClick={() => setScheme(id)}
-              >
-                {id}
-              </button>
-            ))}
-          </div>
         </div>
       </div>
     </>
@@ -220,14 +191,9 @@ const Toolbar = () => {
  * relative to the section heading is a question about the page rather than
  * about the demo.
  */
-const Bench = ({ children }: { children: ReactNode }) => {
-  const { scheme } = useContrast();
-  return (
-    <div className={styles.bench} style={{ colorScheme: SCHEMES[scheme] }}>
-      {children}
-    </div>
-  );
-};
+const Bench = ({ children }: { children: ReactNode }) => (
+  <div className={styles.bench}>{children}</div>
+);
 
 /* ---------- part one: contrast-color() against YIQ ---------- */
 
@@ -243,7 +209,7 @@ const PALETTE: [name: string, hex: string][] = [
 ];
 
 const Swatches = () => {
-  const { scheme, metric, target } = useContrast();
+  const { metric, target } = useContrast();
   const M = METRICS[metric];
   const hostRef = useRef<HTMLDivElement>(null);
   const [supported, setSupported] = useState<boolean | null>(null);
@@ -287,7 +253,6 @@ const Swatches = () => {
       className={styles.demo}
       ref={hostRef}
       style={{
-        colorScheme: SCHEMES[scheme],
         display: "flex",
         flexDirection: "column",
         gap: "1rem",

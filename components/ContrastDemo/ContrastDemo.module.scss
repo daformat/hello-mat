@@ -13,10 +13,9 @@
  * everything around them is the bench.
  *
  * Every colour is a light-dark() pair, so the theme is one property rather than
- * a second stylesheet: the toolbar sets color-scheme on the block root and the
- * whole palette re-resolves. That is also what makes the light / dark toggle
- * honest, since it flips the same switch the operating system does rather than
- * swapping in a set of colours picked to look good in a screenshot.
+ * a second stylesheet: each block root sets color-scheme and the whole palette
+ * re-resolves. It follows the operating system rather than swapping in a set of
+ * colours picked to look good in a screenshot.
  */
 
 /* Pass and fail have to read as pass and fail, and they also have to belong
@@ -58,6 +57,10 @@ $dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
   );
   --step: 6px;
   --mono: ui-monospace, sfmono-regular, "SF Mono", menlo, monospace;
+
+  /* light-dark() resolves against this, and the page root never sets it, so
+     every block that pulls in these tokens has to declare it too. */
+  color-scheme: light dark;
 }
 
 .demo {
