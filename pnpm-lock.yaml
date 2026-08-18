@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@daformat/contrast-color':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@daformat/react-headless-carousel':
         specifier: ^1.2.0
         version: 1.2.0(react@19.2.1)
@@ -314,6 +317,9 @@ packages:
     engines: {node: ^14 || ^16 || >=18}
     peerDependencies:
       postcss-selector-parser: ^6.0.13
+
+  '@daformat/contrast-color@1.0.0':
+    resolution: {integrity: sha512-n0a8cwW1c5MDv8wDFE23xXVtgAuKJr1D1aa+7qDs6EaDUxL3GCbcbtKpISEKEfK4d8QZhJf8xMN3ir7Qu+ZwTg==}
 
   '@daformat/react-headless-carousel@1.2.0':
     resolution: {integrity: sha512-eOa8DVMKCYteGpT2/IKA4I1fJ40VMXJ2QRbLyyDUOqWEJEC57gP7fVE/SYezI1H+i3g5b6SZOIo8MTMRvc9CJw==}
@@ -4556,6 +4562,8 @@ snapshots:
   '@csstools/selector-specificity@3.1.1(postcss-selector-parser@6.1.2)':
     dependencies:
       postcss-selector-parser: 6.1.2
+
+  '@daformat/contrast-color@1.0.0': {}
 
   '@daformat/react-headless-carousel@1.2.0(react@19.2.1)':
     dependencies:

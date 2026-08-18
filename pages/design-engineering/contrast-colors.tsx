@@ -24,10 +24,15 @@ interface CodeBlocks {
   source: string;
   usage: string;
   css: string;
+  installNpm: string;
+  installYarn: string;
+  installPnpm: string;
+  installBun: string;
+  installDeno: string;
 }
 
 const USAGE = `
-import { contrastShift } from "./contrast-shift";
+import { contrastShift } from "@daformat/contrast-color";
 
 // WCAG 2.1, body text on a blue background
 contrastShift("#1e3a8a", "#3b82f6", { target: 4.5 });
@@ -129,28 +134,74 @@ const CSS_SNIPPET = `
 }
 `.trim();
 
-export const getStaticProps: GetStaticProps<CodeBlocks> = async () => {
-  // The module the page imports, read off disk rather than transcribed, so the
-  // listing cannot drift away from the thing running above it.
-  const sourcePath = join(
-    process.cwd(),
-    "components",
-    "ContrastDemo",
-    "contrast-shift.ts"
-  );
-  const themes = { light: "vitesse-light", dark: "houston" } as const;
+/* The modules that make up the package, in reading order. The listing is
+   concatenated from the installed package itself rather than transcribed, so it
+   cannot drift away from the thing running above it. */
+const SOURCE_MODULES = [
+  "types.ts",
+  "srgb.ts",
+  "oklch.ts",
+  "metrics.ts",
+  "ink.ts",
+  "contrast-shift.ts",
+  "index.ts",
+];
 
-  const [source, usage, css] = await Promise.all([
-    codeToHtml(readFileSync(sourcePath, "utf8").trim(), {
-      lang: "ts",
-      themes,
-      tabindex: false,
-    }),
-    codeToHtml(USAGE, { lang: "ts", themes, tabindex: false }),
+const PACKAGE = "@daformat/contrast-color";
+
+const readPackageSource = () => {
+  const src = join(process.cwd(), "node_modules", PACKAGE, "src");
+  return SOURCE_MODULES.map((file) => {
+    const body = readFileSync(join(src, file), "utf8").trim();
+    return `/* ${"=".repeat(68)}\n   src/${file}\n   ${"=".repeat(68)} */\n\n${body}`;
+  }).join("\n\n");
+};
+
+const INSTALL = {
+  npm: `npm install ${PACKAGE}`,
+  yarn: `yarn add ${PACKAGE}`,
+  pnpm: `pnpm add ${PACKAGE}`,
+  bun: `bun add ${PACKAGE}`,
+  deno: `deno add npm:${PACKAGE}`,
+};
+
+export const getStaticProps: GetStaticProps<CodeBlocks> = async () => {
+  const themes = { light: "vitesse-light", dark: "houston" } as const;
+  const ts = { lang: "ts", themes, tabindex: false } as const;
+  const bash = { lang: "bash", themes, tabindex: false } as const;
+
+  const [
+    source,
+    usage,
+    css,
+    installNpm,
+    installYarn,
+    installPnpm,
+    installBun,
+    installDeno,
+  ] = await Promise.all([
+    codeToHtml(readPackageSource(), ts),
+    codeToHtml(USAGE, ts),
     codeToHtml(CSS_SNIPPET, { lang: "css", themes, tabindex: false }),
+    codeToHtml(INSTALL.npm, bash),
+    codeToHtml(INSTALL.yarn, bash),
+    codeToHtml(INSTALL.pnpm, bash),
+    codeToHtml(INSTALL.bun, bash),
+    codeToHtml(INSTALL.deno, bash),
   ]);
 
-  return { props: { source, usage, css } };
+  return {
+    props: {
+      source,
+      usage,
+      css,
+      installNpm,
+      installYarn,
+      installPnpm,
+      installBun,
+      installDeno,
+    },
+  };
 };
 
 const ContrastColorsPage = (props: CodeBlocks) => {
@@ -743,30 +794,110 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
           <div className={styles.sec_head}>
             <h2 id="take-it-with-you">Take it with you</h2>
             <p>
-              The TypeScript below is the same source this page runs on, not a
-              transcription of it.
+              I packaged it up, so you do not have to paste anything out of this
+              page.
             </p>
           </div>
           <p>
-            The module is read off disk when the page is built rather than
-            copied into it, so the listing cannot quietly drift away from the
-            thing running above. It has no dependencies and nothing in it is
-            React, which is what lets it run just as happily in a token pipeline
-            at build time as it does under your cursor here.
+            Everything above runs on{" "}
+            <a
+              href="https://github.com/daformat/contrast-color"
+              target="_blank"
+              rel="noopener"
+            >
+              <code>@daformat/contrast-color</code>
+            </a>
+            , which is the same code with tests around it. It has no
+            dependencies and nothing in it is React, so it runs just as happily
+            in a token pipeline at build time as it does under your cursor here.
+            It also handles a translucent foreground, scoring the composite over
+            the background rather than the colour you handed it.
+          </p>
+
+          <h3 id="install">Install</h3>
+          <p>
+            Open the repo on{" "}
+            <a
+              href="https://github.com/daformat/contrast-color"
+              target="_blank"
+              rel="noopener"
+            >
+              Github
+            </a>{" "}
+            (and drop a star if you like it!)
           </p>
           <div className={styles.code_panel}>
             <Tabs
-              defaultValue="source"
+              defaultValue="install-npm"
               tabs={[
                 {
-                  id: "source",
-                  trigger: "contrast-shift.ts",
-                  content: <CodeBlock html={props.source} />,
+                  id: "install-npm",
+                  trigger: (
+                    <h4 id="install-npm" data-no-toc={""}>
+                      npm
+                    </h4>
+                  ),
+                  content: <CodeBlock html={props.installNpm} />,
                 },
+                {
+                  id: "install-yarn",
+                  trigger: (
+                    <h4 id="install-yarn" data-no-toc={""}>
+                      yarn
+                    </h4>
+                  ),
+                  content: <CodeBlock html={props.installYarn} />,
+                },
+                {
+                  id: "install-pnpm",
+                  trigger: (
+                    <h4 id="install-pnpm" data-no-toc={""}>
+                      pnpm
+                    </h4>
+                  ),
+                  content: <CodeBlock html={props.installPnpm} />,
+                },
+                {
+                  id: "install-bun",
+                  trigger: (
+                    <h4 id="install-bun" data-no-toc={""}>
+                      bun
+                    </h4>
+                  ),
+                  content: <CodeBlock html={props.installBun} />,
+                },
+                {
+                  id: "install-deno",
+                  trigger: (
+                    <h4 id="install-deno" data-no-toc={""}>
+                      deno
+                    </h4>
+                  ),
+                  content: <CodeBlock html={props.installDeno} />,
+                },
+              ]}
+            />
+          </div>
+
+          <h3 id="the-source">The source</h3>
+          <p>
+            The listing below is concatenated from the installed package when
+            this page is built rather than copied into it, so it cannot quietly
+            drift away from the thing running above.
+          </p>
+          <div className={styles.code_panel}>
+            <Tabs
+              defaultValue="usage"
+              tabs={[
                 {
                   id: "usage",
                   trigger: "Usage",
                   content: <CodeBlock html={props.usage} />,
+                },
+                {
+                  id: "source",
+                  trigger: "Source",
+                  content: <CodeBlock html={props.source} />,
                 },
                 {
                   id: "css",

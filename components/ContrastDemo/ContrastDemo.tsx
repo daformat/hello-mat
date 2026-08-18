@@ -1,21 +1,7 @@
 import {
-  createContext,
-  ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-
-import {
   apcaLc,
   contrastRatio,
   contrastShift,
-  cssLumFallback,
-  cssYiqFallback,
   dualScore,
   fitChroma,
   hexToRgb,
@@ -29,7 +15,20 @@ import {
   rgbToOklch,
   yiqInk,
   yiqLuma,
-} from "./contrast-shift";
+} from "@daformat/contrast-color";
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
+import { cssLumFallback, cssYiqFallback } from "./contrast-css-fallbacks";
 import styles from "./ContrastDemo.module.scss";
 
 /**
