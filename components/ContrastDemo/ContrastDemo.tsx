@@ -872,7 +872,7 @@ const Lab = () => {
         })}
       </div>
 
-      <p className={styles.verdict_line}>
+      <p className={`${styles.verdict_line} ${styles.verdict_notes}`}>
         {notes.length ? notes : "All five agree on this background."}
       </p>
 

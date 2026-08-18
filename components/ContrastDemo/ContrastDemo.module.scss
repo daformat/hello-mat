@@ -175,10 +175,8 @@ $dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
 .verdict_line {
   border-left: 2px solid var(--rule);
   color: var(--text-soft);
-  display: grid;
   font-family: var(--mono);
   font-size: 11.5px;
-  gap: calc(var(--step) * 1);
   line-height: 1.6;
   margin: calc(var(--step) * 3) 0 0;
   padding-left: calc(var(--step) * 2);
@@ -189,6 +187,14 @@ $dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
     font-family: var(--mono);
     padding: 1px 5px;
   }
+}
+
+/* Stacked variant: several independent notes rather than one flowing
+   sentence, so each child gets its own row. Never put this on a paragraph
+   of prose, the grid turns every inline child into a row of its own. */
+.verdict_notes {
+  display: grid;
+  gap: calc(var(--step) * 1);
 }
 
 /* Two classes deep on purpose: the page restyles every strong it owns, and the
