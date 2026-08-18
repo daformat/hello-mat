@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CSSProperties, useEffect, useRef } from "react";
 import { codeToHtml } from "shiki";
 
+import { CodeBlock } from "@/components/CodeBlock/CodeBlock";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
@@ -390,13 +391,13 @@ const TiltingTilePageContent = (props: CodeBlocks) => {
           the specular highlight to follow the pointer, no matter if it is
           hovering the tile / card or not.
         </p>
-        <div dangerouslySetInnerHTML={{ __html: props.highlightedCode }} />
+        <CodeBlock html={props.highlightedCode} />
         <p>
           From there on, it’s just a little bit of css magic to rotate the card,
           shift layers based on their depth, and position the specular
           highlight. Here’s the gist of it:
         </p>
-        <div dangerouslySetInnerHTML={{ __html: props.highlightedCode2 }} />
+        <CodeBlock html={props.highlightedCode2} />
         <h2 id="conclusion">That’s a wrap</h2>
         <p>
           In the end, it’s a simple effect to achieve, tilting the cards and

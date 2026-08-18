@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { codeToHtml } from "shiki";
 
+import { CodeBlock } from "@/components/CodeBlock/CodeBlock";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { Slider, SliderValue } from "@/components/Slider/Slider";
@@ -423,7 +424,7 @@ const SliderPageContent = (props: CodeBlocks) => {
           within <code>Slider.Thumb</code>, I put it here so it’s positioned
           relative the to thumb:
         </p>
-        <div dangerouslySetInnerHTML={{ __html: props.highlightedCode }} />
+        <CodeBlock html={props.highlightedCode} />
         <ul>
           <li>
             <code>Slider.Root</code>: the root, contains all the other parts

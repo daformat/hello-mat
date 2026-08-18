@@ -27,6 +27,7 @@ import {
   codeToHtml,
 } from "shiki";
 
+import { CodeBlock } from "@/components/CodeBlock/CodeBlock";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import styles from "@/components/SwipeableCards/SwipeableCards.module.scss";
@@ -831,13 +832,7 @@ const SwipeableCardsPageContent = (props: CodeBlocks) => {
                   npm
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsNpm,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsNpm} />,
             },
             {
               id: "install-yarn",
@@ -846,13 +841,7 @@ const SwipeableCardsPageContent = (props: CodeBlocks) => {
                   yarn
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsYarn,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsYarn} />,
             },
             {
               id: "install-pnpm",
@@ -861,13 +850,7 @@ const SwipeableCardsPageContent = (props: CodeBlocks) => {
                   pnpm
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsPnpm,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsPnpm} />,
             },
             {
               id: "install-bun",
@@ -876,13 +859,7 @@ const SwipeableCardsPageContent = (props: CodeBlocks) => {
                   bun
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsBun,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsBun} />,
             },
             {
               id: "install-deno",
@@ -891,13 +868,7 @@ const SwipeableCardsPageContent = (props: CodeBlocks) => {
                   deno
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsDeno,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsDeno} />,
             },
           ]}
         />
@@ -937,13 +908,7 @@ const SwipeableCardsPageContent = (props: CodeBlocks) => {
                   tsx
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.tsx,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.tsx} />,
             },
             {
               id: "css",
@@ -952,13 +917,7 @@ const SwipeableCardsPageContent = (props: CodeBlocks) => {
                   css
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.css,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.css} />,
             },
           ]}
         />

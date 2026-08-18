@@ -1,0 +1,231 @@
+@use "sass:color";
+@use "/styles/lib/mixins.scss";
+@use "/styles/lib/palette.scss";
+
+/* Everything from the demo to the footnote, widened on a phone.
+   `.page` is `100% - max(40vw, 10em)` and centred, so on a 390px screen it is
+   about 230px of column between two 80px gutters. That measure is right for the
+   opening paragraphs and much too tight for what follows: five panes side by
+   side, a lightness ramp, and two tables that already scroll.
+   So this borrows the right-hand gutter back, all but 16px of it, and leaves the
+   left edge exactly where it was. The copy still starts on the same line as the
+   copy above it, which is what stops the widening from reading as a mistake. */
+.wide {
+  @include mixins.up-to-medium {
+    margin-right: calc(-1 * (max(20vw, 5em) - 32px));
+  }
+}
+
+/* Page furniture for the contrast page: the rules that break it into sections,
+   the standalone formula lines, the callouts, the two comparison tables, and a
+   cap on the code panels so a 400 line module doesn't push the rest of the page
+   off the bottom of the world. Everything interactive lives in the component. */
+
+/* Same mixes the demo uses, so the yes and no in the tables are the same pass
+   and fail as the ones in the panes. */
+$light-fail: color.mix(#c0392b, palette.$light-ivory-1, 80%);
+$light-ok: color.mix(#1f7a4c, palette.$light-ivory-1, 80%);
+$light-part: color.mix(#b07d18, palette.$light-ivory-1, 80%);
+$dark-fail: color.mix(#ff8f7a, palette.$dark-ivory-1, 82%);
+$dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
+$dark-part: color.mix(#dfbd6b, palette.$dark-ivory-1, 82%);
+
+/* This page leans on strong a lot, and bolding every one of them would leave
+   the prose looking like a ransom note. So it borrows the link colour instead
+   and keeps the weight it already had: the emphasis is still there, and it is
+   carried by hue rather than by shouting. */
+.contrast_page {
+  strong {
+    color: var(--text-strong);
+    font-weight: inherit;
+  }
+}
+
+/* A rule, then the heading sitting on it, then its one-line brief on the line
+   under it. The page is long and works in two halves, and this is what makes the
+   halves visible from the scrollbar rather than only from the words.
+
+   The brief gets its own line rather than sitting alongside: beside a short
+   heading it had room and beside a long one it wrapped into a ragged second
+   column, so the same device looked like two different devices down the page. */
+.sec_head {
+  border-top: 1px solid var(--color-border-3);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  margin-top: 3em;
+  padding-top: 0.8em;
+
+  h2,
+  h3 {
+    margin-block: 0;
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 0.88em;
+    margin-block: 0;
+    max-width: 60ch;
+    opacity: 0.75;
+  }
+}
+
+/* An eyebrow over the title: the four things the page is about, in the order it
+   gets to them. */
+.eyebrow {
+  color: var(--text-secondary);
+  font-family: monospace;
+  font-size: 0.72em;
+  letter-spacing: 0.16em;
+  margin-bottom: 1.4em;
+  opacity: 0.7;
+  text-transform: uppercase;
+
+  span {
+    opacity: 0.45;
+    padding: 0 0.5em;
+  }
+}
+
+/* The formulas and the two signatures, each on a line of its own. They are the
+   argument, not an aside inside a sentence, and a paragraph swallows them. */
+.formula {
+  margin-block: 1.1em;
+
+  code {
+    display: inline-block;
+    font-size: 0.92em;
+    line-height: 1.7;
+    padding: 0.45em 0.9em;
+  }
+}
+
+.callout {
+  border-left: 3px solid var(--text-primary);
+  margin-block: 1.5em;
+  padding: 0.2em 0 0.2em 1.1em;
+
+  p {
+    margin-block: 0.35em;
+  }
+}
+
+.callout_label {
+  color: var(--text-secondary);
+  font-family: monospace;
+  font-size: 0.74em;
+  letter-spacing: 0.14em;
+  margin-block: 0 0.4em;
+  text-transform: uppercase;
+}
+
+.warn {
+  border-left-color: $light-fail;
+
+  .callout_label {
+    color: $light-fail;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .warn {
+    border-left-color: $dark-fail;
+
+    .callout_label {
+      color: $dark-fail;
+    }
+  }
+}
+
+.footnote {
+  color: var(--text-secondary);
+  font-size: 0.85em;
+  line-height: 1.7;
+  margin-top: 2.5em;
+  opacity: 0.8;
+}
+
+.matrix_scroll {
+  margin-block: 1.5em;
+  overflow-x: auto;
+}
+
+.matrix {
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  min-width: 640px;
+  width: 100%;
+
+  caption {
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    padding-bottom: 0.75em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  th,
+  td {
+    border-bottom: 1px solid var(--color-border-3);
+    line-height: 1.45;
+    padding: 0.7em 0.9em;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  thead th {
+    color: var(--text-secondary);
+    font-size: 0.74rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  tbody th {
+    font-weight: 600;
+  }
+
+  tr:last-child td,
+  tr:last-child th {
+    border-bottom: 0;
+  }
+}
+
+/* The page never sets color-scheme on the root, so light-dark() would resolve
+   light everywhere. A media query it is. */
+.yes {
+  color: $light-ok;
+  font-weight: 600;
+}
+
+.no {
+  color: $light-fail;
+  font-weight: 600;
+}
+
+.part {
+  color: $light-part;
+  font-weight: 600;
+}
+
+@media (prefers-color-scheme: dark) {
+  .yes {
+    color: $dark-ok;
+  }
+
+  .no {
+    color: $dark-fail;
+  }
+
+  .part {
+    color: $dark-part;
+  }
+}
+
+.code_panel {
+  :global(.shiki) {
+    max-height: 30em;
+  }
+}

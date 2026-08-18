@@ -31,6 +31,8 @@
   --text-secondary: #{palette.$light-ivory-2};
   --text-secondary-hover: #{palette.$light-ivory-1};
 
+  --text-strong: #{color.mix(palette.$light-ivory-1, #000, 75%)};
+
   --color-bullet: #{palette.$light-ivory-5};
   --color-bullet-focus: #{palette.$light-ivory-3};
 
@@ -109,6 +111,8 @@
   --text-primary-hover: #{palette.$dark-ivory-2};
   --text-secondary: #{palette.$dark-ivory-2};
   --text-secondary-hover: #{palette.$dark-ivory-1};
+
+  --text-strong: #{rgba(palette.$dark-ivory-1, 0.78)};
 
   --color-bullet: #{palette.$dark-ivory-5};
   --color-bullet-focus: #{palette.$dark-ivory-3};

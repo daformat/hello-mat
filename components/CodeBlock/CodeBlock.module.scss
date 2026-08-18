@@ -1,0 +1,71 @@
+/* The copy button floats over the top right corner of the snippet rather than
+   sitting in a bar above it. The block scrolls under it, which is why it carries
+   its own background: a long first line has to pass behind something opaque. */
+
+.code_block {
+  position: relative;
+}
+
+.copy {
+  align-items: center;
+  /* Square, and sized off one value so it stays square. */
+  aspect-ratio: 1;
+  background-color: var(--color-toolbar-background);
+  border: 0;
+  border-radius: 6px;
+  box-shadow: 0 1px 12px var(--color-shadow-1),
+    inset 0 0 2px 0.75px var(--color-border-2),
+    inset 0 0 0 0.75px var(--color-border-1);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 1rem;
+  height: 38px;
+  justify-content: center;
+  opacity: 0;
+  padding: 0;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  transition: opacity 0.2s ease-in-out, color 0.2s ease-in-out,
+    background-color 0.2s ease-in-out;
+
+  &:hover {
+    color: var(--text-primary-hover);
+  }
+
+  /* Held visible while it says "copied", so the confirmation survives the
+     pointer leaving the block on its way to somewhere else. */
+  &[data-copied="true"] {
+    opacity: 1;
+  }
+}
+
+/* Hidden until you are somewhere near the snippet, and never hidden from the
+   keyboard: a control you cannot see is one you cannot tab to on purpose. */
+.code_block:hover .copy,
+.copy:focus-visible {
+  opacity: 1;
+}
+
+/* Coarse pointers get no hover, so there is nothing to reveal it with. */
+@media (hover: none) {
+  .copy {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .copy {
+    transition: none;
+  }
+}
+
+.visually_hidden {
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}

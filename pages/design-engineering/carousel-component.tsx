@@ -14,17 +14,26 @@ import {
 } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 import { IoChevronDownOutline } from "react-icons/io5";
-import { BundledLanguage, BundledTheme, CodeToHastOptions, codeToHtml, } from "shiki";
+import {
+  BundledLanguage,
+  BundledTheme,
+  CodeToHastOptions,
+  codeToHtml,
+} from "shiki";
 
 import { Dropdown } from "@/components/ButtonGroup/Dropdown/Dropdown";
 import { DropdownItem } from "@/components/ButtonGroup/Dropdown/DropdownItem";
 import styles from "@/components/Carousel/Carousel.module.scss";
+import { CodeBlock } from "@/components/CodeBlock/CodeBlock";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { Tabs } from "@/components/Tabs/Tabs";
 import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
-import { ComponentId, COMPONENTS, } from "@/constants/design-engineering/components";
+import {
+  ComponentId,
+  COMPONENTS,
+} from "@/constants/design-engineering/components";
 import { useCssSizeVariables } from "@/hooks/useCssSizeVariables";
 
 interface CodeBlocks {
@@ -489,10 +498,7 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
                 >
                   <FaChevronLeft size={12} />
                 </Carousel.PrevPage>
-                <Carousel.NextPage
-                  className={styles.button}
-                  aria-label="Next"
-                >
+                <Carousel.NextPage className={styles.button} aria-label="Next">
                   <FaChevronRight size={12} />
                 </Carousel.NextPage>
               </div>
@@ -856,13 +862,7 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
                   npm
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsNpm,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsNpm} />,
             },
             {
               id: "install-yarn",
@@ -871,13 +871,7 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
                   yarn
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsYarn,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsYarn} />,
             },
             {
               id: "install-pnpm",
@@ -886,13 +880,7 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
                   pnpm
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsPnpm,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsPnpm} />,
             },
             {
               id: "install-bun",
@@ -901,13 +889,7 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
                   bun
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsBun,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsBun} />,
             },
             {
               id: "install-deno",
@@ -916,13 +898,7 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
                   deno
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsDeno,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsDeno} />,
             },
           ]}
         />
@@ -1121,7 +1097,7 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
           you approach the edges, the mask smoothly updates.
         </p>
         <h2 id="component-strucutre">Component structure</h2>
-        <div dangerouslySetInnerHTML={{ __html: props.highlightedCode }} />
+        <CodeBlock html={props.highlightedCode} />
         <h2 id="conclusion">That’s a wrap</h2>
         <p>
           While implementing the basic version of the carousel is easy, thanks

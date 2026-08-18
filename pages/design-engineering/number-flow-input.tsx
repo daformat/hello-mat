@@ -9,6 +9,7 @@ import {
   codeToHtml,
 } from "shiki";
 
+import { CodeBlock } from "@/components/CodeBlock/CodeBlock";
 import { MaybeUndefined } from "@/components/Media/utils/maybe";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import styles from "@/components/NumberFlowInput/NumberFlowInput.module.scss";
@@ -413,13 +414,7 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
                   npm
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsNpm,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsNpm} />,
             },
             {
               id: "install-yarn",
@@ -428,13 +423,7 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
                   yarn
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsYarn,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsYarn} />,
             },
             {
               id: "install-pnpm",
@@ -443,13 +432,7 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
                   pnpm
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsPnpm,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsPnpm} />,
             },
             {
               id: "install-bun",
@@ -458,13 +441,7 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
                   bun
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsBun,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsBun} />,
             },
             {
               id: "install-deno",
@@ -473,13 +450,7 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
                   deno
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsDeno,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsDeno} />,
             },
           ]}
         />
@@ -523,13 +494,7 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
                   tsx
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.tsx,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.tsx} />,
             },
             {
               id: "css",
@@ -538,13 +503,7 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
                   css
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.css,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.css} />,
             },
           ]}
         />
@@ -576,8 +535,8 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
             <strong>External value updates animate too</strong> — when the{" "}
             <code>value</code> prop changes (e.g. from a parent fetching new
             data), every digit rolls into place as a coordinated barrel-wheel
-            animation. The initial mount never animates, and you can opt out
-            of subsequent prop-driven animations entirely with{" "}
+            animation. The initial mount never animates, and you can opt out of
+            subsequent prop-driven animations entirely with{" "}
             <code>{"animateOnValueChange={false}"}</code> — see{" "}
             <a href="#external-value-updates">External value updates</a>.
           </li>
@@ -624,85 +583,70 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
         <h3 id="external-value-updates">External value updates</h3>
         <p>
           When the <code>value</code> prop changes (e.g. you fetched a new
-          number from your API), every digit barrel-rolls into place by
-          default. To opt out — for instance when re-hydrating from
-          localStorage or restoring a server-driven state — pass{" "}
-          <code>{"animateOnValueChange={false}"}</code> and the next prop
-          update snaps in instantly. Typing and{" "}
-          <code>format</code> / <code>locale</code> toggles still animate.
+          number from your API), every digit barrel-rolls into place by default.
+          To opt out — for instance when re-hydrating from localStorage or
+          restoring a server-driven state — pass{" "}
+          <code>{"animateOnValueChange={false}"}</code> and the next prop update
+          snaps in instantly. Typing and <code>format</code> /{" "}
+          <code>locale</code> toggles still animate.
         </p>
-        <div
-          dangerouslySetInnerHTML={{
-            __html: props.animateOnValueChange,
-          }}
-        />
+        <CodeBlock html={props.animateOnValueChange} />
 
         <h3 id="custom-formatter">Custom formatter</h3>
         <p>
           The <code>format</code> prop accepts a function in addition to a
           boolean. The callback receives the raw display value (digits, an
-          optional leading <code>-</code>, an optional single{" "}
-          <code>.</code>) and returns whatever you want rendered. This lets
-          you prefix a currency, group digits in your own way, or pipe the
-          number through a third-party formatter while keeping all of the
-          component’s animation and cursor handling.
+          optional leading <code>-</code>, an optional single <code>.</code>)
+          and returns whatever you want rendered. This lets you prefix a
+          currency, group digits in your own way, or pipe the number through a
+          third-party formatter while keeping all of the component’s animation
+          and cursor handling.
         </p>
-        <div
-          dangerouslySetInnerHTML={{
-            __html: props.customFormatter,
-          }}
-        />
+        <CodeBlock html={props.customFormatter} />
         <p>
-          For correct cursor positioning and animation diffing, the
-          callback’s output should use the locale’s decimal character (or{" "}
-          <code>.</code> if no locale is set) and preserve the digit order
-          from the raw input. Intermediate states (<code>&quot;&quot;</code>,{" "}
+          For correct cursor positioning and animation diffing, the callback’s
+          output should use the locale’s decimal character (or <code>.</code> if
+          no locale is set) and preserve the digit order from the raw input.
+          Intermediate states (<code>&quot;&quot;</code>,{" "}
           <code>&quot;-&quot;</code>, <code>&quot;.&quot;</code>,{" "}
-          <code>&quot;-.&quot;</code>) bypass the callback and render
-          verbatim. If your function throws, the component falls back to a
-          safe locale-decimal-swap output so a buggy formatter can’t break
-          the input.
+          <code>&quot;-.&quot;</code>) bypass the callback and render verbatim.
+          If your function throws, the component falls back to a safe
+          locale-decimal-swap output so a buggy formatter can’t break the input.
         </p>
 
         <h3 id="precision">Precision &amp; arbitrary-length values</h3>
         <p>
           Internally the component is string-based, so what the user types is
-          preserved character-by-character — there is no silent rounding
-          inside the input itself. The boundary is the JavaScript{" "}
-          <code>number</code> type: anything past{" "}
-          <code>Number.MAX_SAFE_INTEGER</code> (~9 × 10<sup>15</sup>) or with
-          more than ~15–17 significant digits cannot be represented exactly.
-          To keep full precision end-to-end, two opt-in mechanisms cooperate:
+          preserved character-by-character — there is no silent rounding inside
+          the input itself. The boundary is the JavaScript <code>number</code>{" "}
+          type: anything past <code>Number.MAX_SAFE_INTEGER</code> (~9 × 10
+          <sup>15</sup>) or with more than ~15–17 significant digits cannot be
+          represented exactly. To keep full precision end-to-end, two opt-in
+          mechanisms cooperate:
         </p>
         <ul>
           <li>
-            <code>value</code> and <code>defaultValue</code> accept a
-            numeric <em>string</em> alongside <code>number</code>. Strings
-            are sanitized with the same pipeline as user input — only
-            characters matching{" "}
+            <code>value</code> and <code>defaultValue</code> accept a numeric{" "}
+            <em>string</em> alongside <code>number</code>. Strings are sanitized
+            with the same pipeline as user input — only characters matching{" "}
             <code>{"/^-?\\d*\\.?\\d*$/"}</code> survive, so junk like{" "}
             <code>&quot;$1,234.56&quot;</code> collapses to{" "}
-            <code>&quot;1234.56&quot;</code>. Use <code>.</code> as the
-            decimal separator regardless of <code>locale</code>.
+            <code>&quot;1234.56&quot;</code>. Use <code>.</code> as the decimal
+            separator regardless of <code>locale</code>.
           </li>
           <li>
-            <code>onChangeText</code> fires alongside <code>onChange</code>{" "}
-            with the raw string representation (e.g.{" "}
-            <code>&quot;12345678901234567890.123&quot;</code>). Pair these
-            two and your parent state never has to touch{" "}
-            <code>parseFloat</code>.
+            <code>onChangeText</code> fires alongside <code>onChange</code> with
+            the raw string representation (e.g.{" "}
+            <code>&quot;12345678901234567890.123&quot;</code>). Pair these two
+            and your parent state never has to touch <code>parseFloat</code>.
           </li>
         </ul>
-        <div
-          dangerouslySetInnerHTML={{
-            __html: props.stringValue,
-          }}
-        />
+        <CodeBlock html={props.stringValue} />
         <p>
-          Trailing zeros, big integers, and long decimals all round-trip
-          intact when you wire <code>value</code> ↔ <code>onChangeText</code>.{" "}
-          <code>onChange</code> still receives the parsed{" "}
-          <code>number</code> if you want a numeric view at the same time.
+          Trailing zeros, big integers, and long decimals all round-trip intact
+          when you wire <code>value</code> ↔ <code>onChangeText</code>.{" "}
+          <code>onChange</code> still receives the parsed <code>number</code> if
+          you want a numeric view at the same time.
         </p>
 
         <h3 id="form-integration">Form integration</h3>
@@ -731,11 +675,10 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
         <h3 id="value-props">Value</h3>
         <ul>
           <li>
-            <code>value</code> (
-            <code>number | string | undefined</code>): controlled value. When
-            provided, changes animate as a coordinated barrel-wheel roll
-            across every digit (except on initial mount). Strings are
-            sanitized with the same pipeline as user input (
+            <code>value</code> (<code>number | string | undefined</code>):
+            controlled value. When provided, changes animate as a coordinated
+            barrel-wheel roll across every digit (except on initial mount).
+            Strings are sanitized with the same pipeline as user input (
             <code>{"/^-?\\d*\\.?\\d*$/"}</code>) — see{" "}
             <a href="#precision">Precision</a> for the rationale and a code
             example.
@@ -749,20 +692,19 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
           <li>
             <code>onChange</code> (
             <code>{"(value: number | undefined) => void"}</code>): called with
-            the parsed number (or <code>undefined</code> for intermediate
-            states like <code>&quot;&quot;</code>,{" "}
-            <code>&quot;-&quot;</code>, <code>&quot;.&quot;</code>,{" "}
-            <code>&quot;-.&quot;</code>).
+            the parsed number (or <code>undefined</code> for intermediate states
+            like <code>&quot;&quot;</code>, <code>&quot;-&quot;</code>,{" "}
+            <code>&quot;.&quot;</code>, <code>&quot;-.&quot;</code>).
           </li>
           <li>
             <code>onChangeText</code> (
             <code>{"(rawText: string) => void"}</code>): fires alongside{" "}
-            <code>onChange</code> with the raw string representation —
-            digits, an optional leading <code>-</code>, an optional single{" "}
+            <code>onChange</code> with the raw string representation — digits,
+            an optional leading <code>-</code>, an optional single{" "}
             <code>.</code> (always <code>.</code>, never the locale decimal).
-            Use this when you need exact precision (BigInt math, currency
-            stored as strings, big-decimal libraries, etc). Intermediate
-            states (<code>&quot;&quot;</code>, <code>&quot;-&quot;</code>,{" "}
+            Use this when you need exact precision (BigInt math, currency stored
+            as strings, big-decimal libraries, etc). Intermediate states (
+            <code>&quot;&quot;</code>, <code>&quot;-&quot;</code>,{" "}
             <code>&quot;.&quot;</code>, <code>&quot;-.&quot;</code>) are
             reported verbatim.
           </li>
@@ -774,8 +716,8 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
             <code>format</code> (
             <code>{"boolean | ((raw: string) => string)"}</code>, default{" "}
             <code>false</code>): <code>true</code> groups via{" "}
-            <code>Intl.NumberFormat</code>; a function takes full control of
-            the output (see <a href="#custom-formatter">Custom formatter</a>).
+            <code>Intl.NumberFormat</code>; a function takes full control of the
+            output (see <a href="#custom-formatter">Custom formatter</a>).
           </li>
           <li>
             <code>locale</code> (<code>string | Intl.Locale</code>): locale used
@@ -818,9 +760,9 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
             <code>animateOnValueChange</code> (<code>boolean</code>, default{" "}
             <code>true</code>): when <code>false</code>, external{" "}
             <code>value</code> updates snap instantly — no digit-roll, no
-            separator slide, no flow animation. Typing and{" "}
-            <code>format</code> / <code>locale</code> toggles still animate.
-            See <a href="#external-value-updates">External value updates</a>.
+            separator slide, no flow animation. Typing and <code>format</code> /{" "}
+            <code>locale</code> toggles still animate. See{" "}
+            <a href="#external-value-updates">External value updates</a>.
           </li>
         </ul>
 

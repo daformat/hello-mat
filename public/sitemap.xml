@@ -11,73 +11,78 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://hello-mat.com/design-engineering/component/carousel-component</loc>
-    <lastmod>2026-07-28</lastmod>
+    <loc>https://hello-mat.com/design-engineering/carousel-component</loc>
+    <lastmod>2026-08-18</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hello-mat.com/design-engineering/component/collapsible-toolbar</loc>
-    <lastmod>2026-01-15</lastmod>
+    <loc>https://hello-mat.com/design-engineering/collapsible-toolbar</loc>
+    <lastmod>2026-08-18</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hello-mat.com/design-engineering/component/details-disclosure-component</loc>
-    <lastmod>2026-01-15</lastmod>
+    <loc>https://hello-mat.com/design-engineering/contrast-colors</loc>
+    <lastmod>2026-08-18</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hello-mat.com/design-engineering/component/dock-component</loc>
-    <lastmod>2026-01-15</lastmod>
+    <loc>https://hello-mat.com/design-engineering/details-disclosure-component</loc>
+    <lastmod>2026-08-18</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hello-mat.com/design-engineering/component/images-and-embeds</loc>
-    <lastmod>2026-06-06</lastmod>
+    <loc>https://hello-mat.com/design-engineering/dock-component</loc>
+    <lastmod>2026-08-18</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hello-mat.com/design-engineering/component/number-flow-input</loc>
-    <lastmod>2026-05-23</lastmod>
+    <loc>https://hello-mat.com/design-engineering/images-and-embeds</loc>
+    <lastmod>2026-08-18</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hello-mat.com/design-engineering/component/publish-button</loc>
-    <lastmod>2026-01-15</lastmod>
+    <loc>https://hello-mat.com/design-engineering/number-flow-input</loc>
+    <lastmod>2026-08-18</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hello-mat.com/design-engineering/component/slider</loc>
-    <lastmod>2026-05-30</lastmod>
+    <loc>https://hello-mat.com/design-engineering/publish-button</loc>
+    <lastmod>2026-08-18</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hello-mat.com/design-engineering/component/split-flap-display</loc>
-    <lastmod>2026-05-12</lastmod>
+    <loc>https://hello-mat.com/design-engineering/slider</loc>
+    <lastmod>2026-08-18</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hello-mat.com/design-engineering/component/stacking-cards</loc>
-    <lastmod>2026-01-15</lastmod>
+    <loc>https://hello-mat.com/design-engineering/split-flap-display</loc>
+    <lastmod>2026-08-18</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hello-mat.com/design-engineering/component/subtitles-app</loc>
-    <lastmod>2026-08-16</lastmod>
+    <loc>https://hello-mat.com/design-engineering/stacking-cards</loc>
+    <lastmod>2026-08-18</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hello-mat.com/design-engineering/component/swipeable-cards</loc>
-    <lastmod>2026-05-09</lastmod>
+    <loc>https://hello-mat.com/design-engineering/subtitles-app</loc>
+    <lastmod>2026-08-18</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hello-mat.com/design-engineering/component/table-of-contents</loc>
-    <lastmod>2026-01-15</lastmod>
+    <loc>https://hello-mat.com/design-engineering/swipeable-cards</loc>
+    <lastmod>2026-08-18</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hello-mat.com/design-engineering/component/tilting-tile</loc>
-    <lastmod>2026-03-14</lastmod>
+    <loc>https://hello-mat.com/design-engineering/table-of-contents</loc>
+    <lastmod>2026-08-18</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://hello-mat.com/design-engineering/tilting-tile</loc>
+    <lastmod>2026-08-18</lastmod>
     <priority>0.7</priority>
   </url>
 </urlset>

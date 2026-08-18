@@ -16,6 +16,7 @@ import {
   codeToHtml,
 } from "shiki";
 
+import { CodeBlock } from "@/components/CodeBlock/CodeBlock";
 import { MaybeUndefined } from "@/components/Media/utils/maybe";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
@@ -523,13 +524,7 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
                   npm
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsNpm,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsNpm} />,
             },
             {
               id: "install-yarn",
@@ -538,13 +533,7 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
                   yarn
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsYarn,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsYarn} />,
             },
             {
               id: "install-pnpm",
@@ -553,13 +542,7 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
                   pnpm
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsPnpm,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsPnpm} />,
             },
             {
               id: "install-bun",
@@ -568,13 +551,7 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
                   bun
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsBun,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsBun} />,
             },
             {
               id: "install-deno",
@@ -583,13 +560,7 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
                   deno
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.installInstructionsDeno,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.installInstructionsDeno} />,
             },
           ]}
         />
@@ -877,13 +848,7 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
                   tsx
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.tsx,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.tsx} />,
             },
             {
               id: "css",
@@ -892,13 +857,7 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
                   css
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.css,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.css} />,
             },
             {
               id: "tailwind",
@@ -907,13 +866,7 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
                   tailwind (composition API)
                 </h4>
               ),
-              content: (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: props.tailwind,
-                  }}
-                />
-              ),
+              content: <CodeBlock html={props.tailwind} />,
             },
           ]}
         />
@@ -928,11 +881,7 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
           three exist for when you want to swap any layer for your own markup,
           like in the <code>tailwind</code> tab above.
         </p>
-        <div
-          dangerouslySetInnerHTML={{
-            __html: props.componentStructure,
-          }}
-        />
+        <CodeBlock html={props.componentStructure} />
         <p>
           When you don’t pass a <code>children</code> render-prop to a given
           level, that level renders the level below automatically. So you can

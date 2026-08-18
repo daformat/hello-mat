@@ -330,6 +330,29 @@ export const COMPONENTS = {
       imageHeight: 630,
     },
   },
+  "contrast-colors": {
+    oss: false,
+    video: {
+      dark: {
+        src: "/media/design-engineering/contrast/contrast-overview-dark.mp4",
+        type: "video/mp4",
+      },
+      light: {
+        src: "/media/design-engineering/contrast/contrast-overview-light.mp4",
+        type: "video/mp4",
+      },
+    },
+    metas: {
+      shortTitle: "Contrast, without losing your colour",
+      title: "Contrast colours: keep the colour, move the lightness",
+      description:
+        "Black or white ink is the easy half of contrast. The harder half is taking a colour you chose and finding the nearest readable version of it: same hue, same chroma, only the lightness moved.",
+      url: "/design-engineering/contrast-colors",
+      image: "/media/design-engineering/contrast/og-contrast-light.png",
+      imageWidth: 1200,
+      imageHeight: 630,
+    },
+  },
 } as const satisfies Record<string, Component>;
 
 export type Component = {
@@ -382,6 +405,7 @@ export const COMPONENTS_ORDER = createComponentOrder([
   "slider",
   "tilting-tile",
   "subtitles-app",
+  "contrast-colors",
 ] as const);
 
 export const getNextComponent = (

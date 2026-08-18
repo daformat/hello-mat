@@ -1,0 +1,778 @@
+@use "sass:color";
+@use "/styles/lib/palette.scss";
+
+/*
+ * The contrast playground.
+ *
+ * The surround is the site's own palette rather than a set of greys: the warm
+ * desert sky in the light theme, the near-black violet in the dark one. Every
+ * surface, rule and label below is either a palette colour or mixed out of one,
+ * so the lab reads as part of the page it sits in rather than as something
+ * pasted into it. The only colours in here that are not from the palette are
+ * the ones under test, which is the entire point: they are the specimens, and
+ * everything around them is the bench.
+ *
+ * Every colour is a light-dark() pair, so the theme is one property rather than
+ * a second stylesheet: the toolbar sets color-scheme on the block root and the
+ * whole palette re-resolves. That is also what makes the light / dark toggle
+ * honest, since it flips the same switch the operating system does rather than
+ * swapping in a set of colours picked to look good in a screenshot.
+ */
+
+/* Pass and fail have to read as pass and fail, and they also have to belong
+   here. Both are mixed most of the way towards the palette's own ink, which
+   keeps the hue and drops the shout. */
+$light-fail: color.mix(#c0392b, palette.$light-ivory-1, 80%);
+$light-ok: color.mix(#1f7a4c, palette.$light-ivory-1, 80%);
+$dark-fail: color.mix(#ff8f7a, palette.$dark-ivory-1, 82%);
+$dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
+
+@mixin tokens {
+  --paper: light-dark(
+    #{palette.$light-desert-sky-3},
+    #{palette.$dark-desert-sky-2}
+  );
+  --ink: light-dark(#{palette.$light-ivory-1}, #{palette.$dark-ivory-1});
+  --text: light-dark(#{palette.$light-ivory-2}, #{palette.$dark-ivory-2});
+  --text-soft: light-dark(#{palette.$light-ivory-3}, #{palette.$dark-ivory-3});
+  --muted: light-dark(#{palette.$light-ivory-4}, #{palette.$dark-ivory-4});
+  --rule: light-dark(#{palette.$light-ivory-5}, #{palette.$dark-ivory-5});
+  --fail: light-dark(#{$light-fail}, #{$dark-fail});
+  --ok: light-dark(#{$light-ok}, #{$dark-ok});
+  --glass: light-dark(
+    #{rgba(palette.$light-desert-sky-3, 0.86)},
+    #{rgba(palette.$dark-desert-sky-2, 0.86)}
+  );
+  --glass-up: light-dark(
+    #{rgba(palette.$light-desert-sky-3, 0.97)},
+    #{rgba(palette.$dark-desert-sky-2, 0.97)}
+  );
+  --hair: light-dark(#{rgba(#fff, 0.6)}, #{rgba(palette.$dark-ivory-1, 0.09)});
+  --inline: light-dark(
+    #{rgba(palette.$light-ivory-1, 0.07)},
+    #{rgba(palette.$dark-ivory-1, 0.09)}
+  );
+  --shadow: light-dark(
+    #{rgba(palette.$light-shadow, 0.35)},
+    #{rgba(palette.$dark-shadow, 0.75)}
+  );
+  --step: 6px;
+  --mono: ui-monospace, sfmono-regular, "SF Mono", menlo, monospace;
+}
+
+.demo {
+  @include tokens;
+
+  margin-block: 1.5em;
+}
+
+/* Only the tokens and the sticky context. No colour and no font, because the
+   page puts its own prose between these blocks and that prose belongs to the
+   page. */
+.bench {
+  @include tokens;
+
+  position: relative;
+}
+
+/* ---------- the toolbar ---------- */
+
+/* A sticky element is always intersecting, so it cannot watch itself arrive.
+   This can, and it is one pixel tall. */
+.sentinel {
+  height: 1px;
+  margin-bottom: -1px;
+}
+
+.toolbar_wrap {
+  margin-block: 1.5em 0;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+/* The gap under the bar belongs to whatever comes after it, never to the bar.
+   A sticky box is clamped by its margin box rather than its border box, so a
+   bottom margin here is a bottom margin the toolbar has to keep inside the
+   bench: it stopped sticking, and started sliding back up, that many pixels
+   before the demo had finished passing under it. Two classes deep so it beats
+   the page's own paragraph spacing. */
+.bench .toolbar_wrap + * {
+  margin-top: 1.5em;
+}
+
+.toolbar {
+  align-items: center;
+  backdrop-filter: blur(10px);
+  background: var(--glass);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  box-shadow: 0 0 0 rgb(0 0 0 / 0);
+  color: var(--ink);
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--step) * 2);
+  padding: calc(var(--step) * 2);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.is_stuck .toolbar {
+  background: var(--glass-up);
+  box-shadow: 0 10px 28px -18px var(--shadow);
+}
+
+.grow {
+  margin-right: auto;
+}
+
+.segmented {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  display: flex;
+  overflow: hidden;
+
+  button {
+    background: transparent;
+    border: 0;
+    color: var(--text);
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    padding: calc(var(--step) * 1.5) calc(var(--step) * 2);
+    text-transform: uppercase;
+
+    + button {
+      border-left: 1px solid var(--rule);
+    }
+
+    &[aria-pressed="true"] {
+      background: var(--ink);
+      color: var(--paper);
+    }
+  }
+}
+
+/* ---------- shared furniture ---------- */
+
+.chip {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px -12px var(--shadow);
+  color: var(--ink);
+}
+
+.chip_label {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.verdict_line {
+  border-left: 2px solid var(--rule);
+  color: var(--text-soft);
+  display: grid;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  gap: calc(var(--step) * 1);
+  line-height: 1.6;
+  margin: calc(var(--step) * 3) 0 0;
+  padding-left: calc(var(--step) * 2);
+
+  code {
+    background: var(--inline);
+    border-radius: 3px;
+    font-family: var(--mono);
+    padding: 1px 5px;
+  }
+}
+
+/* Two classes deep on purpose: the page restyles every strong it owns, and the
+   ones in here are reporting a failure rather than emphasising a sentence. */
+.demo .verdict_line strong,
+.bench .verdict_line strong {
+  color: var(--fail);
+  font-weight: 500;
+}
+
+.demo,
+.bench {
+  input,
+  select,
+  button {
+    &:focus-visible {
+      outline: 2px solid var(--ink);
+      outline-offset: 2px;
+    }
+  }
+}
+
+/* ---------- contrast-color() swatches ---------- */
+
+.support_banner {
+  align-items: center;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  color: var(--text);
+  display: flex;
+  flex-wrap: wrap;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  gap: calc(var(--step) * 2);
+  margin: 0 0 calc(var(--step) * 3);
+  padding: calc(var(--step) * 2) calc(var(--step) * 3);
+
+  code {
+    background: var(--inline);
+    border-radius: 3px;
+    font-family: var(--mono);
+    padding: 1px 5px;
+  }
+
+  &[data-supported="true"] .dot {
+    background: var(--ok);
+  }
+
+  &[data-supported="false"] {
+    border-color: var(--fail);
+
+    .dot {
+      background: var(--fail);
+    }
+  }
+}
+
+.dot {
+  background: var(--muted);
+  border-radius: 10px;
+  flex: none;
+  height: 9px;
+  width: 9px;
+}
+
+.swatches {
+  display: grid;
+  gap: calc(var(--step) * 2);
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.swatch {
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 150px;
+  padding: calc(var(--step) * 3);
+
+  p {
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin: 0;
+  }
+}
+
+.sw_name {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  margin: 0 0 calc(var(--step) * 1.5);
+  opacity: 0.75;
+  text-transform: uppercase;
+}
+
+.sw_tag {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.sw_flag {
+  align-self: flex-start;
+  border: 1px solid currentcolor;
+  border-radius: 10px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  margin-top: auto;
+  opacity: 0.85;
+  padding: 1px 6px;
+  text-transform: uppercase;
+}
+
+/* The live declaration, not a picture of one: what this resolves to is what the
+   readout next to it reports. */
+.cc_native {
+  color: #fff;
+}
+
+@supports (color: contrast-color(red)) {
+  .cc_native {
+    color: #{"contrast-color(var(--bg))"};
+  }
+}
+
+/* ---------- worked examples ---------- */
+
+.examples {
+  display: grid;
+  gap: calc(var(--step) * 3);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin-block: 1.5em;
+}
+
+.example {
+  overflow: hidden;
+}
+
+.example_stage {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--step) * 1);
+  padding: calc(var(--step) * 3);
+
+  p {
+    font-size: 1.05rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+}
+
+.example_meta {
+  border-top: 1px solid var(--rule);
+  padding: calc(var(--step) * 2) calc(var(--step) * 3);
+
+  dl {
+    display: grid;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    gap: calc(var(--step) * 1);
+    margin: calc(var(--step) * 1.5) 0 0;
+  }
+
+  dt {
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+/* The name on the left, the score on the right, and the detail line under both
+   rather than inside the right-hand column: sharing one column with the score
+   gave it a third of the width, and a single number came back as three wrapped
+   fragments of itself. */
+.row {
+  align-items: baseline;
+  column-gap: calc(var(--step) * 2);
+  display: grid;
+  grid-template-columns: auto 1fr;
+}
+
+.dd_main {
+  text-align: right;
+}
+
+.dd_alt {
+  font-size: 9.5px;
+  grid-column: 1 / -1;
+  margin-top: 1px;
+  opacity: 0.55;
+  text-align: right;
+}
+
+.ratio_bad {
+  color: var(--fail);
+}
+
+/* Flex rather than a float: floated, the tag hung past the label it belongs to
+   and pushed the first row of the list sideways. */
+.example_meta > .chip_label {
+  align-items: baseline;
+  display: flex;
+  gap: calc(var(--step) * 1.5);
+  justify-content: space-between;
+}
+
+.target_tag {
+  background: var(--inline);
+  border-radius: 3px;
+  color: var(--ink);
+  font-family: var(--mono);
+  letter-spacing: 0.06em;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+.note {
+  color: var(--text-soft);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  margin: calc(var(--step) * 2) 0 0;
+}
+
+/* ---------- the lab ---------- */
+
+.lab {
+  margin-block: 1.5em;
+  padding: calc(var(--step) * 4);
+}
+
+.controls {
+  align-items: flex-end;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--step) * 3);
+  padding-bottom: calc(var(--step) * 3);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--step) * 1.5);
+}
+
+.field_inputs {
+  align-items: center;
+  display: flex;
+  gap: calc(var(--step) * 1.5);
+}
+
+.toggle {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  font-size: 0.9rem;
+  gap: calc(var(--step) * 1.5);
+  padding-bottom: calc(var(--step) * 1.5);
+
+  input {
+    accent-color: var(--ink);
+    cursor: pointer;
+    height: 17px;
+    width: 17px;
+  }
+}
+
+.demo,
+.bench {
+  input[type="color"] {
+    background: none;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    cursor: pointer;
+    height: 40px;
+    padding: 0;
+    width: 40px;
+
+    &::-webkit-color-swatch-wrapper {
+      padding: 3px;
+    }
+
+    &::-webkit-color-swatch {
+      border: 0;
+      border-radius: 4px;
+    }
+
+    &::-moz-color-swatch {
+      border: 0;
+      border-radius: 4px;
+    }
+  }
+
+  input[type="text"] {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: calc(var(--step) * 1.5);
+    text-transform: lowercase;
+    width: 9ch;
+
+    &[aria-invalid="true"] {
+      border-color: var(--fail);
+      color: var(--fail);
+    }
+  }
+
+  select {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 13px;
+    height: 34px;
+    padding: 0 calc(var(--step) * 1);
+  }
+}
+
+.presets {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--step) * 1.5);
+  padding-top: calc(var(--step) * 3);
+
+  button {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    color: var(--ink);
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    padding: calc(var(--step) * 1) calc(var(--step) * 2);
+
+    &:hover {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--paper);
+    }
+  }
+}
+
+.panes {
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(5, 1fr);
+  margin-top: calc(var(--step) * 3);
+  overflow: hidden;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 520px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 170px;
+  padding: calc(var(--step) * 2.5);
+}
+
+/* The word in each pane is a type specimen rather than a heading: it is there to
+   be looked at in the colour the pane computed, and calling it an h3 put five
+   identical entries in the page's table of contents. */
+.sample {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  margin: 0 0 auto;
+}
+
+.pane_tag {
+  display: flex;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  gap: calc(var(--step) * 1.5);
+  justify-content: space-between;
+  letter-spacing: 0.12em;
+  margin: 0 0 calc(var(--step) * 2);
+  opacity: 0.7;
+  text-transform: uppercase;
+
+  em {
+    font-style: normal;
+    opacity: 0.7;
+  }
+}
+
+.readout {
+  font-family: var(--mono);
+  font-size: 11px;
+  margin-top: calc(var(--step) * 3);
+
+  b {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  i {
+    display: block;
+    font-size: 9.5px;
+    font-style: normal;
+    margin-top: 2px;
+    opacity: 0.6;
+  }
+}
+
+.sub {
+  display: block;
+  margin-top: calc(var(--step) * 1.5);
+  opacity: 0.62;
+}
+
+.verdict {
+  border: 1px solid currentcolor;
+  border-radius: 10px;
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  margin-top: calc(var(--step) * 2);
+  padding: 2px 6px;
+  text-transform: uppercase;
+}
+
+/* The three CSS approaches, spelled out as declarations rather than described.
+   The comma the original snippet carries after the origin colour is left out
+   here, because with it the declaration is dropped and there is nothing to
+   look at: the point being made is about the arithmetic, not the parse error.
+   Interpolated so Sass hands the relative colour syntax to the browser
+   untouched. */
+.css_broken {
+  color: #{"rgb(from var(--bg) clamp(0, (((r * .299) + (g * .587) + (b * .114)) - 128) * -1000, 255) clamp(0, (((r * .299) + (g * .587) + (b * .114)) - 128) * -1000, 255) clamp(0, (((r * .299) + (g * .587) + (b * .114)) - 128) * -1000, 255))"};
+}
+
+.css_fixed {
+  color: #{"rgb(from var(--bg) clamp(0, (((r * .299) + (g * .587) + (b * .114)) - 128) * -100000, 255) clamp(0, (((r * .299) + (g * .587) + (b * .114)) - 128) * -100000, 255) clamp(0, (((r * .299) + (g * .587) + (b * .114)) - 128) * -100000, 255))"};
+}
+
+.css_lum {
+  color: #{"rgb(from var(--bg) clamp(0, (0.2126 * pow(r / 255, 2.2) + 0.7152 * pow(g / 255, 2.2) + 0.0722 * pow(b / 255, 2.2) - 0.1791288) * -100000, 255) clamp(0, (0.2126 * pow(r / 255, 2.2) + 0.7152 * pow(g / 255, 2.2) + 0.0722 * pow(b / 255, 2.2) - 0.1791288) * -100000, 255) clamp(0, (0.2126 * pow(r / 255, 2.2) + 0.7152 * pow(g / 255, 2.2) + 0.0722 * pow(b / 255, 2.2) - 0.1791288) * -100000, 255))"};
+}
+
+/* ---------- lightness track ---------- */
+
+.track_block {
+  margin-top: calc(var(--step) * 5);
+}
+
+/* Label above, explanation under it, the same way the page's own section heads
+   are stacked. */
+.track_head {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--step) * 1);
+  margin-bottom: calc(var(--step) * 3);
+
+  p {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin: 0;
+    max-width: 60ch;
+  }
+}
+
+.track {
+  padding-top: 34px;
+  position: relative;
+}
+
+.ramp {
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  height: 56px;
+}
+
+.band {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--rule) 0 3px,
+    transparent 3px 6px
+  );
+  height: 5px;
+  margin-top: 5px;
+  position: relative;
+
+  i {
+    background: var(--ink);
+    border-radius: 1px;
+    inset-block: 0;
+    position: absolute;
+  }
+}
+
+.tick {
+  border-left: 1.5px solid var(--ink);
+  inset-block-end: 10px;
+  inset-block-start: 0;
+  position: absolute;
+  transform: translateX(-0.75px);
+  width: 0;
+
+  label {
+    background: var(--paper);
+    border-radius: 2px;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    inset-block-start: -2px;
+    inset-inline-start: 4px;
+    letter-spacing: 0.1em;
+    padding: 1px 4px;
+    position: absolute;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  &[data-kind="bg"] {
+    border-left-style: dotted;
+  }
+
+  &[data-kind="typed"] {
+    border-left-style: dashed;
+    opacity: 0.62;
+  }
+
+  &[data-kind="yiq"] {
+    border-left-color: var(--fail);
+    border-left-width: 2px;
+
+    label {
+      color: var(--fail);
+    }
+  }
+
+  &[data-flip="true"] label {
+    inset-inline-end: 4px;
+    inset-inline-start: auto;
+  }
+}
+
+.scale {
+  color: var(--muted);
+  display: flex;
+  font-family: var(--mono);
+  font-size: 10px;
+  justify-content: space-between;
+  margin-top: calc(var(--step) * 1.5);
+}
+
+.legend {
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  gap: calc(var(--step) * 3);
+  margin-top: calc(var(--step) * 3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toolbar {
+    transition: none;
+  }
+}
