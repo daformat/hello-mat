@@ -85,6 +85,28 @@ const SubtitlesAppPageContent = () => {
           hold shift, and then it is something you can pick up.
         </p>
         <p>
+          Two more come out of the app rather than off the desktop, and neither
+          is a picture of itself: the page has a pointer, something underneath
+          the captions and the same modifier keys, which is everything the two
+          of them need. Point at the captions and they dissolve under you, over
+          the app&rsquo;s own 800 by 400 points, keeping a twentieth of the box
+          in the middle so that it reads as a hole rather than a gap. Hold{" "}
+          <kbd>⌥</kbd> and the last few boxes stack back up above the live one,
+          rising out of it nearest first, and you can scroll back through them.
+        </p>
+        <p>
+          The stack cost me a couple of hours I had not budgeted for, and all of
+          it was one shape. It is a scroll container whose boxes animate in, a
+          box mid-entrance is displaced by a transform, and a transformed child
+          widens the scrollable overflow it is then measured against. So every
+          reading I took during the entrance was of a stack a fifth of a second
+          out of date: it parked against that, the transforms resolved, the
+          overflow shrank, and the browser clamped the scroll back down. The
+          boxes appeared slightly high and dropped onto their real position. It
+          now settles the scroll while the new boxes are still at rest, before a
+          single transform exists, and only then lets them move.
+        </p>
+        <p>
           Most of the work in that is in the refusals. Clicking the scene you
           are already watching does nothing, because restarting it would punish
           a click on the thing you were enjoying. A window can be pushed off the

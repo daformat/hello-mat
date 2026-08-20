@@ -1177,6 +1177,13 @@
    375px viewport. Anything smaller was unreadable, which is the worse failure of
    the two. Widening the demo on narrow viewports is what would buy both back. */
 .overlay {
+  /* Where the pointer reveal is centred, in the box's own pixels. Off screen by
+     default, and left there for touch and for shift: the falloff means distance
+     alone turns the hole off, exactly as moving the mouse away from the box does
+     on a real screen. */
+  --hole-x: -999px;
+  --hole-y: -999px;
+
   background: rgba(0, 0, 0, 0.72);
   border-radius: 0.47em;
   bottom: 5.5%;
@@ -1190,6 +1197,30 @@
   font-weight: 600;
   left: 50%;
   line-height: 1.34;
+  /* The pointer reveal, and every number in it is the app's own.
+     `defaultMaskSize` is 800x400pt against a 30pt overlay, so 26.67 x 13.33em
+     here, which is why this is written in em like the rest of the box: the
+     caption scales with the screen and the hole has to scale with it.
+
+     `maskPlateau` is 0.7 of the radius at full strength and `defaultMaskStrength`
+     is 0.95, so the centre keeps a twentieth of the box rather than erasing it
+     outright, which is the difference between a hole and a gap. The app spends
+     the last 0.3 of the radius on a smoothstep; four stops carry the same curve
+     closely enough that the join is invisible, which is the only thing the 32 in
+     the app is buying.
+
+     A CSS mask is the inverse of the app's: there the gradient is subtracted
+     from what is drawn, here it is what survives. So these alphas are 1 minus
+     the ones in `buildMaskGradient`. */
+  mask-image: radial-gradient(
+    ellipse 13.33em 6.67em at var(--hole-x) var(--hole-y),
+    rgba(0, 0, 0, 0.05) 0%,
+    rgba(0, 0, 0, 0.05) 70%,
+    rgba(0, 0, 0, 0.198) 77.5%,
+    rgba(0, 0, 0, 0.525) 85%,
+    rgba(0, 0, 0, 0.852) 92.5%,
+    rgba(0, 0, 0, 1) 100%
+  );
   /* Both of these are about the box keeping its shape while it is dragged. A
      percentage max-width and a fit-content width are both measured against the
      space left between the box's own left edge and the screen's right one, so
@@ -1225,6 +1256,20 @@
     pointer-events: auto;
   }
 
+  /* Two ways the box goes solid, and both drop the mask rather than merely
+     parking its centre somewhere harmless.
+
+     Shift because the app keeps the box solid to be picked up, and because
+     `mask-clip` is the border box by default: it would clip the dashed ring
+     above at its 3px offset, and `no-clip` is not carried everywhere. Option
+     because the stack is what is being read at that moment, and dissolving the
+     live box under the pointer while you read past it is the reveal firing at
+     the one time nobody asked for it. */
+  &.is_movable,
+  &.is_solid {
+    mask-image: none;
+  }
+
   &.is_dragging {
     cursor: grabbing;
   }
@@ -1232,6 +1277,168 @@
   /* The in-flight word, before the recogniser commits it. */
   .tentative {
     color: rgba(255, 255, 255, 0.55);
+  }
+}
+
+/* The option stack: the last few closed boxes, above the live one.
+
+   A sibling of the live box rather than a child of it, for the reason the app
+   gives for making its stack a second panel: the live box carries the pointer
+   reveal, a mask applies to a whole subtree, and a stack inside the box would
+   dissolve along with it.
+
+   `HistoryPillView.recession` is 0.92 of the live box's background and
+   `defaultTextOpacity` is 0.65 of its text, which is the stack receding as one
+   rather than each box ageing on its own. The gap is the app's 6pt at 30pt of
+   text, so 0.2em. Positioned against the live box by the component, which is
+   the one thing here the app gets for free: its stack is a panel pinned above a
+   panel whose frame it can read. */
+.history {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  /* The same clamp the live box has, floor included: the two are read as one
+     stack and a history pill set at a different size would give that away. */
+  font-size: clamp(10px, 2.61cqw, 23px);
+  gap: 0.2em;
+  opacity: 0;
+  /* The browser must not correct the scroll on its own here. A box mid-entrance
+     is displaced by its own transform, which widens the scrollable overflow, and
+     once the stack is nearly as tall as the room it has, that displacement alone
+     tips the container into being scrollable for the length of the animation.
+     Scroll anchoring sees content resize under it, adjusts to hold its anchor
+     still, and the adjustment is stranded when the transform resolves and the
+     overflow goes away again. Which is why it fired a little before the stack
+     was long enough to scroll rather than after. */
+  overflow-anchor: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  pointer-events: none;
+  position: absolute;
+  scrollbar-width: none;
+  transform: translateX(-50%);
+  /* The panel's own fade: 0.12s in and 0.15s out, as the app's is. */
+  transition: opacity 0.15s ease, visibility 0.15s;
+  visibility: hidden;
+  z-index: 10;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Only while option is down, and only then does it take the wheel: the same
+     trade the app makes, where the stack is the one panel that is not
+     click-through, because the scroll has to land somewhere. */
+  &.is_visible {
+    opacity: 1;
+    pointer-events: auto;
+    transition: opacity 0.12s ease, visibility 0s;
+    visibility: visible;
+  }
+
+  /* No room left on the chosen side. Hidden rather than emptied, because the
+     next page shrinks the live box and brings the stack straight back. */
+  &.is_starved {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  /* The fade at the edge that still has boxes past it. Its depth is --fade, set
+     by the component from how much is actually hidden there, so it shrinks as
+     you approach the end and costs nothing once you reach it. The direction is
+     the only part CSS decides, because it follows the side the stack took: older
+     boxes are above when the stack is above and below when it is below. Never
+     the near edge, which holds the newest box, the one being read. */
+  &.is_clipped {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent,
+      #000 var(--fade, 2.2em)
+    );
+  }
+
+  &.is_below.is_clipped {
+    mask-image: linear-gradient(to top, transparent, #000 var(--fade, 2.2em));
+  }
+
+  /* Bottom-anchored by an auto margin rather than justify-content: flex-end,
+     which in every engine puts the overflowing top of a scroll container out of
+     reach of the scroll it just created. Only when the stack is above the live
+     box: below it the boxes hang from the top and there is nothing to push
+     down. */
+  &:not(.is_below) .hist_line:first-child {
+    margin-top: auto;
+  }
+}
+
+/* The same measurements as the live box, for the reason Pill.swift exists: a
+   stray point of inset between the two is invisible apart and glaring stacked. */
+.hist_line {
+  background: rgba(0, 0, 0, 0.66);
+  border-radius: 0.47em;
+  color: rgba(255, 255, 255, 0.65);
+  flex: none;
+  font-family: var(--demo-font);
+  font-weight: 600;
+  line-height: 1.34;
+  max-width: min(73cqw, 640px);
+  /* The same floor the live box has, and for the same reason: `fittingSize`
+     gives a history pill the app's 140pt minimum too, so a three-word line is a
+     pill rather than a chip. */
+  min-width: 4.67em;
+  padding: 0.47em 0.73em;
+  text-align: center;
+  text-wrap: balance;
+  width: max-content;
+  will-change: transform;
+
+  /* Boxes rise out of the live one, nearest first, on the app's numbers exactly:
+     0.22s ease-out, 35ms apart, displaced 12pt towards the live box to start
+     with, which at 30pt of text is 0.4em, so it reads as pushed out of that box
+     rather than materialising in place. The stagger is what makes a stack read
+     as a stack instead of one slab arriving.
+
+     `backwards` is the app's `.backwards` fill and does the same job: without it
+     every box sits at its final opacity until its delay elapses, and the whole
+     stack flashes in before it animates. --rise counts from the bottom, which is
+     what makes "nearest first" nearest and not furthest.
+
+     No reduced-motion rule of its own: the block at the foot of this file cuts
+     every animation in the demo to nothing, and unlike `animation: none` it
+     still fires the animationend the component counts entrances with. */
+  &.is_rising {
+    animation: hist_rise 0.22s ease-out backwards;
+    animation-delay: calc(var(--rise, 0) * 35ms);
+  }
+
+  /* Below the live box, "out of it" is downwards, so the displacement flips with
+     the side. */
+  .is_below &.is_rising {
+    animation-name: hist_fall;
+  }
+}
+
+@keyframes hist_rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.4em);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hist_fall {
+  from {
+    opacity: 0;
+    transform: translateY(-0.4em);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
@@ -1340,6 +1547,21 @@
     min-width: 1.7em;
     padding: 0.28em 0.42em;
     text-align: center;
+  }
+
+  /* The lines under the demo are one block of help text, so they sit closer to
+     each other than the block does to the screen above it. */
+  + .caption {
+    margin-top: 6px;
+  }
+}
+
+/* Only says anything to a pointer and a keyboard, so it is only shown to one. */
+.caption_try {
+  display: none;
+
+  @media (hover: hover) and (pointer: fine) {
+    display: block;
   }
 }
 

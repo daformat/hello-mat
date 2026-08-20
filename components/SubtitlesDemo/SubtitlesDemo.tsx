@@ -64,6 +64,11 @@ const SCENES: Scene[] = [
   },
 ];
 
+/** One closed caption in the stack. Carries an id because the demo speaks seven
+ *  lines into fifteen slots, so the same sentence is often in the stack twice
+ *  and its text cannot tell the two boxes apart. */
+type HistoryPage = { id: number; text: string };
+
 const PEOPLE = [
   { initials: "AO", name: "Amara", face: styles.f1 },
   { initials: "YT", name: "Yuki", face: styles.f2 },
@@ -139,8 +144,12 @@ const JUMPED = Symbol("jumped");
 
 export const SubtitlesDemo = () => {
   const rootRef = useRef<HTMLDivElement>(null);
+  const screenRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  // The stack's boxes are put there by hand rather than rendered, so this is a
+  // ref to an element React is asked to leave alone. See the effect below.
+  const historyRef = useRef<HTMLDivElement>(null);
 
   const [reducedMotion, setReducedMotion] = useState(false);
   const [clock, setClock] = useState("");
@@ -165,8 +174,17 @@ export const SubtitlesDemo = () => {
   const [spot, setSpot] = useState<{ x: number; y: number } | null>(null);
   const [shiftHeld, setShiftHeld] = useState(false);
   const [dragging, setDragging] = useState(false);
+  // The live box goes solid while the stack is up, the way it does under shift.
+  const [stackUp, setStackUp] = useState(false);
   /** Where in the box the drag started, so it doesn't jump to the cursor. */
   const grabRef = useRef<{ x: number; y: number } | null>(null);
+  // Read by the reveal and the stack below, which run outside React's render and
+  // need these the instant they change rather than at the next commit: the stack
+  // measures the live box in the same breath as the page that closed it.
+  const shiftHeldRef = useRef(false);
+  const captionVisibleRef = useRef(false);
+  const closePageRef = useRef<((line: string) => void) | null>(null);
+  const queueHoleRef = useRef<(() => void) | null>(null);
   // Windows that have been dragged off their CSS insets, each held as fractions
   // of the screen so they keep both their size and their place when it resizes.
   const [placed, setPlaced] = useState<Partial<Record<AppId, Placement>>>({});
@@ -200,6 +218,14 @@ export const SubtitlesDemo = () => {
   // so a switch interrupted by a second click left it a window behind: the next
   // ⌘-tab panel then opened on the wrong app and skipped over the real one.
   const frontRef = useRef<AppId>(SCENES[0]?.app ?? "meeting");
+
+  // Both together, always. The stack anchors itself to the live box at the
+  // moment a page closes, which is the same moment this goes false, and a state
+  // update has not reached the DOM by then.
+  const showCaption = useCallback((next: boolean) => {
+    captionVisibleRef.current = next;
+    setCaptionVisible(next);
+  }, []);
 
   const showApp = useCallback((app: AppId) => {
     frontRef.current = app;
@@ -344,7 +370,7 @@ export const SubtitlesDemo = () => {
     if (reducedMotion) {
       setCommitted(firstLine);
       setTentative("");
-      setCaptionVisible(true);
+      showCaption(true);
       return;
     }
 
@@ -402,7 +428,7 @@ export const SubtitlesDemo = () => {
 
       setCommitted("");
       setTentative("");
-      setCaptionVisible(true);
+      showCaption(true);
       setProgress({ value: typed, ms: typing });
 
       for (let i = 0; i < words.length; i++) {
@@ -423,7 +449,10 @@ export const SubtitlesDemo = () => {
       setProgress({ value: to, ms: hold + GAP_MS });
 
       await step(hold);
-      setCaptionVisible(false);
+      showCaption(false);
+      // The page has closed. The app records it here too, at the fade, because
+      // fading is precisely when somebody looked away and will want it back.
+      closePageRef.current?.(line);
       await step(GAP_MS);
     };
 
@@ -516,7 +545,7 @@ export const SubtitlesDemo = () => {
           index = jump?.index ?? index;
           picked = jump ? !jump.direct : false;
           setSwitcherVisible(false);
-          setCaptionVisible(false);
+          showCaption(false);
           setCommitted("");
           setTentative("");
           setProgress({ value: 0, ms: 0 });
@@ -537,7 +566,7 @@ export const SubtitlesDemo = () => {
       timers.clear();
       waking.clear();
     };
-  }, [reducedMotion, showApp]);
+  }, [reducedMotion, showApp, showCaption]);
 
   // Picking the scene that is already playing does nothing, whether you picked
   // it from the bar or by clicking its window: restarting it would punish a
@@ -590,18 +619,26 @@ export const SubtitlesDemo = () => {
   // centre, and it cannot be dropped outside the screen it belongs to.
 
   useEffect(() => {
+    // The ref as well as the state, because the reveal below reads it from a
+    // frame callback rather than from a render, and repaint the hole with it:
+    // arming the box is one of the two things that puts the hole away.
+    const hold = (next: boolean) => {
+      shiftHeldRef.current = next;
+      setShiftHeld(next);
+      queueHoleRef.current?.();
+    };
     const down = (event: KeyboardEvent) => {
       if (event.key === "Shift") {
-        setShiftHeld(true);
+        hold(true);
       }
     };
     const up = (event: KeyboardEvent) => {
       if (event.key === "Shift") {
-        setShiftHeld(false);
+        hold(false);
       }
     };
     // Tabbing away with the key down would otherwise leave it armed forever.
-    const clear = () => setShiftHeld(false);
+    const clear = () => hold(false);
 
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
@@ -679,6 +716,503 @@ export const SubtitlesDemo = () => {
   const endDrag = useCallback(() => {
     grabRef.current = null;
     setDragging(false);
+  }, []);
+
+  // ── the pointer reveal and the option stack ──────────────────────────────
+  //
+  // Neither of these is drawn. The page has a pointer and something underneath
+  // the captions, which is everything the reveal needs, and a keyboard with the
+  // same modifier on it, so both are wired to the real thing and behave as they
+  // do in the app. The geometry is in the stylesheet, against the app's own
+  // constants; what is here is where the hole is and what is in the stack.
+  //
+  // All of it runs outside React on purpose. The stack is a scroll container
+  // whose children animate in, and the order of the work is the whole trick:
+  // patch the boxes in place, settle the scroll while they are still at rest,
+  // and only then let them move. Rendering the list would hand that order to
+  // the reconciler, and re-attaching a box is exactly what restarts the CSS
+  // animation still named on it. So React is given an empty div whose className
+  // never changes, which means it never writes to the node again, and this owns
+  // the children.
+  useEffect(() => {
+    const box = overlayRef.current;
+    const stage = stageRef.current;
+    const screen = screenRef.current;
+    const historyEl = historyRef.current;
+    if (!box || !stage || !screen || !historyEl) {
+      return;
+    }
+
+    // Closed pages, oldest first, at the app's own `defaultHistoryDepth`.
+    //
+    // Held back to six at first, on the reasoning that this stage is only a few
+    // hundred pixels tall and would clip most of them. That was the wrong way
+    // round: a stack that always fits is a stack the scroll never does anything
+    // to, and scrolling back through the older ones is half of what the feature
+    // is. Fifteen overflows this stage comfortably, which is the point.
+    //
+    // The demo speaks seven distinct lines, so a full buffer repeats them. The
+    // app would do the same with a speaker who repeats themselves: closePage
+    // only refuses a line identical to the one before it.
+    const PAST_MAX = 15;
+    // Below this there is not enough room to be worth drawing: the app's 40pt.
+    const MIN_ROOM = 1.33;
+    const FADE_MAX = 2.2;
+
+    // The stylesheet's own names. The module types them as possibly absent and
+    // `classList` refuses an empty token, so each one falls back to the name it
+    // is written under next door: inert if it ever came to that, and never
+    // empty.
+    const NAMES = {
+      line: styles.hist_line || "hist_line",
+      rising: styles.is_rising || "is_rising",
+      below: styles.is_below || "is_below",
+      clipped: styles.is_clipped || "is_clipped",
+      starved: styles.is_starved || "is_starved",
+      visible: styles.is_visible || "is_visible",
+    };
+
+    const past: HistoryPage[] = [];
+    // Pages carry an id rather than being matched on their text. Seven lines
+    // into fifteen slots means the same sentence is in the stack more than once,
+    // and keying the patch below on text made two different boxes look like one
+    // box that had moved, which rebuilt and re-animated the lot.
+    let pageId = 0;
+
+    // Which side of the live box the stack takes. Decided on the press that
+    // raises it and held for as long as it is up: re-deciding it as the box
+    // resizes would let one sentence wrapping to a second line throw the stack
+    // across it mid-read, which is the app's reasoning too.
+    let placedAbove = true;
+    // Whether the stack is raised, which is also what keeps the live box solid.
+    let raised = false;
+    // How many boxes are still playing their entrance. While any of them is, the
+    // scroll geometry below is not to be trusted or written to: a box mid-rise
+    // is displaced by its own transform, and that displacement widens the
+    // scrollable overflow it is measured against.
+    let rising = 0;
+    // Whether the stack is sitting against the live box, tracked rather than
+    // measured. Deriving it from the scroll offset meant reading geometry at the
+    // one moment it cannot be trusted: a box closing while an earlier one was
+    // still rising would have read as the reader having scrolled away, and the
+    // stack would then have refused to follow the newest box.
+    let parked = true;
+    // When the reader last turned the wheel, and when we last moved the scroll
+    // ourselves. The second exists only to keep the first honest: every write
+    // below fires a scroll event, and without telling them apart the stack would
+    // read its own corrections as a gesture.
+    let userScrolledAt = -1e9;
+    let selfScrolledAt = -1e9;
+
+    const emSize = () => parseFloat(getComputedStyle(historyEl).fontSize) || 16;
+
+    // The live box's top edge, as the stack should hang off it.
+    //
+    // Between pages the box is invisible but still holds the caption that just
+    // ended, at whatever height that sentence needed. Anchoring to that edge put
+    // the stack where a two-line box had left it and then dropped it the moment
+    // the next caption came up one line short, which reads as the stack lagging
+    // a page behind.
+    //
+    // The box is bottom-anchored and grows upwards, so its bottom edge is the
+    // stable one. While it is down, anchor to where a single line would put the
+    // top instead, which is where the next caption opens. A sentence that goes
+    // on to wrap still lifts the stack when it wraps, exactly as in the app.
+    const anchorTop = (rect: DOMRect) => {
+      if (captionVisibleRef.current) {
+        return rect.top;
+      }
+      const cs = getComputedStyle(box);
+      const line = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.34;
+      const oneLine =
+        line + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      return Math.max(rect.top, rect.bottom - oneLine);
+    };
+
+    // Vertical space for the stack on one side of the live box. The gap is the
+    // app's 6pt and the margin off the edge of the screen its 12pt, both at 30pt
+    // of text, so both in em. The bottom edge needs no such care: it does not
+    // move when the caption changes length.
+    const roomFor = (above: boolean, rect: DOMRect, bounds: DOMRect) =>
+      (above ? anchorTop(rect) - bounds.top : bounds.bottom - rect.bottom) -
+      emSize() * 0.6;
+
+    const boxes = () => Array.from(historyEl.children) as HTMLElement[];
+
+    // How tall the stack's content is, measured from layout rather than read off
+    // `scrollHeight`.
+    //
+    // A box mid-entrance carries a transform, and a transformed child widens its
+    // scroll container's scrollable overflow, so during the rise `scrollHeight`
+    // reports a stack up to 0.4em taller than the one that will be standing
+    // there a fifth of a second later. `offsetHeight` is layout and ignores
+    // transforms, so this is the height the stack will settle at, available
+    // before it gets there.
+    const contentHeight = () => {
+      const kids = boxes();
+      if (!kids.length) {
+        return 0;
+      }
+      const gap = parseFloat(getComputedStyle(historyEl).rowGap) || 0;
+      return (
+        kids.reduce((sum, el) => sum + el.offsetHeight, 0) +
+        gap * (kids.length - 1)
+      );
+    };
+
+    // The exact scroll range, from the browser rather than from arithmetic.
+    // Summing the children is off by whole pixels each, since `offsetHeight` is
+    // rounded and the pills are fractionally tall, and against a full stack that
+    // error compounded into several: parking on it put the scroll past the real
+    // end, the browser clamped it back, and the stack snapped. `scrollHeight` is
+    // exact and fractional, and only wrong while a transform is in flight, which
+    // is what `rising` keeps this away from.
+    const maxScroll = () =>
+      Math.max(0, historyEl.scrollHeight - historyEl.clientHeight);
+
+    // Distance between the edge nearest the live box and the end of the content
+    // on that side. Zero means the newest box is flush against the live one,
+    // which is where the stack parks itself. Everything is measured from that
+    // edge because it is the one the reader is anchored to and the end new boxes
+    // arrive at, and which edge that is depends on the side the stack took.
+    const nearDistance = () =>
+      placedAbove ? maxScroll() - historyEl.scrollTop : historyEl.scrollTop;
+
+    const setNearDistance = (distance: number) => {
+      const max = maxScroll();
+      const clamped = Math.min(Math.max(distance, 0), max);
+      selfScrolledAt = performance.now();
+      historyEl.scrollTop = placedAbove ? max - clamped : clamped;
+    };
+
+    // Fade the edge that still has boxes beyond it, and only that one. Scroll to
+    // the end and the fade goes with it, because a fade with nothing behind it
+    // advertises content that is not there. The band is sized to the amount
+    // actually hidden, so a stack overflowing by ten pixels gets a ten-pixel
+    // fade rather than swallowing a whole box to announce it.
+    //
+    // Only the depth moves here. `is_clipped` carries the mask and is set from
+    // layout in placeHistory instead: adding or removing a mask on a scroll
+    // container disturbs the scroll, so toggling it on every scroll frame put
+    // the fade in a fight with the gesture it was reading. A depth of zero looks
+    // exactly like no mask and costs the scroller nothing.
+    const updateFade = () => {
+      const hidden = Math.max(0, maxScroll() - nearDistance());
+      const fade = Math.min(
+        emSize() * FADE_MAX,
+        hidden,
+        historyEl.clientHeight / 2
+      );
+      historyEl.style.setProperty("--fade", `${fade.toFixed(1)}px`);
+    };
+
+    // Pinned to the live box, so dragging the captions takes the stack with
+    // them. Deliberately does not park the scroll: this runs on every frame the
+    // stack is up, to follow a live box that moves and resizes under it, and
+    // parking here is what threw the reader back to the newest box the instant
+    // they scrolled away from it.
+    const placeHistory = () => {
+      const bounds = stage.getBoundingClientRect();
+      const rect = box.getBoundingClientRect();
+      const em = emSize();
+      const room = roomFor(placedAbove, rect, bounds);
+      const near = nearDistance();
+      const was = historyEl.clientHeight;
+
+      historyEl.style.left = `${
+        ((rect.left + rect.width / 2 - bounds.left) / bounds.width) * 100
+      }%`;
+      if (placedAbove) {
+        historyEl.style.top = "auto";
+        historyEl.style.bottom = `${
+          ((bounds.bottom - anchorTop(rect) + em * 0.2) / bounds.height) * 100
+        }%`;
+      } else {
+        historyEl.style.bottom = "auto";
+        historyEl.style.top = `${
+          ((rect.bottom - bounds.top + em * 0.2) / bounds.height) * 100
+        }%`;
+      }
+      // Rounded, because `room` is derived from the live box's rect and jitters
+      // by fractions of a pixel as a caption is typed. Left as a float it
+      // crossed the half-pixel test below on its own every few frames, and every
+      // crossing was a scroll correction the reader had not asked for.
+      historyEl.style.maxHeight = `${Math.max(0, Math.round(room))}px`;
+
+      // Nowhere left to put it. Hidden rather than emptied, because the live box
+      // shrinks again on the next page and the stack should still be there.
+      historyEl.classList.toggle(NAMES.starved, room < em * MIN_ROOM);
+      // Whether the stack can scroll at all, which changes only when a box lands
+      // or the live box takes room away, never mid-gesture.
+      historyEl.classList.toggle(NAMES.clipped, contentHeight() > room + 1);
+
+      // Only a change of height disturbs the scroller; the live box merely
+      // moving does not. Put the reader back the same distance from the live
+      // box, so a caption growing to a second line eats the stack from the far
+      // end rather than sliding it under them.
+      //
+      // Never mid-gesture. Somebody flicking through the stack while a caption
+      // happens to resize the live box underneath is navigating, and moving the
+      // content under them is the one thing that must not happen. The app draws
+      // the same line with `!scroll.isScrolling`.
+      if (
+        Math.abs(historyEl.clientHeight - was) > 0.5 &&
+        performance.now() - userScrolledAt > 400 &&
+        !rising
+      ) {
+        setNearDistance(near);
+      }
+
+      updateFade();
+    };
+
+    // Patched in place rather than rebuilt, so a box already standing is not
+    // animated again when a page closes while the key is still held: only the
+    // one that just closed rises. The boxes already there are never detached,
+    // because taking an element out of the document and putting it back restarts
+    // a CSS animation still named on it, and leaving them alone leaves the
+    // scroll position alone too.
+    const paintHistory = () => {
+      // Read the reader's place before the patch destroys it. Sticking to the
+      // newest box is right only if that is where they already were; if they had
+      // scrolled back to an older one, hold that box still instead. New text
+      // arriving must not drag the page out from under someone mid-sentence.
+      const wasParked = !historyEl.children.length || parked;
+      const wasNear = nearDistance();
+      const wasContent = contentHeight();
+
+      // Reversed when the stack hangs below, so the newest box is the one
+      // touching the live box either way.
+      const ordered = placedAbove ? past : [...past].reverse();
+
+      const living = new Set(ordered.map((page) => String(page.id)));
+      boxes().forEach((el) => {
+        if (!living.has(el.dataset.pid ?? "")) {
+          el.remove();
+        }
+      });
+
+      const risen: HTMLElement[] = [];
+      ordered.forEach((page, i) => {
+        const here = historyEl.children[i] as HTMLElement | undefined;
+        if (here && here.dataset.pid === String(page.id)) {
+          return;
+        }
+        const el = document.createElement("div");
+        el.className = NAMES.line;
+        el.dataset.pid = String(page.id);
+        el.textContent = page.text;
+        historyEl.insertBefore(el, here ?? null);
+        risen.push(el);
+      });
+
+      placeHistory();
+
+      // Settle the scroll while the new boxes are still sitting at their resting
+      // position, before a single transform exists to widen the overflow they
+      // are measured against. Parked stays parked; otherwise the box they were
+      // reading holds still, which means moving with the growth that landed at
+      // the near end.
+      setNearDistance(wasParked ? 0 : wasNear + (contentHeight() - wasContent));
+      parked = wasParked;
+
+      // Only now do they animate. Nearest the live box first, so the stack
+      // unrolls out of it: the newest box is last above the live one and first
+      // below it.
+      const kids = boxes();
+      risen.forEach((el) => {
+        const i = kids.indexOf(el);
+        el.style.setProperty(
+          "--rise",
+          String(placedAbove ? kids.length - 1 - i : i)
+        );
+        rising += 1;
+        el.addEventListener(
+          "animationend",
+          () => {
+            rising = Math.max(0, rising - 1);
+          },
+          { once: true }
+        );
+        el.classList.add(NAMES.rising);
+      });
+    };
+
+    // Deduplicated against the last entry, as the app's own closePage is: a page
+    // can close twice in a beat, and two identical boxes read as a stutter
+    // rather than as history.
+    const closePage = (line: string) => {
+      const trimmed = line.trim();
+      const last = past[past.length - 1];
+      if (!trimmed || (last && trimmed === last.text)) {
+        return;
+      }
+      past.push({ id: ++pageId, text: trimmed });
+      if (past.length > PAST_MAX) {
+        past.splice(0, past.length - PAST_MAX);
+      }
+      if (raised) {
+        paintHistory();
+      }
+    };
+
+    const showHistory = (on: boolean) => {
+      const want = on && past.length > 0;
+
+      if (want) {
+        // A fresh press builds the stack from nothing, so every box rises. Only
+        // while the key is still held does the patch in paintHistory matter, and
+        // then it is a single box that just closed joining a stack already up.
+        // The app draws the same line.
+        if (!raised) {
+          historyEl.textContent = "";
+          // Whatever was still animating went with them, and a fresh press
+          // always opens against the live box.
+          rising = 0;
+          parked = true;
+        }
+
+        // Flip only when there is genuinely more room the other way, which is
+        // what makes the stack fall below the box once the box has been dragged
+        // to the top of the screen.
+        const bounds = stage.getBoundingClientRect();
+        const rect = box.getBoundingClientRect();
+        placedAbove =
+          roomFor(true, rect, bounds) >= roomFor(false, rect, bounds);
+        historyEl.classList.toggle(NAMES.below, !placedAbove);
+        raised = true;
+        paintHistory();
+      }
+      // The boxes are left in place on the way out so the stack fades rather
+      // than vanishing; the next press is what clears them.
+      raised = want;
+      historyEl.classList.toggle(NAMES.visible, want);
+      setStackUp(want);
+      queueHole();
+    };
+
+    // Where the pointer is, in the page's coordinates. Kept rather than the
+    // hole's offset because the box moves under a still pointer far more than
+    // the pointer moves over a still box: it re-centres and re-sizes on every
+    // word, and the app recomputes the centre on exactly the same events for
+    // exactly the same reason.
+    let pointer: { x: number; y: number } | null = null;
+    let holeFrame = 0;
+
+    const paintHole = () => {
+      // Shift keeps the box solid, the way it does in the app: you are about to
+      // pick it up, and a hole under the hand you are picking it up with is no
+      // help. The stack does too, because the stack is what is being read then.
+      if (!pointer || shiftHeldRef.current || raised) {
+        box.style.setProperty("--hole-x", "-999px");
+        box.style.setProperty("--hole-y", "-999px");
+        return;
+      }
+      const rect = box.getBoundingClientRect();
+      box.style.setProperty("--hole-x", `${pointer.x - rect.left}px`);
+      box.style.setProperty("--hole-y", `${pointer.y - rect.top}px`);
+    };
+
+    // One paint a frame at most. The box resizes on every word and the pointer
+    // reports faster than that, so both feed the same queue.
+    const queueHole = () => {
+      if (holeFrame) {
+        return;
+      }
+      holeFrame = requestAnimationFrame(() => {
+        holeFrame = 0;
+        paintHole();
+        if (raised) {
+          placeHistory();
+        }
+      });
+    };
+
+    // Follows the wheel, not just the moment the stack is built: scrolling is
+    // exactly when the amount hidden at each edge changes. One update a frame,
+    // because this writes a property and then measures, and doing that on every
+    // scroll event is how a handler starts costing more than the scroll.
+    let fadeFrame = 0;
+    const onScroll = () => {
+      if (performance.now() - selfScrolledAt > 60) {
+        userScrolledAt = performance.now();
+        // Only worth reading between entrances, when the geometry is honest.
+        if (!rising) {
+          parked = nearDistance() < 1;
+        }
+      }
+      if (fadeFrame) {
+        return;
+      }
+      fadeFrame = requestAnimationFrame(() => {
+        fadeFrame = 0;
+        updateFade();
+      });
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") {
+        return;
+      }
+      pointer = { x: event.clientX, y: event.clientY };
+      queueHole();
+    };
+    // Nothing to turn off: the falloff means distance alone ends the reveal, on
+    // this screen as on a real one. This is only for the pointer that leaves in
+    // one jump, or out of the window entirely.
+    const onPointerLeave = () => {
+      pointer = null;
+      queueHole();
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      // Held keys repeat, and a repeat that repainted would restart the stagger
+      // over and over for as long as the key is down.
+      if (event.key === "Alt" && !event.repeat) {
+        showHistory(true);
+      }
+    };
+    const onKeyUp = (event: KeyboardEvent) => {
+      if (event.key === "Alt") {
+        showHistory(false);
+      }
+    };
+    // Tabbing away with the key down would otherwise leave the stack up forever,
+    // the same reason the shift handler above watches blur.
+    const onBlur = () => showHistory(false);
+
+    closePageRef.current = closePage;
+    queueHoleRef.current = queueHole;
+
+    historyEl.addEventListener("scroll", onScroll);
+    screen.addEventListener("pointermove", onPointerMove);
+    screen.addEventListener("pointerleave", onPointerLeave);
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onBlur);
+
+    // The box changes width on almost every word, which moves its left edge by
+    // most of the box. Without this the hole lands off the pointer until the
+    // pointer next moves, and reads as the reveal blinking out.
+    const sizes =
+      typeof ResizeObserver === "function"
+        ? new ResizeObserver(() => queueHole())
+        : null;
+    sizes?.observe(box);
+
+    return () => {
+      closePageRef.current = null;
+      queueHoleRef.current = null;
+      historyEl.removeEventListener("scroll", onScroll);
+      screen.removeEventListener("pointermove", onPointerMove);
+      screen.removeEventListener("pointerleave", onPointerLeave);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
+      sizes?.disconnect();
+      cancelAnimationFrame(holeFrame);
+      cancelAnimationFrame(fadeFrame);
+    };
   }, []);
 
   // ── moving the windows ───────────────────────────────────────────────────
@@ -842,7 +1376,7 @@ export const SubtitlesDemo = () => {
           scripted loop, not content, and the windows are drawings of apps.
           Screen readers get the page copy, and the scene buttons below, which
           are the only part of this anybody can operate. */}
-      <div className={styles.screen} aria-hidden="true">
+      <div ref={screenRef} className={styles.screen} aria-hidden="true">
         <div className={styles.menubar}>
           <span />
           <span className={styles.mb_right}>
@@ -1113,12 +1647,24 @@ export const SubtitlesDemo = () => {
             </span>
           </div>
 
+          {/* The stack of closed captions. A sibling of the live box rather
+              than a child, for the reason the app gives for making its stack a
+              second panel: the live box carries the pointer reveal, a mask
+              applies to a whole subtree, and a stack inside the box would
+              dissolve along with it.
+
+              Empty on purpose. Its boxes are put here by the effect above, and
+              because neither the class nor the style ever changes as a prop,
+              React never writes to this node again after it mounts. */}
+          <div ref={historyRef} className={styles.history} />
+
           <div
             ref={overlayRef}
             className={cx(
               styles.overlay,
               captionVisible && styles.is_visible,
               shiftHeld && styles.is_movable,
+              stackUp && styles.is_solid,
               dragging && styles.is_dragging
             )}
             // Once moved it is placed by its centre, which is also how it is
@@ -1178,8 +1724,16 @@ export const SubtitlesDemo = () => {
 
       <p className={styles.caption}>
         Switch apps and the captions stay: the overlay is above every window,
-        and lets clicks through — click a window to bring it forward. Hold{" "}
-        <kbd>⇧</kbd> and drag the captions to move them, as you would in the
+        and lets clicks through.
+      </p>
+      <p className={styles.caption}>
+        Click a window to bring it forward. Hold <kbd>⇧</kbd> and drag the
+        captions to move them, as you would in the app.
+      </p>
+      {/* Says nothing to a phone, and is hidden from one by the stylesheet. */}
+      <p className={cx(styles.caption, styles.caption_try)}>
+        Point at the captions and they dissolve under you. Hold <kbd>⌥</kbd> to
+        stack the last few back up. Both work here exactly as they do in the
         app.
       </p>
     </div>
