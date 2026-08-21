@@ -18,16 +18,14 @@ import {
 
 import { CodeBlock } from "@/components/CodeBlock/CodeBlock";
 import { MaybeUndefined } from "@/components/Media/utils/maybe";
+import { ArticleDates } from "@/components/Navigation/ArticleDates";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
-import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { ComponentPageMetas } from "@/components/PageMetas/ComponentPageMetas";
 import styles from "@/components/SplitFlapDisplay/SplitFlapDisplay.module.scss";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { Tabs } from "@/components/Tabs/Tabs";
 import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
-import {
-  ComponentId,
-  COMPONENTS,
-} from "@/constants/design-engineering/components";
+import { ComponentId } from "@/constants/design-engineering/components";
 
 const componentStructureSource = `
 <SplitFlapDisplay.Root>
@@ -342,10 +340,9 @@ deno add npm:@daformat/react-split-flap-display
 const componentId: ComponentId = "split-flap-display";
 
 const SplitFlapDisplayPage = (props: CodeBlocks) => {
-  const component = COMPONENTS[componentId];
   return (
     <>
-      <PageMetas {...component.metas} />
+      <ComponentPageMetas componentId={componentId} />
       <TableOfContents.Provider>
         <SplitFlapDisplayPageContent {...props} />
       </TableOfContents.Provider>
@@ -483,8 +480,9 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
           Back to gallery
         </Link>
         <h1 id="design-engineering-a-split-flap-display">
-          Design engineering: a split-flap display component
+          A realistic split-flap display
         </h1>
+        <ArticleDates componentId={componentId} />
         {/*<Demo />*/}
         <p>
           An animated split-flap display component, aka Solari board, like the
@@ -877,9 +875,9 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
           with four compound components: <code>Root</code>, <code>Slot</code>,{" "}
           <code>Character</code>, and <code>Flap</code>.{" "}
           <code>SplitFlapDisplay.Root</code> is the only one you need 99% of the
-          time — it renders all four nested layers automatically. The other
-          three exist for when you want to swap any layer for your own markup,
-          like in the <code>tailwind</code> tab above.
+          time, it renders all four nested layers automatically. The other three
+          exist for when you want to swap any layer for your own markup, like in
+          the <code>tailwind</code> tab above.
         </p>
         <CodeBlock html={props.componentStructure} />
         <p>
@@ -957,7 +955,7 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
               }
             </code>{" "}
             and is called once per slot. Capture <code>currentCharacter</code>{" "}
-            from this closure if you need to forward it deeper — it isn’t
+            from this closure if you need to forward it deeper, it isn’t
             re-emitted by <code>Slot.children</code>.
           </li>
           <li>
@@ -1071,7 +1069,7 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
             <code>position</code> (
             <code>&quot;top&quot; | &quot;bottom&quot;</code>): which half of
             the flap pair this is. The <code>bottom</code> flap is automatically{" "}
-            <code>aria-hidden</code> and <code>inert</code> — it’s a visual
+            <code>aria-hidden</code> and <code>inert</code>: it’s a visual
             mirror of the top flap.
           </li>
           <li>

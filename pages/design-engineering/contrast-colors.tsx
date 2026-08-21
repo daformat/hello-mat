@@ -8,14 +8,12 @@ import { codeToHtml } from "shiki";
 
 import { CodeBlock } from "@/components/CodeBlock/CodeBlock";
 import { ContrastDemo } from "@/components/ContrastDemo/ContrastDemo";
+import { ArticleDates } from "@/components/Navigation/ArticleDates";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
-import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { ComponentPageMetas } from "@/components/PageMetas/ComponentPageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { Tabs } from "@/components/Tabs/Tabs";
-import {
-  ComponentId,
-  COMPONENTS,
-} from "@/constants/design-engineering/components";
+import { ComponentId } from "@/constants/design-engineering/components";
 import styles from "@/styles/ContrastColors.module.scss";
 
 const componentId: ComponentId = "contrast-colors";
@@ -153,7 +151,9 @@ const readPackageSource = () => {
   const src = join(process.cwd(), "node_modules", PACKAGE, "src");
   return SOURCE_MODULES.map((file) => {
     const body = readFileSync(join(src, file), "utf8").trim();
-    return `/* ${"=".repeat(68)}\n   src/${file}\n   ${"=".repeat(68)} */\n\n${body}`;
+    return `/* ${"=".repeat(68)}\n   src/${file}\n   ${"=".repeat(
+      68
+    )} */\n\n${body}`;
   }).join("\n\n");
 };
 
@@ -205,10 +205,9 @@ export const getStaticProps: GetStaticProps<CodeBlocks> = async () => {
 };
 
 const ContrastColorsPage = (props: CodeBlocks) => {
-  const component = COMPONENTS[componentId];
   return (
     <>
-      <PageMetas {...component.metas} />
+      <ComponentPageMetas componentId={componentId} />
       <TableOfContents.Provider>
         <ContrastColorsPageContent {...props} />
       </TableOfContents.Provider>
@@ -240,6 +239,7 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
         <h1 id="design-engineering-contrast-colours">
           Keep the colour. <em>Move the lightness.</em>
         </h1>
+        <ArticleDates componentId={componentId} />
         <p>
           Every few months I need the same thing, and every few months the web
           offers me something else. I have a colour I chose, it sits on a

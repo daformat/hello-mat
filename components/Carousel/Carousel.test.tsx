@@ -13,7 +13,7 @@ import { Carousel } from "./Carousel";
 
 /**
  * jsdom has no layout engine. This stubs the three properties the component
- * reads to decide whether—and how far—it can scroll.
+ * reads to decide whether, and how far,it can scroll.
  *
  * Default values produce a container that is 300px wide and has 1000px of
  * scrollable content, starting at scrollLeft=0.
@@ -95,12 +95,12 @@ beforeEach(() => {
       disconnect() {}
     }
   );
-  // Prevent momentum animation side effects—the component uses rAF internally
+  // Prevent momentum animation side effects, the component uses rAF internally
   // and we don't want frames firing between assertions.
   vi.stubGlobal("requestAnimationFrame", vi.fn().mockReturnValue(1));
   vi.stubGlobal("cancelAnimationFrame", vi.fn());
 
-  // jsdom does not implement these pointer capture APIs — define them as no-ops
+  // jsdom does not implement these pointer capture APIs, define them as no-ops
   Object.defineProperty(Element.prototype, "setPointerCapture", {
     value: vi.fn(),
     writable: true,
@@ -374,7 +374,7 @@ describe("Carousel", () => {
       const vp = getViewport();
       const btn = screen.getByRole("button", { name: "clickable" });
 
-      // pointerDown on the inner button — capture listener on the viewport
+      // pointerDown on the inner button, capture listener on the viewport
       // sets initialTarget=btn and initialPointerPosition={x:0,y:0}
       fireEvent.pointerDown(btn, {
         pointerType: "mouse",
@@ -416,7 +416,7 @@ describe("Carousel", () => {
         clientY: 0,
         bubbles: true,
       });
-      // Move less than 3px — the component dispatches a synthetic click on btn
+      // Move less than 3px, the component dispatches a synthetic click on btn
       fireEvent.pointerUp(vp, {
         pointerType: "mouse",
         pointerId: 1,
@@ -496,7 +496,7 @@ describe("Carousel", () => {
       expect(vp.scrollLeft).not.toBe(scrollAfterDrag);
     });
 
-    it("decelerates — each successive frame covers less distance than the previous", () => {
+    it("decelerates, each successive frame covers less distance than the previous", () => {
       const frames = captureAnimationFrames();
       renderCarousel();
       const vp = getViewport();

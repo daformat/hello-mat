@@ -4,15 +4,13 @@ import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { codeToHtml } from "shiki";
 
 import { CodeBlock } from "@/components/CodeBlock/CodeBlock";
+import { ArticleDates } from "@/components/Navigation/ArticleDates";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
-import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { ComponentPageMetas } from "@/components/PageMetas/ComponentPageMetas";
 import { Slider, SliderValue } from "@/components/Slider/Slider";
 import StyledSlider from "@/components/Slider/StyledSlider.module.scss";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
-import {
-  ComponentId,
-  COMPONENTS,
-} from "@/constants/design-engineering/components";
+import { ComponentId } from "@/constants/design-engineering/components";
 
 interface CodeBlocks {
   highlightedCode: string;
@@ -49,10 +47,9 @@ export const getStaticProps: GetStaticProps<CodeBlocks> = async () => {
 const componentId: ComponentId = "slider";
 
 const SliderPage = (props: CodeBlocks) => {
-  const component = COMPONENTS[componentId];
   return (
     <>
-      <PageMetas {...component.metas} />
+      <ComponentPageMetas componentId={componentId} />
       <TableOfContents.Provider>
         <SliderPageContent {...props} />
       </TableOfContents.Provider>
@@ -102,8 +99,9 @@ const SliderPageContent = (props: CodeBlocks) => {
           Back to gallery
         </Link>
         <h1 id="design-engineering-a-swipeable-cards-carousel">
-          Design engineering: a composable headless slider component
+          A headless, composable slider
         </h1>
+        <ArticleDates componentId={componentId} />
         <p>
           This started out as an exercise, and out of a frustration that both{" "}
           <a

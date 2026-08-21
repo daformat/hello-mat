@@ -6,11 +6,11 @@ const path = require("path");
 const reactPath = path.resolve(__dirname, "node_modules/react");
 const reactDomPath = path.resolve(__dirname, "node_modules/react-dom");
 
+// No `i18n` block: with a single locale it bought nothing, and it served every
+// page a second time under /en/*, so each article had two working URLs. The
+// canonical tag pointed at the right one, but the simpler fix is not to have
+// the duplicate at all. Bring it back the day there is a second language.
 const nextConfig = {
-  i18n: {
-    locales: ["en"],
-    defaultLocale: "en",
-  },
   // The gallery pages used to live one level deeper, under
   // /design-engineering/component/*. They are now siblings of the gallery
   // index, and every old link keeps working.
@@ -24,6 +24,18 @@ const nextConfig = {
       {
         source: "/design-engineering/component",
         destination: "/design-engineering",
+        permanent: true,
+      },
+      // The single-locale i18n config used to answer on /en/* as well. Anything
+      // that got indexed there is sent to the one real URL rather than to a 404.
+      {
+        source: "/en",
+        destination: "/",
+        permanent: true,
+      },
+      {
+        source: "/en/:path*",
+        destination: "/:path*",
         permanent: true,
       },
     ];

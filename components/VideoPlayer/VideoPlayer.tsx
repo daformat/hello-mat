@@ -30,15 +30,26 @@ export type VideoSources =
   | VideoSourcesWithSlowVersions
   | VideoSourcesWithoutSlowVersions;
 
+export type VideoPosters = {
+  light: string;
+  dark: string;
+};
+
 export type VideoPlayerProps = {
   sources: VideoSources;
+  /**
+   * Still frame per theme, painted while the video is still on the shelf. This
+   * shadows the native single-value `poster`, since there are two videos here.
+   */
+  poster?: VideoPosters;
   /** When true, the video will only play when visible in the viewport */
   autoPlaysWhenVisible?: boolean;
   autoPlaysOnHover?: boolean;
-} & ComponentProps<"video">;
+} & Omit<ComponentProps<"video">, "poster">;
 
 export const VideoPlayer = ({
   sources,
+  poster,
   className,
   style,
   autoPlaysWhenVisible = false,
@@ -57,9 +68,13 @@ export const VideoPlayer = ({
     }
   }, []);
 
-  // Intersection Observer for autoPlaysWhenVisible
+  // With `preload="none"` the video holds back until the player is on screen,
+  // which is what keeps the gallery index from asking about every file at once.
+  const preloadsLazily = rest.preload === "none";
+
+  // Intersection Observer for autoPlaysWhenVisible and for lazy preloading
   useEffect(() => {
-    if (!autoPlaysWhenVisible || !containerRef.current) {
+    if ((!autoPlaysWhenVisible && !preloadsLazily) || !containerRef.current) {
       return;
     }
 
@@ -76,7 +91,25 @@ export const VideoPlayer = ({
     observer.observe(containerRef.current);
 
     return () => observer.disconnect();
-  }, [autoPlaysWhenVisible]);
+  }, [autoPlaysWhenVisible, preloadsLazily]);
+
+  // Once a lazy player is on screen, let the video the reader can actually see
+  // fetch its metadata, so hovering it does not start from nothing. The other
+  // theme's copy stays untouched: it is `display: none`, nobody is looking at
+  // it, and it would be a wasted request.
+  useEffect(() => {
+    if (!preloadsLazily || !isVisible) {
+      return;
+    }
+    videoRefs.current.forEach((video) => {
+      if (
+        video.preload === "none" &&
+        getComputedStyle(video).display !== "none"
+      ) {
+        video.preload = "metadata";
+      }
+    });
+  }, [preloadsLazily, isVisible]);
 
   // Play/pause videos based on visibility
   useLayoutEffect(() => {
@@ -147,6 +180,7 @@ export const VideoPlayer = ({
           <video
             ref={addVideoRef}
             className={["video_dark", className].filter(Boolean).join(" ")}
+            poster={poster?.dark}
             autoPlay={shouldAutoPlay}
             loop
             muted
@@ -159,6 +193,7 @@ export const VideoPlayer = ({
           <video
             ref={addVideoRef}
             className={["video_light", className].filter(Boolean).join(" ")}
+            poster={poster?.light}
             autoPlay={shouldAutoPlay}
             loop
             muted
@@ -180,6 +215,7 @@ export const VideoPlayer = ({
             <video
               ref={addVideoRef}
               className={["video_dark", className].filter(Boolean).join(" ")}
+              poster={poster?.dark}
               autoPlay={shouldAutoPlay}
               loop
               muted
@@ -195,6 +231,7 @@ export const VideoPlayer = ({
             <video
               ref={addVideoRef}
               className={["video_light", className].filter(Boolean).join(" ")}
+              poster={poster?.light}
               autoPlay={shouldAutoPlay}
               loop
               muted

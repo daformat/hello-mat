@@ -11,16 +11,14 @@ import {
 
 import { CodeBlock } from "@/components/CodeBlock/CodeBlock";
 import { MaybeUndefined } from "@/components/Media/utils/maybe";
+import { ArticleDates } from "@/components/Navigation/ArticleDates";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import styles from "@/components/NumberFlowInput/NumberFlowInput.module.scss";
-import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { ComponentPageMetas } from "@/components/PageMetas/ComponentPageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { Tabs } from "@/components/Tabs/Tabs";
 import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
-import {
-  ComponentId,
-  COMPONENTS,
-} from "@/constants/design-engineering/components";
+import { ComponentId } from "@/constants/design-engineering/components";
 import { isNonNullable } from "@/utils/nullable";
 
 const DEBUG = false;
@@ -73,7 +71,7 @@ export const PrecisionDemo = () => {
   // Track the raw string the user typed. This preserves trailing zeros
   // ("1.50"), integers past Number.MAX_SAFE_INTEGER, and decimals with
   // more than ~17 significant digits. \`value\` accepts the string back
-  // directly — no parseFloat() round-trip required.
+  // directly, no parseFloat() round-trip required.
   const [raw, setRaw] = useState<string | undefined>("12345678901234567890.50");
 
   return (
@@ -112,7 +110,7 @@ import { NumberFlowInput } from "@daformat/react-number-flow-input";
 export const RestoreFromServer = () => {
   const [value, setValue] = useState<number | undefined>();
 
-  // Imagine we re-hydrate from /api/me on mount — we don't want the
+  // Imagine we re-hydrate from /api/me on mount, we don't want the
   // initial restore to barrel-roll from 0 to the saved value. Typing
   // and format/locale toggles still animate normally.
   useEffect(() => {
@@ -226,10 +224,9 @@ const useMaxLength = (
 const componentId: ComponentId = "number-flow-input";
 
 const NumberFlowInputPage = (props: CodeBlocks) => {
-  const component = COMPONENTS[componentId];
   return (
     <>
-      <PageMetas {...component.metas} />
+      <ComponentPageMetas componentId={componentId} />
       <TableOfContents.Provider>
         <NumberFlowInputPageContent {...props} />
       </TableOfContents.Provider>
@@ -271,8 +268,9 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
           Back to gallery
         </Link>
         <h1 id="design-engineering-a-number-flow-input">
-          Design engineering: a number flow like input
+          An animated number input
         </h1>
+        <ArticleDates componentId={componentId} />
         <p>
           An animated number input component, inspired by the{" "}
           <a href={"https://family.co/"} target="_blank" rel="noopener">
@@ -481,7 +479,7 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
         </p>
         <p>
           <strong>Note:</strong> the component injects its own stylesheet on
-          first mount for layout and animation — you only need to style
+          first mount for layout and animation, you only need to style
           typography and colors yourself.
         </p>
         <Tabs
@@ -532,12 +530,12 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
             so that it animates to the latest digit.
           </li>
           <li>
-            <strong>External value updates animate too</strong> — when the{" "}
+            <strong>External value updates animate too</strong>: when the{" "}
             <code>value</code> prop changes (e.g. from a parent fetching new
             data), every digit rolls into place as a coordinated barrel-wheel
             animation. The initial mount never animates, and you can opt out of
             subsequent prop-driven animations entirely with{" "}
-            <code>{"animateOnValueChange={false}"}</code> — see{" "}
+            <code>{"animateOnValueChange={false}"}</code>, see{" "}
             <a href="#external-value-updates">External value updates</a>.
           </li>
         </ul>
@@ -584,8 +582,8 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
         <p>
           When the <code>value</code> prop changes (e.g. you fetched a new
           number from your API), every digit barrel-rolls into place by default.
-          To opt out — for instance when re-hydrating from localStorage or
-          restoring a server-driven state — pass{" "}
+          To opt out, for instance when re-hydrating from localStorage or
+          restoring a server-driven state, pass{" "}
           <code>{"animateOnValueChange={false}"}</code> and the next prop update
           snaps in instantly. Typing and <code>format</code> /{" "}
           <code>locale</code> toggles still animate.
@@ -617,7 +615,7 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
         <h3 id="precision">Precision &amp; arbitrary-length values</h3>
         <p>
           Internally the component is string-based, so what the user types is
-          preserved character-by-character — there is no silent rounding inside
+          preserved character-by-character: there is no silent rounding inside
           the input itself. The boundary is the JavaScript <code>number</code>{" "}
           type: anything past <code>Number.MAX_SAFE_INTEGER</code> (~9 × 10
           <sup>15</sup>) or with more than ~15–17 significant digits cannot be
@@ -628,7 +626,7 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
           <li>
             <code>value</code> and <code>defaultValue</code> accept a numeric{" "}
             <em>string</em> alongside <code>number</code>. Strings are sanitized
-            with the same pipeline as user input — only characters matching{" "}
+            with the same pipeline as user input: only characters matching{" "}
             <code>{"/^-?\\d*\\.?\\d*$/"}</code> survive, so junk like{" "}
             <code>&quot;$1,234.56&quot;</code> collapses to{" "}
             <code>&quot;1234.56&quot;</code>. Use <code>.</code> as the decimal
@@ -679,7 +677,7 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
             controlled value. When provided, changes animate as a coordinated
             barrel-wheel roll across every digit (except on initial mount).
             Strings are sanitized with the same pipeline as user input (
-            <code>{"/^-?\\d*\\.?\\d*$/"}</code>) — see{" "}
+            <code>{"/^-?\\d*\\.?\\d*$/"}</code>), see{" "}
             <a href="#precision">Precision</a> for the rationale and a code
             example.
           </li>
@@ -699,11 +697,11 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
           <li>
             <code>onChangeText</code> (
             <code>{"(rawText: string) => void"}</code>): fires alongside{" "}
-            <code>onChange</code> with the raw string representation — digits,
-            an optional leading <code>-</code>, an optional single{" "}
-            <code>.</code> (always <code>.</code>, never the locale decimal).
-            Use this when you need exact precision (BigInt math, currency stored
-            as strings, big-decimal libraries, etc). Intermediate states (
+            <code>onChange</code> with the raw string representation: digits, an
+            optional leading <code>-</code>, an optional single <code>.</code>{" "}
+            (always <code>.</code>, never the locale decimal). Use this when you
+            need exact precision (BigInt math, currency stored as strings,
+            big-decimal libraries, etc). Intermediate states (
             <code>&quot;&quot;</code>, <code>&quot;-&quot;</code>,{" "}
             <code>&quot;.&quot;</code>, <code>&quot;-.&quot;</code>) are
             reported verbatim.
@@ -759,7 +757,7 @@ const NumberFlowInputPageContent = (props: CodeBlocks) => {
           <li>
             <code>animateOnValueChange</code> (<code>boolean</code>, default{" "}
             <code>true</code>): when <code>false</code>, external{" "}
-            <code>value</code> updates snap instantly — no digit-roll, no
+            <code>value</code> updates snap instantly, no digit-roll, no
             separator slide, no flow animation. Typing and <code>format</code> /{" "}
             <code>locale</code> toggles still animate. See{" "}
             <a href="#external-value-updates">External value updates</a>.

@@ -1,0 +1,13 @@
+// Sits directly under the title, and should read as a caption rather than as
+// the first line of the piece. Scoped through .prose so it outranks the
+// `.prose p` margins it would otherwise inherit.
+:global(.prose) .dates {
+  align-items: baseline;
+  color: var(--text-primary);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.8125rem;
+  gap: 0.5ch;
+  margin: 0 0 2em;
+  opacity: 0.75;
+}

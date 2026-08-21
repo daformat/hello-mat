@@ -1,11 +1,23 @@
 import { BreadcrumbJsonLd, NextSeo } from "next-seo";
 import { OpenGraph } from "next-seo/lib/types";
 
+import {
+  AUTHOR_NAME,
+  AUTHOR_TWITTER,
+  GALLERY_PATH,
+  getAbsoluteUrl,
+  isGalleryArticle,
+  SITE_NAME,
+} from "@/constants/site";
+
 export type PageMetasBaseProps = {
   title: string;
   shortTitle: string;
   description: string;
   url: string;
+  /** ISO date, articles only. Omitted on the homepage and the gallery index. */
+  datePublished?: string;
+  dateModified?: string;
 };
 
 export type PageMetasImageProps =
@@ -50,11 +62,20 @@ export const PageMetas = ({
   videoType,
   videoWidth,
   videoHeight,
+  datePublished,
+  dateModified,
 }: PageMetasProps) => {
+  // The gallery index and the homepage are their own thing. Everything under
+  // /design-engineering/ is an article, and gets the suffix, the article
+  // metadata, and the breadcrumb that says where it sits.
+  const isArticle = isGalleryArticle(url);
+  const fullTitle = isArticle ? `${title} · ${SITE_NAME}` : title;
+
   const openGraph: OpenGraph = {
-    url,
-    title,
+    url: getAbsoluteUrl(url),
+    title: fullTitle,
     description,
+    type: isArticle ? "article" : "website",
     images: [
       {
         url: getAbsoluteUrl(image),
@@ -64,6 +85,15 @@ export const PageMetas = ({
       },
     ],
   };
+
+  if (isArticle && datePublished) {
+    openGraph.article = {
+      publishedTime: datePublished,
+      modifiedTime: dateModified ?? datePublished,
+      authors: [AUTHOR_NAME],
+    };
+  }
+
   if (video) {
     openGraph.videos = [
       {
@@ -74,37 +104,32 @@ export const PageMetas = ({
       },
     ];
   }
+
   return (
     <>
       <NextSeo
-        title={title}
+        title={fullTitle}
         description={description}
         canonical={getAbsoluteUrl(url)}
         openGraph={openGraph}
-        twitter={{ handle: "@daformat", cardType: "summary_large_image" }}
+        twitter={{ handle: AUTHOR_TWITTER, cardType: "summary_large_image" }}
       />
-      <BreadcrumbJsonLd
-        itemListElements={[
-          {
-            position: 1,
-            name: "Design engineering gallery",
-            item: getAbsoluteUrl("/design-engineering"),
-          },
-          {
-            position: 2,
-            name: shortTitle,
-            item: getAbsoluteUrl(url),
-          },
-        ]}
-      />
+      {isArticle && (
+        <BreadcrumbJsonLd
+          itemListElements={[
+            {
+              position: 1,
+              name: "Design engineering gallery",
+              item: getAbsoluteUrl(GALLERY_PATH),
+            },
+            {
+              position: 2,
+              name: shortTitle,
+              item: getAbsoluteUrl(url),
+            },
+          ]}
+        />
+      )}
     </>
   );
-};
-
-const getAbsoluteUrl = (url: string) => {
-  const base = "https://hello-mat.com";
-  if (!url.startsWith("http")) {
-    return `${base}${url}`;
-  }
-  return url;
 };

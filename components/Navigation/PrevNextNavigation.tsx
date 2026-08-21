@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { ComponentProps } from "react";
 
+import { ComponentCardList } from "@/components/design-engineering/ComponentCardList";
 import {
   ComponentId,
   getNextComponent,
   getPreviousComponent,
+  getRelatedComponents,
 } from "@/constants/design-engineering/components";
 
 import styles from "./NextCard.module.scss";
+import relatedStyles from "./RelatedLinks.module.scss";
 
 const NextCard = ({
   className,
@@ -56,21 +59,54 @@ export const PrevNextNavigation = ({
   const prevComponent = getPreviousComponent(currentComponentId);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        gap: 24,
-        width: "100%",
-        flexWrap: "wrap",
-        marginTop: "2em",
-      }}
-    >
-      <NextCard href={nextComponent.metas.url}>
-        {nextComponent.metas.shortTitle}
-      </NextCard>
-      <PrevCard href={prevComponent.metas.url}>
-        {prevComponent.metas.shortTitle}
-      </PrevCard>
-    </div>
+    <>
+      <RelatedLinks currentComponentId={currentComponentId} />
+      <div
+        style={{
+          display: "flex",
+          gap: 24,
+          width: "100%",
+          flexWrap: "wrap",
+          marginTop: "2em",
+        }}
+      >
+        <NextCard href={nextComponent.metas.url}>
+          {nextComponent.metas.shortTitle}
+        </NextCard>
+        <PrevCard href={prevComponent.metas.url}>
+          {prevComponent.metas.shortTitle}
+        </PrevCard>
+      </div>
+    </>
+  );
+};
+
+/**
+ * Sideways links, for readers who came for one problem and have the next one
+ * already. Previous and next only follow the order things were written in,
+ * which is rarely the order anybody needs them in.
+ */
+const RelatedLinks = ({
+  currentComponentId,
+}: {
+  currentComponentId: ComponentId;
+}) => {
+  const related = getRelatedComponents(currentComponentId);
+
+  if (!related.length) {
+    return null;
+  }
+
+  return (
+    <aside className={relatedStyles.related}>
+      <h2 className={relatedStyles.heading} data-no-toc>
+        While you’re here
+      </h2>
+      <ComponentCardList
+        componentIds={related.map(({ id }) => id)}
+        label="full"
+        threeUp
+      />
+    </aside>
   );
 };

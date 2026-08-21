@@ -1,23 +1,21 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 
+import { ArticleDates } from "@/components/Navigation/ArticleDates";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
-import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { ComponentPageMetas } from "@/components/PageMetas/ComponentPageMetas";
 import { RollingStackedCards } from "@/components/RollingStackedCards/RollingStackedCards";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer";
-import {
-  ComponentId,
-  COMPONENTS,
-} from "@/constants/design-engineering/components";
+import { ComponentId } from "@/constants/design-engineering/components";
+import { describePreview } from "@/utils/media-alt";
 
 const componentId: ComponentId = "stacking-cards";
 
 const StackingCardsPage = () => {
-  const component = COMPONENTS[componentId];
   return (
     <>
-      <PageMetas {...component.metas} />
+      <ComponentPageMetas componentId={componentId} />
       <TableOfContents.Provider>
         <StackingCardsPageContent />
       </TableOfContents.Provider>
@@ -72,7 +70,11 @@ const StackingCardsPageContent = () => {
       style={{ display: "inline-block", fontSize: 0, padding: 8 }}
     >
       <source media="(prefers-color-scheme: dark)" srcSet={dark} />
-      <img src={light} alt="" style={{ aspectRatio: "1200 / 630" }} />
+      <img
+        src={light}
+        alt={describePreview(light)}
+        style={{ aspectRatio: "1200 / 630" }}
+      />
     </picture>
   ));
 
@@ -84,8 +86,9 @@ const StackingCardsPageContent = () => {
           Back to gallery
         </Link>
         <h1 id="design-engineering-rolling-stacking-cards">
-          Design engineering: rolling stacking cards
+          Rolling stacked cards, a scroll-driven animation
         </h1>
+        <ArticleDates componentId={componentId} />
         <p>
           A scroll-driven animation that stacks cards in a rolling fashion, with
           up to 4 stacked cards at a time. Just scroll the page to see it in

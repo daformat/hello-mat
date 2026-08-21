@@ -17,23 +17,20 @@ import {
 
 import { ButtonGroup } from "@/components/ButtonGroup/ButtonGroup";
 import { DropdownItem } from "@/components/ButtonGroup/Dropdown/DropdownItem";
+import { ArticleDates } from "@/components/Navigation/ArticleDates";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
-import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { ComponentPageMetas } from "@/components/PageMetas/ComponentPageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { Toolbar } from "@/components/Toolbar/Toolbar";
 import { ToolbarButton } from "@/components/Toolbar/ToolbarButton";
-import {
-  ComponentId,
-  COMPONENTS,
-} from "@/constants/design-engineering/components";
+import { ComponentId } from "@/constants/design-engineering/components";
 
 const componentId: ComponentId = "collapsible-toolbar";
 
 const CollapsibleToolbarPage = () => {
-  const component = COMPONENTS[componentId];
   return (
     <>
-      <PageMetas {...component.metas} />
+      <ComponentPageMetas componentId={componentId} />
       <TableOfContents.Provider>
         <CollapsibleToolbarPageContent />
       </TableOfContents.Provider>
@@ -60,8 +57,9 @@ const CollapsibleToolbarPageContent = () => {
           Back to gallery
         </Link>
         <h1 id="design-engineering-a-collapsible-toolbar">
-          Design engineering: a collapsible resizable toolbar
+          A collapsible, resizable toolbar
         </h1>
+        <ArticleDates componentId={componentId} />
         <p>
           Within many applications, we need toolbars. The problem is that they
           can only fit as many tools as their size allows. What happens we we
@@ -121,6 +119,33 @@ const CollapsibleToolbarPageContent = () => {
             10%
           </button>
         </div>
+        <h2 id="how-it-decides-what-to-hide">How it decides what to hide</h2>
+        <p>
+          There are no breakpoints in this component, and it never listens for
+          window resizes. A <code>ResizeObserver</code> watches the toolbar
+          itself, which is the only thing that works when the element that
+          changed size is a panel, a split view, or in this case a card with a
+          resize handle on it, rather than the window.
+        </p>
+        <p>
+          Each item is then measured against the space available, with one
+          wrinkle worth pointing out: every item except the last is checked
+          against the container width{" "}
+          <strong>minus the dropdown trigger</strong>, while the last item is
+          checked against the full width. The last item doesn’t have to make
+          room for a trigger that would only need to exist if something had
+          overflowed, and without that exception you get a toolbar that hides
+          its final button in order to make space for a menu containing exactly
+          that button.
+        </p>
+        <h2 id="the-floor">The floor</h2>
+        <p>
+          On mount, the container takes a <code>min-width</code> equal to the
+          trigger’s own width, so however far you drag the handle the toolbar
+          can’t shrink past the one control that has to stay reachable.
+          Everything else moves into the dropdown as the room runs out, which is
+          the whole point: at any size, every action is still available.
+        </p>
         <PrevNextNavigation currentComponentId={componentId} />
       </div>
     </>

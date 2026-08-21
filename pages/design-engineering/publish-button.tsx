@@ -1,22 +1,19 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { ArticleDates } from "@/components/Navigation/ArticleDates";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
-import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { ComponentPageMetas } from "@/components/PageMetas/ComponentPageMetas";
 import { PublishSplitButton } from "@/components/PublishButton/PublishButton";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
-import {
-  ComponentId,
-  COMPONENTS,
-} from "@/constants/design-engineering/components";
+import { ComponentId } from "@/constants/design-engineering/components";
 
 const componentId: ComponentId = "publish-button";
 
 const PublishButtonPage = () => {
-  const component = COMPONENTS[componentId];
   return (
     <>
-      <PageMetas {...component.metas} />
+      <ComponentPageMetas componentId={componentId} />
       <TableOfContents.Provider>
         <PublishButtonPageContent />
       </TableOfContents.Provider>
@@ -43,8 +40,9 @@ const PublishButtonPageContent = () => {
           Back to gallery
         </Link>
         <h1 id="design-engineering-a-publish-button">
-          Design engineering: a publish button
+          A publish button with real feedback states
         </h1>
+        <ArticleDates componentId={componentId} />
         <p>
           Whenever something is publishable, you need an action for that. And
           when it’s published, you need an action to unpublish it, and maybe
@@ -108,6 +106,35 @@ const PublishButtonPageContent = () => {
             </button>
           </div>
         </div>
+        <h2 id="the-timings">The timings</h2>
+        <p>
+          The simulated request takes a random time between 1.5 and 3.5 seconds,
+          which is deliberate. A fixed duration lets you learn the animation
+          instead of reading the state, and it quietly hides the case that
+          actually matters, the one where the network takes longer than the
+          transition you designed for it.
+        </p>
+        <p>
+          The result then sits there for two seconds before the button goes back
+          to its resting label, which is long enough to read and short enough
+          that the button doesn’t feel stuck. If you move the pointer back onto
+          it while the result is showing, that timer is thrown away and
+          restarted, so the feedback never disappears from under the cursor of
+          someone who came back to check what happened. Clicking again while a
+          request is in flight does <strong>nothing at all</strong>: the handler
+          bails out when there is already a pending timeout, so you can’t stack
+          publishes on top of each other.
+        </p>
+        <h2 id="slowing-it-down">Slowing it down</h2>
+        <p>
+          The 10% control doesn’t touch any of that. It sets a{" "}
+          <code>--speed</code> custom property that the transition duration is
+          divided by, so every transition in the button stretches out together
+          while the state machine underneath carries on at its normal pace.
+          That’s the useful way round: you get to watch the motion at a speed
+          you can actually see, without the thing you are inspecting behaving
+          differently from the way it ships.
+        </p>
         <PrevNextNavigation currentComponentId={componentId} />
       </div>
     </>

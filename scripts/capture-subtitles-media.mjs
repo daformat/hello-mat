@@ -66,7 +66,7 @@ const OG = { width: 1200, height: 630 };
 // the clip opens on a clean meeting window with nothing on top of it.
 //
 // The same offset is applied at both ends, so the clip is still exactly one
-// period and still loops without a seam — and, unlike rotating the frames
+// period and still loops without a seam, and, unlike rotating the frames
 // afterwards, it costs no second encode.
 const CUT_OFFSET_MS = 200;
 

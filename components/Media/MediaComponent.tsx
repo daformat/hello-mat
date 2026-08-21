@@ -464,7 +464,7 @@ export const ImageComp = ({
       responsive={ResizeType.both}
       placeholder={<SvgPlaceholderImage />}
     >
-      <img src={source} alt="" />
+      <img src={source} alt={title ?? ""} />
       <MediaSource source={source} />
     </Media>
   );

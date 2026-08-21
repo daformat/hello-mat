@@ -15,7 +15,7 @@ import styles from "./SubtitlesDemo.module.scss";
  * It plays a three-scene loop: a call, the notes you switch to while the call
  * keeps running, and a podcast. Captions type themselves out over the top of
  * all of it, and the app switch happens *while* a caption is running, because
- * that is the whole point being made — the overlay belongs to the screen, not
+ * that is the whole point being made, the overlay belongs to the screen, not
  * to the window underneath it.
  *
  * Nothing here is an image or a video. Every pixel is CSS.
@@ -169,7 +169,7 @@ export const SubtitlesDemo = () => {
   // it there, rather than the component animating a number frame by frame.
   const [progress, setProgress] = useState({ value: 0, ms: 0 });
   // Where the caption box has been dragged to, as the fraction of the screen its
-  // centre sits at — not pixels, so it keeps its place when the demo resizes.
+  // centre sits at, not pixels, so it keeps its place when the demo resizes.
   // Null until somebody moves it, which leaves the CSS to place it.
   const [spot, setSpot] = useState<{ x: number; y: number } | null>(null);
   const [shiftHeld, setShiftHeld] = useState(false);
@@ -207,11 +207,11 @@ export const SubtitlesDemo = () => {
   // at its next beat and picks that scene up from the top. `direct` is the
   // difference between the two: the buttons are a request to go somewhere, and
   // watching the ⌘-tab get there is the point of them, while clicking a window
-  // is reaching for that window — the machinery in between would be in the way.
+  // is reaching for that window, the machinery in between would be in the way.
   const jumpRef = useRef<{ index: number; direct: boolean } | null>(null);
   // Cuts every wait the loop is sitting in short. Without it a click landed
   // whenever the current wait happened to end, and a finished caption holds for
-  // up to 4.2 seconds — long enough to read as nothing having happened.
+  // up to 4.2 seconds, long enough to read as nothing having happened.
   const wakeRef = useRef<(() => void) | null>(null);
   // Which window is actually in front, updated at the moment it fronts. The loop
   // used to carry this in a local it only assigned once a switch had finished,
@@ -416,8 +416,8 @@ export const SubtitlesDemo = () => {
     // pages the same way, and shows the newest word dim until it commits.
     //
     // `from` and `to` are the slice of the scene's bar this caption is worth.
-    // The bar is walked across it in two moves — one for the typing, one for the
-    // hold — because those are the only two moments the loop knows how long the
+    // The bar is walked across it in two moves, one for the typing, one for the
+    // hold, because those are the only two moments the loop knows how long the
     // next stretch will take. The second starts from wherever the first actually
     // got to, so the jitter in the typing corrects itself rather than piling up.
     const say = async (line: string, from: number, to: number) => {
@@ -457,7 +457,7 @@ export const SubtitlesDemo = () => {
     };
 
     // ⌘-tab: panel up on the current app, selection moves, window fronts as the
-    // panel drops — which is when you'd release the key.
+    // panel drops, which is when you'd release the key.
     const switchTo = async (to: AppId) => {
       setSelected(frontRef.current);
       setSwitcherVisible(true);
@@ -582,7 +582,7 @@ export const SubtitlesDemo = () => {
       }
 
       if (reducedMotion) {
-        // No loop to unwind — the scene is just what is on screen.
+        // No loop to unwind, the scene is just what is on screen.
         setScene(index);
         showApp(target.app);
         setCommitted(target.lines[0] ?? "");
@@ -669,13 +669,13 @@ export const SubtitlesDemo = () => {
     (event: ReactPointerEvent<HTMLDivElement>) => {
       const stage = stageRef.current?.getBoundingClientRect();
       const box = overlayRef.current?.getBoundingClientRect();
-      // Mouse only, as with the windows — and shift is a key nobody holds on a
+      // Mouse only, as with the windows, and shift is a key nobody holds on a
       // phone anyway.
       if (event.pointerType !== "mouse" || !event.shiftKey || !stage || !box) {
         return;
       }
       event.preventDefault();
-      // Captured, so the box keeps receiving the pointer once it leaves it —
+      // Captured, so the box keeps receiving the pointer once it leaves it,
       // and keeps receiving the release, wherever that happens. Paired with
       // onLostPointerCapture below, which covers the pointer being taken away
       // rather than let go: without it a release outside the page would leave
@@ -1227,7 +1227,7 @@ export const SubtitlesDemo = () => {
       const stage = stageRef.current?.getBoundingClientRect();
       const node = event.currentTarget.parentElement;
       // Mouse only. On a phone the title bar is inside a page you are trying to
-      // scroll, and a drag that starts there would take the window with you —
+      // scroll, and a drag that starts there would take the window with you,
       // or eat the scroll. Tapping a window still brings it forward.
       if (event.pointerType !== "mouse" || !stage || !node) {
         return;
@@ -1302,7 +1302,7 @@ export const SubtitlesDemo = () => {
   }, [draggedWindow, endWindowDrag, scene]);
 
   // The box holds its place as a fraction of the screen, but its own size does
-  // not scale with the demo in lockstep — the caption has a floor — so a resize
+  // not scale with the demo in lockstep, the caption has a floor, so a resize
   // can leave it hanging over an edge. Put it back inside.
   useEffect(() => {
     const stage = stageRef.current;
@@ -1364,7 +1364,7 @@ export const SubtitlesDemo = () => {
     onPointerMove: dragWindow,
     onPointerUp: endWindowDrag,
     onPointerCancel: endWindowDrag,
-    // The pointer being taken away rather than let go — released off the page,
+    // The pointer being taken away rather than let go, released off the page,
     // or claimed by something else. Without this the window stays grabbed and
     // follows the cursor with no button held.
     onLostPointerCapture: endWindowDrag,
@@ -1626,7 +1626,7 @@ export const SubtitlesDemo = () => {
               )}
             >
               <span className={cx(styles.sw_icon, styles.i_player)}>
-                {/* Badge and mark in one SVG on purpose — see the note in the
+                {/* Badge and mark in one SVG on purpose, see the note in the
                     stylesheet. Drawn as two elements they drifted apart by a
                     pixel as the panel finished scaling. */}
                 <svg viewBox="0 0 24 24" fill="currentColor">

@@ -1,22 +1,19 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 
+import { ArticleDates } from "@/components/Navigation/ArticleDates";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
-import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { ComponentPageMetas } from "@/components/PageMetas/ComponentPageMetas";
 import { SubtitlesDemo } from "@/components/SubtitlesDemo/SubtitlesDemo";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
-import {
-  ComponentId,
-  COMPONENTS,
-} from "@/constants/design-engineering/components";
+import { ComponentId } from "@/constants/design-engineering/components";
 
 const componentId: ComponentId = "subtitles-app";
 
 const SubtitlesAppPage = () => {
-  const component = COMPONENTS[componentId];
   return (
     <>
-      <PageMetas {...component.metas} />
+      <ComponentPageMetas componentId={componentId} />
       <TableOfContents.Provider>
         <SubtitlesAppPageContent />
       </TableOfContents.Provider>
@@ -42,8 +39,9 @@ const SubtitlesAppPageContent = () => {
           Back to gallery
         </Link>
         <h1 id="design-engineering-the-subtitles-demo">
-          Design engineering: the Subtitles app demo
+          The Subtitles demo, built entirely in CSS
         </h1>
+        <ArticleDates componentId={componentId} />
         <p>
           I made a small Mac app called{" "}
           <a href="https://subtitles-live.com" target="_blank" rel="noopener">

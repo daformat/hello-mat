@@ -2,13 +2,19 @@
 // Run automatically before every build (see the "prebuild" script).
 
 import { execFileSync } from "node:child_process";
-import { readdirSync, statSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PAGES_DIR = join(ROOT, "pages");
 const OUTPUT = join(ROOT, "public", "sitemap.xml");
+const COMPONENTS_FILE = join(
+  ROOT,
+  "constants",
+  "design-engineering",
+  "components.ts"
+);
 
 const SITE_URL = (process.env.SITE_URL ?? "https://hello-mat.com").replace(
   /\/$/,
@@ -51,6 +57,33 @@ const routeFromFile = (file) => {
 };
 
 /**
+ * The dates the articles declare about themselves, read straight out of the
+ * COMPONENTS map. These beat the git date, because a repo-wide rename or a
+ * formatting pass moves every file's commit date without changing a word of
+ * what the page says.
+ *
+ * Read as text on purpose: node cannot import a .tsx-adjacent module with path
+ * aliases, and this only needs two fields out of it.
+ */
+const declaredDates = () => {
+  const dates = new Map();
+  try {
+    const source = readFileSync(COMPONENTS_FILE, "utf8");
+    const entry =
+      /url: "([^"]+)",[\s\S]{0,400}?dateModified: "(\d{4}-\d{2}-\d{2})"/g;
+    let match;
+    while ((match = entry.exec(source))) {
+      dates.set(match[1], match[2]);
+    }
+  } catch {
+    // No map, or it moved: every route falls back to its git date below.
+  }
+  return dates;
+};
+
+const DECLARED_DATES = declaredDates();
+
+/**
  * Last modification date: the file's last commit, falling back to its mtime
  * when git history isn't available (shallow clones, tarball deploys).
  */
@@ -65,7 +98,7 @@ const lastModified = (file) => {
       return date.slice(0, 10);
     }
   } catch {
-    // git unavailable — fall through to the file mtime
+    // git unavailable, fall through to the file mtime
   }
   return statSync(file).mtime.toISOString().slice(0, 10);
 };
@@ -90,7 +123,7 @@ for (const file of pageFiles) {
   }
   entries.push({
     route,
-    lastmod: lastModified(file),
+    lastmod: DECLARED_DATES.get(route) ?? lastModified(file),
     priority: priorityForRoute(route),
   });
 }

@@ -44,9 +44,13 @@ export const Layout = ({ children }: { children: ReactNode }) => (
         name="apple-mobile-web-app-status-bar-style"
         content="black-translucent"
       />
+      {/* No `user-scalable=no` or `maximum-scale`: both stop people pinching
+          to zoom, which matters most on the code blocks. If iOS starts zooming
+          on input focus again, the fix is a 16px minimum font size on inputs,
+          not locking the viewport. */}
       <meta
         name="viewport"
-        content="viewport-fit=cover, user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1"
+        content="viewport-fit=cover, width=device-width, initial-scale=1"
       />
     </Head>
     <StartupImages />

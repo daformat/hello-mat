@@ -1,0 +1,9 @@
+# https://hello-mat.com
+
+User-agent: *
+Allow: /
+
+# The oEmbed endpoint answers machines, not readers, so keep it out of the index.
+Disallow: /api/
+
+Sitemap: https://hello-mat.com/sitemap.xml

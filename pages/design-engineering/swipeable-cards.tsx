@@ -28,17 +28,16 @@ import {
 } from "shiki";
 
 import { CodeBlock } from "@/components/CodeBlock/CodeBlock";
+import { ArticleDates } from "@/components/Navigation/ArticleDates";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
-import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { ComponentPageMetas } from "@/components/PageMetas/ComponentPageMetas";
 import styles from "@/components/SwipeableCards/SwipeableCards.module.scss";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { Tabs } from "@/components/Tabs/Tabs";
 import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
-import {
-  ComponentId,
-  COMPONENTS,
-} from "@/constants/design-engineering/components";
+import { ComponentId } from "@/constants/design-engineering/components";
 import { useCssSizeVariables } from "@/hooks/useCssSizeVariables";
+import { describePreview } from "@/utils/media-alt";
 
 const tsxSource = `
 // full source: https://github.com/daformat/hello-mat/blob/master/pages/design-engineering/swipeable-cards.tsx
@@ -205,10 +204,9 @@ deno add npm:@daformat/react-swipeable-cards
 const componentId: ComponentId = "swipeable-cards";
 
 const SwipeableCardsPage = (props: CodeBlocks) => {
-  const component = COMPONENTS[componentId];
   return (
     <>
-      <PageMetas {...component.metas} />
+      <ComponentPageMetas componentId={componentId} />
       <TableOfContents.Provider>
         <SwipeableCardsPageContent {...props} />
       </TableOfContents.Provider>
@@ -284,7 +282,7 @@ const cards = cardsSources.map(({ id, light, dark, rotation }, index) => ({
       <source media="(prefers-color-scheme: dark)" srcSet={dark} />
       <img
         src={light}
-        alt=""
+        alt={describePreview(light)}
         style={{ aspectRatio: "1200 / 630", width: "100%" }}
       />
     </picture>
@@ -310,7 +308,7 @@ const cards2 = cardsSources.map(({ id, light, dark, rotation }, index) => ({
       <source media="(prefers-color-scheme: dark)" srcSet={dark} />
       <img
         src={light}
-        alt=""
+        alt={describePreview(light)}
         style={{ aspectRatio: "1200 / 630", width: "100%" }}
       />
     </picture>
@@ -578,8 +576,9 @@ const SwipeableCardsPageContent = (props: CodeBlocks) => {
           Back to gallery
         </Link>
         <h1 id="design-engineering-a-swipeable-cards-carousel">
-          Design engineering: a swipeable cards carousel
+          A headless swipeable card stack
         </h1>
+        <ArticleDates componentId={componentId} />
         <p>
           A cards carousel with swipe gestures, loopable or not. This is an
           interaction pioneered by{" "}

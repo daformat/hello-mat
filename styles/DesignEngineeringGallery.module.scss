@@ -31,7 +31,44 @@
     }
   }
 
+  // The same answer to the pointer, and to the keyboard, as the previous /
+  // next cards: the inner hairline comes up to the active border colour.
+  &:hover,
+  &:focus-visible {
+    box-shadow: 0 1px 12px var(--color-shadow-1),
+      inset 0 0 2px 0.75px var(--color-border-2),
+      inset 0 0 0 0.75px var(--color-border-active);
+    outline: none;
+  }
+
   @include mixins.above-medium {
     width: calc(50% - 8px);
+  }
+}
+
+// Three across, for the related cards at the foot of an article. The gallery
+// itself stays two across, where the cards are the whole point of the page.
+.card_list.three_up {
+  .card {
+    // The same ink and weight as the prose above it: the card is the link, so
+    // the title does not need to announce itself as one.
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 400;
+    gap: 12px;
+    line-height: 1.4;
+    padding: 8px;
+    // These sit inside .prose, which underlines its links. The border is what
+    // answers the pointer here.
+    text-decoration: none;
+    // No stranded last word on a three line title.
+    text-wrap: pretty;
+
+    // The gallery cards carry a 250px floor, which is wider than a third of
+    // the prose column, so three across needs that floor lifted.
+    @include mixins.above-medium {
+      min-width: 0;
+      width: calc(33.333% - 11px);
+    }
   }
 }

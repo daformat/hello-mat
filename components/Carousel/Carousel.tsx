@@ -1110,7 +1110,7 @@ const CarouselViewport = forwardRef<HTMLDivElement, CarouselViewportProps>(
         onPointerUp={handlePointerUp}
         onClickCapture={(event) => {
           // detail === 0 means the click was synthesized by the keyboard (Enter/Space),
-          // not by a pointer device — let it through unconditionally
+          // not by a pointer device, let it through unconditionally
           if (
             !scrollStateRef.current.isDispatchingClick &&
             event.detail !== 0

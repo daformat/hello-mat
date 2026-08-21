@@ -4,14 +4,12 @@ import { CSSProperties, useEffect, useRef } from "react";
 import { codeToHtml } from "shiki";
 
 import { CodeBlock } from "@/components/CodeBlock/CodeBlock";
+import { ArticleDates } from "@/components/Navigation/ArticleDates";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
-import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { ComponentPageMetas } from "@/components/PageMetas/ComponentPageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { TiltingTile } from "@/components/TiltingTile/TiltingTile";
-import {
-  ComponentId,
-  COMPONENTS,
-} from "@/constants/design-engineering/components";
+import { ComponentId } from "@/constants/design-engineering/components";
 
 interface CodeBlocks {
   highlightedCode: string;
@@ -113,10 +111,9 @@ useEffect(() => {
 const componentId: ComponentId = "tilting-tile";
 
 const TiltingTilePage = (props: CodeBlocks) => {
-  const component = COMPONENTS[componentId] ?? {};
   return (
     <>
-      <PageMetas {...component.metas} />
+      <ComponentPageMetas componentId={componentId} />
       <TableOfContents.Provider>
         <TiltingTilePageContent {...props} />
       </TableOfContents.Provider>
@@ -142,8 +139,9 @@ const TiltingTilePageContent = (props: CodeBlocks) => {
           Back to gallery
         </Link>
         <h1 id="design-engineering-a-swipeable-cards-carousel">
-          Design engineering: a tvOS inspired tilting card component
+          A tvOS style tilting card with parallax
         </h1>
+        <ArticleDates componentId={componentId} />
         <p>
           I am always fascinated when I see these subtle parallax effects on
           tvOS, it adds so much depth and never fails to make me smile. These
@@ -187,6 +185,7 @@ const TiltingTilePageContent = (props: CodeBlocks) => {
             }
           >
             <TiltingTile
+              label="The Godfather, as a layered poster that tilts with the pointer"
               layers={[
                 {
                   img: (
@@ -250,6 +249,7 @@ const TiltingTilePageContent = (props: CodeBlocks) => {
               ]}
             />
             <TiltingTile
+              label="Fight Club, as a layered poster that tilts with the pointer"
               layers={[
                 {
                   img: (
@@ -314,6 +314,7 @@ const TiltingTilePageContent = (props: CodeBlocks) => {
               ]}
             />
             <TiltingTile
+              label="The Matrix, as a layered poster that tilts with the pointer"
               layers={[
                 {
                   img: (

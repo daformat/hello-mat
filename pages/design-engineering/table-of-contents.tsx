@@ -2,22 +2,19 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 
 import { DetailsComponent } from "@/components/Details/DetailsComponent";
+import { ArticleDates } from "@/components/Navigation/ArticleDates";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
-import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { ComponentPageMetas } from "@/components/PageMetas/ComponentPageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer";
-import {
-  ComponentId,
-  COMPONENTS,
-} from "@/constants/design-engineering/components";
+import { ComponentId } from "@/constants/design-engineering/components";
 
 const componentId: ComponentId = "toc";
 
 const TableOfContentsPage = () => {
-  const component = COMPONENTS[componentId];
   return (
     <>
-      <PageMetas {...component.metas} />
+      <ComponentPageMetas componentId={componentId} />
       <TableOfContents.Provider>
         <TableOfContentsPageContent />
       </TableOfContents.Provider>
@@ -43,8 +40,9 @@ const TableOfContentsPageContent = () => {
           Back to gallery
         </Link>
         <h1 id="design-engineering-a-table-of-content-component">
-          Design engineering: a table of contents component
+          A scroll-aware table of contents
         </h1>
+        <ArticleDates componentId={componentId} />
         <p>
           This component (shown on the left hand-side, play with it!) was
           crafted at{" "}

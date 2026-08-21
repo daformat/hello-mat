@@ -3,21 +3,18 @@ import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { EmbedComp, ImageComp } from "@/components/Media/MediaComponent";
+import { ArticleDates } from "@/components/Navigation/ArticleDates";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
-import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { ComponentPageMetas } from "@/components/PageMetas/ComponentPageMetas";
 import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer";
-import {
-  ComponentId,
-  COMPONENTS,
-} from "@/constants/design-engineering/components";
+import { ComponentId } from "@/constants/design-engineering/components";
 
 const componentId: ComponentId = "images-and-embeds";
 
 const ImageAndEmbedsPage = () => {
-  const component = COMPONENTS[componentId];
   return (
     <>
-      <PageMetas {...component.metas} />
+      <ComponentPageMetas componentId={componentId} />
       <TableOfContents.Provider>
         <ImageAndEmbedsContent />
       </TableOfContents.Provider>
@@ -65,8 +62,9 @@ const ImageAndEmbedsContent = () => {
           Back to gallery
         </Link>
         <h1 id="design-engineering-an-image-and-embed-component">
-          Design engineering: images and embeds
+          A media component for images, video and embeds
         </h1>
+        <ArticleDates componentId={componentId} />
         <p>
           More often than not, web pages contain images and embeds. What should
           these components do? These ones were designed at{" "}
@@ -156,7 +154,7 @@ const ImageAndEmbedsContent = () => {
             10%
           </button>
         </div>
-        <h2>Functional requirements</h2>
+        <h2 id="functional-requirements">Functional requirements</h2>
         <ul>
           <li>The component should support images and embeds</li>
           <li>
@@ -164,11 +162,7 @@ const ImageAndEmbedsContent = () => {
             been loaded
           </li>
           <li>
-            The component should display a loading state until the media has
-            been loaded
-          </li>
-          <li>
-            The component should support passing predetermines dimensions to
+            The component should support passing predetermined dimensions to
             avoid layout shift
           </li>
           <li>
@@ -184,7 +178,7 @@ const ImageAndEmbedsContent = () => {
             it should be expandable only if collapsed
           </li>
         </ul>
-        <h2>Non- functional requirements</h2>
+        <h2 id="non-functional-requirements">Non-functional requirements</h2>
         <ul>
           <li>The component should be accessible to screen readers</li>
           <li>The component should be accessible to keyboard users</li>
@@ -193,7 +187,33 @@ const ImageAndEmbedsContent = () => {
           <li>The component should honor prefers-reduced-motion</li>
           <li>Animations should be interruptible</li>
         </ul>
-        <h2>Video overview</h2>
+        <h2 id="the-loading-state">The loading state nobody sees</h2>
+        <p>
+          Loading states are the part of a media component you are least likely
+          to get right, because you build them on a fast connection with a warm
+          cache and they flash past before you can look at them. So this one
+          holds. The component records how long the media actually took, and
+          then keeps the loading state up for at least three seconds, which
+          means the state you designed is a state you have watched.
+        </p>
+        <p>
+          It matters because the loading state is doing real work here. An embed
+          has no dimensions until its provider answers, so if you let the layout
+          settle first and correct it afterwards, everything below the media
+          jumps. Passing known dimensions avoids that entirely, and where they
+          are not known, the placeholder holds the space in the right proportion
+          until the real thing arrives.
+        </p>
+        <h2 id="collapsing-to-a-real-height">Collapsing to a real height</h2>
+        <p>
+          Collapsing is the other half. You cannot animate to <code>auto</code>,
+          and picking a number means picking wrong for every embed that is not
+          the one you tested with. A <code>ResizeObserver</code> watches the
+          collapsed content and writes its measured height into a custom
+          property, so the animation always runs to a height that exists, and it
+          stays correct when the container is resized underneath it.
+        </p>
+        <h2 id="video-overview">Video overview</h2>
         <VideoPlayer
           style={{ aspectRatio: "990/500" }}
           sources={{

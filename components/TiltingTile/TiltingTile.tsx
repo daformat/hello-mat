@@ -19,11 +19,21 @@ type TiltingTilePropsWithSingleLayer = {
   layers: TileLayer;
 };
 
+type TiltingTileLabel = {
+  /**
+   * What the stack of layers adds up to, for anyone who cannot see it. The
+   * individual layers stay decorative: on their own, a background plate and a
+   * mask are not worth announcing.
+   */
+  label?: string;
+};
+
 export type TiltingTileProps =
   | ComponentProps<"span"> &
+      TiltingTileLabel &
       (TiltingTilePropsWithLayers | TiltingTilePropsWithSingleLayer);
 
-export const TiltingTile = ({ layers }: TiltingTileProps) => {
+export const TiltingTile = ({ layers, label }: TiltingTileProps) => {
   const ref = useRef<HTMLSpanElement>(null);
   const layersArray = useMemo(
     () => (Array.isArray(layers) ? layers : [layers]),
@@ -124,7 +134,13 @@ export const TiltingTile = ({ layers }: TiltingTileProps) => {
     }
   }, []);
   return (
-    <span ref={ref} className={styles.tilting_tile_root} data-tilting-tile={""}>
+    <span
+      ref={ref}
+      className={styles.tilting_tile_root}
+      data-tilting-tile={""}
+      role={label ? "img" : undefined}
+      aria-label={label}
+    >
       <span className={styles.tilting_tile}>
         {children}
         <span

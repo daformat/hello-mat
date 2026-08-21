@@ -64,6 +64,11 @@ h1 {
   margin-top: 0;
 }
 
+/* The dates belong to the heading above them, so they sit against it. */
+h1:has(+ .article_dates) {
+  margin-bottom: 0;
+}
+
 h2 {
   font-size: var(--font-size-h2);
   margin-bottom: 0.25em;

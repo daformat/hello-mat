@@ -1,56 +1,89 @@
 import Link from "next/link";
 
-import styles from "/styles/DesignEngineeringGallery.module.scss";
+import { ComponentCardList } from "@/components/design-engineering/ComponentCardList";
+import { JsonLd } from "@/components/PageMetas/JsonLd";
 import { PageMetas } from "@/components/PageMetas/PageMetas";
 import { Tabs } from "@/components/Tabs/Tabs";
-import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer";
 import {
   COMPONENTS,
   COMPONENTS_ORDER,
 } from "@/constants/design-engineering/components";
+import { GALLERY_PATH, getAbsoluteUrl } from "@/constants/site";
 
 const DesignEngineeringIndex = () => (
   <>
     <PageMetas
       shortTitle="Design engineering gallery"
-      title="Hello Mat - Design engineering portfolio"
-      description="Design engineering portfolio of Mathieu Jouhet, explore real components, explorations, and more"
-      url="https://hello-mat.com/design-engineering"
+      title="Design engineering portfolio: React interface components"
+      description="Fifteen interface components pulled apart and written up: carousels with real momentum, scroll-driven animations, accessible contrast, and the details that decide how each one feels."
+      url={GALLERY_PATH}
       image="https://hello-mat.com/media/hello-mat-light.png"
       imageWidth={1200}
       imageHeight={630}
+    />
+
+    {/* The gallery as a list, in the order it is presented, so the articles are
+        discoverable as a set rather than fifteen unrelated pages. */}
+    <JsonLd
+      id="gallery"
+      data={{
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: "Design engineering gallery",
+        url: getAbsoluteUrl(GALLERY_PATH),
+        mainEntity: {
+          "@type": "ItemList",
+          numberOfItems: COMPONENTS_ORDER.length,
+          itemListElement: COMPONENTS_ORDER.map((componentId, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: COMPONENTS[componentId].metas.shortTitle,
+            url: getAbsoluteUrl(COMPONENTS[componentId].metas.url),
+          })),
+        },
+      }}
     />
     <div className="page">
       <div className="prose">
         <h1 id="design-engineering">Design engineering portfolio</h1>
         <p>
-          Hello! I’m Mat (Mathieu Jouhet) and this my design engineering
-          portfolio. I&nbsp;have a serious passion for the web platform, care
-          deeply about craft, design, UX, and obsess over details that are often
-          invisible, but never imperceptible. I&nbsp;think these&nbsp;make or
-          break a great experience and even if you don’t see them, you actually
-          feel&nbsp;them.
+          Hello! I’m Mat (Mathieu Jouhet). I&nbsp;build interface components for
+          the web, and write up how they work: a{" "}
+          <Link href={COMPONENTS["carousel-component"].metas.url}>
+            carousel that keeps its momentum and rubber-bands at the ends
+          </Link>
+          , a{" "}
+          <Link href={COMPONENTS.details.metas.url}>
+            disclosure that animates without giving up the native element
+          </Link>
+          , a way of{" "}
+          <Link href={COMPONENTS["contrast-colors"].metas.url}>
+            finding a readable colour by moving its lightness
+          </Link>{" "}
+          instead of reaching for black or white.
         </p>
         <p>
-          These are either real components, used in production, or it can also
-          be explorations. This list is a constant work in progress and is far
-          from exhaustive. Each component is designed with performance,
-          accessibility, and best practices in mind. Attention to details is
-          paramount and you can play accompanying videos at 10% speed, or use
-          the slow down controls when present to slow the live component itself.
-          This will also slow down network requests, if any, so that loading
-          states are shown longer
+          They are built with React, TypeScript, and CSS, with performance and
+          accessibility treated as part of the design rather than as a pass at
+          the end. I&nbsp;have a serious passion for the web platform and obsess
+          over details that are often invisible, but never imperceptible. I
+          think these&nbsp;make or break a great experience and even if you
+          don’t see them, you actually feel&nbsp;them, so most of what I have to
+          say here is about those.
         </p>
         <p>
-          Some of these components are{" "}
+          Some of them are{" "}
+          <Link href={`${GALLERY_PATH}/open-source`}>open source</Link> and
+          published on npm. If one of them is useful to you, don’t be shy and
+          drop a star on{" "}
           <a
             href={"https://github.com/daformat"}
             target="_blank"
             rel="noopener"
           >
-            open-source
+            github
           </a>
-          , dont be shy and drop a star!
+          !
         </p>
       </div>
       <div style={{ marginTop: "1.5em" }}>
@@ -60,60 +93,16 @@ const DesignEngineeringIndex = () => (
             {
               id: "all",
               trigger: "All",
-              content: (
-                <div
-                  className={styles.card_list}
-                  style={{ marginTop: "1.5em" }}
-                >
-                  {COMPONENTS_ORDER.map((componentId) => {
-                    const component = COMPONENTS[componentId];
-                    return (
-                      <Link
-                        key={componentId}
-                        href={component.metas.url}
-                        className={styles.card}
-                      >
-                        <VideoPlayer
-                          style={{ aspectRatio: "990/500" }}
-                          sources={component.video}
-                          autoPlaysOnHover
-                        />
-                        {component.metas.shortTitle}
-                      </Link>
-                    );
-                  })}
-                </div>
-              ),
+              content: <ComponentCardList style={{ marginTop: "1.5em" }} />,
             },
             {
               id: "oss",
               trigger: "Open source",
               content: (
-                <div
-                  className={styles.card_list}
+                <ComponentCardList
+                  onlyOpenSource
                   style={{ marginTop: "1.5em" }}
-                >
-                  {COMPONENTS_ORDER.map((componentId) => {
-                    const component = COMPONENTS[componentId];
-                    if (!component.oss) {
-                      return null;
-                    }
-                    return (
-                      <Link
-                        key={componentId}
-                        href={component.metas.url}
-                        className={styles.card}
-                      >
-                        <VideoPlayer
-                          style={{ aspectRatio: "990/500" }}
-                          sources={component.video}
-                          autoPlaysOnHover
-                        />
-                        {component.metas.shortTitle}
-                      </Link>
-                    );
-                  })}
-                </div>
+                />
               ),
             },
           ]}

@@ -25,16 +25,15 @@ import { Dropdown } from "@/components/ButtonGroup/Dropdown/Dropdown";
 import { DropdownItem } from "@/components/ButtonGroup/Dropdown/DropdownItem";
 import styles from "@/components/Carousel/Carousel.module.scss";
 import { CodeBlock } from "@/components/CodeBlock/CodeBlock";
+import { ArticleDates } from "@/components/Navigation/ArticleDates";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
-import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { ComponentPageMetas } from "@/components/PageMetas/ComponentPageMetas";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
 import { Tabs } from "@/components/Tabs/Tabs";
 import { Checkbox } from "@/components/ui/Checkbox/Checkbox";
-import {
-  ComponentId,
-  COMPONENTS,
-} from "@/constants/design-engineering/components";
+import { ComponentId } from "@/constants/design-engineering/components";
 import { useCssSizeVariables } from "@/hooks/useCssSizeVariables";
+import { describePreview } from "@/utils/media-alt";
 
 interface CodeBlocks {
   highlightedCode: string;
@@ -132,10 +131,9 @@ deno add npm:@daformat/react-headless-carousel
 const componentId: ComponentId = "carousel-component";
 
 const CarouselComponentPage = (props: CodeBlocks) => {
-  const component = COMPONENTS[componentId];
   return (
     <>
-      <PageMetas {...component.metas} />
+      <ComponentPageMetas componentId={componentId} />
       <TableOfContents.Provider>
         <CarouselComponentPageContent {...props} />
       </TableOfContents.Provider>
@@ -398,8 +396,9 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
           Back to gallery
         </Link>
         <h1 id="design-engineering-a-carousel-component">
-          Design engineering: a carousel component
+          A carousel with momentum and rubber banding
         </h1>
+        <ArticleDates componentId={componentId} />
         <p>
           A headless, zero-dependency, scrollable, and swipeable carousel, even
           on desktop (complete with snapping, friction, rubber-banding and
@@ -457,7 +456,7 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
                         />
                         <img
                           src={image.light}
-                          alt=""
+                          alt={describePreview(image.light)}
                           style={{ aspectRatio: "1200 / 630" }}
                         />
                       </picture>
@@ -712,7 +711,7 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
                                   />
                                   <img
                                     src={image.light}
-                                    alt=""
+                                    alt={describePreview(image.light)}
                                     style={{ aspectRatio: "1200 / 630" }}
                                   />
                                 </picture>
@@ -769,7 +768,10 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
                                     media="(prefers-color-scheme: dark)"
                                     srcSet={image.dark}
                                   />
-                                  <img src={image.light} alt="" />
+                                  <img
+                                    src={image.light}
+                                    alt={describePreview(image.light)}
+                                  />
                                 </picture>
                               </div>
                             </Carousel.Item>
@@ -823,7 +825,7 @@ const CarouselComponentPageContent = (props: CodeBlocks) => {
                                   />
                                   <img
                                     src={image.light}
-                                    alt=""
+                                    alt={describePreview(image.light)}
                                     style={{ aspectRatio: "1200 / 630" }}
                                   />
                                 </picture>

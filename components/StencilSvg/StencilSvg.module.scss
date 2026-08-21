@@ -47,6 +47,10 @@
   display: flex;
   flex-grow: 1;
   justify-content: center;
+  // The artwork is not the click target, the backdrop behind it is. Nothing in
+  // here listens for pointer events of its own: the distance effect is bound to
+  // the document.
+  pointer-events: none;
   // max-height: 42em;
 }
 
@@ -134,8 +138,11 @@
   justify-content: center;
   margin: 0 0 clamp(42px, 10vh, 84px);
   padding: 7px;
+  // In front of the backdrop link, so these keep their own clicks.
+  position: relative;
   transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out,
     box-shadow 0.2s ease-in-out;
+  z-index: 1;
 
   li {
     display: inline-flex;
@@ -184,4 +191,28 @@
       }
     }
   }
+}
+
+// The whole viewport is a way in to the gallery. Taken out of flow and pinned
+// to the viewport, so it changes nothing about how the page is laid out, and
+// left at the bottom of the stack so everything that is already clickable sits
+// in front of it.
+.backdrop_link {
+  inset: 0;
+  position: fixed;
+  z-index: 0;
+}
+
+// The heading is the link. It contributes no box of its own: the pill inside
+// keeps the exact geometry it had when it was just a link.
+.headline {
+  display: flex;
+  font-size: inherit;
+  font-weight: inherit;
+  justify-content: center;
+  letter-spacing: inherit;
+  line-height: inherit;
+  margin: 0;
+  max-width: 100%;
+  min-width: 0;
 }

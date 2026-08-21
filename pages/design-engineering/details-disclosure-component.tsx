@@ -3,21 +3,18 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { DetailsComponent } from "@/components/Details/DetailsComponent";
+import { ArticleDates } from "@/components/Navigation/ArticleDates";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
-import { PageMetas } from "@/components/PageMetas/PageMetas";
+import { ComponentPageMetas } from "@/components/PageMetas/ComponentPageMetas";
 import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer";
-import {
-  ComponentId,
-  COMPONENTS,
-} from "@/constants/design-engineering/components";
+import { ComponentId } from "@/constants/design-engineering/components";
 
 const componentId: ComponentId = "details";
 
 const DetailsDisclosureComponent = () => {
-  const component = COMPONENTS[componentId];
   return (
     <>
-      <PageMetas {...component.metas} />
+      <ComponentPageMetas componentId={componentId} />
       <TableOfContents.Provider>
         <DetailsPageContent />
       </TableOfContents.Provider>
@@ -44,8 +41,9 @@ const DetailsPageContent = () => {
           Back to gallery
         </Link>
         <h1 id="design-engineering-a-table-of-content-component">
-          Design engineering: a details (or disclosure) component
+          Animating the native details element
         </h1>
+        <ArticleDates componentId={componentId} />
         <p>
           Every now and then, we need a disclosure component. That is, an
           element that contains additional information, hidden by default, and

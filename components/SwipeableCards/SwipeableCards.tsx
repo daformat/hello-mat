@@ -859,7 +859,7 @@ const shouldReturnToStack = (state: DraggingState, rect: DOMRect) => {
 /**
  * Returns a `trigger` function and the current `swipeStyle` for use inside
  * programmatic swipe buttons. `trigger` handles finding the top card element,
- * wiring up the drag state, and committing the swipe — the callback only needs
+ * wiring up the drag state, and committing the swipe, the callback only needs
  * to set the velocity/pivot/position values that differ per direction.
  */
 const useProgrammaticSwipe = () => {

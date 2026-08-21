@@ -343,6 +343,19 @@ export const StencilSvgAnimation = () => {
   };
   return (
     <>
+      {/* The whole page is a way in to the gallery, not just the artwork. This
+          covers the viewport and sits behind everything that is already
+          clickable, so the toolbar, the logos, and the heading below keep their
+          own clicks. It draws nothing and takes up no space, so the layout is
+          exactly what it was. Hidden from assistive tech and from the tab order
+          on purpose: the heading is the same link, named, and one destination
+          does not need two stops. */}
+      <Link
+        href={"/design-engineering"}
+        className={styles.backdrop_link}
+        aria-hidden="true"
+        tabIndex={-1}
+      />
       <div className={styles.container}>
         <div className={styles.wrapper} key="wrapper" ref={wrapperRef}>
           {paths.map((path, i) => (
@@ -389,22 +402,24 @@ export const StencilSvgAnimation = () => {
           </li>
         ))}
       </ul>
-      <Link
-        href={"/design-engineering"}
-        className={styles.controls}
-        style={{
-          marginTop: "calc(clamp(42px, 10vh, 84px) * -1 + 8px)",
-          paddingLeft: 18,
-          paddingRight: 18,
-          borderRadius: 8,
-        }}
-        data-controls=""
-      >
-        <small>
-          -&gt; &nbsp;&nbsp;Browse design engineering portfolio&nbsp;&nbsp;
-          &lt;-
-        </small>
-      </Link>
+      {/* The page's heading and its way in, in one control. The homepage is the
+          animation, so the only text on it may as well be the text that says
+          what the site is about. */}
+      <h1 className={styles.headline}>
+        <Link
+          href={"/design-engineering"}
+          className={styles.controls}
+          style={{
+            marginTop: "calc(clamp(42px, 10vh, 84px) * -1 + 8px)",
+            paddingLeft: 18,
+            paddingRight: 18,
+            borderRadius: 8,
+          }}
+          data-controls=""
+        >
+          <small>Design. Engineering. Product&nbsp;&nbsp;-&gt;</small>
+        </Link>
+      </h1>
     </>
   );
 };

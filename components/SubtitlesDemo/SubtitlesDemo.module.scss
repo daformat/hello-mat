@@ -8,7 +8,7 @@
  *
  * The fake Mac follows the page: light desktop under a light page, dark under a
  * dark one, the way the real one follows the system. Two things do not, because
- * they do not on a Mac either — the app icons and the artwork keep their own
+ * they do not on a Mac either: the app icons and the artwork keep their own
  * colours, and the caption box stays black with white text, since that is what
  * the app draws whatever the desktop behind it is doing.
  *
@@ -49,7 +49,7 @@
   /* A background window is not dimmed on a Mac, but the demo has three of them
      overlapping in a small space, and the front one has to win. This is the
      least that does it: the colour drains a little out of the content, and the
-     chrome — title bar, traffic lights — is left alone, because that is where
+     chrome, title bar and traffic lights, is left alone, because that is where
      macOS puts the difference. */
   --content-dim: saturate(0.75) brightness(0.99);
   --desktop-bg: radial-gradient(
@@ -148,7 +148,7 @@
    --u, one hundredth of the screen's own width. The demo is a scale model of a
    desktop, so it has to behave like one: sized off the viewport, the chrome kept
    its floors while the screen shrank, and a title bar that is 3.4% of the width
-   at full size was 10% of it in this page's narrow column — the model stopped
+   at full size was 10% of it in this page's narrow column, and the model stopped
    being to scale and started looking like a toy.
    --u is capped at the 8.8px it reaches at the 880px the screen tops out at, so
    nothing changes at full size, and floored at 4px, because a model that scales
@@ -177,7 +177,7 @@
 
 /* Above the windows and above the ⌘-tab panel, the way a menu bar is. The one
    thing that goes over it is the caption overlay, which on a real Mac covers the
-   menu bar too — that is what "above every window" means.
+   menu bar too, which is what "above every window" means.
 
    Translucent over a heavy blur, as the real one is. It can afford to be: a
    window cannot be dragged up under it (see the drag, which floors a window's
@@ -230,7 +230,7 @@
   width: calc(0.57 * var(--u));
 }
 
-/* 1.8s each way, autoreversed, 1.0 → 0.25 — the app's "live" pulse. */
+/* 1.8s each way, autoreversed, 1.0 → 0.25, the app's "live" pulse. */
 .is_live .mb_dot {
   animation: badge-pulse 3.6s ease-in-out infinite;
   opacity: 1;
@@ -259,11 +259,11 @@
   position: relative;
 }
 
-/* fake macOS windows — all three stacked, one fronted at a time.
+/* fake macOS windows, all three stacked, one fronted at a time.
 
    Nothing dims the ones behind, because macOS doesn't: a background window keeps
-   its own colours, and what marks it as inactive is its chrome — greyed traffic
-   lights, a faded title — and a shallower shadow than the window on top of it. */
+   its own colours, and what marks it as inactive is its chrome, greyed traffic
+   lights, a faded title, and a shallower shadow than the window on top of it. */
 .demo_window {
   background: var(--window-bg);
   border: 1px solid rgb(var(--ink) / 0.11);
@@ -357,7 +357,7 @@
 }
 
 /* The handle: a window is dragged by its bar, as on a real desktop, and no
-   modifier — the caption box needs shift because it is what clicks fall
+   modifier, the caption box needs shift because it is what clicks fall
    through, and a window is not. */
 .titlebar {
   align-items: center;
@@ -424,7 +424,7 @@
     color: rgb(var(--ink) / 0.3);
   }
 
-  /* And the content takes a step back — only the content: dimming the title bar
+  /* And the content takes a step back, only the content: dimming the title bar
      as well would read as the window being disabled rather than as another
      window being in front of it. */
   .win_content {
@@ -439,7 +439,7 @@
   transition: filter 0.28s ease;
 }
 
-/* An abstract "something is playing" scene — no real video needed. */
+/* An abstract "something is playing" scene, no real video needed. */
 .scene {
   background: var(--scene-bg);
   inset: 0;
@@ -523,8 +523,8 @@
 }
 
 /* Nothing in this pane may be shrunk to fit. The pane runs out of height before
-   the demo runs out of width — --u stops at its floor while the screen keeps
-   getting shorter — and flex takes what it needs from whichever child has the
+   the demo runs out of width, --u stops at its floor while the screen keeps
+   getting shorter, and flex takes what it needs from whichever child has the
    least to say for itself, which is the waveform: it has no content of its own,
    so it collapsed from 28px to 2px on a phone while everything around it kept
    its size. It gives up nothing now; what gives is the layout, below. */
@@ -1048,7 +1048,7 @@
   visibility: hidden;
   /* The panel is rasterised once and scaled as a whole. Without it the scale
      lands and Chromium re-rasterises, and the icons' SVG contents snap to a
-     different subpixel origin than the CSS tiles they sit on — which nobody
+     different subpixel origin than the CSS tiles they sit on, which nobody
      notices on the two icons drawn as small marks, and everybody notices on the
      player, whose mark is a white disc across most of its tile. It moved about a
      pixel against its neighbours every time the panel settled. */
@@ -1113,7 +1113,7 @@
 
    The geometry the CSS used to hold, now in the markup: the badge is 64% of the
    tile, so r is 32% of a 24 box; the mark is drawn at half size about the
-   centre, which puts it at 32% of the tile tall — half the badge's diameter, the
+   centre, which puts it at 32% of the tile tall, half the badge's diameter, the
    proportion a play button normally uses, and the point at which it stops
    looking lost in the circle. Rounding a filled shape by stroking it with round
    joins also dilates it, by the stroke width, so the two are one calculation
@@ -1163,7 +1163,7 @@
   opacity: 1;
 }
 
-/* The top layer, above every window and above the switcher — that is the whole
+/* The top layer, above every window and above the switcher, that is the whole
    point of it. Colours, radius, padding and the content-hugging width are the
    app's own: black at 0.72, white SF Rounded semibold, 14pt radius and 22×14pt
    insets at its 30pt default, with a floor so short lines don't jitter.
@@ -1462,7 +1462,7 @@
 /* Not `.scene`: that name is taken further up by the podcast window's backdrop,
    which is absolutely positioned and would swallow the button whole.
 
-   The whole segment is the button — track, label, and the space around both —
+   The whole segment is the button, track, label, and the space around both, 
    rather than a 4px bar you have to aim at. */
 .scene_button {
   appearance: none;
