@@ -499,6 +499,38 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
           application.
         </p>
 
+        <h2 id="why-solari-board">Why they are called Solari boards</h2>
+        <p>
+          The name comes from <strong>Solari di Udine</strong>, the Italian
+          manufacturer whose displays ended up in so many European stations and
+          airports that the company name became the word for the thing, the way
+          it did for the biro and the thermos. If you have a memory of a
+          departure board clattering its way through the alphabet while you
+          worked out whether your train was late, it was very probably one of
+          theirs.
+        </p>
+        <p>
+          The mechanism is worth understanding before the code, because it is
+          what the component models. Each character position is a drum carrying
+          a stack of hinged flaps, each printed with half of one character on
+          its front and half of the next on its back. To change what is shown,
+          the drum turns and the flaps fall past the split under their own
+          weight until the requested one is at the front. That is where the
+          clatter comes from, and it is also why the boards always cycled{" "}
+          <strong>forwards</strong> through the whole set rather than taking the
+          short way round: the drum only turns one way.
+        </p>
+        <p>
+          It also explains the constraint the digital version inherits. A drum
+          only shows what is physically on it, so a position that carried digits
+          could not suddenly display a letter, and boards were built with
+          different drums in different places: letters where the destinations
+          went, digits where the times did. That is exactly what the{" "}
+          <code>characters</code> prop is, and why it takes an array as well as
+          a string. Pass one string and every slot gets the same set. Pass an
+          array and each slot gets its own drum.
+        </p>
+
         <h2 id="install">Install</h2>
         <p>
           Open the repo in{" "}
@@ -1077,6 +1109,34 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
             forwarded to the flap <code>&lt;span&gt;</code>.
           </li>
         </ul>
+
+        <h2 id="the-font-question">A note on the font</h2>
+        <p>
+          The component does not choose one, which tends to surprise people. It
+          sets a size and inherits everything else from the page it is on, which
+          is deliberate: a departure board rendered in your own typeface looks
+          like your site, and one rendered in a typeface I picked looks like my
+          demo dropped into your site.
+        </p>
+        <p>
+          What actually matters is not which face you use but{" "}
+          <strong>whether its characters are the same width</strong>. Every slot
+          here is a fixed box, because on the real thing every drum is the same
+          drum, so a proportional face will make the box jump as it flips
+          between a wide character and a narrow one, and the whole illusion goes
+          with it. Reach for a monospaced face and the problem disappears. If
+          you are only ever showing numbers and you would rather keep your body
+          face, <code>font-variant-numeric: tabular-nums</code> buys you the
+          same thing for digits alone.
+        </p>
+        <p>
+          Beyond that it is mostly a question of how much character you want.
+          The boards these are modelled on were not typographically precious:
+          the lettering was condensed, heavy, and slightly crude, because it had
+          to be legible from the other end of a concourse and printed on a piece
+          of hinged plastic. A grotesque with tight apertures gets you closer
+          than anything designed to be admired at close range.
+        </p>
 
         <h2 id="conclusion">That’s a wrap</h2>
         <p>

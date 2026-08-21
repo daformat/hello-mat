@@ -97,7 +97,7 @@ export const COMPONENTS = {
       imageWidth: 1200,
       imageHeight: 630,
       datePublished: "2025-09-16",
-      dateModified: "2026-06-06",
+      dateModified: "2026-08-21",
     },
   },
   "collapsible-toolbar": {
@@ -131,7 +131,7 @@ export const COMPONENTS = {
       imageWidth: 1200,
       imageHeight: 630,
       datePublished: "2025-09-27",
-      dateModified: "2026-01-15",
+      dateModified: "2026-08-21",
     },
   },
   "publish-button": {
@@ -165,7 +165,7 @@ export const COMPONENTS = {
       imageWidth: 1200,
       imageHeight: 630,
       datePublished: "2025-09-28",
-      dateModified: "2026-01-15",
+      dateModified: "2026-08-21",
     },
   },
   "dock-component": {
@@ -197,7 +197,7 @@ export const COMPONENTS = {
       imageWidth: 1200,
       imageHeight: 630,
       datePublished: "2025-10-04",
-      dateModified: "2026-01-15",
+      dateModified: "2026-08-21",
     },
   },
   "carousel-component": {
@@ -256,16 +256,16 @@ export const COMPONENTS = {
     videoDuration: 13.334,
     metas: {
       shortTitle: "Rolling stacking cards",
-      title: "Rolling stacked cards, a scroll-driven animation",
+      title: "Stacked cards animation on scroll, with CSS",
       description:
-        "Cards that roll and stack as the page scrolls, built on scroll-driven animations with React, TypeScript, and SCSS.",
+        "A card stack that builds as you scroll and never grows past four, and how position sticky and scroll-driven CSS animations split the work between them.",
       url: "/design-engineering/stacking-cards",
       image:
         "/media/design-engineering/stacking-cards/og-stacking-cards-light.png",
       imageWidth: 1200,
       imageHeight: 630,
       datePublished: "2025-10-19",
-      dateModified: "2026-01-15",
+      dateModified: "2026-08-21",
     },
   },
   "swipeable-cards": {
@@ -361,16 +361,16 @@ export const COMPONENTS = {
     videoDuration: 9.75,
     metas: {
       shortTitle: "A split-flap display component",
-      title: "A realistic split-flap display in React",
+      title: "An animated split-flap display in React, Solari style",
       description:
-        "A departure board that flips like the real thing, down to the half-card overlap and the per-flap timing. React and TypeScript.",
+        "A Solari style departure board that flips like the real thing: a drum that really rotates rather than a faked spool, per-slot character sets, and the typography that makes it read as mechanical.",
       url: "/design-engineering/split-flap-display",
       image:
         "/media/design-engineering/split-flap-display/og-split-flap-display-light.png",
       imageWidth: 1200,
       imageHeight: 630,
       datePublished: "2025-12-20",
-      dateModified: "2026-05-12",
+      dateModified: "2026-08-21",
     },
   },
   slider: {

@@ -177,7 +177,11 @@ export const getFormattedChanges = (
       if (isSeparator(char, localeDecimal)) {
         // For separators: animate if truly new AND in/near the insertion region
         const remaining = remainingNewSeparators.get(char ?? "") ?? 0;
-        if (remaining > 0 && idx >= insertStartFormatted && idx < insertEndFormatted) {
+        if (
+          remaining > 0 &&
+          idx >= insertStartFormatted &&
+          idx < insertEndFormatted
+        ) {
           addedIndices.add(idx);
           remainingNewSeparators.set(char ?? "", remaining - 1);
         } else if (remaining > 0 && numInserted > 0) {
@@ -625,7 +629,11 @@ export const getPositionChanges = (
               oldFormattedIdx,
               localeDecimal
             );
-            const newGroup = getGroupNumber(newFormatted, newIdx, localeDecimal);
+            const newGroup = getGroupNumber(
+              newFormatted,
+              newIdx,
+              localeDecimal
+            );
 
             if (oldGroup !== newGroup) {
               changes.push({

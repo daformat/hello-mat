@@ -16,7 +16,7 @@ const Homepage = () => {
     <>
       <PageMetas
         shortTitle="Hello Mat"
-        title="Mathieu Jouhet, design engineer"
+        title="Hello Mat, design engineering by Mathieu Jouhet"
         description="I'm Mat, a design engineer. I build interface components for the web and write up how they work, down to the details you feel rather than see."
         url="/"
         image="https://hello-mat.com/media/hello-mat-light.png"

@@ -90,9 +90,12 @@ const StackingCardsPageContent = () => {
         </h1>
         <ArticleDates componentId={componentId} />
         <p>
-          A scroll-driven animation that stacks cards in a rolling fashion, with
-          up to 4 stacked cards at a time. Just scroll the page to see it in
-          action.
+          A card stack that builds itself as you scroll: each card sticks to the
+          top of the viewport, shrinks back as the next one arrives over it, and
+          is discarded off the top once four are stacked up, so the pile never
+          grows past four. It is built with{" "}
+          <strong>scroll-driven CSS animations</strong> and about fifteen lines
+          of JavaScript. Scroll the page to see it.
         </p>
         <style
           dangerouslySetInnerHTML={{
@@ -156,6 +159,27 @@ const StackingCardsPageContent = () => {
           />
         </div>
 
+        <h2 id="two-mechanisms">Two mechanisms, not one</h2>
+        <p>
+          The thing that took me longest to see is that a stacked cards effect
+          is <strong>two separate techniques doing two separate jobs</strong>,
+          and almost every explanation of it runs them together.
+        </p>
+        <p>
+          The stacking is not an animation at all. Every card is{" "}
+          <code>position: sticky</code> with <code>top: 0</code>, so as you
+          scroll, each one stops at the top of the viewport and the next card
+          slides up underneath it. That alone gets you a pile of cards, in plain
+          CSS, with no timeline involved and no JavaScript. If all you want is a
+          stack, you can stop reading here.
+        </p>
+        <p>
+          The scroll-driven animation does the other half: it takes the cards
+          that are already stuck and scales them back so the pile reads as
+          depth, then discards the ones at the bottom once the stack is four
+          deep. That is what stops it turning into a heap of forty cards by the
+          end of the page.
+        </p>
         <h2 id="scroll-driven-animations">Scroll driven animations</h2>
         <p>
           A relatively new feature in modern browsers, scroll-driven animations
@@ -163,6 +187,23 @@ const StackingCardsPageContent = () => {
           While the basics are pretty simple to master, making the animation
           rolling is a bit more complex. You’ll need to stack multiple
           animations and calculate offsets based on the total wrapper height.
+        </p>
+        <p>
+          The timeline here is a <strong>view timeline</strong> rather than a
+          scroll timeline: the wrapper declares{" "}
+          <code>view-timeline-name: --cards-scrolling</code>, so progress is
+          measured by how far the wrapper has travelled through the viewport
+          rather than by how far the page has scrolled. Each card then attaches
+          to that timeline and runs over a slice of it.
+        </p>
+        <p>
+          Working out the slice is where it gets gnarly. Each card’s range is
+          expressed against the <code>exit-crossing</code> phase, and its start
+          and end are computed from the card’s own index, the number of cards
+          allowed in the stack, the card height, and the wrapper’s block size.
+          It is a lot of arithmetic in a custom property, and it is the reason
+          this looks harder than it is: the effect is simple, the bookkeeping is
+          not.
         </p>
         <h3 id="stacking-multiple-animations">
           Stacking multiple scroll-driven animations
@@ -181,6 +222,29 @@ const StackingCardsPageContent = () => {
           discarded. While this might be doable without javascript, the css
           calculations are already a bit gnarly, and I didn’t want to complicate
           things further.
+        </p>
+        <h2 id="the-rolling-part">What makes it roll</h2>
+        <p>
+          Scaling a card down on its own centre makes it recede, which is fine
+          but flat. The rolling comes from one line:{" "}
+          <code>transform-origin: center 200%</code>, which puts the origin well
+          below the card, so the same scale reads as the card tipping away from
+          you over an axis somewhere near your knees. It is a small change and
+          it is most of the character of the effect.
+        </p>
+        <p>
+          The discard keyframe then takes the card out with a negative{" "}
+          <code>margin-top</code> as well as opacity and scale, so the cards
+          underneath close the gap as it leaves rather than waiting for it to
+          finish fading.
+        </p>
+        <h2 id="when-the-browser-cannot">When the browser cannot do it</h2>
+        <p>
+          Scroll-driven animations are still not everywhere, so the demo above
+          is behind <code>@supports (animation-timeline: view())</code>. Where
+          it is not supported you get a video of the effect and a note saying
+          so, rather than a stack of cards sitting there doing nothing, which is
+          the failure mode you get if you ship this and assume.
         </p>
         <h2 id="conclusion">That’s a wrap</h2>
         <p>

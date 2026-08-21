@@ -131,4 +131,3 @@ export const isRawCharacter = (
   }
   return /[\d.\-]/.test(char) || char === localeDecimal;
 };
-

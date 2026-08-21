@@ -9,7 +9,7 @@
  * reproduce a declaration on this page, not to be used by anybody.
  */
 
-import { type Rgb,yiqLuma } from "@daformat/contrast-color";
+import { type Rgb, yiqLuma } from "@daformat/contrast-color";
 
 export const cssYiqFallback = (bgRgb: Rgb, steep: number): Rgb => {
   const v = Math.min(255, Math.max(0, (yiqLuma(bgRgb) - 128) * -steep));

@@ -1,17 +1,12 @@
 {
-  "plugins": [
-    "@typescript-eslint",
-    "simple-import-sort"
-  ],
+  "plugins": ["@typescript-eslint", "simple-import-sort"],
   "extends": [
     "next",
     "next/core-web-vitals",
     "plugin:@typescript-eslint/recommended",
     "prettier"
   ],
-  "ignorePatterns": [
-    "coverage/*"
-  ],
+  "ignorePatterns": ["coverage/*"],
   "rules": {
     "@next/next/no-img-element": "off",
     "@typescript-eslint/no-restricted-types": "warn",
@@ -27,10 +22,7 @@
         "argsIgnorePattern": "^_"
       }
     ],
-    "semi": [
-      "error",
-      "always"
-    ],
+    "semi": ["error", "always"],
     "quotes": [
       "warn",
       "double",
@@ -38,14 +30,8 @@
         "avoidEscape": true
       }
     ],
-    "curly": [
-      "error",
-      "all"
-    ],
-    "comma-dangle": [
-      "warn",
-      "always-multiline"
-    ],
+    "curly": ["error", "all"],
+    "comma-dangle": ["warn", "always-multiline"],
     "no-unused-vars": "off",
     "no-irregular-whitespace": [
       "error",
