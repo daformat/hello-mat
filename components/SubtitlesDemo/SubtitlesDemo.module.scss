@@ -52,17 +52,22 @@
      chrome, title bar and traffic lights, is left alone, because that is where
      macOS puts the difference. */
   --content-dim: saturate(0.75) brightness(0.99);
+  /* The wallpaper: indigo, pink, peach and cyan, one radial each, over a
+     lilac-to-peach wash. Both themes use the same four positions, so the
+     desktop reads as the same picture with the lights turned down. */
   --desktop-bg: radial-gradient(
-      60% 70% at 22% 8%,
-      rgb(150 156 255 / 0.5),
-      transparent 70%
+      55% 60% at 16% 10%,
+      rgb(112 100 255 / 0.62),
+      transparent 64%
     ),
+    radial-gradient(48% 55% at 86% 18%, rgb(255 110 170 / 0.5), transparent 66%),
     radial-gradient(
-      52% 60% at 88% 96%,
-      rgb(255 176 150 / 0.45),
-      transparent 72%
+      58% 50% at 72% 96%,
+      rgb(255 168 100 / 0.66),
+      transparent 66%
     ),
-    linear-gradient(158deg, #cdd6f2 0%, #e6e6f4 46%, #f2eef0 100%);
+    radial-gradient(42% 46% at 12% 90%, rgb(80 196 235 / 0.5), transparent 66%),
+    linear-gradient(160deg, #c7c2ff 0%, #ead6f4 48%, #ffd8c2 100%);
   --scene-bg: radial-gradient(
       42% 58% at 26% 32%,
       rgb(150 146 255 / 0.42),
@@ -109,12 +114,26 @@
       0 26px 60px -10px rgb(0 0 0 / 0.72);
     --art-shadow: 0 10px 26px -8px rgb(0 0 0 / 0.8);
     --desktop-bg: radial-gradient(
-        60% 70% at 22% 8%,
-        rgb(120 116 255 / 0.34),
-        transparent 70%
+        55% 60% at 16% 10%,
+        rgb(104 88 255 / 0.5),
+        transparent 64%
       ),
-      radial-gradient(52% 60% at 88% 96%, rgb(78 74 190 / 0.3), transparent 72%),
-      linear-gradient(158deg, #2a2b45 0%, #191a2a 46%, #101019 100%);
+      radial-gradient(
+        48% 55% at 86% 18%,
+        rgb(225 70 150 / 0.36),
+        transparent 66%
+      ),
+      radial-gradient(
+        58% 50% at 72% 96%,
+        rgb(255 138 76 / 0.36),
+        transparent 66%
+      ),
+      radial-gradient(
+        42% 46% at 12% 90%,
+        rgb(40 160 225 / 0.32),
+        transparent 66%
+      ),
+      linear-gradient(160deg, #17142f 0%, #2b1b40 50%, #3a1e2b 100%);
     --scene-bg: radial-gradient(
         42% 58% at 26% 32%,
         rgb(112 108 255 / 0.44),
@@ -197,6 +216,30 @@
   padding-inline: calc(1.36 * var(--u));
   position: relative;
   z-index: 8;
+}
+
+/* The left half reads like the real bar: the mark, the app in front in bold,
+   then the first menus. All of it sits at the bar's own size, which follows
+   --u. */
+.mb_left {
+  align-items: center;
+  color: rgb(var(--ink) / 0.82);
+  display: inline-flex;
+  gap: calc(1.55 * var(--u));
+}
+
+.mb_apple {
+  height: calc(1.6 * var(--u));
+  margin-inline-end: calc(0.2 * var(--u));
+  width: calc(1.35 * var(--u));
+}
+
+.mb_app {
+  font-weight: 700;
+}
+
+.mb_menu {
+  color: rgb(var(--ink) / 0.72);
 }
 
 .mb_right {
@@ -336,6 +379,9 @@
   --z: 3;
   bottom: clamp(5.85cqw, 4.77692cqw + 9.44308px, 6.3cqw); /* 10.5% ->  9.75% */
   left: clamp(9cqw, 23.4185cqw - 89.3945px, 13.26cqw); /*  9%   -> 13.26% */
+  /* Five per cent narrower than the insets alone give, taken evenly from both
+     sides so it keeps its centre. */
+  margin-inline: 1.85cqw;
   right: clamp(9cqw, 23.4185cqw - 89.3945px, 13.26cqw); /*  9%   -> 13.26% */
   top: clamp(3.45cqw, 0.230769cqw + 28.3292px, 4.8cqw); /*  8%   ->  5.75% */
 }
@@ -436,6 +482,9 @@
   flex: 1;
   overflow: hidden;
   position: relative;
+  /* Whatever the page around the demo does with its text, a window's content
+     reads from the start, like the real thing. */
+  text-align: start;
   transition: filter 0.28s ease;
 }
 
@@ -635,7 +684,13 @@
    --u stops at a 4px floor around 440px of screen, so below that the bars hold
    their size while the pane carries on shrinking, and under about 365px the row
    was wider than the window. Narrower than 400px they give up a quarter of their
-   width: show less rather than the same thing clipped. */
+   width: show less rather than the same thing clipped.
+
+   Once the component mounts, its wave-fit effect takes over: it measures the
+   row in device pixels and sets each bar and gap inline to a whole number of
+   them, so the row fills its width exactly and every bar paints the same.
+   What is above is the layout before that runs, and the whole of it for the
+   server-rendered markup. */
 @container (max-width: 400px) {
   .pod_wave i {
     width: calc(0.375 * var(--u));

@@ -150,6 +150,8 @@ export const SubtitlesDemo = () => {
   // The stack's boxes are put there by hand rather than rendered, so this is a
   // ref to an element React is asked to leave alone. See the effect below.
   const historyRef = useRef<HTMLDivElement>(null);
+  // The podcast waveform, so the fit effect below can measure its row.
+  const waveRef = useRef<HTMLDivElement>(null);
 
   const [reducedMotion, setReducedMotion] = useState(false);
   const [clock, setClock] = useState("");
@@ -1316,6 +1318,51 @@ export const SubtitlesDemo = () => {
     return () => observer.disconnect();
   }, [insideStage, spot]);
 
+  // The waveform, fitted to its row in whole device pixels. Laid out by CSS the
+  // bars sat on a fractional pitch, so each one was painted a device pixel
+  // wider or narrower than its neighbour and the row read as a beat of thick
+  // and thin; sized to --u instead, it stopped short of the right edge.
+  // Measuring the row in device pixels, giving every bar and every gap a whole
+  // number of them and handing the remainder to the first few gaps, one pixel
+  // each, fills the row exactly and paints every bar the same.
+  useEffect(() => {
+    const wave = waveRef.current;
+    if (!wave || typeof ResizeObserver !== "function") {
+      return;
+    }
+    const bars = Array.from(wave.children) as HTMLElement[];
+    const n = bars.length;
+    if (n < 2) {
+      return;
+    }
+    const fit = () => {
+      const dpr = window.devicePixelRatio || 1;
+      const width = Math.floor(wave.clientWidth * dpr);
+      if (width < n * 2) {
+        return;
+      }
+      // Bars four times the gap, as the stylesheet draws them.
+      const unit = width / (n * 4 + (n - 1));
+      const gap = Math.max(1, Math.round(unit));
+      const bar = Math.max(1, Math.floor((width - (n - 1) * gap) / n));
+      const spare = width - n * bar - (n - 1) * gap;
+      wave.style.gap = "0px";
+      bars.forEach((b, i) => {
+        b.style.width = `${bar / dpr}px`;
+        b.style.marginInlineEnd =
+          i < n - 1 ? `${(gap + (i < spare ? 1 : 0)) / dpr}px` : "0px";
+      });
+    };
+    const observer = new ResizeObserver(fit);
+    observer.observe(wave);
+    window.addEventListener("resize", fit);
+    fit();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", fit);
+    };
+  }, []);
+
   const played = Math.round((elapsed / TOTAL) * WAVE.length);
 
   // A window is a way into its own scene. The one in front is already there, so
@@ -1378,7 +1425,22 @@ export const SubtitlesDemo = () => {
           are the only part of this anybody can operate. */}
       <div ref={screenRef} className={styles.screen} aria-hidden="true">
         <div className={styles.menubar}>
-          <span />
+          {/* The left half of a real bar: the mark, the app in front, and its
+              first menus. The name follows whichever window is in front, which
+              is what the bar is for. */}
+          <span className={styles.mb_left}>
+            <svg
+              className={styles.mb_apple}
+              viewBox="0 0 17 20"
+              fill="currentColor"
+            >
+              <path d="M14.1 10.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9-.7 0-1.9-.8-3.1-.8C4.5 5.4 3 6.3 2.2 7.8c-1.7 2.9-.4 7.2 1.2 9.6.8 1.2 1.7 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8 1.5 0 1.9.8 3.2.8s2.1-1.2 2.9-2.4c.9-1.3 1.3-2.6 1.3-2.7 0 0-2.6-1-2.8-4.1zM11.8 3.6c.7-.8 1.1-1.9 1-3-1 0-2.1.6-2.8 1.4-.6.7-1.2 1.8-1 2.9 1.1.1 2.2-.5 2.8-1.3z" />
+            </svg>
+            <span className={styles.mb_app}>{APPS[front]}</span>
+            <span className={styles.mb_menu}>File</span>
+            <span className={styles.mb_menu}>Edit</span>
+            <span className={styles.mb_menu}>View</span>
+          </span>
           <span className={styles.mb_right}>
             <span className={cx(styles.mb_glyph, styles.is_live)}>
               <svg viewBox="0 0 16 14" fill="currentColor">
@@ -1513,7 +1575,7 @@ export const SubtitlesDemo = () => {
                       <i>Episode 42 · Ana Ferreira</i>
                     </span>
                   </div>
-                  <div className={styles.pod_wave}>
+                  <div ref={waveRef} className={styles.pod_wave}>
                     {WAVE.map((height, index) => (
                       <i
                         key={index}

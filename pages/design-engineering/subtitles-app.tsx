@@ -127,11 +127,12 @@ const SubtitlesAppPageContent = () => {
         <h3 id="no-images">Not a single image</h3>
         <p>
           There is no video in here, no screen recording, and no screenshot. Not
-          one image file. The desktop is a couple of radial gradients, the
-          participants are initials on a linear gradient, the album art is a
-          gradient too, the waveform is ninety-six divs with a height each, and
-          the notes document is a stack of grey rounded rectangles pretending to
-          be sentences.
+          one image file. The desktop is four radial gradients over a linear
+          one, the participants are initials on a linear gradient, the album art
+          is a gradient too, the waveform is ninety-six divs with a height each,
+          and the notes document is a stack of grey rounded rectangles
+          pretending to be sentences. Even the Apple mark in the menu bar is an
+          inline path.
         </p>
         <p>
           That started as a constraint I set for fun and turned out to be the
@@ -275,6 +276,20 @@ const SubtitlesAppPageContent = () => {
           compositing bill you are paying for something nobody can see.
         </p>
         <p>
+          The width of the bars is the detail I got wrong twice. Laid out as
+          flex children they stretched to fill the row, which put ninety-six
+          bars on a fractional pitch, and the raster rounded each one to a
+          different number of device pixels: the row read as a beat of thick and
+          thin that came and went with the animation. Sized to a fixed multiple
+          of the screen unit instead, the bars were all the same width and the
+          row stopped short of the right edge. So the component now measures the
+          row in device pixels, gives every bar and every gap a whole number of
+          them, and hands the remainder to the first few gaps, one pixel each.
+          The stylesheet still lays the bars out on its own for the
+          server-rendered markup, and the fit takes over the moment the
+          component mounts and again whenever the row resizes.
+        </p>
+        <p>
           The playhead runs at four times real time. A scene lasts about a dozen
           seconds and a real playhead would not visibly move in that, and the
           clock counting up is the part people read as &ldquo;this is
@@ -317,7 +332,10 @@ const SubtitlesAppPageContent = () => {
           The menu bar clock is real, formatted in your own locale, re-arming on
           the next minute boundary rather than ticking every second. It is a
           throwaway detail that nobody will ever mention, and the demo would
-          feel subtly wrong without it.
+          feel subtly wrong without it. The left half of the bar is the same
+          kind of detail: the Apple mark, the name of whichever window is in
+          front in bold, and the first three menus, so bringing a window forward
+          changes the bar the way it does on a real Mac.
         </p>
 
         <h3 id="two-desktops">One demo, two desktops</h3>
