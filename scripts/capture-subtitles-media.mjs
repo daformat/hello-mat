@@ -19,9 +19,11 @@
 //
 //   · the fake screen is stretched edge to edge, with its radius, border and
 //     shadow removed, so the frame is all demo and no background;
-//   · the windows are narrowed to 84% of their width on the site, each about
-//     its own centre, because at full bleed the site's proportions read as
-//     cramped;
+//   · the stage keeps the demo's own proportions and scale: it is sized to
+//     the frame's height at its 16/9.6 ratio and centred, with the unit every
+//     piece of chrome is drawn in taken from that width, exactly as the site
+//     derives it. The frame is wider than the demo is, so the difference is
+//     more desktop either side of the windows rather than wider windows;
 //   · the clip is cut at the wrap-around back to the meeting, so one loop
 //     plays on repeat without a seam, and then rotated by a few frames so it
 //     opens on the meeting window rather than on the tail of the ⌘-tab fade.
@@ -70,21 +72,18 @@ const OG = { width: 1200, height: 630 };
 // afterwards, it costs no second encode.
 const CUT_OFFSET_MS = 200;
 
-// The windows are 82% of the stage wide on the site, which is right for a page
-// but too wide once the screen is stretched edge to edge. These are the same
-// three windows at 84% of that width, each shrunk about its own centre so the
-// stack keeps its offsets: 82 × 0.84 = 68.88, half of it 34.44 either side of
-// centres that sit at 50%, 56% and 44%. The vertical insets are the site's own.
-const NARROWER_WINDOWS = `
+// The site measures everything inside the screen against the screen's own
+// width. Here the screen is the whole frame and the stage is narrower than it,
+// so the stage becomes the container instead: the windows' insets, in cqw, then
+// resolve against the stage they sit in, and land where they do on the site.
+const STAGE_RULES = `
   /* The screen's frame is a page detail; the recording is the screen itself. */
   .demo-screen::after { display: none; }
-  .win-meeting { inset: 8% 15.56% 10.5%; }
-  .win-notes   { inset: 12% 9.56% 10.5% 21.56%; }
-  .win-player  { inset: 5% 21.56% 10.5% 9.56%; }
+  .demo-stage { container-type: inline-size; }
 `;
 
 /** Fills the frame with the fake screen, and marks every wrap-around. */
-const isolate = (windowRules) => {
+const isolate = (stageRules) => {
   // The whole .demo, not just the screen inside it: the palette is declared on
   // .demo, so lifting the screen out on its own left every token undefined and
   // the capture came back as windows with no surfaces on no wallpaper.
@@ -105,14 +104,26 @@ const isolate = (windowRules) => {
   demo.querySelector(".demo-caption")?.remove();
   screen.style.cssText +=
     ";width:100vw;max-width:none;height:100vh;border:0;border-radius:0;box-shadow:none;margin:0";
-  // The stage is 16/9.6 by default; letting it take whatever is left of the
-  // viewport is what makes the screen fill the frame rather than sit in it.
-  stage.style.aspectRatio = "auto";
-  stage.style.height = `calc(100vh - ${menubar.offsetHeight}px)`;
 
   const overrides = document.createElement("style");
-  overrides.textContent = windowRules;
+  overrides.textContent = stageRules;
   document.head.append(overrides);
+
+  // The stage at the demo's own proportions, as tall as the frame allows and
+  // centred, with the unit taken from the width that gives. The menu bar's
+  // height is in that unit and the stage's height depends on the menu bar's,
+  // so it settles over a few passes; the fifth is already the fourth.
+  let unit = 8;
+  for (let pass = 0; pass < 5; pass += 1) {
+    menubar.style.setProperty("--u", `${unit}px`);
+    stage.style.setProperty("--u", `${unit}px`);
+    const height = window.innerHeight - menubar.offsetHeight;
+    const width = (height * 16) / 9.6;
+    stage.style.cssText += `;aspect-ratio:auto;height:${height}px;width:${width}px;margin-inline:auto`;
+    // The site's own unit, clamp(4px, 0.91cqw, 8px), off the stage's width.
+    // Spelled out here because this whole function runs inside the page.
+    unit = Math.min(8, Math.max(4, 0.0091 * width));
+  }
 
   // The loop comes back round when the meeting window fronts again.
   window.__marks = [];
@@ -167,7 +178,7 @@ const captureOg = async (browser, theme) => {
   });
   const page = await context.newPage();
   await page.goto(SITE);
-  await page.evaluate(isolate, NARROWER_WINDOWS);
+  await page.evaluate(isolate, STAGE_RULES);
   await page.waitForFunction(
     (line) =>
       document.getElementById("caption-text")?.textContent === line &&
@@ -202,7 +213,7 @@ const captureClip = async (browser, theme) => {
   });
   const page = await context.newPage();
   await page.goto(SITE);
-  await page.evaluate(isolate, NARROWER_WINDOWS);
+  await page.evaluate(isolate, STAGE_RULES);
 
   const work = mkdtempSync(join(tmpdir(), `subtitles-${theme}-`));
   const session = await context.newCDPSession(page);
@@ -248,7 +259,10 @@ const captureClip = async (browser, theme) => {
   const listFile = join(work, "frames.txt");
   writeFileSync(listFile, `${list}\nfile '${name(frames.length - 1)}'\n`);
 
-  // One pass, straight from the lossless frames to the file that ships.
+  // One pass, straight from the lossless frames to the file that ships. CRF 16
+  // is a step short of transparent for flat UI like this, and about 60% larger
+  // than the 20 it used to be; 4:2:0 chroma stays, because Safari will not
+  // play anything else, and it is only the coloured edges that pay for it.
   ffmpeg([
     "-f",
     "concat",
@@ -263,7 +277,7 @@ const captureClip = async (browser, theme) => {
     "-preset",
     "slow",
     "-crf",
-    "20",
+    "16",
     "-pix_fmt",
     "yuv420p",
     "-movflags",
