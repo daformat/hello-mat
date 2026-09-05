@@ -1,4 +1,5 @@
 import {
+  Component,
   ComponentId,
   COMPONENTS,
 } from "@/constants/design-engineering/components";
@@ -22,7 +23,12 @@ const format = (isoDate: string) =>
  * stale, and saying so is more useful than letting a reader guess.
  */
 export const ArticleDates = ({ componentId }: { componentId: ComponentId }) => {
-  const { datePublished, dateModified } = COMPONENTS[componentId].metas;
+  // Typed through Component rather than inferred: COMPONENTS is `as const`, so
+  // each date is a string literal, and the moment no page's modified date
+  // happens to equal any page's published date, the comparison below is between
+  // two unions with no overlap and tsc rejects it as unintentional.
+  const { datePublished, dateModified }: Component["metas"] =
+    COMPONENTS[componentId].metas;
 
   if (!datePublished) {
     return null;
