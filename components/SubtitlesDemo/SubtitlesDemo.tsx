@@ -98,6 +98,15 @@ const EPISODES = [
 // Every line is scaled by the same 100/92, so the raggedness is unchanged.
 const NOTE_LINES_TOP = ["100%", "84.8%", "92.4%", "47.8%"];
 const NOTE_LINES_BOTTOM = ["95.7%", "79.3%", "88%", "56.5%", "93.5%", "41.3%"];
+// The section under "Actions" may grow by two lines before the oldest goes, so
+// the page keeps its height while it is being written.
+const NOTES_LIMIT = NOTE_LINES_BOTTOM.length + 2;
+
+const between = (from: number, to: number) =>
+  from + Math.random() * (to - from);
+/** How long the next line runs: mostly a full one, now and then a short one. */
+const nextLineWidth = () =>
+  Math.random() < 0.15 ? between(28, 50) : between(55, 96);
 
 // The transport runs only while the player is in front, and faster than real
 // time on purpose: a scene lasts about a dozen seconds, and a real playhead
@@ -155,6 +164,12 @@ export const SubtitlesDemo = () => {
 
   const [reducedMotion, setReducedMotion] = useState(false);
   const [clock, setClock] = useState("");
+  // The notes document: the lines under "Actions", and how far along the one
+  // being written is. The writer keeps its own copy in a ref so a line carries
+  // on from where it stopped when the window comes back to the front.
+  const [notesLines, setNotesLines] = useState<string[]>(NOTE_LINES_BOTTOM);
+  const [writing, setWriting] = useState(0);
+  const writerRef = useRef({ width: 0, target: nextLineWidth() });
   const [front, setFront] = useState<AppId>(SCENES[0]?.app ?? "meeting");
   const [selected, setSelected] = useState<AppId>(SCENES[0]?.app ?? "meeting");
   const [switcherVisible, setSwitcherVisible] = useState(false);
@@ -1318,6 +1333,41 @@ export const SubtitlesDemo = () => {
     return () => observer.disconnect();
   }, [insideStage, spot]);
 
+  // Writing, while the notes are the window in front: a line grows under the
+  // caret, joins the page when it is done, and a fresh one starts. Nothing is
+  // typed in words, so the skeleton lines grow the way the ones already there
+  // were drawn. Behind another window the document holds still, as it does on
+  // a real desktop with the focus elsewhere, and so does the rest of the demo
+  // when it is off screen or in a hidden tab, which the paused flag covers.
+  useEffect(() => {
+    if (reducedMotion || front !== "notes") {
+      return;
+    }
+    const writer = writerRef.current;
+    let timer = 0;
+    const step = () => {
+      if (pausedRef.current) {
+        timer = window.setTimeout(step, 300);
+        return;
+      }
+      writer.width = Math.min(writer.target, writer.width + between(2.5, 6.5));
+      setWriting(writer.width);
+      if (writer.width < writer.target) {
+        timer = window.setTimeout(step, between(110, 190));
+        return;
+      }
+      // The line is done: it joins the page, and a fresh one starts.
+      const done = `${writer.target}%`;
+      setNotesLines((lines) => [...lines, done].slice(-NOTES_LIMIT));
+      writer.width = 0;
+      writer.target = nextLineWidth();
+      setWriting(0);
+      timer = window.setTimeout(step, between(350, 700));
+    };
+    timer = window.setTimeout(step, between(400, 1200));
+    return () => window.clearTimeout(timer);
+  }, [front, reducedMotion]);
+
   // The waveform, fitted to its row in whole device pixels. Laid out by CSS the
   // bars sat on a fractional pitch, so each one was painted a device pixel
   // wider or narrower than its neighbour and the row read as a beat of thick
@@ -1392,6 +1442,10 @@ export const SubtitlesDemo = () => {
           ? {
               height: `${spotted.height * 100}%`,
               inset: "auto",
+              // The position below is absolute; a margin the window was
+              // centred with would move it by that much the moment it is
+              // picked up, which is what sent the call window right on press.
+              marginInline: 0,
               left: `${spotted.left * 100}%`,
               top: `${spotted.top * 100}%`,
               width: `${spotted.width * 100}%`,
@@ -1528,10 +1582,14 @@ export const SubtitlesDemo = () => {
                     <i key={index} style={{ width }} />
                   ))}
                   <b className={styles.sub}>Actions</b>
-                  {NOTE_LINES_BOTTOM.map((width, index) => (
-                    <i key={index} style={{ width }} />
+                  {notesLines.map((width, index) => (
+                    <i key={`${index}-${width}`} style={{ width }} />
                   ))}
-                  <span className={styles.notes_caret} />
+                  {/* The line being written, with the caret at its end. */}
+                  <span className={styles.lw_write}>
+                    <i style={{ width: `${writing}%` }} />
+                    <span className={styles.notes_caret} />
+                  </span>
                 </div>
               </div>
             </div>

@@ -89,6 +89,10 @@
   --window-shadow-front: 0 2px 6px rgb(0 0 0 / 0.1),
     0 20px 44px -14px rgb(0 0 0 / 0.28);
   --art-shadow: 0 8px 20px -10px rgb(0 0 0 / 0.35);
+  /* The half-pixel ring macOS draws round a window, in place of a border: a
+     dark hairline outside, and on the dark desktop a light one inside too. */
+  --window-ring: 0 0 0 0.5px rgb(0 0 0 / 0.08);
+  --window-inner: transparent;
   /* Dark: the palette everything in here was drawn against, unchanged. */
   @media (prefers-color-scheme: dark) {
     --ink: 255 255 255;
@@ -113,6 +117,8 @@
     --window-shadow-front: 0 2px 6px rgb(0 0 0 / 0.36),
       0 26px 60px -10px rgb(0 0 0 / 0.72);
     --art-shadow: 0 10px 26px -8px rgb(0 0 0 / 0.8);
+    --window-ring: 0 0 0 0.5px rgb(0 0 0 / 0.6);
+    --window-inner: rgb(255 255 255 / 0.1);
     --desktop-bg: radial-gradient(
         55% 60% at 16% 10%,
         rgb(104 88 255 / 0.5),
@@ -309,9 +315,8 @@
    lights, a faded title, and a shallower shadow than the window on top of it. */
 .demo_window {
   background: var(--window-bg);
-  border: 1px solid rgb(var(--ink) / 0.11);
   border-radius: calc(1.25 * var(--u));
-  box-shadow: var(--window-shadow);
+  box-shadow: var(--window-ring), var(--window-shadow);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -330,7 +335,19 @@
      behind fall back on markup order, and this rule would beat the --z on the
      base selector anyway. Being in front is now only how it is lit. */
   &.is_front {
-    box-shadow: var(--window-shadow-front);
+    box-shadow: var(--window-ring), var(--window-shadow-front);
+  }
+
+  /* The inner ring is drawn over the content, since an inset shadow would sit
+     under the title bar. */
+  &::after {
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 0.5px var(--window-inner);
+    content: "";
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+    z-index: 20;
   }
 
   /* Anything but the front window is a way into its own scene. */
@@ -1070,6 +1087,22 @@
   height: calc(1.36 * var(--u));
   margin-top: -2px;
   width: 1.5px;
+}
+
+/* The line being written: the bar and the caret on one row, so the caret sits
+   at the end of the line rather than under it. The row is a line's height and
+   the caret overflows it rather than stretching it, so the line being written
+   sits at the same pitch as the ones above. */
+.lw_write {
+  align-items: center;
+  display: flex;
+  gap: calc(0.35 * var(--u));
+  height: calc(0.68 * var(--u));
+
+  .notes_caret {
+    flex: none;
+    margin-top: 0;
+  }
 }
 
 @keyframes blink {

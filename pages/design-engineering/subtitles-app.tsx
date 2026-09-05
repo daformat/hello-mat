@@ -135,6 +135,15 @@ const SubtitlesAppPageContent = () => {
           inline path.
         </p>
         <p>
+          The notes are not quite still, either. While that window is in front a
+          line grows under the caret, a few per cent at a time, joins the page
+          when it is done, and a fresh one starts, with the odd short line so it
+          does not read as a metronome. The section under the heading may grow
+          by two lines before the oldest goes, so the page keeps its height.
+          Behind another window the document holds still, as it does on a real
+          desktop when the focus is elsewhere.
+        </p>
+        <p>
           That started as a constraint I set for fun and turned out to be the
           right call. The whole thing weighs a few kilobytes of markup, it stays
           crisp at any size, it reflows at every breakpoint instead of
@@ -357,7 +366,11 @@ const SubtitlesAppPageContent = () => {
           that is what the app draws over a light desktop too. And the shadows
           get their own values per theme: the dark ones are deep because they
           fall on a near-black desktop where nothing shallower would read at
-          all, and the same shadow on a light desktop is a smear.
+          all, and the same shadow on a light desktop is a smear. The windows
+          have no border at all: what edges them is the half-pixel ring macOS
+          draws, dark outside on both desktops and, on the dark one, light
+          inside as well, drawn over the content so it does not disappear under
+          the title bar.
         </p>
         <p>
           A background window is a fourth. macOS does not dim one, so neither
