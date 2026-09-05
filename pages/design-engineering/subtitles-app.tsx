@@ -39,7 +39,7 @@ const SubtitlesAppPageContent = () => {
           Back to gallery
         </Link>
         <h1 id="design-engineering-the-subtitles-demo">
-          The Subtitles demo, built entirely in CSS
+          The Subtitles demo, built entirely in CSS and JS
         </h1>
         <ArticleDates componentId={componentId} />
         <p>
