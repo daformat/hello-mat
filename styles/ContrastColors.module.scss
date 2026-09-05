@@ -5,7 +5,7 @@
 /* Everything from the demo to the footnote, widened on a phone.
    `.page` is `100% - max(40vw, 10em)` and centred, so on a 390px screen it is
    about 230px of column between two 80px gutters. That measure is right for the
-   opening paragraphs and much too tight for what follows: five panes side by
+   opening paragraphs and much too tight for what follows: four panes side by
    side, a lightness ramp, and two tables that already scroll.
    So this borrows the right-hand gutter back, all but 16px of it, and leaves the
    left edge exactly where it was. The copy still starts on the same line as the

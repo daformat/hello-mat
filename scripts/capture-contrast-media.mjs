@@ -11,8 +11,8 @@
 // component and only exists once the page is served. Point CONTRAST_SITE at
 // whichever origin is running it.
 //
-// What it films is the lab's five panes, full bleed, while the lab walks its own
-// presets underneath them. Five answers to the same question, side by side, each
+// What it films is the lab's four panes, full bleed, while the lab walks its own
+// presets underneath them. Four answers to the same question, side by side, each
 // one rendered in the colour it is arguing for: that is the page in one frame,
 // and it is the only part of it that survives being scaled to a thumbnail. The
 // rest of the lab, and the six cases, make a stiller and busier card.
@@ -69,7 +69,7 @@ const ffmpeg = (args) =>
   });
 
 /**
- * Keep the five panes and nothing else, filling the frame edge to edge.
+ * Keep the four panes and nothing else, filling the frame edge to edge.
  *
  * Inline styles rather than a rewritten DOM: the component is live for the rest
  * of the capture and has to keep handling the preset clicks, which a reparented
@@ -115,13 +115,13 @@ const isolate = () => {
       overflow: hidden !important;
       padding: 0 !important;
     }
-    /* Five across whatever the width. The lab's own breakpoints drop to two
-       columns below 900px, and the point being made is that there are five
+    /* Four across whatever the width. The lab's own breakpoints drop to two
+       columns below 900px, and the point being made is that there are four
        answers to compare, side by side. */
     [class*="ContrastDemo_panes"] {
       border: 0 !important;
       border-radius: 0 !important;
-      grid-template-columns: repeat(5, 1fr) !important;
+      grid-template-columns: repeat(4, 1fr) !important;
       height: 100% !important;
       margin: 0 !important;
       width: 100% !important;
@@ -164,7 +164,7 @@ const verify = () => {
  *
  * The panes centre their contents, and the shifted pane carries two lines the
  * others don't: a delta and a direction. Centring a taller stack starts it
- * higher, so the five tags and the five specimens each sat on their own line.
+ * higher, so the four tags and the four specimens each sat on their own line.
  */
 const readoutHeights = () => {
   const readouts = [

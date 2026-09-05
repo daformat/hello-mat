@@ -258,14 +258,16 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
           <ContrastDemo.Provider>
             <ContrastDemo.Bench>
               <div className={styles.sec_head}>
-                <h2 id="five-ways">Five ways to pick ink</h2>
+                <h2 id="four-ways">Four ways to pick ink</h2>
               </div>
               <p>
-                The last three panes carry CSS declarations, the browser
-                resolves them, and the numbers underneath are read back off what
-                it painted. Move the background around and watch the{" "}
-                <code>×−1000</code> pane fall into its grey band, which is a
-                thing I would not have believed from a table and which{" "}
+                The last two panes carry CSS declarations, the browser resolves
+                them, and the numbers underneath are read back off what it
+                painted. The <code>×−1000</code> expression that circulates does
+                not get a pane of its own, since it is the fixed one with a bug
+                in it, but the lab still tells you when the background you
+                picked falls into its grey band, which is a thing I would not
+                have believed from a table and which{" "}
                 <a href="#by-hand">rolling it by hand</a> gets to below.
               </p>
               <ContrastDemo.Toolbar />
@@ -303,7 +305,7 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
               honestly labelled as easy.
             </p>
             <p>
-              Everything on it is live. The swatches, the six cases and the five
+              Everything on it is live. The swatches, the six cases and the four
               approaches in the lab all compute against whatever the controls
               say, and the panes that demonstrate CSS carry the real
               declarations rather than a drawing of them.
@@ -531,7 +533,7 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
           <div className={styles.sec_head}>
             <h2 id="wins-and-fails">Where each one wins and fails</h2>
             <p>
-              The same five approaches, judged on what they can and cannot do.
+              Every approach on this page, judged on what it can and cannot do.
             </p>
           </div>
           <div className={styles.matrix_scroll}>

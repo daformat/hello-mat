@@ -482,19 +482,21 @@ const PRESETS: { label: string; bg: string; fg: string }[] = [
   { label: "dark surface", bg: "#0b1120", fg: "#22c55e" },
 ];
 
-type CssPaneId = "broken" | "fixed" | "lum";
+type CssPaneId = "fixed" | "lum";
 
+/* The ×−1000 expression that circulates does not get a pane: it is the fixed
+   one with a bug in it, and on all but one background in six hundred the two
+   paint the same colour, so a pane for it sat there agreeing with its neighbour.
+   The lab still says when the background has landed in its grey band, below. */
 const CSS_PANES: { id: CssPaneId; tag: string; note: string; klass: string }[] =
   [
-    {
-      id: "broken",
-      tag: "CSS YIQ",
-      note: "×−1000",
-      klass: "css_broken",
-    },
     { id: "fixed", tag: "CSS YIQ", note: "×−100000", klass: "css_fixed" },
     { id: "lum", tag: "CSS luminance", note: "pow()", klass: "css_lum" },
   ];
+
+/* Half the width of the ×−1000 clamp's grey band, in luma units: inside it the
+   multiplier never reaches 255 and the expression returns a grey. */
+const GREY_BAND = 255 / 1000;
 
 const Lab = () => {
   const { metric, target } = useContrast();
@@ -516,7 +518,7 @@ const Lab = () => {
   const bgRgb = rgb(bg);
   const fgRgb = rgb(fg);
 
-  /* The three CSS panes carry the real declarations, so what they are showing is
+  /* The two CSS panes carry the real declarations, so what they are showing is
      whatever the engine resolved. Reading it back after paint is the only way to
      put a number next to it, and the only honest way to claim the grey band is
      real rather than something this page drew to make a point. */
@@ -535,9 +537,7 @@ const Lab = () => {
       } else {
         computed = false;
         read[id] =
-          id === "lum"
-            ? cssLumFallback(bgRgb)
-            : cssYiqFallback(bgRgb, id === "broken" ? 1000 : 100000);
+          id === "lum" ? cssLumFallback(bgRgb) : cssYiqFallback(bgRgb, 100000);
       }
     });
     setCssInk(read);
@@ -633,20 +633,22 @@ const Lab = () => {
   });
 
   const notes: ReactNode[] = [];
-  if (cssInk) {
-    const brokenHex = rgbToHex(cssInk.broken);
-    const fixedHex = rgbToHex(cssInk.fixed);
-    if (brokenHex !== fixedHex) {
-      notes.push(
-        <span key="grey">
-          <strong>The ×−1000 expression is in its grey band here.</strong> Luma
-          is {yiqLuma(bgRgb).toFixed(3)}, within 0.255 of the 128 cutoff, so the
-          clamp never saturates: it returns {brokenHex} at{" "}
-          {M.fmt(M.score(cssInk.broken, bgRgb))} instead of {fixedHex}. Roughly
-          1 background in 600 lands here.
-        </span>
-      );
-    }
+  /* The ×−1000 expression has no pane, so this is the JS mirror of it rather
+     than something read back off the browser. It is only here to say that the
+     circulating snippet would have gone wrong on this background, and what it
+     would have painted instead. */
+  const luma = yiqLuma(bgRgb);
+  if (cssInk && Math.abs(luma - 128) < GREY_BAND) {
+    const grey = cssYiqFallback(bgRgb, 1000);
+    notes.push(
+      <span key="grey">
+        <strong>The ×−1000 expression that circulates fails here.</strong> Luma
+        is {luma.toFixed(3)}, within 0.255 of the 128 cutoff, so its clamp never
+        saturates: it would return {rgbToHex(grey)} at{" "}
+        {M.fmt(M.score(grey, bgRgb))} instead of {rgbToHex(cssInk.fixed)}.
+        Roughly 1 background in 600 lands here.
+      </span>
+    );
   }
   if (ink !== exactInk) {
     notes.push(
@@ -682,7 +684,7 @@ const Lab = () => {
         <strong>
           This browser did not compute the relative-colour expressions
         </strong>
-        , so those three panes are showing a JS mirror of the same maths.
+        , so those two panes are showing a JS mirror of the same maths.
       </span>
     );
   }
@@ -837,7 +839,7 @@ const Lab = () => {
       </div>
 
       <p className={`${styles.verdict_line} ${styles.verdict_notes}`}>
-        {notes.length ? notes : "All five agree on this background."}
+        {notes.length ? notes : "All four agree on this background."}
       </p>
 
       <div className={styles.track_block}>

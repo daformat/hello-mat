@@ -492,7 +492,7 @@ export const COMPONENTS = {
       light:
         "/media/design-engineering/contrast/contrast-overview-light-poster.webp",
     },
-    videoDuration: 6.917,
+    videoDuration: 6.967,
     metas: {
       shortTitle: "Contrast, without losing your colour",
       title: "Contrast colours: keep the hue, move the lightness",

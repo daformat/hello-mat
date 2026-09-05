@@ -559,7 +559,7 @@ $dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
   border-radius: 8px;
   display: grid;
   gap: 1px;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   margin-top: calc(var(--step) * 3);
   overflow: hidden;
 
@@ -580,7 +580,7 @@ $dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
 }
 
 /* The word in each pane is a type specimen rather than a heading: it is there to
-   be looked at in the colour the pane computed, and calling it an h3 put five
+   be looked at in the colour the pane computed, and calling it an h3 put four
    identical entries in the page's table of contents. */
 .sample {
   font-size: 1.05rem;
@@ -646,16 +646,12 @@ $dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
   text-transform: uppercase;
 }
 
-/* The three CSS approaches, spelled out as declarations rather than described.
-   The comma the original snippet carries after the origin colour is left out
-   here, because with it the declaration is dropped and there is nothing to
-   look at: the point being made is about the arithmetic, not the parse error.
-   Interpolated so Sass hands the relative colour syntax to the browser
+/* The two CSS approaches, spelled out as declarations rather than described.
+   The ×−1000 expression that circulates is not one of them: it is the first
+   declaration with a shallower multiplier, and the lab reports its grey band
+   in prose instead of giving it a pane that agreed with this one 599 times in
+   600. Interpolated so Sass hands the relative colour syntax to the browser
    untouched. */
-.css_broken {
-  color: #{"rgb(from var(--bg) clamp(0, (((r * .299) + (g * .587) + (b * .114)) - 128) * -1000, 255) clamp(0, (((r * .299) + (g * .587) + (b * .114)) - 128) * -1000, 255) clamp(0, (((r * .299) + (g * .587) + (b * .114)) - 128) * -1000, 255))"};
-}
-
 .css_fixed {
   color: #{"rgb(from var(--bg) clamp(0, (((r * .299) + (g * .587) + (b * .114)) - 128) * -100000, 255) clamp(0, (((r * .299) + (g * .587) + (b * .114)) - 128) * -100000, 255) clamp(0, (((r * .299) + (g * .587) + (b * .114)) - 128) * -100000, 255))"};
 }
