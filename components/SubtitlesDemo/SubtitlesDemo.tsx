@@ -69,6 +69,529 @@ const SCENES: Scene[] = [
  *  and its text cannot tell the two boxes apart. */
 type HistoryPage = { id: number; text: string };
 
+// ── searching the stack ────────────────────────────────────────────────────
+// The app's HistorySearch: case and accents fold on both sides, so "ete" finds
+// "été" and "Zurich" finds "Zürich", and every occurrence counts. Folded one
+// code point at a time, keeping where each folded unit came from, so a hit in
+// the folded text maps back to a range of the original.
+const foldChar = (ch: string) =>
+  ch.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+
+const folded = (text: string) => {
+  let out = "";
+  const starts: number[] = [];
+  const ends: number[] = [];
+  let at = 0;
+  for (const ch of text) {
+    const f = foldChar(ch);
+    for (let k = 0; k < f.length; k += 1) {
+      starts.push(at);
+      ends.push(at + ch.length);
+    }
+    out += f;
+    at += ch.length;
+  }
+  return { text: out, starts, ends };
+};
+
+/** Every place `query` occurs in `text`, as [from, to) of the original. An
+ *  empty query matches nowhere: an empty field means "show everything", which
+ *  is the caller's decision, not a match on every box. */
+const searchRanges = (query: string, text: string) => {
+  const q = folded(query).text;
+  if (!q) {
+    return [] as [number, number][];
+  }
+  const t = folded(text);
+  const hits: [number, number][] = [];
+  let from = 0;
+  for (;;) {
+    const i = t.text.indexOf(q, from);
+    if (i < 0) {
+      break;
+    }
+    hits.push([t.starts[i] ?? 0, t.ends[i + q.length - 1] ?? text.length]);
+    from = i + q.length;
+  }
+  return hits;
+};
+
+const searchMatches = (text: string, query: string) =>
+  !query || searchRanges(query, text).length > 0;
+
+/** `text` into `el`, with the hits wrapped so they can be lit. A background
+ *  changes no glyph's advance, so a box measures the same lit or not. */
+const writeLit = (
+  el: HTMLElement,
+  text: string,
+  query: string,
+  hitClass: string
+) => {
+  el.textContent = "";
+  let at = 0;
+  searchRanges(query, text).forEach(([from, to]) => {
+    if (from > at) {
+      el.append(text.slice(at, from));
+    }
+    const lit = document.createElement("span");
+    lit.className = hitClass;
+    lit.textContent = text.slice(from, to);
+    el.append(lit);
+    at = to;
+  });
+  if (at < text.length) {
+    el.append(text.slice(at));
+  }
+};
+
+// The app's SpringValue: one number on a spring, ticked once a frame with the
+// interval the frame actually took, integrated over fixed substeps so it is the
+// same spring at 60 and 120 Hz. The defaults are the search pill's: about a
+// quarter of a second with a small overshoot, quick enough to feel attached to
+// the click, soft enough to read as a spring. A retarget mid-flight keeps its
+// velocity, so an Escape halfway through opening turns round rather than
+// jumping.
+class Spring {
+  value: number;
+  target: number;
+  velocity = 0;
+  k: number;
+  c: number;
+  frame = 0;
+  last = 0;
+  onTick: ((value: number) => void) | null = null;
+
+  constructor(value: number, stiffness = 700, ratio = 0.74) {
+    this.value = value;
+    this.target = value;
+    this.k = stiffness;
+    this.c = 2 * ratio * Math.sqrt(stiffness);
+  }
+
+  snap(value: number) {
+    cancelAnimationFrame(this.frame);
+    this.frame = 0;
+    this.velocity = 0;
+    this.value = value;
+    this.target = value;
+  }
+
+  animate(target: number) {
+    if (
+      Math.abs(target - this.target) <= 0.5 &&
+      (this.frame || Math.abs(target - this.value) <= 0.5)
+    ) {
+      return;
+    }
+    this.target = target;
+    if (this.frame) {
+      return;
+    }
+    this.last = 0;
+    this.frame = requestAnimationFrame((t) => this.tick(t));
+  }
+
+  tick(now: number) {
+    // Clamped: the first tick has no predecessor, and a stall must not be
+    // integrated as one enormous step.
+    const dt = this.last
+      ? Math.min(Math.max((now - this.last) / 1000, 1 / 240), 1 / 30)
+      : 1 / 120;
+    this.last = now;
+    let left = dt;
+    while (left > 0) {
+      const step = Math.min(1 / 480, left);
+      this.velocity +=
+        (-this.k * (this.value - this.target) - this.c * this.velocity) * step;
+      this.value += this.velocity * step;
+      left -= step;
+    }
+    if (
+      Math.abs(this.value - this.target) < 0.3 &&
+      Math.abs(this.velocity) < 8
+    ) {
+      this.snap(this.target);
+    } else {
+      this.frame = requestAnimationFrame((t) => this.tick(t));
+    }
+    this.onTick?.(this.value);
+  }
+}
+
+type SearchHooks = {
+  /** The field took the keyboard: the stack is now held up. */
+  onPin: () => void;
+  /** The text changed: repaint, narrowed to it, parked. */
+  onQuery: () => void;
+  /** The keyboard went back: the stack answers to ⌥ again. */
+  onUnpin: (hadQuery: boolean) => void;
+};
+
+// The app's HistorySearchView. The pill is rendered next to the stack and, like
+// the stack, left alone by React after it mounts: this owns the field, the pin
+// and the query, and the demo lays it out and says when the stack is up. Click
+// the pill, or press ⌥F while the stack is up, and the stack is pinned for as
+// long as the field has the keyboard: it stays up with ⌥ released, so both
+// hands are free to type. Typing narrows the stack to the boxes containing the
+// text, with the matches lit; clearing the field shows every box again and
+// keeps the pin. Escape or a click anywhere outside the stack unpins it. The
+// numbers are the app's, at 30pt of text, so in em of the boxes.
+const attachSearch = (
+  el: HTMLElement,
+  historyEl: HTMLElement,
+  hooks: SearchHooks
+) => {
+  const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const field = el.querySelector("input") as HTMLInputElement;
+  const icon = el.querySelector("svg") as SVGElement;
+  const clear = el.querySelector("button") as HTMLButtonElement;
+  const measure = Array.from(
+    el.querySelectorAll<HTMLElement>("[data-measure]")
+  );
+  const NAMES = {
+    open: styles.is_open || "is_open",
+    visible: styles.is_visible || "is_visible",
+    starved: styles.is_starved || "is_starved",
+    below: styles.is_below || "is_below",
+    rising: styles.is_rising || "is_rising",
+    text: styles.has_text || "has_text",
+    hit: styles.hist_hit || "hist_hit",
+  };
+
+  let focused = false;
+  let query = "";
+  let visible = false;
+  let starved = false;
+  const expanded = () => focused || query !== "";
+
+  const spring = new Spring(0);
+  spring.onTick = (w) => {
+    el.style.width = `${Math.round(w)}px`;
+  };
+
+  const num = (v: string) => parseFloat(v) || 0;
+  const em = () => num(getComputedStyle(historyEl).fontSize) || 16;
+  // Closed: exactly the icon, the word and the hint. Open: the app's 220pt or
+  // 0.55 of the stack, whichever is wider, never wider than the stack.
+  const compactWidth = () => {
+    const cs = getComputedStyle(el);
+    const gap = num(cs.columnGap);
+    // The icon is SVG, which has no offsetWidth.
+    return (
+      num(cs.paddingLeft) +
+      icon.getBoundingClientRect().width +
+      gap +
+      (measure[0]?.offsetWidth ?? 0) +
+      Math.round(em() * 0.133) +
+      gap +
+      (measure[1]?.offsetWidth ?? 0) +
+      num(cs.paddingRight)
+    );
+  };
+  const openWidth = (stackWidth: number) =>
+    Math.min(
+      stackWidth,
+      Math.max(Math.round(em() * 7.33), Math.round(stackWidth * 0.55))
+    );
+
+  // A pill while idle, the full field while in use, and the change between
+  // them sprung, so the field is seen to open out of the pill rather than
+  // replace it. Only while the stack is up: a stack arriving on screen builds
+  // the field at the width it should already have.
+  const layout = (stackWidth: number, animate: boolean) => {
+    el.classList.toggle(NAMES.open, expanded());
+    const width = expanded()
+      ? openWidth(stackWidth)
+      : Math.min(stackWidth, compactWidth());
+    if (animate && !calm) {
+      spring.animate(width);
+    } else {
+      spring.snap(width);
+      spring.onTick?.(width);
+    }
+  };
+  const place = (left: string, above: boolean, near: string) => {
+    el.style.left = left;
+    if (above) {
+      el.style.top = "auto";
+      el.style.bottom = near;
+    } else {
+      el.style.bottom = "auto";
+      el.style.top = near;
+    }
+  };
+  const setVisible = (on: boolean) => {
+    visible = on;
+    el.classList.toggle(NAMES.visible, on);
+  };
+  const setBelow = (on: boolean) => el.classList.toggle(NAMES.below, on);
+  // Nowhere to put the stack: it leaves the screen, keyboard included, and
+  // comes back with it. Not an outside click, so the pin survives it.
+  const setStarved = (on: boolean) => {
+    if (starved === on) {
+      return;
+    }
+    starved = on;
+    el.classList.toggle(NAMES.starved, on);
+    if (!on && focused && document.activeElement !== field) {
+      field.focus();
+    }
+  };
+  // The stack opening: the pill is the nearest thing to the live box, so it
+  // rises first and the boxes follow it.
+  const rise = () => {
+    el.classList.remove(NAMES.rising);
+    void el.offsetWidth;
+    el.classList.add(NAMES.rising);
+    el.addEventListener(
+      "animationend",
+      () => el.classList.remove(NAMES.rising),
+      { once: true }
+    );
+  };
+
+  const setQuery = (text: string) => {
+    query = text;
+    el.classList.toggle(NAMES.text, query !== "");
+  };
+  const changed = () => {
+    setQuery(field.value);
+    hooks.onQuery();
+  };
+
+  // Give the keyboard back and let the stack answer to ⌥ again. The field is
+  // emptied whichever way this came. The boxes are left as the search had
+  // them: the usual next step is the stack fading out, and what fades should
+  // be what was on screen.
+  const unpin = () => {
+    if (!focused && query === "") {
+      return;
+    }
+    const hadQuery = query !== "";
+    focused = false;
+    field.value = "";
+    setQuery("");
+    if (document.activeElement === field) {
+      field.blur();
+    }
+    hooks.onUnpin(hadQuery);
+  };
+
+  const onFocus = () => {
+    if (focused) {
+      return;
+    }
+    focused = true;
+    hooks.onPin();
+  };
+  const onFieldKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      unpin();
+      return;
+    }
+    if (!e.altKey || e.metaKey || e.ctrlKey) {
+      return;
+    }
+    // ⌥ is what raised the stack, so it is still down as the first letters of
+    // a search are typed, and ⌥ with a letter is the layout's alternate
+    // character: "an" arrives as "åñ". Stripped from anything that would type
+    // a character, and left on everything else, so ⌥⌫ and ⌥← still edit the
+    // way they do in any field. ⌥F is the hotkey and types nothing.
+    let ch: string | null = null;
+    const letter = /^Key([A-Z])$/.exec(e.code);
+    if (letter?.[1]) {
+      ch = e.shiftKey ? letter[1] : letter[1].toLowerCase();
+    } else if (/^Digit[0-9]$/.test(e.code)) {
+      ch = e.code.slice(-1);
+    } else if (e.code === "Space") {
+      ch = " ";
+    }
+    if (!ch) {
+      return;
+    }
+    e.preventDefault();
+    if (e.code === "KeyF") {
+      return;
+    }
+    field.setRangeText(
+      ch,
+      field.selectionStart ?? 0,
+      field.selectionEnd ?? 0,
+      "end"
+    );
+    changed();
+  };
+  // The keyboard went elsewhere: a click on the page, another window. Either
+  // is an outside click as far as the pin is concerned.
+  const onFieldBlur = () => {
+    if (focused && !starved) {
+      unpin();
+    }
+  };
+  // A click on the pill is a click into the field; on the ✕, one that empties
+  // it and keeps the keyboard for the next word; on a box in the stack, inside
+  // the panel, so the pin stays. mousedown rather than pointerdown, which is
+  // the one Safari lets cancel a focus change.
+  const onClearDown = (e: MouseEvent) => e.preventDefault();
+  const onClear = () => {
+    field.value = "";
+    changed();
+    field.focus();
+  };
+  const onPillDown = (e: MouseEvent) => {
+    const target = e.target as Node;
+    if (target === field || clear.contains(target)) {
+      return;
+    }
+    e.preventDefault();
+    field.focus();
+  };
+  const onPillClick = (e: MouseEvent) => {
+    const target = e.target as Node;
+    if (target === field || clear.contains(target)) {
+      return;
+    }
+    field.focus();
+  };
+  const onStackDown = (e: MouseEvent) => {
+    if (focused) {
+      e.preventDefault();
+    }
+  };
+  // ⌥F, only while the stack is up: the rest of the time it belongs to
+  // whatever is in front.
+  const onWindowKeyDown = (e: KeyboardEvent) => {
+    if (!e.altKey || e.metaKey || e.ctrlKey || e.code !== "KeyF") {
+      return;
+    }
+    if (!visible || starved) {
+      return;
+    }
+    e.preventDefault();
+    if (!focused) {
+      field.focus();
+    }
+  };
+  // Another window took the front. The browser would hand the field its focus
+  // back on return, and with it the pin, so it is let go for good.
+  const onWindowBlur = () => {
+    unpin();
+    setTimeout(() => {
+      if (document.activeElement === field) {
+        field.blur();
+      }
+    }, 0);
+  };
+
+  field.addEventListener("focus", onFocus);
+  field.addEventListener("input", changed);
+  field.addEventListener("keydown", onFieldKeyDown);
+  field.addEventListener("blur", onFieldBlur);
+  clear.addEventListener("mousedown", onClearDown);
+  clear.addEventListener("click", onClear);
+  el.addEventListener("mousedown", onPillDown);
+  el.addEventListener("click", onPillClick);
+  historyEl.addEventListener("mousedown", onStackDown);
+  window.addEventListener("keydown", onWindowKeyDown);
+  window.addEventListener("blur", onWindowBlur);
+
+  return {
+    get query() {
+      return query;
+    },
+    get pinned() {
+      return focused;
+    },
+    matches: (text: string) => searchMatches(text, query),
+    write: (node: HTMLElement, text: string) =>
+      writeLit(node, text, query, NAMES.hit),
+    layout,
+    place,
+    setVisible,
+    setBelow,
+    setStarved,
+    height: () => el.offsetHeight,
+    rise,
+    unpin,
+    dispose: () => {
+      field.removeEventListener("focus", onFocus);
+      field.removeEventListener("input", changed);
+      field.removeEventListener("keydown", onFieldKeyDown);
+      field.removeEventListener("blur", onFieldBlur);
+      clear.removeEventListener("mousedown", onClearDown);
+      clear.removeEventListener("click", onClear);
+      el.removeEventListener("mousedown", onPillDown);
+      el.removeEventListener("click", onPillClick);
+      historyEl.removeEventListener("mousedown", onStackDown);
+      window.removeEventListener("keydown", onWindowKeyDown);
+      window.removeEventListener("blur", onWindowBlur);
+      spring.snap(spring.value);
+    },
+  };
+};
+
+type Search = ReturnType<typeof attachSearch>;
+
+// The app's originXSpring and originYSpring. The live box hugs its text and
+// grows a line at a time as a sentence wraps, and a stack that jumped the line
+// with it read as a jolt; the box itself stays put, since it changes several
+// times a second and is what is being read, and the stack and its pill follow
+// it on a stiff spring, a tenth of a second behind, no overshoot. Straight
+// there when the stack is arriving, since there is nowhere for it to be coming
+// from. In px of the stage, where the stack used to be placed in percentages:
+// the target is recomputed whenever the box moves, which is what the
+// percentages were for.
+const followBox = (historyEl: HTMLElement, search: Search) => {
+  const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const x = new Spring(0, 900, 0.9);
+  const y = new Spring(0, 900, 0.9);
+  let above = true;
+  let block = 0;
+  const lay = () => {
+    const left = `${Math.round(x.value)}px`;
+    const near = Math.round(y.value);
+    historyEl.style.left = left;
+    search.place(left, above, `${near}px`);
+    if (above) {
+      historyEl.style.top = "auto";
+      historyEl.style.bottom = `${near + block}px`;
+    } else {
+      historyEl.style.bottom = "auto";
+      historyEl.style.top = `${near + block}px`;
+    }
+  };
+  x.onTick = lay;
+  y.onTick = lay;
+  return {
+    // `left` is the live box's centre and `near` the stack's edge nearest it,
+    // both from the stage's own edges; `gapBlock` is the pill and the gap past
+    // it, where the boxes start.
+    to: (
+      left: number,
+      near: number,
+      isAbove: boolean,
+      gapBlock: number,
+      animate: boolean
+    ) => {
+      above = isAbove;
+      block = gapBlock;
+      if (animate && !calm) {
+        x.animate(left);
+        y.animate(near);
+      } else {
+        x.snap(left);
+        y.snap(near);
+      }
+      lay();
+    },
+    dispose: () => {
+      x.snap(x.value);
+      y.snap(y.value);
+    },
+  };
+};
+
 const PEOPLE = [
   { initials: "AO", name: "Amara", face: styles.f1 },
   { initials: "YT", name: "Yuki", face: styles.f2 },
@@ -159,6 +682,8 @@ export const SubtitlesDemo = () => {
   // The stack's boxes are put there by hand rather than rendered, so this is a
   // ref to an element React is asked to leave alone. See the effect below.
   const historyRef = useRef<HTMLDivElement>(null);
+  // The search pill at the stack's edge: rendered once, then the effect's.
+  const searchRef = useRef<HTMLDivElement>(null);
   // The podcast waveform, so the fit effect below can measure its row.
   const waveRef = useRef<HTMLDivElement>(null);
 
@@ -756,7 +1281,8 @@ export const SubtitlesDemo = () => {
     const stage = stageRef.current;
     const screen = screenRef.current;
     const historyEl = historyRef.current;
-    if (!box || !stage || !screen || !historyEl) {
+    const searchEl = searchRef.current;
+    if (!box || !stage || !screen || !historyEl || !searchEl) {
       return;
     }
 
@@ -787,6 +1313,7 @@ export const SubtitlesDemo = () => {
       clipped: styles.is_clipped || "is_clipped",
       starved: styles.is_starved || "is_starved",
       visible: styles.is_visible || "is_visible",
+      hidden: styles.is_hidden || "is_hidden",
     };
 
     const past: HistoryPage[] = [];
@@ -820,6 +1347,31 @@ export const SubtitlesDemo = () => {
     // read its own corrections as a gesture.
     let userScrolledAt = -1e9;
     let selfScrolledAt = -1e9;
+    // Whether ⌥ is down. The stack is up while it is, or while the search has
+    // it pinned, when it stays up whatever the modifier keys are doing.
+    let altKey = false;
+
+    // The search pill at the stack's edge. Pinned, the stack stays up with ⌥
+    // released; each keystroke repaints it narrowed and parked on the newest
+    // match; unpinned, the stack answers to ⌥ again, and if it stays up the
+    // boxes the search had hidden come back. The three hooks reach the
+    // functions declared below, which are all in place by the time anything
+    // can call them.
+    const search = attachSearch(searchEl, historyEl, {
+      onPin: () => showHistory(),
+      onQuery: () => paintHistory(true),
+      onUnpin: (hadQuery) => {
+        showHistory();
+        // Up still: every box back. Going: the field closes back down to its
+        // pill as the stack fades, the boxes left as the search had them.
+        if (!raised) {
+          search.layout(historyEl.offsetWidth, true);
+        } else if (hadQuery) {
+          paintHistory(true);
+        }
+      },
+    });
+    const follow = followBox(historyEl, search);
 
     const emSize = () => parseFloat(getComputedStyle(historyEl).fontSize) || 16;
 
@@ -935,33 +1487,42 @@ export const SubtitlesDemo = () => {
       const room = roomFor(placedAbove, rect, bounds);
       const near = nearDistance();
       const was = historyEl.clientHeight;
+      // The search pill sits at the near edge, a gap off the live box, and the
+      // boxes beyond it, so it comes off the room before they are measured
+      // against it, as the app's does.
+      const block = search.height() + em * 0.2;
+      const content = contentHeight();
 
-      historyEl.style.left = `${
-        ((rect.left + rect.width / 2 - bounds.left) / bounds.width) * 100
-      }%`;
-      if (placedAbove) {
-        historyEl.style.top = "auto";
-        historyEl.style.bottom = `${
-          ((bounds.bottom - anchorTop(rect) + em * 0.2) / bounds.height) * 100
-        }%`;
-      } else {
-        historyEl.style.bottom = "auto";
-        historyEl.style.top = `${
-          ((rect.bottom - bounds.top + em * 0.2) / bounds.height) * 100
-        }%`;
-      }
       // Rounded, because `room` is derived from the live box's rect and jitters
       // by fractions of a pixel as a caption is typed. Left as a float it
       // crossed the half-pixel test below on its own every few frames, and every
       // crossing was a scroll correction the reader had not asked for.
-      historyEl.style.maxHeight = `${Math.max(0, Math.round(room))}px`;
+      historyEl.style.maxHeight = `${Math.max(0, Math.round(room - block))}px`;
 
       // Nowhere left to put it. Hidden rather than emptied, because the live box
-      // shrinks again on the next page and the stack should still be there.
-      historyEl.classList.toggle(NAMES.starved, room < em * MIN_ROOM);
+      // shrinks again on the next page and the stack should still be there. A
+      // stack with nothing in it, every box filtered out, still shows the
+      // field, and needs only the field's own height.
+      const starved =
+        room < (content > 0 ? em * MIN_ROOM + block : search.height());
+      historyEl.classList.toggle(NAMES.starved, starved);
+      search.setStarved(starved);
+      // Sprung after the live box while the stack is up, straight there when
+      // it is arriving, as the app's is.
+      const edge = placedAbove
+        ? bounds.bottom - anchorTop(rect)
+        : rect.bottom - bounds.top;
+      follow.to(
+        rect.left + rect.width / 2 - bounds.left,
+        edge + em * 0.2,
+        placedAbove,
+        block,
+        raised && !starved
+      );
       // Whether the stack can scroll at all, which changes only when a box lands
       // or the live box takes room away, never mid-gesture.
-      historyEl.classList.toggle(NAMES.clipped, contentHeight() > room + 1);
+      historyEl.classList.toggle(NAMES.clipped, content > room - block + 1);
+      search.layout(historyEl.offsetWidth, raised);
 
       // Only a change of height disturbs the scroller; the live box merely
       // moving does not. Put the reader back the same distance from the live
@@ -989,12 +1550,16 @@ export const SubtitlesDemo = () => {
     // because taking an element out of the document and putting it back restarts
     // a CSS animation still named on it, and leaving them alone leaves the
     // scroll position alone too.
-    const paintHistory = () => {
+    //
+    // `park` forces the scroll to the newest box: the search asks for that on
+    // every keystroke, where a page closing leaves the reader where they were.
+    const paintHistory = (park = false) => {
+      const fresh = !raised;
       // Read the reader's place before the patch destroys it. Sticking to the
       // newest box is right only if that is where they already were; if they had
       // scrolled back to an older one, hold that box still instead. New text
       // arriving must not drag the page out from under someone mid-sentence.
-      const wasParked = !historyEl.children.length || parked;
+      const wasParked = fresh || !historyEl.children.length || parked;
       const wasNear = nearDistance();
       const wasContent = contentHeight();
 
@@ -1018,9 +1583,32 @@ export const SubtitlesDemo = () => {
         const el = document.createElement("div");
         el.className = NAMES.line;
         el.dataset.pid = String(page.id);
-        el.textContent = page.text;
         historyEl.insertBefore(el, here ?? null);
         risen.push(el);
+      });
+
+      // Every box counts towards the width, filtered out or not: a stack that
+      // narrowed as the query did would jitter under each keystroke, and the
+      // search pill takes its width from the stack's. So the width is read
+      // with every box standing, then held while the search hides some. Hidden
+      // rather than removed: a box keeps its place for when the query changes.
+      const kids = boxes();
+      const pageOf = (el: HTMLElement) =>
+        past.find((page) => String(page.id) === el.dataset.pid);
+      historyEl.style.minWidth = "";
+      kids.forEach((el) => {
+        const page = pageOf(el);
+        if (page) {
+          search.write(el, page.text);
+        }
+        el.classList.remove(NAMES.hidden);
+      });
+      historyEl.style.minWidth = `${historyEl.offsetWidth}px`;
+      kids.forEach((el) => {
+        const page = pageOf(el);
+        if (page) {
+          el.classList.toggle(NAMES.hidden, !search.matches(page.text));
+        }
       });
 
       placeHistory();
@@ -1030,18 +1618,27 @@ export const SubtitlesDemo = () => {
       // are measured against. Parked stays parked; otherwise the box they were
       // reading holds still, which means moving with the growth that landed at
       // the near end.
-      setNearDistance(wasParked ? 0 : wasNear + (contentHeight() - wasContent));
-      parked = wasParked;
+      setNearDistance(
+        park || wasParked ? 0 : wasNear + (contentHeight() - wasContent)
+      );
+      parked = park || wasParked;
 
       // Only now do they animate. Nearest the live box first, so the stack
       // unrolls out of it: the newest box is last above the live one and first
-      // below it.
-      const kids = boxes();
+      // below it. The pill goes before them all when the stack is opening. A
+      // box the search hides does not rise: it has nowhere to be seen, and an
+      // entrance that never ends would hold the scroll geometry hostage.
+      if (fresh) {
+        search.rise();
+      }
       risen.forEach((el) => {
+        if (el.classList.contains(NAMES.hidden)) {
+          return;
+        }
         const i = kids.indexOf(el);
         el.style.setProperty(
           "--rise",
-          String(placedAbove ? kids.length - 1 - i : i)
+          String((placedAbove ? kids.length - 1 - i : i) + (fresh ? 1 : 0))
         );
         rising += 1;
         el.addEventListener(
@@ -1068,13 +1665,20 @@ export const SubtitlesDemo = () => {
       if (past.length > PAST_MAX) {
         past.splice(0, past.length - PAST_MAX);
       }
+      // A stack already up takes the box in. One that is not may be wanted
+      // anyway: ⌥ pressed before anything had closed, and still held, which
+      // the app's poll answers the moment a first page does.
       if (raised) {
         paintHistory();
+      } else {
+        showHistory();
       }
     };
 
-    const showHistory = (on: boolean) => {
-      const want = on && past.length > 0;
+    // Up while ⌥ is held, or while the search has it pinned, when it stays up
+    // whatever the modifier keys are doing.
+    const showHistory = () => {
+      const want = (altKey || search.pinned) && past.length > 0;
 
       if (want) {
         // A fresh press builds the stack from nothing, so every box rises. Only
@@ -1087,23 +1691,29 @@ export const SubtitlesDemo = () => {
           // always opens against the live box.
           rising = 0;
           parked = true;
-        }
 
-        // Flip only when there is genuinely more room the other way, which is
-        // what makes the stack fall below the box once the box has been dragged
-        // to the top of the screen.
-        const bounds = stage.getBoundingClientRect();
-        const rect = box.getBoundingClientRect();
-        placedAbove =
-          roomFor(true, rect, bounds) >= roomFor(false, rect, bounds);
-        historyEl.classList.toggle(NAMES.below, !placedAbove);
-        raised = true;
+          // Flip only when there is genuinely more room the other way, which
+          // is what makes the stack fall below the box once the box has been
+          // dragged to the top of the screen. Decided once, on the press that
+          // raises it, and held for as long as it is up: re-deciding it as the
+          // box resizes would let one sentence wrapping to a second line throw
+          // the stack across it mid-read, which is the app's reasoning too.
+          const bounds = stage.getBoundingClientRect();
+          const rect = box.getBoundingClientRect();
+          placedAbove =
+            roomFor(true, rect, bounds) >= roomFor(false, rect, bounds);
+          historyEl.classList.toggle(NAMES.below, !placedAbove);
+          search.setBelow(!placedAbove);
+        }
+        // `raised` is still what it was, which is how paintHistory tells a
+        // stack arriving from one that is up.
         paintHistory();
       }
       // The boxes are left in place on the way out so the stack fades rather
       // than vanishing; the next press is what clears them.
       raised = want;
       historyEl.classList.toggle(NAMES.visible, want);
+      search.setVisible(want);
       setStackUp(want);
       queueHole();
     };
@@ -1186,17 +1796,22 @@ export const SubtitlesDemo = () => {
       // Held keys repeat, and a repeat that repainted would restart the stagger
       // over and over for as long as the key is down.
       if (event.key === "Alt" && !event.repeat) {
-        showHistory(true);
+        altKey = true;
+        showHistory();
       }
     };
     const onKeyUp = (event: KeyboardEvent) => {
       if (event.key === "Alt") {
-        showHistory(false);
+        altKey = false;
+        showHistory();
       }
     };
     // Tabbing away with the key down would otherwise leave the stack up forever,
     // the same reason the shift handler above watches blur.
-    const onBlur = () => showHistory(false);
+    const onBlur = () => {
+      altKey = false;
+      showHistory();
+    };
 
     closePageRef.current = closePage;
     queueHoleRef.current = queueHole;
@@ -1227,6 +1842,8 @@ export const SubtitlesDemo = () => {
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
       sizes?.disconnect();
+      search.dispose();
+      follow.dispose();
       cancelAnimationFrame(holeFrame);
       cancelAnimationFrame(fadeFrame);
     };
@@ -1778,6 +2395,71 @@ export const SubtitlesDemo = () => {
               React never writes to this node again after it mounts. */}
           <div ref={historyRef} className={styles.history} />
 
+          {/* The search pill at the stack's edge, drawn as one more box. Like
+              the stack, React writes nothing here after it mounts: the effect
+              owns its classes, its width and the field. The two hidden spans
+              at the end are the placeholder and the hint laid out to be
+              measured for the closed pill's width, and never seen. */}
+          <div ref={searchRef} className={styles.search}>
+            <svg
+              className={styles.ds_icon}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.6"
+              strokeLinecap="round"
+            >
+              <circle cx="10.4" cy="10.4" r="6.8" />
+              <path d="M15.5 15.5 21.4 21.4" />
+            </svg>
+            <input
+              className={styles.ds_field}
+              type="text"
+              placeholder="Search"
+              aria-label="Search"
+              tabIndex={-1}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+            />
+            <span className={styles.ds_hint}>⌥F</span>
+            <button
+              type="button"
+              className={styles.ds_clear}
+              tabIndex={-1}
+              aria-label="Clear"
+            >
+              <svg viewBox="0 0 24 24">
+                <mask id="subtitles-demo-search-clear">
+                  <rect width="24" height="24" fill="#fff" />
+                  <path
+                    d="M8.5 8.5l7 7M15.5 8.5l-7 7"
+                    stroke="#000"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                  />
+                </mask>
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  fill="currentColor"
+                  mask="url(#subtitles-demo-search-clear)"
+                />
+              </svg>
+            </button>
+            <span className={styles.ds_measure} data-measure="">
+              Search
+            </span>
+            <span
+              className={cx(styles.ds_measure, styles.ds_hint)}
+              data-measure=""
+            >
+              ⌥F
+            </span>
+          </div>
+
           <div
             ref={overlayRef}
             className={cx(
@@ -1853,8 +2535,9 @@ export const SubtitlesDemo = () => {
       {/* Says nothing to a phone, and is hidden from one by the stylesheet. */}
       <p className={cx(styles.caption, styles.caption_try)}>
         Point at the captions and they dissolve under you. Hold <kbd>⌥</kbd> to
-        stack the last few back up. Both work here exactly as they do in the
-        app.
+        stack the closed ones back up, and <kbd>⌥</kbd>
+        <kbd>F</kbd> to search them. All of it works here exactly as it does in
+        the app.
       </p>
     </div>
   );

@@ -89,8 +89,12 @@ const SubtitlesAppPageContent = () => {
           of them need. Point at the captions and they dissolve under you, over
           the app&rsquo;s own 800 by 400 points, keeping a twentieth of the box
           in the middle so that it reads as a hole rather than a gap. Hold{" "}
-          <kbd>⌥</kbd> and the last few boxes stack back up above the live one,
+          <kbd>⌥</kbd> and the closed boxes stack back up above the live one,
           rising out of it nearest first, and you can scroll back through them.
+          A search pill sits at the stack&rsquo;s edge, drawn as one more box:
+          click it, or press <kbd>⌥</kbd>
+          <kbd>F</kbd> while the stack is up, and the stack narrows to the boxes
+          containing what you type.
         </p>
         <p>
           The stack cost me a couple of hours I had not budgeted for, and all of
@@ -122,6 +126,41 @@ const SubtitlesAppPageContent = () => {
           drag a window around under them, which is the same claim the app makes
           about the real overlay, and a better demonstration of it than the
           scripted version because you are the one moving the window.
+        </p>
+
+        <h3 id="searching-the-stack">Searching the stack</h3>
+        <p>
+          The search is the app&rsquo;s 1.4.0 feature, ported whole. While the
+          field has the keyboard the stack is pinned: it stays up with{" "}
+          <kbd>⌥</kbd> released, so both hands are free to type, and Escape or a
+          click anywhere outside lets it go again. The matching folds case and
+          accents on both sides, so &ldquo;ete&rdquo; finds &ldquo;été&rdquo;,
+          and the hits are lit with the app&rsquo;s warm wash rather than
+          inverted. A box the search rules out is hidden rather than removed, so
+          it keeps its place for when the query changes, and the stack&rsquo;s
+          width is read with every box standing and then held, because a stack
+          that narrowed with each keystroke would jitter under your hands. The
+          one awkward part is that <kbd>⌥</kbd> is what raised the stack, so it
+          is still down as the first letters are typed, and <kbd>⌥</kbd> with a
+          letter is the layout&rsquo;s alternate character: &ldquo;an&rdquo;
+          arrives as &ldquo;åñ&rdquo;. The field strips it from anything that
+          would type a character and leaves it on everything else, so{" "}
+          <kbd>⌥</kbd>
+          <kbd>⌫</kbd> still edits the way it does in any field.
+        </p>
+        <p>
+          Two springs came with it, ports of the app&rsquo;s own. The
+          pill&rsquo;s width is sprung between the closed pill and the open
+          field, so the field is seen to open out of the pill rather than
+          replace it, and a retarget mid-flight keeps its velocity, so an Escape
+          halfway through opening turns round rather than jumping. The
+          stack&rsquo;s origin is sprung too, stiffer and with no overshoot: the
+          live box grows a line at a time as a sentence wraps, and a stack that
+          jumped the line with it read as a jolt. Now the box stays put, since
+          it changes several times a second and is what is being read, and the
+          stack and its pill follow it a tenth of a second behind. Each spring
+          is integrated over fixed substeps with the interval the frame actually
+          took, so it is the same spring at 60 and 120 Hz.
         </p>
 
         <h3 id="no-images">Not a single image</h3>

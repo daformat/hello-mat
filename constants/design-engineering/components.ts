@@ -469,7 +469,7 @@ export const COMPONENTS = {
       imageWidth: 1200,
       imageHeight: 630,
       datePublished: "2026-08-16",
-      dateModified: "2026-09-05",
+      dateModified: "2026-09-06",
     },
   },
   "contrast-colors": {

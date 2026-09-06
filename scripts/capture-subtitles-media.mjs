@@ -5,6 +5,12 @@
 //   node scripts/capture-subtitles-media.mjs light      # one theme
 //   node scripts/capture-subtitles-media.mjs light og   # one theme, stills only
 //   node scripts/capture-subtitles-media.mjs dark video # one theme, clip only
+//   node scripts/capture-subtitles-media.mjs preview    # the clip's page, in a browser
+//   node scripts/capture-subtitles-media.mjs preview quiet   # written, not opened
+//
+// `preview` writes the page the clip is recorded from, at the clip's own size
+// and with the epilogue on, one file per theme, and opens the light one: what
+// the recording will show, to be looked at before it is made.
 //
 // Needs ffmpeg on the PATH, and Chrome installed (Playwright drives the real
 // browser rather than its own download, which this machine doesn't have).
@@ -33,7 +39,13 @@
 // PNG keeps the pixels lossless until the single h264 pass at the end.
 
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -51,12 +63,24 @@ const OUT =
   process.env.SUBTITLES_MEDIA_OUT ??
   join(ROOT, "public", "media", "design-engineering", "subtitles");
 
-const THEMES = process.argv[2] ? [process.argv[2]] : ["light", "dark"];
+const PREVIEW = process.argv[2] === "preview";
+const THEMES =
+  process.argv[2] && !PREVIEW ? [process.argv[2]] : ["light", "dark"];
 /** "og", "video", or neither for both. */
 const MODE = process.argv[3] ?? "both";
 
 /** The line the still is taken on, once it has committed. */
 const OPENER = "Universal subtitles for any app, live on your Mac.";
+
+// Said before the podcast's last line, in the clip only: the demo raises the
+// stack as ⌥ is said in the first, opens the field and types "meeting" as ⌥F
+// is said in the second, and lets both go under "none of it leaves the Mac",
+// which closes the clip as it always did. The demo's own loop plays them, from
+// window.SUBTITLES_EPILOGUE; on the site itself the epilogue is off.
+const EPILOGUE = [
+  "Missed a line? Hold ⌥ and every caption that closed stacks back up.",
+  "Press ⌥F and type: the stack narrows to the boxes that match.",
+];
 
 const CARD = { width: 990, height: 500 }; // ×2 for the 1980×1000 the cards use
 const OG = { width: 1200, height: 630 };
@@ -82,8 +106,10 @@ const STAGE_RULES = `
   .demo-stage { container-type: inline-size; }
 `;
 
-/** Fills the frame with the fake screen, and marks every wrap-around. */
-const isolate = (stageRules) => {
+/** Fills the frame with the fake screen, and marks every wrap-around. With a
+ *  `frame`, the screen is that size and centred in the window instead, which
+ *  is how the preview page shows the clip at the clip's own dimensions. */
+const isolate = (stageRules, frame) => {
   // The whole .demo, not just the screen inside it: the palette is declared on
   // .demo, so lifting the screen out on its own left every token undefined and
   // the capture came back as windows with no surfaces on no wallpaper.
@@ -96,14 +122,17 @@ const isolate = (stageRules) => {
   }
   document.body.append(demo);
   document.body.style.cssText =
-    "margin:0;height:100vh;overflow:hidden;background:#0c0d11";
+    "margin:0;height:100vh;overflow:hidden;background:#0c0d11" +
+    (frame ? ";display:grid;place-items:center" : "");
   demo.style.cssText += ";margin:0";
   // The controls and the sentence under the screen belong to the page, not to
   // the recording.
   demo.querySelector(".demo-scenes")?.remove();
-  demo.querySelector(".demo-caption")?.remove();
-  screen.style.cssText +=
-    ";width:100vw;max-width:none;height:100vh;border:0;border-radius:0;box-shadow:none;margin:0";
+  demo.querySelectorAll(".demo-caption").forEach((el) => el.remove());
+  const size = frame
+    ? `width:${frame.width}px;height:${frame.height}px`
+    : "width:100vw;height:100vh";
+  screen.style.cssText += `;${size};max-width:none;border:0;border-radius:0;box-shadow:none;margin:0`;
 
   const overrides = document.createElement("style");
   overrides.textContent = stageRules;
@@ -117,7 +146,8 @@ const isolate = (stageRules) => {
   for (let pass = 0; pass < 5; pass += 1) {
     menubar.style.setProperty("--u", `${unit}px`);
     stage.style.setProperty("--u", `${unit}px`);
-    const height = window.innerHeight - menubar.offsetHeight;
+    const height =
+      (frame ? frame.height : window.innerHeight) - menubar.offsetHeight;
     const width = (height * 16) / 9.6;
     stage.style.cssText += `;aspect-ratio:auto;height:${height}px;width:${width}px;margin-inline:auto`;
     // The site's own unit, clamp(4px, 0.91cqw, 8px), off the stage's width.
@@ -212,6 +242,9 @@ const captureClip = async (browser, theme) => {
     colorScheme: theme,
   });
   const page = await context.newPage();
+  await page.addInitScript((lines) => {
+    window.SUBTITLES_EPILOGUE = lines;
+  }, EPILOGUE);
   await page.goto(SITE);
   await page.evaluate(isolate, STAGE_RULES);
 
@@ -289,7 +322,51 @@ const captureClip = async (browser, theme) => {
   console.log(`subtitles-overview-${theme}.mp4`);
 };
 
+/** The clip's page as a file, one per theme, and the light one opened. */
+const preview = () => {
+  if (!SITE.startsWith("file://")) {
+    throw new Error("preview needs the site as a file, see SITE");
+  }
+  const siteFile = fileURLToPath(SITE);
+  const html = readFileSync(siteFile, "utf8");
+  const dir = mkdtempSync(join(tmpdir(), "subtitles-preview-"));
+  const files = ["light", "dark"].map((theme) => {
+    const page = html
+      // Relative assets resolve against the site, wherever this file lives.
+      .replace("<head>", `<head><base href="${SITE.replace(/[^/]*$/, "")}">`)
+      .replace(
+        '<script src="script.min.js"></script>',
+        `<script>window.SUBTITLES_EPILOGUE = ${JSON.stringify(
+          EPILOGUE
+        )};</script>\n` + '<script src="script.min.js"></script>'
+      )
+      .replace(
+        "</body>",
+        // On load, as the capture does it: after every script on the page has
+        // run, so none of them is left looking for an element this removed.
+        `<script>document.documentElement.dataset.theme = ${JSON.stringify(
+          theme
+        )};` +
+          `window.addEventListener("load", () => (${isolate.toString()})(${JSON.stringify(
+            STAGE_RULES
+          )}, ${JSON.stringify(CARD)}));</script></body>`
+      );
+    const file = join(dir, `subtitles-clip-${theme}.html`);
+    writeFileSync(file, page);
+    return file;
+  });
+  files.forEach((file) => console.log(file));
+  // `preview quiet` writes the files and leaves the browser alone.
+  if (process.argv[3] !== "quiet") {
+    execFileSync("open", [files[0]]);
+  }
+};
+
 const run = async () => {
+  if (PREVIEW) {
+    preview();
+    return;
+  }
   mkdirSync(OUT, { recursive: true });
   const browser = await chromium.launch({ channel: "chrome" });
 
