@@ -25,11 +25,15 @@
 //
 //   · the fake screen is stretched edge to edge, with its radius, border and
 //     shadow removed, so the frame is all demo and no background;
-//   · the stage keeps the demo's own proportions and scale: it is sized to
-//     the frame's height at its 16/9.6 ratio and centred, with the unit every
-//     piece of chrome is drawn in taken from that width, exactly as the site
-//     derives it. The frame is wider than the demo is, so the difference is
-//     more desktop either side of the windows rather than wider windows;
+//   · the windows keep the demo's own size and scale: the stage is a 16:9
+//     screen's width at the frame's height, centred, so every window is the
+//     size it is on the site, with the unit every piece of chrome is drawn in
+//     at the 7.2px the site tops out at. The frame is a little wider than
+//     that, and the difference goes into the spread rather than the windows:
+//     the notes and the player are pushed out by half of it each, so each
+//     keeps its own distance from the frame's edge, and the call stays put in
+//     the middle. Stretching the stage to the frame instead widened every
+//     window by a tenth, and the call read as too wide;
 //   · the clip is cut at the wrap-around back to the meeting, so one loop
 //     plays on repeat without a seam, and then rotated by a few frames so it
 //     opens on the meeting window rather than on the tail of the ⌘-tab fade.
@@ -58,6 +62,9 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SITE =
   process.env.SUBTITLES_SITE ??
   `file://${resolve(ROOT, "..", "subtitles-site", "index.html")}`;
+
+/** The site's folder, for the assets its pages name from the root. */
+const SITE_DIR = SITE.replace(/[^/]*$/, "");
 
 const OUT =
   process.env.SUBTITLES_MEDIA_OUT ??
@@ -109,7 +116,7 @@ const STAGE_RULES = `
 /** Fills the frame with the fake screen, and marks every wrap-around. With a
  *  `frame`, the screen is that size and centred in the window instead, which
  *  is how the preview page shows the clip at the clip's own dimensions. */
-const isolate = (stageRules, frame) => {
+const isolate = ({ stageRules, frame, base }) => {
   // The whole .demo, not just the screen inside it: the palette is declared on
   // .demo, so lifting the screen out on its own left every token undefined and
   // the capture came back as windows with no surfaces on no wallpaper.
@@ -121,6 +128,14 @@ const isolate = (stageRules, frame) => {
     child.remove();
   }
   document.body.append(demo);
+  // The site's own images are root-absolute, /assets/…, which resolve to
+  // nothing over file://. Pointed at the site's folder instead, so the ⌘-tab
+  // panel gets its icons.
+  if (base) {
+    document.querySelectorAll('img[src^="/"]').forEach((img) => {
+      img.src = base + img.getAttribute("src").slice(1);
+    });
+  }
   document.body.style.cssText =
     "margin:0;height:100vh;overflow:hidden;background:#0c0d11" +
     (frame ? ";display:grid;place-items:center" : "");
@@ -138,22 +153,33 @@ const isolate = (stageRules, frame) => {
   overrides.textContent = stageRules;
   document.head.append(overrides);
 
-  // The stage at the demo's own proportions, as tall as the frame allows and
-  // centred, with the unit taken from the width that gives. The menu bar's
-  // height is in that unit and the stage's height depends on the menu bar's,
-  // so it settles over a few passes; the fifth is already the fourth.
-  let unit = 8;
-  for (let pass = 0; pass < 5; pass += 1) {
-    menubar.style.setProperty("--u", `${unit}px`);
-    stage.style.setProperty("--u", `${unit}px`);
-    const height =
-      (frame ? frame.height : window.innerHeight) - menubar.offsetHeight;
-    const width = (height * 16) / 9.6;
-    stage.style.cssText += `;aspect-ratio:auto;height:${height}px;width:${width}px;margin-inline:auto`;
-    // The site's own unit, clamp(4px, 0.91cqw, 8px), off the stage's width.
-    // Spelled out here because this whole function runs inside the page.
-    unit = Math.min(8, Math.max(4, 0.0091 * width));
-  }
+  // A 16:9 screen's width at the frame's height, centred, so the windows are
+  // the size they are on the site. The unit is the site's own slope of that
+  // width, clamp(4px, 0.8182cqw, 7.2px), spelled out here because this whole
+  // function runs inside the page; both frames are past the 880px where it
+  // tops out, so it is 7.2px in each. The bar takes its height in that unit
+  // and the stage gets what is left.
+  const screenHeight = frame ? frame.height : window.innerHeight;
+  const screenWidth = frame ? frame.width : window.innerWidth;
+  const stageWidth = Math.min(screenWidth, (screenHeight * 16) / 9);
+  const unit = Math.min(7.2, Math.max(4, 0.008182 * stageWidth));
+  menubar.style.setProperty("--u", `${unit}px`);
+  stage.style.setProperty("--u", `${unit}px`);
+  stage.style.cssText += `;flex:none;height:${
+    screenHeight - menubar.offsetHeight
+  }px;width:${stageWidth}px;margin-inline:auto`;
+
+  // What the frame has over 16:9 goes into the spread: the two side windows
+  // are moved out by half of it each, a margin one way and its negative the
+  // other so the box keeps its width, which leaves each the same distance from
+  // the frame's edge it has from the screen's on the site.
+  const spread = (screenWidth - stageWidth) / 2;
+  const sideways = document.createElement("style");
+  sideways.textContent = `
+    .win-notes  { margin-inline: ${spread}px ${-spread}px; }
+    .win-player { margin-inline: ${-spread}px ${spread}px; }
+  `;
+  document.head.append(sideways);
 
   // The loop comes back round when the meeting window fronts again.
   window.__marks = [];
@@ -208,7 +234,7 @@ const captureOg = async (browser, theme) => {
   });
   const page = await context.newPage();
   await page.goto(SITE);
-  await page.evaluate(isolate, STAGE_RULES);
+  await page.evaluate(isolate, { stageRules: STAGE_RULES, base: SITE_DIR });
   await page.waitForFunction(
     (line) =>
       document.getElementById("caption-text")?.textContent === line &&
@@ -246,7 +272,7 @@ const captureClip = async (browser, theme) => {
     window.SUBTITLES_EPILOGUE = lines;
   }, EPILOGUE);
   await page.goto(SITE);
-  await page.evaluate(isolate, STAGE_RULES);
+  await page.evaluate(isolate, { stageRules: STAGE_RULES, base: SITE_DIR });
 
   const work = mkdtempSync(join(tmpdir(), `subtitles-${theme}-`));
   const session = await context.newCDPSession(page);
@@ -333,7 +359,7 @@ const preview = () => {
   const files = ["light", "dark"].map((theme) => {
     const page = html
       // Relative assets resolve against the site, wherever this file lives.
-      .replace("<head>", `<head><base href="${SITE.replace(/[^/]*$/, "")}">`)
+      .replace("<head>", `<head><base href="${SITE_DIR}">`)
       .replace(
         '<script src="script.min.js"></script>',
         `<script>window.SUBTITLES_EPILOGUE = ${JSON.stringify(
@@ -348,8 +374,8 @@ const preview = () => {
           theme
         )};` +
           `window.addEventListener("load", () => (${isolate.toString()})(${JSON.stringify(
-            STAGE_RULES
-          )}, ${JSON.stringify(CARD)}));</script></body>`
+            { stageRules: STAGE_RULES, frame: CARD, base: SITE_DIR }
+          )}));</script></body>`
       );
     const file = join(dir, `subtitles-clip-${theme}.html`);
     writeFileSync(file, page);

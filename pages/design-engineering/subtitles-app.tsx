@@ -163,15 +163,26 @@ const SubtitlesAppPageContent = () => {
           took, so it is the same spring at 60 and 120 Hz.
         </p>
 
-        <h3 id="no-images">Not a single image</h3>
+        <h3 id="no-images">Three images, and none of them a screenshot</h3>
         <p>
-          There is no video in here, no screen recording, and no screenshot. Not
-          one image file. The desktop is four radial gradients over a linear
-          one, the participants are initials on a linear gradient, the album art
-          is a gradient too, the waveform is ninety-six divs with a height each,
-          and the notes document is a stack of grey rounded rectangles
-          pretending to be sentences. Even the Apple mark in the menu bar is an
-          inline path.
+          There is no video in here, no screen recording, and no screenshot. The
+          desktop is four radial gradients over a linear one, the participants
+          are initials on a linear gradient, the album art is a gradient too,
+          the waveform is ninety-six divs with a height each, and the notes
+          document is a stack of grey rounded rectangles pretending to be
+          sentences. Even the Apple mark in the menu bar is an inline path. The
+          notes window itself is Apple&rsquo;s Notes, drawn in the demo&rsquo;s
+          own tokens: the toolbar in the title bar, then the folders, the list
+          and the note, so it follows the page into dark mode the way the real
+          one follows the Mac.
+        </p>
+        <p>
+          The three exceptions are the app icons in the ⌘-tab panel. They used
+          to be squircles I had drawn, a camera, a notepad, a play badge, and
+          they read as icons of nothing in particular. They are now the icons
+          the Dock draws, read from the apps themselves, each with its own
+          shape, margins and shadow, so the tile is only a box and the panel
+          names its apps the way the menu bar does: zoom.us, Notes, Spotify.
         </p>
         <p>
           The notes are not quite still, either. While that window is in front a

@@ -175,17 +175,32 @@
    its floors while the screen shrank, and a title bar that is 3.4% of the width
    at full size was 10% of it in this page's narrow column, and the model stopped
    being to scale and started looking like a toy.
-   --u is capped at the 8.8px it reaches at the 880px the screen tops out at, so
+   --u is capped at the 7.2px it reaches at the 880px the screen tops out at, so
    nothing changes at full size, and floored at 4px, because a model that scales
    the whole way down loses its hairlines and its text turns to grain. Below
-   about 400px of screen the demo therefore stops shrinking and simply is what it
-   is: still far closer to scale than the floors it had before. */
+   about 490px of screen the demo therefore stops shrinking and simply is what it
+   is: still far closer to scale than the floors it had before.
+
+   The screen is 16:9, and it is the whole screen that is, menu bar included: the
+   bar takes its height off the top and the stage below is whatever is left. It
+   was a 16:9.6 stage under the bar before, which came to 16:10 all told. */
 .screen {
+  aspect-ratio: 16 / 9;
   background: var(--desktop-bg);
-  border-radius: 14px;
+  /* The corner follows the unit rather than staying a fixed 14px, because the
+     screen clips at it: on a phone, where the unit is at its floor and the bar
+     is 12px tall, the arc ran through the Apple mark. 1.6vw is about two units
+     at full size, which is what the 14px is there, and it cannot be written in
+     the unit itself: an element's own container is the next one up, so the
+     screen's width is available to everything it contains and not to the
+     screen. It bottoms out at 8px, two units at the floor, which clears the
+     mark's box with the arc to spare. */
+  border-radius: clamp(8px, 1.6vw, 14px);
   box-shadow: 0 1px 12px var(--color-shadow-1),
     0 24px 60px -22px var(--color-shadow-strong);
   container-type: inline-size;
+  display: flex;
+  flex-direction: column;
   margin-inline: auto;
   max-width: 880px;
   overflow: hidden;
@@ -194,10 +209,17 @@
 
 /* On the children rather than on .screen: an element's own container is the next
    one up, so cq units inside the container it establishes have to be resolved by
-   something it contains. */
+   something it contains.
+
+   7.2px at the top, a tenth off the 8 it was, taken when the screen went to
+   16:9: the stage lost a tenth of its height and the windows with it, and the
+   model is zoomed out by the same tenth so a window still holds the drawing it
+   held. 0.8182cqw is the slope that reaches 7.2 exactly at the 880 the screen
+   tops out at, so the model scales the whole way there rather than flattening
+   early against its own cap. */
 .menubar,
 .stage {
-  --u: clamp(4px, 0.91cqw, 8px);
+  --u: clamp(4px, 0.8182cqw, 7.2px);
 }
 
 /* Above the windows and above the ⌘-tab panel, the way a menu bar is. The one
@@ -234,9 +256,13 @@
   gap: calc(1.55 * var(--u));
 }
 
+/* Lifted an eighth of a unit, 1px at full size, off the bar's centre line: the
+   mark's visual weight sits low in its box, and centring the box sat it low. */
 .mb_apple {
   height: calc(1.6 * var(--u));
   margin-inline-end: calc(0.2 * var(--u));
+  position: relative;
+  top: calc(-0.125 * var(--u));
   width: calc(1.35 * var(--u));
 }
 
@@ -303,8 +329,13 @@
   text-align: right;
 }
 
+/* The part of the screen under the menu bar. The screen is the one with the
+   aspect ratio, and the stage takes what the bar leaves: flex: 1 for that, and
+   min-height: 0 because a flex item's automatic minimum is its content, and
+   this one must never come out taller than the screen makes it. */
 .stage {
-  aspect-ratio: 16 / 9.6;
+  flex: 1;
+  min-height: 0;
   position: relative;
 }
 
@@ -394,29 +425,53 @@
    crosses all three, which is the part that mattered. */
 .win_meeting {
   --z: 3;
-  bottom: clamp(5.85cqw, 4.77692cqw + 9.44308px, 6.3cqw); /* 10.5% ->  9.75% */
+  bottom: clamp(
+    5.24904cqw,
+    4.2862cqw + 8.47301px,
+    5.65281cqw
+  ); /* 10.5% ->  9.75% */
   left: clamp(9cqw, 23.4185cqw - 89.3945px, 13.26cqw); /*  9%   -> 13.26% */
   /* Five per cent narrower than the insets alone give, taken evenly from both
      sides so it keeps its centre. */
   margin-inline: 1.85cqw;
   right: clamp(9cqw, 23.4185cqw - 89.3945px, 13.26cqw); /*  9%   -> 13.26% */
-  top: clamp(3.45cqw, 0.230769cqw + 28.3292px, 4.8cqw); /*  8%   ->  5.75% */
+  top: clamp(
+    3.09559cqw,
+    0.207063cqw + 25.419px,
+    4.3069cqw
+  ); /*  8%   ->  5.75% */
 }
 
 .win_notes {
   --z: 1;
-  bottom: clamp(6.3cqw, 14.9308cqw - 53.5108px, 8.85cqw); /* 10.5% -> 14.75% */
+  bottom: clamp(
+    5.65281cqw,
+    13.397cqw - 48.0137px,
+    7.94086cqw
+  ); /* 10.5% -> 14.75% */
   left: clamp(15cqw, 32.7692cqw - 110.169px, 20.25cqw); /* 15%   -> 20.25% */
   right: clamp(3cqw, 6.38462cqw - 20.9846px, 4cqw); /*  3%   ->  4%    */
-  top: clamp(6.45cqw, 4.66154cqw + 15.7385px, 7.2cqw); /* 12%   -> 10.75% */
+  top: clamp(
+    5.7874cqw,
+    4.18267cqw + 14.1217px,
+    6.46036cqw
+  ); /* 12%   -> 10.75% */
 }
 
 .win_player {
   --z: 2;
-  bottom: clamp(6.3cqw, 14.9308cqw - 53.5108px, 8.85cqw); /* 10.5% -> 14.75% */
+  bottom: clamp(
+    5.65281cqw,
+    13.397cqw - 48.0137px,
+    7.94086cqw
+  ); /* 10.5% -> 14.75% */
   left: clamp(3cqw, 6.38462cqw - 20.9846px, 4cqw); /*  3%   ->  4%    */
   right: clamp(15cqw, 46.3077cqw - 194.108px, 24.25cqw); /* 15%   -> 24.25% */
-  top: clamp(3cqw, 20.7692cqw - 110.169px, 8.25cqw); /*  5%   -> 13.75% */
+  top: clamp(
+    2.69182cqw,
+    18.6356cqw - 98.8517px,
+    7.40249cqw
+  ); /*  5%   -> 13.75% */
 }
 
 /* The handle: a window is dragged by its bar, as on a real desktop, and no
@@ -691,14 +746,24 @@
    twice a second is not one you read the width of, which is why it looked like a
    bug that came and went with the animation.
 
-   0.5u and 0.125u put the pitch at 5px at the size the model tops out at, which
-   is 10 whole device pixels on a retina Mac and 5 on anything else. The row
-   starts hard left, on the artwork's edge, and is sized to nearly fill the pane:
-   the pitch is pinned to how wide the podcast window is, so it has to be
-   revisited if that window is resized. Too wide and the row is clipped, too
-   narrow and it floats short of the right edge.
+   0.5u and 0.125u put the pitch at 4.5px at the size the model tops out at,
+   which is 9 whole device pixels on a retina Mac, so every bar there is painted
+   the same. It was 5px, whole on a 1x display as well, until the unit came down
+   to 7.2; on a 1x display the CSS alone is back on a half pixel, and it is the
+   wave-fit effect that keeps the beat out of it. Both are fractions of --u so
+   the row still scales with the rest of the model; the phase lands exactly at
+   the top of the range, and everywhere else the bars are small enough that the
+   beat does not read.
 
-   --u stops at a 4px floor around 440px of screen, so below that the bars hold
+   The pitch is set by what the pane can hold: 96 bars want 431px and the podcast
+   window offers about 530, so the row starts hard left, on the same edge as the
+   artwork above it, and stops a little short of the right. It is aligned rather
+   than stretched, since stretching is what put the bars on a fractional pitch
+   in the first place, and that means the pitch has to be revisited whenever the
+   podcast window is resized. Too wide and the row is clipped; too narrow and it
+   floats short of the right edge.
+
+   --u stops at a 4px floor around 490px of screen, so below that the bars hold
    their size while the pane carries on shrinking, and under about 365px the row
    was wider than the window. Narrower than 400px they give up a quarter of their
    width: show less rather than the same thing clipped.
@@ -1017,38 +1082,227 @@
   }
 }
 
-/* ── the notes you switch to ──────────────────────────────── */
+/* ── the notes you switch to ────────────────────────────────
+   Apple's, drawn as it is: the toolbar in the title bar, then three columns,
+   the folders, the list, the note, in the demo's tokens, so it follows the page
+   the way the real one follows the Mac. */
 
 .win_notes .win_content {
   background: var(--notes-bg);
 }
 
-.notes_body {
+.app_notes {
+  .titlebar {
+    gap: calc(1.1 * var(--u));
+    justify-content: flex-start;
+  }
+
+  /* A glyph, and a skeleton line: the two things Notes is mostly made of. */
+  .nt_g {
+    display: inline-block;
+    flex: none;
+    height: calc(1.4 * var(--u));
+    width: calc(1.4 * var(--u));
+
+    svg {
+      display: block;
+      height: 100%;
+      width: 100%;
+    }
+  }
+
+  .sk {
+    background: rgb(var(--ink) / 0.12);
+    border-radius: 3px;
+    display: block;
+    height: calc(0.6 * var(--u));
+  }
+}
+
+.nt_tools {
+  align-items: center;
+  color: rgb(var(--ink) / 0.62);
   display: flex;
+  flex: 1;
+  gap: calc(1.1 * var(--u));
+  min-width: 0;
+
+  .nt_g {
+    height: calc(1.5 * var(--u));
+    width: calc(1.5 * var(--u));
+  }
+}
+
+.nt_aa {
+  font-size: calc(1.15 * var(--u));
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.nt_gap {
+  flex: 1;
+}
+
+.nt_search {
+  align-items: center;
+  background: rgb(var(--ink) / 0.07);
+  border-radius: calc(0.5 * var(--u));
+  box-shadow: inset 0 0 0 0.5px rgb(var(--ink) / 0.1);
+  color: rgb(var(--ink) / 0.4);
+  display: inline-flex;
+  font-size: calc(1 * var(--u));
+  gap: calc(0.4 * var(--u));
+  height: calc(2 * var(--u));
+  padding-inline: calc(0.6 * var(--u));
+  width: calc(11 * var(--u));
+
+  .nt_g {
+    height: calc(1.1 * var(--u));
+    width: calc(1.1 * var(--u));
+  }
+}
+
+.nt {
+  background: var(--notes-bg);
+  display: flex;
+  font-size: calc(1.05 * var(--u));
   height: 100%;
 }
 
-.notes_side {
-  background: rgb(var(--ink) / 0.035);
-  border-right: 1px solid rgb(var(--ink) / 0.07);
+.nt_side {
+  background: rgb(var(--ink) / 0.04);
+  border-right: 1px solid rgb(var(--ink) / 0.08);
+  color: rgb(var(--ink) / 0.85);
   display: flex;
   flex: none;
   flex-direction: column;
-  gap: calc(1.02 * var(--u));
-  max-width: 130px;
-  padding: calc(1.25 * var(--u)) calc(1.02 * var(--u));
-  width: 22%;
+  gap: calc(0.25 * var(--u));
+  min-width: 0;
+  padding: calc(1.2 * var(--u)) calc(0.8 * var(--u));
+  width: 24%;
+}
 
-  i {
-    background: rgb(var(--ink) / 0.13);
-    border-radius: 3px;
-    display: block;
-    height: calc(0.68 * var(--u));
+.nt_h {
+  color: rgb(var(--ink) / 0.45);
+  font-size: calc(0.85 * var(--u));
+  font-weight: 700;
+  padding: 0 calc(0.6 * var(--u)) calc(0.3 * var(--u));
+}
+
+.nt_row {
+  align-items: center;
+  border-radius: calc(0.5 * var(--u));
+  display: flex;
+  gap: calc(0.6 * var(--u));
+  height: calc(2.2 * var(--u));
+  overflow: hidden;
+  padding-inline: calc(0.6 * var(--u));
+  white-space: nowrap;
+
+  &.is_on {
+    background: rgb(var(--ink) / 0.11);
   }
 
-  i.is_on {
-    background: rgb(var(--ink) / 0.3);
-    width: 80%;
+  /* The folders in the gold Notes gives them. */
+  .nt_g {
+    color: #f2b300;
+  }
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  u {
+    color: rgb(var(--ink) / 0.4);
+    font-size: calc(0.95 * var(--u));
+    margin-inline-start: auto;
+    text-decoration: none;
+  }
+}
+
+.nt_list {
+  border-right: 1px solid rgb(var(--ink) / 0.08);
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: calc(0.3 * var(--u));
+  min-width: 0;
+  padding: calc(0.8 * var(--u));
+  width: 30%;
+}
+
+.nt_item {
+  border-bottom: 1px solid rgb(var(--ink) / 0.06);
+  border-radius: calc(0.6 * var(--u));
+  display: grid;
+  gap: calc(0.35 * var(--u));
+  padding: calc(0.7 * var(--u)) calc(0.8 * var(--u));
+
+  &.is_on {
+    background: rgb(var(--ink) / 0.1);
+    border-bottom-color: transparent;
+  }
+
+  b {
+    color: rgb(var(--ink) / 0.9);
+    font-size: calc(1.05 * var(--u));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  > .sk {
+    height: calc(0.55 * var(--u));
+  }
+}
+
+.nt_meta {
+  align-items: center;
+  display: flex;
+  gap: calc(0.6 * var(--u));
+
+  span {
+    color: rgb(var(--ink) / 0.7);
+    font-size: calc(0.9 * var(--u));
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sk {
+    flex: 1;
+    height: calc(0.5 * var(--u));
+  }
+}
+
+.nt_editor {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.nt_date {
+  color: rgb(var(--ink) / 0.4);
+  font-size: calc(0.85 * var(--u));
+  padding-top: calc(1 * var(--u));
+  text-align: center;
+}
+
+/* Narrow, the columns go the way they do when a Notes window is dragged
+   narrow: the folders first, then the list. */
+@container (max-width: 620px) {
+  .nt_side {
+    display: none;
+  }
+
+  .nt_list {
+    width: 36%;
+  }
+}
+
+@container (max-width: 430px) {
+  .nt_list {
+    display: none;
   }
 }
 
@@ -1078,6 +1332,25 @@
     border-radius: 3px;
     display: block;
     height: calc(0.68 * var(--u));
+  }
+}
+
+/* The note itself: the same document the writer has always typed into, with
+   the title at the size Notes sets it. */
+.app_notes .notes_doc {
+  padding: calc(0.9 * var(--u)) calc(1.9 * var(--u)) calc(1.5 * var(--u));
+
+  b {
+    color: rgb(var(--ink) / 0.9);
+    font-size: calc(1.6 * var(--u));
+    font-weight: 700;
+    margin-bottom: calc(0.3 * var(--u));
+  }
+
+  b.sub {
+    color: rgb(var(--ink) / 0.8);
+    font-size: calc(1.2 * var(--u));
+    margin-top: calc(0.6 * var(--u));
   }
 }
 
@@ -1165,60 +1438,16 @@
   }
 }
 
+/* Each app's icon as the Dock draws it, its own shape, margins and shadow,
+   read from the app itself on the site's side, so the tile is only a box. */
 .sw_icon {
-  border-radius: calc(1.25 * var(--u));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24),
-    0 2px 5px rgba(0, 0, 0, 0.3);
-  color: #fff;
-  display: grid;
+  display: block;
   height: calc(5.23 * var(--u));
-  place-items: center;
   width: calc(5.23 * var(--u));
 
-  svg {
-    height: 62%;
-    width: 62%;
-  }
-}
-
-.i_meet {
-  background: linear-gradient(160deg, #4a8ef0, #2c5fc4);
-}
-
-.i_notes {
-  background: linear-gradient(160deg, #ffd75e, #f0b429);
-}
-
-/* Still an app icon, so it keeps the squircle the other two have. What is round
-   is the play badge inside it, the way a media app draws itself.
-
-   The badge and the mark are one SVG, and they have to stay one. They were a
-   CSS ::before circle with the mark stacked on it in the same grid cell, which
-   is fine until the switcher animates: the panel scales 0.94 → 1, and at the end
-   of that the two rounded to device pixels independently, so the mark jumped
-   about a pixel inside its badge as the panel landed. Inside one SVG they are a
-   single painted thing at any scale, and nothing can drift between them.
-
-   The geometry the CSS used to hold, now in the markup: the badge is 64% of the
-   tile, so r is 32% of a 24 box; the mark is drawn at half size about the
-   centre, which puts it at 32% of the tile tall, half the badge's diameter, the
-   proportion a play button normally uses, and the point at which it stops
-   looking lost in the circle. Rounding a filled shape by stroking it with round
-   joins also dilates it, by the stroke width, so the two are one calculation
-   rather than two: the path is 11.02 wide and 13.76 tall, and stroking it at 1.6
-   makes that 12.62 by 15.36. The 0.522 taken off x is the nudge that was a
-   translate before: the triangle's centroid sits on 12.07 against a centre of
-   12, and this takes a little of that back by eye. Change any of these and the
-   others have to move. */
-.i_player {
-  background: linear-gradient(160deg, #3a3b46, #1e1f27);
-
-  svg {
-    color: #1b1c24;
+  img {
+    display: block;
     height: 100%;
-    stroke: currentColor;
-    stroke-linejoin: round;
-    stroke-width: 1.6;
     width: 100%;
   }
 }
@@ -1435,18 +1664,30 @@
      by the component from how much is actually hidden there, so it shrinks as
      you approach the end and costs nothing once you reach it. The direction is
      the only part CSS decides, because it follows the side the stack took: older
-     boxes are above when the stack is above and below when it is below. Never
-     the near edge, which holds the newest box, the one being read. */
+     boxes are above when the stack is above and below when it is below. The
+     near edge, which holds the newest box, the one being read, gets a much
+     shorter band in --near-fade, and only once the stack has been scrolled away
+     from the live box: then that edge hides newer boxes too, and the band says
+     so without dimming what is being read. It is zero when parked, and a
+     zero-length ramp at the very end of the gradient is the same as no ramp. */
   &.is_clipped {
     mask-image: linear-gradient(
       to bottom,
       transparent,
-      #000 var(--fade, 2.2em)
+      #000 var(--fade, 2.2em),
+      #000 calc(100% - var(--near-fade, 0px)),
+      transparent
     );
   }
 
   &.is_below.is_clipped {
-    mask-image: linear-gradient(to top, transparent, #000 var(--fade, 2.2em));
+    mask-image: linear-gradient(
+      to top,
+      transparent,
+      #000 var(--fade, 2.2em),
+      #000 calc(100% - var(--near-fade, 0px)),
+      transparent
+    );
   }
 
   /* Bottom-anchored by an auto margin rather than justify-content: flex-end,

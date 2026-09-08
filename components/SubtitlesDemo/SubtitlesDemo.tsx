@@ -21,11 +21,23 @@ import styles from "./SubtitlesDemo.module.scss";
  * Nothing here is an image or a video. Every pixel is CSS.
  */
 
+// Named as the Mac names them in its menu bar: Zoom's process is zoom.us.
 const APPS = {
-  meeting: "Meetings",
+  meeting: "zoom.us",
   notes: "Notes",
-  player: "Player",
+  player: "Spotify",
 } as const;
+
+/** The ⌘-tab tiles: each app's icon as the Dock draws it, its own shape,
+ *  margins and shadow, read from the app itself on the site's side. */
+const DOCK = "/media/design-engineering/subtitles/dock";
+
+/** The folder glyph Notes puts before every folder in its sidebar. */
+const NOTES_FOLDER = (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M3 6a2 2 0 0 1 2-2h4.5l2 2H19a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+  </svg>
+);
 
 type AppId = keyof typeof APPS;
 
@@ -1301,6 +1313,8 @@ export const SubtitlesDemo = () => {
     // Below this there is not enough room to be worth drawing: the app's 40pt.
     const MIN_ROOM = 1.33;
     const FADE_MAX = 2.2;
+    // The near edge's own band: the app's 60pt against its 150pt far fade.
+    const NEAR_FADE_MAX = FADE_MAX * 0.4;
 
     // The stylesheet's own names. The module types them as possibly absent and
     // `classList` refuses an empty token, so each one falls back to the name it
@@ -1465,14 +1479,31 @@ export const SubtitlesDemo = () => {
     // container disturbs the scroll, so toggling it on every scroll frame put
     // the fade in a fight with the gesture it was reading. A depth of zero looks
     // exactly like no mask and costs the scroller nothing.
+    //
+    // The far edge carries the tall fade. The near edge gets a much shorter
+    // one, and only once the reader has scrolled away from the live box:
+    // parked, the box against the live one is the newest and the one being
+    // read, so dimming it would be backwards; scrolled, that edge hides newer
+    // boxes, and the short band says so without swallowing what is being read.
+    // Neither takes more than half the visible height, so the two can meet but
+    // never cross. Parked, the near band is zero whatever the geometry says: a
+    // box rising in at the near end is translated for the length of its
+    // entrance, and a transformed box widens the scrollable overflow it sits
+    // in, so for those frames the near distance reads as the displacement and
+    // the band flashed on and snapped off with the animation.
     const updateFade = () => {
-      const hidden = Math.max(0, maxScroll() - nearDistance());
+      const near = Math.max(0, nearDistance());
+      const hidden = Math.max(0, maxScroll() - near);
       const fade = Math.min(
         emSize() * FADE_MAX,
         hidden,
         historyEl.clientHeight / 2
       );
+      const nearFade = parked
+        ? 0
+        : Math.min(emSize() * NEAR_FADE_MAX, near, historyEl.clientHeight / 2);
       historyEl.style.setProperty("--fade", `${fade.toFixed(1)}px`);
+      historyEl.style.setProperty("--near-fade", `${nearFade.toFixed(1)}px`);
     };
 
     // Pinned to the live box, so dragging the captions takes the stack with
@@ -2173,40 +2204,242 @@ export const SubtitlesDemo = () => {
             </div>
           </div>
 
-          {/* 2 · what you switch to */}
-          <div {...windowProps("notes", styles.win_notes)}>
+          {/* 2 · what you switch to: Apple's Notes, drawn as it is in the
+              demo's tokens. The toolbar sits in the title bar, then three
+              columns, the folders, the list and the note, which is the
+              document the writer above types into. */}
+          <div
+            {...windowProps("notes", cx(styles.win_notes, styles.app_notes))}
+          >
             <div {...titlebarProps("notes")}>
               <span className={styles.lights}>
                 <i className={styles.l_close} />
                 <i className={styles.l_min} />
                 <i className={styles.l_max} />
               </span>
-              <span className={styles.win_title}>Notes · Weekly sync</span>
+              <div className={styles.nt_tools}>
+                <span className={styles.nt_g}>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <rect
+                      x="3"
+                      y="4"
+                      width="18"
+                      height="16"
+                      rx="2.5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M9 4v16"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+                <span className={styles.nt_g}>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <rect
+                      x="3"
+                      y="5"
+                      width="13"
+                      height="16"
+                      rx="2"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path d="M12 13l8.5-8.5 2 2L14 15h-2z" />
+                  </svg>
+                </span>
+                <span className={styles.nt_gap} />
+                <span className={styles.nt_aa}>Aa</span>
+                <span className={styles.nt_g}>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M3 7l2 2 3.5-3.5M3 15l2 2 3.5-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <rect x="11" y="6" width="10" height="2.2" rx="1" />
+                    <rect x="11" y="14" width="10" height="2.2" rx="1" />
+                  </svg>
+                </span>
+                <span className={styles.nt_g}>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <rect
+                      x="3"
+                      y="4"
+                      width="18"
+                      height="16"
+                      rx="2"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M3 10h18M3 15h18M10 4v16M16 4v16"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                    />
+                  </svg>
+                </span>
+                <span className={styles.nt_g}>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+                <span className={styles.nt_g}>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <rect
+                      x="3"
+                      y="4"
+                      width="18"
+                      height="16"
+                      rx="2"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <circle cx="8.5" cy="9" r="1.8" />
+                    <path d="M4 18l5-5 3.5 3.5 3-3L20 18z" />
+                  </svg>
+                </span>
+                <span className={styles.nt_g}>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M12 3v12M8 7l4-4 4 4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+                <span className={styles.nt_search}>
+                  <span className={styles.nt_g}>
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <circle
+                        cx="10"
+                        cy="10"
+                        r="6"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                      />
+                      <path
+                        d="M14.5 14.5L20 20"
+                        stroke="currentColor"
+                        strokeWidth="2.4"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
+                  <span>Search</span>
+                </span>
+              </div>
             </div>
             <div className={styles.win_content}>
-              <div className={styles.notes_body}>
-                <div className={styles.notes_side}>
-                  {[0, 1, 2, 3, 4].map((index) => (
-                    <i
-                      key={index}
-                      className={cx(index === 1 && styles.is_on)}
-                    />
-                  ))}
-                </div>
-                <div className={styles.notes_doc}>
-                  <b>Weekly sync</b>
-                  {NOTE_LINES_TOP.map((width, index) => (
-                    <i key={index} style={{ width }} />
-                  ))}
-                  <b className={styles.sub}>Actions</b>
-                  {notesLines.map((width, index) => (
-                    <i key={`${index}-${width}`} style={{ width }} />
-                  ))}
-                  {/* The line being written, with the caret at its end. */}
-                  <span className={styles.lw_write}>
-                    <i style={{ width: `${writing}%` }} />
-                    <span className={styles.notes_caret} />
+              <div className={styles.nt}>
+                <div className={styles.nt_side}>
+                  <span className={styles.nt_h}>iCloud</span>
+                  <span className={styles.nt_row}>
+                    <span className={styles.nt_g}>{NOTES_FOLDER}</span>
+                    <span>All iCloud</span>
+                    <u>12</u>
                   </span>
+                  <span className={cx(styles.nt_row, styles.is_on)}>
+                    <span className={styles.nt_g}>{NOTES_FOLDER}</span>
+                    <span>Notes</span>
+                    <u>9</u>
+                  </span>
+                  <span className={styles.nt_row}>
+                    <span className={styles.nt_g}>{NOTES_FOLDER}</span>
+                    <span>Quick Notes</span>
+                    <u>2</u>
+                  </span>
+                  <span className={styles.nt_row}>
+                    <span className={styles.nt_g}>
+                      <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M4 6h16v2H4zM9 3h6v2H9zM6 8h12l-1 13H7z" />
+                      </svg>
+                    </span>
+                    <span>Recently Deleted</span>
+                    <u>1</u>
+                  </span>
+                </div>
+                <div className={styles.nt_list}>
+                  <span className={cx(styles.nt_item, styles.is_on)}>
+                    <b>Weekly sync</b>
+                    <span className={styles.nt_meta}>
+                      <span>14:32</span>
+                      <i className={styles.sk} style={{ width: "55%" }} />
+                    </span>
+                  </span>
+                  <span className={styles.nt_item}>
+                    <i className={styles.sk} style={{ width: "62%" }} />
+                    <span className={styles.nt_meta}>
+                      <span>Yesterday</span>
+                      <i className={styles.sk} style={{ width: "48%" }} />
+                    </span>
+                  </span>
+                  <span className={styles.nt_item}>
+                    <i className={styles.sk} style={{ width: "44%" }} />
+                    <span className={styles.nt_meta}>
+                      <i className={styles.sk} style={{ width: "18%" }} />
+                      <i className={styles.sk} style={{ width: "52%" }} />
+                    </span>
+                  </span>
+                </div>
+                <div className={styles.nt_editor}>
+                  <span className={styles.nt_date}>
+                    7 September 2026 at 14:32
+                  </span>
+                  <div className={styles.notes_doc}>
+                    <b>Weekly sync</b>
+                    {NOTE_LINES_TOP.map((width, index) => (
+                      <i key={index} style={{ width }} />
+                    ))}
+                    <b className={styles.sub}>Actions</b>
+                    {notesLines.map((width, index) => (
+                      <i key={`${index}-${width}`} style={{ width }} />
+                    ))}
+                    {/* The line being written, with the caret at its end. */}
+                    <span className={styles.lw_write}>
+                      <i style={{ width: `${writing}%` }} />
+                      <span className={styles.notes_caret} />
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2330,11 +2563,8 @@ export const SubtitlesDemo = () => {
                 selected === "meeting" && styles.is_selected
               )}
             >
-              <span className={cx(styles.sw_icon, styles.i_meet)}>
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <rect x="2.6" y="6.4" width="12.6" height="11.2" rx="2.6" />
-                  <path d="M16.8 11.2l3.6-2.6a.7.7 0 0 1 1.1.6v5.6a.7.7 0 0 1-1.1.6l-3.6-2.6z" />
-                </svg>
+              <span className={styles.sw_icon}>
+                <img src={`${DOCK}/zoom.png`} width={84} height={84} alt="" />
               </span>
               <span className={styles.sw_name}>{APPS["meeting"]}</span>
             </span>
@@ -2344,15 +2574,8 @@ export const SubtitlesDemo = () => {
                 selected === "notes" && styles.is_selected
               )}
             >
-              <span className={cx(styles.sw_icon, styles.i_notes)}>
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <rect x="4.6" y="3" width="14.8" height="18" rx="2.6" />
-                  <g fill="#b07d18">
-                    <rect x="7.4" y="7" width="9.2" height="1.7" rx="0.85" />
-                    <rect x="7.4" y="11" width="9.2" height="1.7" rx="0.85" />
-                    <rect x="7.4" y="15" width="5.6" height="1.7" rx="0.85" />
-                  </g>
-                </svg>
+              <span className={styles.sw_icon}>
+                <img src={`${DOCK}/notes.png`} width={84} height={84} alt="" />
               </span>
               <span className={styles.sw_name}>{APPS["notes"]}</span>
             </span>
@@ -2362,23 +2585,13 @@ export const SubtitlesDemo = () => {
                 selected === "player" && styles.is_selected
               )}
             >
-              <span className={cx(styles.sw_icon, styles.i_player)}>
-                {/* Badge and mark in one SVG on purpose, see the note in the
-                    stylesheet. Drawn as two elements they drifted apart by a
-                    pixel as the panel finished scaling. */}
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="7.68"
-                    fill="rgba(255,255,255,0.95)"
-                    stroke="none"
-                  />
-                  <path
-                    transform="translate(11.478 12) scale(.5) translate(-12 -12)"
-                    d="M8.4 5.8v12.4a.8.8 0 0 0 1.22.68l9.8-6.2a.8.8 0 0 0 0-1.36l-9.8-6.2a.8.8 0 0 0-1.22.68z"
-                  />
-                </svg>
+              <span className={styles.sw_icon}>
+                <img
+                  src={`${DOCK}/spotify.png`}
+                  width={84}
+                  height={84}
+                  alt=""
+                />
               </span>
               <span className={styles.sw_name}>{APPS["player"]}</span>
             </span>
