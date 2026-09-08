@@ -6,7 +6,7 @@
     "plugin:@typescript-eslint/recommended",
     "prettier"
   ],
-  "ignorePatterns": ["coverage/*"],
+  "ignorePatterns": ["coverage/*", "next-env.d.ts"],
   "rules": {
     "@next/next/no-img-element": "off",
     "@typescript-eslint/no-restricted-types": "warn",
