@@ -34,3 +34,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Clips recorded for uploading elsewhere, see scripts/capture-subtitles-media.mjs
+exports/

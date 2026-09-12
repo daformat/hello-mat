@@ -105,7 +105,9 @@
     --meeting-bg: #16171d;
     --notes-bg: #17171a;
     --tile-bg: linear-gradient(150deg, #262838, #191a24);
-    --controls-bg: rgb(9 9 12 / 0.94);
+    /* Lifted off the near-black, so the transport strip reads as a bar on the
+       window rather than a hole in it. */
+    --controls-bg: rgb(36 36 45 / 0.94);
     --panel-bg: rgb(38 38 44 / 0.55);
     --recess: rgb(0 0 0 / 0.3);
     --recess-deep: rgb(0 0 0 / 0.42);
@@ -140,14 +142,17 @@
         transparent 66%
       ),
       linear-gradient(160deg, #17142f 0%, #2b1b40 50%, #3a1e2b 100%);
+    /* The two upper washes broader and softer than they were, the indigo at
+       0.3 and the peach at 0.1, so the scene reads as a glow behind the show
+       rather than two spots on it. */
     --scene-bg: radial-gradient(
-        42% 58% at 26% 32%,
-        rgb(112 108 255 / 0.44),
+        52% 58% at 26% 32%,
+        rgb(112 108 255 / 0.3),
         transparent 66%
       ),
       radial-gradient(
-        38% 52% at 74% 28%,
-        rgb(255 138 106 / 0.26),
+        60.7% 93% at 74% 28%,
+        rgb(255 138 106 / 0.1),
         transparent 68%
       ),
       radial-gradient(
@@ -339,6 +344,30 @@
   position: relative;
 }
 
+/* The cursor while resizing by an edge: the stage says which, and for as long
+   as it does the cursor is that edge's over whatever the pointer happens to be
+   on, the window behind and the desktop included, since half of the band is
+   outside the window being pulled. */
+.stage[data-resize="ew"],
+.stage[data-resize="ew"] * {
+  cursor: ew-resize !important; // stylelint-disable-line declaration-no-important
+}
+
+.stage[data-resize="ns"],
+.stage[data-resize="ns"] * {
+  cursor: ns-resize !important; // stylelint-disable-line declaration-no-important
+}
+
+.stage[data-resize="nwse"],
+.stage[data-resize="nwse"] * {
+  cursor: nwse-resize !important; // stylelint-disable-line declaration-no-important
+}
+
+.stage[data-resize="nesw"],
+.stage[data-resize="nesw"] * {
+  cursor: nesw-resize !important; // stylelint-disable-line declaration-no-important
+}
+
 /* fake macOS windows, all three stacked, one fronted at a time.
 
    Nothing dims the ones behind, because macOS doesn't: a background window keeps
@@ -431,9 +460,10 @@
     5.65281cqw
   ); /* 10.5% ->  9.75% */
   left: clamp(9cqw, 23.4185cqw - 89.3945px, 13.26cqw); /*  9%   -> 13.26% */
-  /* Five per cent narrower than the insets alone give, taken evenly from both
-     sides so it keeps its centre. */
-  margin-inline: 1.85cqw;
+  /* Narrower than the insets alone give, taken evenly from both sides so it
+     keeps its centre: five per cent off, then five per cent off that (1.85cqw
+     a side, then 3.6), so about a tenth all told at the fan's width. */
+  margin-inline: 3.6cqw;
   right: clamp(9cqw, 23.4185cqw - 89.3945px, 13.26cqw); /*  9%   -> 13.26% */
   top: clamp(
     3.09559cqw,
@@ -449,7 +479,7 @@
     13.397cqw - 48.0137px,
     7.94086cqw
   ); /* 10.5% -> 14.75% */
-  left: clamp(15cqw, 32.7692cqw - 110.169px, 20.25cqw); /* 15%   -> 20.25% */
+  left: clamp(15cqw, 53.0769cqw - 236.077px, 26.25cqw); /* 15%   -> 26.25% */
   right: clamp(3cqw, 6.38462cqw - 20.9846px, 4cqw); /*  3%   ->  4%    */
   top: clamp(
     5.7874cqw,
@@ -692,10 +722,17 @@
 
   b {
     color: rgb(var(--ink) / 0.96);
+    /* One line, whatever the window's width: a show's name that wraps to four
+       lines in a narrow window reads as a broken layout, the way players show
+       it is as much as fits and an ellipsis. */
+    display: block;
     font-size: calc(2.16 * var(--u));
     font-weight: 680;
     letter-spacing: -0.02em;
     line-height: 1.1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   i {
@@ -798,6 +835,38 @@
   i:nth-child(4n + 1) {
     animation-duration: 0.43s;
   }
+}
+
+/* And when the window itself is pulled in, see the resize in the component:
+   narrow loses the library and the rest of the show, cramped brings the artwork
+   and the title down so the name still reads on one or two lines; short loses
+   the rest of the show, squat the waveform too, and what is left is the head
+   and the transport, which is the least a player can be and still be one. */
+.win_player.is_narrow .pod_side,
+.win_player.is_narrow .pod_list {
+  display: none;
+}
+
+.win_player.is_cramped .pod_art {
+  width: calc(6 * var(--u));
+}
+
+.win_player.is_cramped .pod_meta b {
+  font-size: calc(1.7 * var(--u));
+}
+
+.win_player.is_short .pod_list {
+  display: none;
+}
+
+.win_player.is_short .pod_main {
+  gap: calc(1.4 * var(--u));
+  justify-content: flex-start;
+  padding-block: calc(1.4 * var(--u));
+}
+
+.win_player.is_squat .pod_wave {
+  display: none;
 }
 
 @keyframes pod-bar {
@@ -1010,6 +1079,18 @@
       color: rgb(var(--ink) / 0.9);
     }
   }
+}
+
+/* Pulled short, the names go and the faces come down a size, so four people
+   still fit in two rows rather than the names landing on the faces. */
+.demo_window.is_short .meet_grid .tile em {
+  display: none;
+}
+
+.demo_window.is_short .meet_grid .face {
+  font-size: calc(0.95 * var(--u));
+  height: calc(2.9 * var(--u));
+  width: calc(2.9 * var(--u));
 }
 
 @keyframes tile-speak {
@@ -1306,6 +1387,30 @@
   }
 }
 
+/* The same two steps when the window itself is pulled narrow, as Notes takes
+   them: the folders go first, then the list, and the toolbar sheds its tools
+   from the right so the search field is never the thing that gets cut. */
+.app_notes.is_narrow .nt_side {
+  display: none;
+}
+
+.app_notes.is_narrow .nt_list {
+  width: 36%;
+}
+
+.app_notes.is_narrow .nt_tools .nt_g:nth-of-type(n + 7) {
+  display: none;
+}
+
+.app_notes.is_cramped .nt_list {
+  display: none;
+}
+
+.app_notes.is_cramped .nt_tools .nt_aa,
+.app_notes.is_cramped .nt_tools .nt_g:nth-of-type(n + 5) {
+  display: none;
+}
+
 .notes_doc {
   display: flex;
   flex: 1;
@@ -1501,6 +1606,7 @@
   --hole-x: -999px;
   --hole-y: -999px;
 
+  backdrop-filter: blur(6px);
   background: rgba(0, 0, 0, 0.72);
   border-radius: 0.47em;
   bottom: 5.5%;
@@ -1669,24 +1775,30 @@
      shorter band in --near-fade, and only once the stack has been scrolled away
      from the live box: then that edge hides newer boxes too, and the band says
      so without dimming what is being read. It is zero when parked, and a
-     zero-length ramp at the very end of the gradient is the same as no ramp. */
-  &.is_clipped {
+     zero-length ramp at the very end of the gradient is the same as no ramp.
+     Both bands are drawn on the boxes rather than on the stack, below. */
+  /* On each box, not on the stack, see the fade in the component: a mask on
+     the stack would take the boxes' backdrop away. The gradient is the stack's,
+     the far band at the far edge and the near band at the near one, shifted up
+     by the box's own position in the view (--y) so the boxes together draw one
+     fade. */
+  &.is_clipped .hist_line {
     mask-image: linear-gradient(
       to bottom,
-      transparent,
-      #000 var(--fade, 2.2em),
-      #000 calc(100% - var(--near-fade, 0px)),
-      transparent
+      transparent calc(0px - var(--y, 0px)),
+      #000 calc(var(--fade, 2.2em) - var(--y, 0px)),
+      #000 calc(var(--h, 100%) - var(--near-fade, 0px) - var(--y, 0px)),
+      transparent calc(var(--h, 100%) - var(--y, 0px))
     );
   }
 
-  &.is_below.is_clipped {
+  &.is_below.is_clipped .hist_line {
     mask-image: linear-gradient(
-      to top,
-      transparent,
-      #000 var(--fade, 2.2em),
-      #000 calc(100% - var(--near-fade, 0px)),
-      transparent
+      to bottom,
+      transparent calc(0px - var(--y, 0px)),
+      #000 calc(var(--near-fade, 0px) - var(--y, 0px)),
+      #000 calc(var(--h, 100%) - var(--fade, 2.2em) - var(--y, 0px)),
+      transparent calc(var(--h, 100%) - var(--y, 0px))
     );
   }
 
@@ -1703,6 +1815,7 @@
 /* The same measurements as the live box, for the reason Pill.swift exists: a
    stray point of inset between the two is invisible apart and glaring stacked. */
 .hist_line {
+  backdrop-filter: blur(6px);
   background: rgba(0, 0, 0, 0.66);
   border-radius: 0.47em;
   color: rgba(255, 255, 255, 0.65);
@@ -1799,6 +1912,7 @@
   --e: clamp(14px, 2.61cqw, 23px);
 
   align-items: center;
+  backdrop-filter: blur(6px);
   background: rgba(0, 0, 0, 0.66);
   border-radius: calc(var(--e) * 0.467);
   box-sizing: border-box;

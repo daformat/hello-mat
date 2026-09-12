@@ -458,7 +458,7 @@ export const COMPONENTS = {
       light:
         "/media/design-engineering/subtitles/subtitles-overview-light-poster.webp",
     },
-    videoDuration: 43.8,
+    videoDuration: 55.9,
     metas: {
       shortTitle: "The demo for my Subtitles app",
       title: "A product demo built entirely in CSS",
@@ -469,7 +469,7 @@ export const COMPONENTS = {
       imageWidth: 1200,
       imageHeight: 630,
       datePublished: "2026-08-16",
-      dateModified: "2026-09-08",
+      dateModified: "2026-09-12",
     },
   },
   "contrast-colors": {

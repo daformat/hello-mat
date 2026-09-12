@@ -128,6 +128,29 @@ const SubtitlesAppPageContent = () => {
           scripted version because you are the one moving the window.
         </p>
 
+        <h3 id="resizing">Resizing by the edges</h3>
+        <p>
+          The windows resize by any edge or corner, within four pixels either
+          side of it, and each knows how small it can go. The hit test runs on
+          the stage rather than on the windows, because half of the band is
+          outside the window, over the desktop or over whatever window is
+          behind, and it walks the windows front to back, so an edge under
+          another window&rsquo;s body is not reachable through it. It runs in
+          the capture phase, ahead of the title bar&rsquo;s own press, because
+          the top edge&rsquo;s band lies across the bar and a press there is a
+          resize rather than a move. Taking hold raises, as moving does; the
+          opposite edge holds; upwards stops under the menu bar.
+        </p>
+        <p>
+          Each window names its floor and the sizes at which it shows less, in
+          units of the model, and wears the step it has crossed as a class, the
+          way its app does when dragged in: Notes loses its folders then its
+          list, the player its library then its list then its waveform, a call
+          its names. The table of those numbers lives in the component; the site
+          keeps them as custom properties on the window, which is the same
+          numbers read the other way round.
+        </p>
+
         <h3 id="searching-the-stack">Searching the stack</h3>
         <p>
           The search is the app&rsquo;s 1.4.0 feature, ported whole. While the
@@ -161,6 +184,16 @@ const SubtitlesAppPageContent = () => {
           stack and its pill follow it a tenth of a second behind. Each spring
           is integrated over fixed substeps with the interval the frame actually
           took, so it is the same spring at 60 and 120 Hz.
+        </p>
+        <p>
+          The caption box, the boxes in the stack and the pill blur what is
+          behind them by six pixels, which cost the stack its fade. A mask on
+          the stack makes it the backdrop root for everything in it, and a
+          box&rsquo;s backdrop blur then has only the stack&rsquo;s own
+          transparent pixels to blur. So the fade is drawn on each box instead:
+          the component writes every box&rsquo;s position in the view, and the
+          box&rsquo;s own mask carries the stack&rsquo;s gradient shifted by it,
+          so the boxes together draw one fade.
         </p>
 
         <h3 id="no-images">Three images, and none of them a screenshot</h3>

@@ -5,6 +5,7 @@
 //   node scripts/capture-subtitles-media.mjs light      # one theme
 //   node scripts/capture-subtitles-media.mjs light og   # one theme, stills only
 //   node scripts/capture-subtitles-media.mjs dark video # one theme, clip only
+//   node scripts/capture-subtitles-media.mjs light youtube  # the 1920×1080 clip, to exports/
 //   node scripts/capture-subtitles-media.mjs preview    # the clip's page, in a browser
 //   node scripts/capture-subtitles-media.mjs preview quiet   # written, not opened
 //
@@ -38,9 +39,9 @@
 //     plays on repeat without a seam, and then rotated by a few frames so it
 //     opens on the meeting window rather than on the tail of the ⌘-tab fade.
 //
-// Frames come off a CDP screencast as PNG rather than through Playwright's own
-// recorder: the recorder needs a bundled ffmpeg that isn't installed here, and
-// PNG keeps the pixels lossless until the single h264 pass at the end.
+// Frames come off a CDP screencast rather than through Playwright's own
+// recorder, which needs a bundled ffmpeg that isn't installed here. They are
+// JPEG at the top quality: see captureClip for why not PNG.
 
 import { execFileSync } from "node:child_process";
 import {
@@ -73,8 +74,14 @@ const OUT =
 const PREVIEW = process.argv[2] === "preview";
 const THEMES =
   process.argv[2] && !PREVIEW ? [process.argv[2]] : ["light", "dark"];
-/** "og", "video", or neither for both. */
+/** "og", "video", or neither for both; "youtube" for the 1080p clip alone. */
 const MODE = process.argv[3] ?? "both";
+
+// YouTube's own frame is the demo's own ratio, so the stage fills it with no
+// spread. Written outside the site's public media: these are for uploading,
+// not for serving, and the folder is left out of git.
+const YOUTUBE = { width: 960, height: 540 }; // ×2 for 1920×1080
+const EXPORTS = join(ROOT, "exports");
 
 /** The line the still is taken on, once it has committed. */
 const OPENER = "Universal subtitles for any app, live on your Mac.";
@@ -89,7 +96,9 @@ const EPILOGUE = [
   "Press ⌥F and type: the stack narrows to the boxes that match.",
 ];
 
-const CARD = { width: 990, height: 500 }; // ×2 for the 1980×1000 the cards use
+// The card's own size. The clip ships at twice it, the 1980×1000 the cards
+// use, which is what the browser's scale factor below is for.
+const CARD = { width: 990, height: 500 };
 const OG = { width: 1200, height: 630 };
 
 // The loop is cut a beat after the meeting window fronts, not on the instant it
@@ -261,10 +270,15 @@ const captureOg = async (browser, theme) => {
 };
 
 /** The card clip: exactly one loop of the demo, cut and rotated. */
-const captureClip = async (browser, theme) => {
+const captureClip = async (
+  browser,
+  theme,
+  frame = CARD,
+  out = OUT,
+  suffix = ""
+) => {
   const context = await browser.newContext({
-    viewport: CARD,
-    deviceScaleFactor: 2,
+    viewport: frame,
     colorScheme: theme,
   });
   const page = await context.newPage();
@@ -272,16 +286,23 @@ const captureClip = async (browser, theme) => {
     window.SUBTITLES_EPILOGUE = lines;
   }, EPILOGUE);
   await page.goto(SITE);
-  await page.evaluate(isolate, { stageRules: STAGE_RULES, base: SITE_DIR });
+  await page.evaluate(isolate, {
+    stageRules: STAGE_RULES,
+    frame,
+    base: SITE_DIR,
+  });
 
+  // JPEG at its top quality rather than PNG: at 1980×1000 the PNG encoder
+  // fell behind the compositor, about 55 frames a second on a still screen
+  // and 45 with the stack up, where JPEG holds 60 throughout. What it costs
+  // is under what the 4:2:0 h264 pass at the end loses regardless.
   const work = mkdtempSync(join(tmpdir(), `subtitles-${theme}-`));
+  const name = (index) => join(work, `${String(index).padStart(5, "0")}.jpg`);
   const session = await context.newCDPSession(page);
   const frames = [];
   session.on("Page.screencastFrame", async ({ data, sessionId, metadata }) => {
     const index = frames.length;
-    writeFileSync(join(work, `${String(index).padStart(5, "0")}.png`), data, {
-      encoding: "base64",
-    });
+    writeFileSync(name(index), data, { encoding: "base64" });
     frames.push(metadata.timestamp);
     try {
       await session.send("Page.screencastFrameAck", { sessionId });
@@ -294,9 +315,10 @@ const captureClip = async (browser, theme) => {
   // exactly one loop, cut where there is nothing on screen but the desktop.
   await waitForMark(page, 1);
   await session.send("Page.startScreencast", {
-    format: "png",
-    maxWidth: CARD.width * 2,
-    maxHeight: CARD.height * 2,
+    format: "jpeg",
+    quality: 100,
+    maxWidth: frame.width * 2,
+    maxHeight: frame.height * 2,
     everyNthFrame: 1,
   });
   await waitForMark(page, 2);
@@ -308,7 +330,6 @@ const captureClip = async (browser, theme) => {
   // One line per frame, with the gap to the next as its duration: the frames
   // arrive when the compositor has something new, not on a fixed clock, so
   // their own timestamps are the only thing that keeps the pacing honest.
-  const name = (index) => join(work, `${String(index).padStart(5, "0")}.png`);
   const list = frames
     .map((timestamp, index) => {
       const next = frames[index + 1] ?? timestamp + 1 / 60;
@@ -318,7 +339,7 @@ const captureClip = async (browser, theme) => {
   const listFile = join(work, "frames.txt");
   writeFileSync(listFile, `${list}\nfile '${name(frames.length - 1)}'\n`);
 
-  // One pass, straight from the lossless frames to the file that ships. CRF 16
+  // One pass, straight from the frames to the file that ships. CRF 16
   // is a step short of transparent for flat UI like this, and about 60% larger
   // than the 20 it used to be; 4:2:0 chroma stays, because Safari will not
   // play anything else, and it is only the coloured edges that pay for it.
@@ -330,7 +351,7 @@ const captureClip = async (browser, theme) => {
     "-i",
     listFile,
     "-vf",
-    `fps=60,scale=${CARD.width * 2}:${CARD.height * 2}:flags=lanczos`,
+    `fps=60,scale=${frame.width * 2}:${frame.height * 2}:flags=lanczos`,
     "-c:v",
     "libx264",
     "-preset",
@@ -341,11 +362,11 @@ const captureClip = async (browser, theme) => {
     "yuv420p",
     "-movflags",
     "+faststart",
-    join(OUT, `subtitles-overview-${theme}.mp4`),
+    join(out, `subtitles-overview-${theme}${suffix}.mp4`),
   ]);
 
   rmSync(work, { recursive: true, force: true });
-  console.log(`subtitles-overview-${theme}.mp4`);
+  console.log(`subtitles-overview-${theme}${suffix}.mp4`);
 };
 
 /** The clip's page as a file, one per theme, and the light one opened. */
@@ -394,9 +415,26 @@ const run = async () => {
     return;
   }
   mkdirSync(OUT, { recursive: true });
-  const browser = await chromium.launch({ channel: "chrome" });
+  // The whole browser at two pixels per CSS pixel. Chrome's screencast hands
+  // over frames at the page's CSS size whatever a context's device scale
+  // factor says, so the 2x clip recorded that way was the 1x frames scaled
+  // up; scaled at the browser's own level the frames come at 1980×1000, and
+  // the page's script still measures in CSS pixels, so the stack and its
+  // pill land where they should. (Zooming the page's root also gave real
+  // pixels, but doubled every measured position on the way.) A screenshot,
+  // unlike the screencast, follows its context's own factor, which is why
+  // the still's context still asks for 2.
+  const browser = await chromium.launch({
+    channel: "chrome",
+    args: ["--force-device-scale-factor=2"],
+  });
 
   for (const theme of THEMES) {
+    if (MODE === "youtube") {
+      mkdirSync(EXPORTS, { recursive: true });
+      await captureClip(browser, theme, YOUTUBE, EXPORTS, "-1080p");
+      continue;
+    }
     if (MODE !== "og") {
       await captureClip(browser, theme);
     }

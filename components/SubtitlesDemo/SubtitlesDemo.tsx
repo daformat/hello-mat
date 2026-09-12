@@ -681,6 +681,58 @@ const capture = (event: ReactPointerEvent<HTMLElement>) => {
 /** A window's place on the screen, as fractions of it. */
 type Placement = { left: number; top: number; width: number; height: number };
 
+/** The sizes at which a window shows less, worn as classes. */
+type Steps = {
+  narrow: boolean;
+  cramped: boolean;
+  short: boolean;
+  squat: boolean;
+};
+type ResizeCursor = "ew" | "ns" | "nwse" | "nesw";
+type Edges = { left: boolean; right: boolean; top: boolean; bottom: boolean };
+
+// How small each window can be pulled, and where it starts showing less, in
+// units of the model, the way the app it is drawn as does when its window is
+// dragged in: --min-w and --min-h are the floor; under narrow and cramped in
+// width, short and squat in height, the stylesheet's rules for that class
+// take something out. Set from what each has to show, not shared: a call is
+// four tiles and a bar, a note is three columns, and they run out of room in
+// different places. The site keeps these as custom properties on the window;
+// here they are a table, which is the same numbers read the other way round.
+const WINDOW_SIZES: Record<
+  AppId,
+  { minW: number; minH: number } & Partial<Record<keyof Steps, number>>
+> = {
+  meeting: { minW: 30, minH: 24, short: 30 },
+  notes: { minW: 30, minH: 18, narrow: 52, cramped: 40 },
+  player: { minW: 28, minH: 20, narrow: 48, cramped: 36, short: 30, squat: 24 },
+};
+
+/** The pointer within this many pixels of an edge, either side, takes it. */
+const EDGE_SLOP = 4;
+
+const NO_STEPS: Steps = {
+  narrow: false,
+  cramped: false,
+  short: false,
+  squat: false,
+};
+
+/** The model's unit, as the stylesheet sets it: clamp(4px, 0.8182cqw, 7.2px)
+ *  of the screen. Computed rather than read, because a custom property comes
+ *  back from getComputedStyle as the clamp() it was written as. */
+const unitOf = (screenWidth: number) =>
+  Math.min(7.2, Math.max(4, 0.008182 * screenWidth));
+
+const cursorFor = (e: Edges): ResizeCursor =>
+  (e.left && e.top) || (e.right && e.bottom)
+    ? "nwse"
+    : (e.right && e.top) || (e.left && e.bottom)
+    ? "nesw"
+    : e.left || e.right
+    ? "ew"
+    : "ns";
+
 /** Thrown to unwind the scene loop when the component goes away. */
 const CANCELLED = Symbol("cancelled");
 /** Thrown to unwind it when somebody picks a different scene. */
@@ -743,6 +795,23 @@ export const SubtitlesDemo = () => {
   // of the screen so they keep both their size and their place when it resizes.
   const [placed, setPlaced] = useState<Partial<Record<AppId, Placement>>>({});
   const [draggedWindow, setDraggedWindow] = useState<AppId | null>(null);
+  // Resizing, by any edge or corner: the window being pulled, the steps each
+  // window has crossed, and which edge's cursor the stage should show.
+  const [resizedWindow, setResizedWindow] = useState<AppId | null>(null);
+  const [dressed, setDressed] = useState<Partial<Record<AppId, Steps>>>({});
+  const [resizeCursor, setResizeCursor] = useState<ResizeCursor | null>(null);
+  const windowRefs = useRef<Partial<Record<AppId, HTMLDivElement>>>({});
+  const resizeGrabRef = useRef<{
+    app: AppId;
+    edges: Edges;
+    pointerId: number;
+    box: Placement;
+    x: number;
+    y: number;
+    u: number;
+    minW: number;
+    minH: number;
+  } | null>(null);
   const windowGrabRef = useRef<{
     app: AppId;
     x: number;
@@ -1504,6 +1573,20 @@ export const SubtitlesDemo = () => {
         : Math.min(emSize() * NEAR_FADE_MAX, near, historyEl.clientHeight / 2);
       historyEl.style.setProperty("--fade", `${fade.toFixed(1)}px`);
       historyEl.style.setProperty("--near-fade", `${nearFade.toFixed(1)}px`);
+      // The fade is drawn on each box rather than on the stack: a mask on the
+      // stack would make it the backdrop root for everything in it, and a
+      // box's backdrop blur would then have only the stack's own transparent
+      // pixels to blur. So each box carries its own mask, positioned from
+      // where the box sits in the stack's view (--y) against the stack's
+      // height (--h) and the two bands above; the stylesheet does the rest.
+      // Reads first, then writes, so a stack of fifteen costs one layout.
+      const top = historyEl.scrollTop;
+      const lines = boxes();
+      const ys = lines.map((line) => line.offsetTop - top);
+      historyEl.style.setProperty("--h", `${historyEl.clientHeight}px`);
+      lines.forEach((line, i) => {
+        line.style.setProperty("--y", `${(ys[i] ?? 0).toFixed(1)}px`);
+      });
     };
 
     // Pinned to the live box, so dragging the captions takes the stack with
@@ -1955,16 +2038,207 @@ export const SubtitlesDemo = () => {
     setDraggedWindow(null);
   }, []);
 
+  // ── resizing the windows ─────────────────────────────────────────────────
+  //
+  // By any edge or corner, as on a Mac: the pointer within four pixels of an
+  // edge, on either side of it, takes hold of that edge, and a corner takes
+  // hold of two. The hit test runs on the stage rather than on the windows,
+  // because half of the band is outside the window, over the desktop or over
+  // whatever window is behind; and it walks the windows front to back, so a
+  // band under another window's body is not reachable through it, exactly as
+  // a real desktop has it. It runs in the capture phase, ahead of the title
+  // bar's own press: the top edge's band lies across the bar, and a press
+  // there is a resize rather than a move. Mouse only, like moving: on a phone
+  // the edges are inside a page you are trying to scroll.
+
+  // Front to back: the stack is kept back to front.
+  const edgesAt = useCallback(
+    (x: number, y: number) => {
+      for (const app of [...stack].reverse()) {
+        const win = windowRefs.current[app];
+        if (!win) {
+          continue;
+        }
+        const r = win.getBoundingClientRect();
+        if (
+          x < r.left - EDGE_SLOP ||
+          x > r.right + EDGE_SLOP ||
+          y < r.top - EDGE_SLOP ||
+          y > r.bottom + EDGE_SLOP
+        ) {
+          continue;
+        }
+        const edges: Edges = {
+          left: Math.abs(x - r.left) <= EDGE_SLOP,
+          right: Math.abs(x - r.right) <= EDGE_SLOP,
+          top: Math.abs(y - r.top) <= EDGE_SLOP,
+          bottom: Math.abs(y - r.bottom) <= EDGE_SLOP,
+        };
+        if (edges.left || edges.right || edges.top || edges.bottom) {
+          return { app, win, edges };
+        }
+        // Over this window's body, which covers whatever is under it.
+        return null;
+      }
+      return null;
+    },
+    [stack]
+  );
+
+  // Not the overlay, the stack, the pill or the switcher: those are above the
+  // windows and have pointers of their own.
+  const offTheWindows = (event: ReactPointerEvent<HTMLElement>) =>
+    event.pointerType !== "mouse" ||
+    !!(event.target as Element).closest(
+      [styles.overlay, styles.history, styles.search, styles.switcher]
+        .filter(Boolean)
+        .map((name) => `.${name}`)
+        .join(", ")
+    );
+
+  const endWindowResize = useCallback(() => {
+    const grab = resizeGrabRef.current;
+    const stage = stageRef.current;
+    if (grab && stage?.hasPointerCapture(grab.pointerId)) {
+      stage.releasePointerCapture(grab.pointerId);
+    }
+    resizeGrabRef.current = null;
+    setResizedWindow(null);
+    setResizeCursor(null);
+  }, []);
+
+  const startWindowResize = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const stage = stageRef.current;
+    const screen = screenRef.current;
+    if (event.button !== 0 || !stage || !screen || offTheWindows(event)) {
+      return;
+    }
+    const hit = edgesAt(event.clientX, event.clientY);
+    if (!hit) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    try {
+      stage.setPointerCapture(event.pointerId);
+    } catch {
+      // the pointer went away between the press and this
+    }
+    // Pinned at explicit fractions of the stage, in place of the insets it was
+    // laid out with and the margin it may have been centred by, as a move
+    // does: see windowProps.
+    const bounds = stage.getBoundingClientRect();
+    const r = hit.win.getBoundingClientRect();
+    const box = {
+      left: (r.left - bounds.left) / bounds.width,
+      top: (r.top - bounds.top) / bounds.height,
+      width: r.width / bounds.width,
+      height: r.height / bounds.height,
+    };
+    const u = unitOf(screen.getBoundingClientRect().width);
+    const sizes = WINDOW_SIZES[hit.app];
+    resizeGrabRef.current = {
+      app: hit.app,
+      edges: hit.edges,
+      pointerId: event.pointerId,
+      box,
+      x: event.clientX,
+      y: event.clientY,
+      u,
+      minW: (sizes.minW * u) / bounds.width,
+      minH: (sizes.minH * u) / bounds.height,
+    };
+    setPlaced((at) => ({ ...at, [hit.app]: box }));
+    setResizedWindow(hit.app);
+    setResizeCursor(cursorFor(hit.edges));
+    // Taking hold raises, as moving does, which here means playing its scene.
+    jumpTo(
+      SCENES.findIndex((item) => item.app === hit.app),
+      true
+    );
+  };
+
+  const resizeWindow = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const grab = resizeGrabRef.current;
+    const stage = stageRef.current;
+    if (!stage) {
+      return;
+    }
+    if (!grab) {
+      // Hovering: the cursor says what a press here would take hold of.
+      const hit = offTheWindows(event)
+        ? null
+        : edgesAt(event.clientX, event.clientY);
+      setResizeCursor(hit ? cursorFor(hit.edges) : null);
+      return;
+    }
+    const bounds = stage.getBoundingClientRect();
+    const dx = (event.clientX - grab.x) / bounds.width;
+    const dy = (event.clientY - grab.y) / bounds.height;
+    let { left, top, width, height } = grab.box;
+    const e = grab.edges;
+    // An edge moves and the opposite one stays, so a window pulled by its
+    // left edge grows leftwards; the floor holds the still edge in place.
+    if (e.left) {
+      const w = Math.max(grab.minW, width - dx);
+      left += width - w;
+      width = w;
+    }
+    if (e.right) {
+      width = Math.max(grab.minW, width + dx);
+    }
+    if (e.top) {
+      let h = Math.max(grab.minH, height - dy);
+      let t = top + height - h;
+      // Upwards it stops at the top of the stage, as moving does: the
+      // underside of the menu bar.
+      if (t < 0) {
+        h += t;
+        t = 0;
+      }
+      top = t;
+      height = h;
+    }
+    if (e.bottom) {
+      height = Math.max(grab.minH, height + dy);
+    }
+    setPlaced((at) => ({ ...at, [grab.app]: { left, top, width, height } }));
+    // The window's size in units, against its steps: under each one the class
+    // of that name goes on, and the stylesheet takes something out.
+    const wU = (width * bounds.width) / grab.u;
+    const hU = (height * bounds.height) / grab.u;
+    const sizes = WINDOW_SIZES[grab.app];
+    const steps: Steps = {
+      narrow: sizes.narrow !== undefined && wU < sizes.narrow,
+      cramped: sizes.cramped !== undefined && wU < sizes.cramped,
+      short: sizes.short !== undefined && hU < sizes.short,
+      squat: sizes.squat !== undefined && hU < sizes.squat,
+    };
+    setDressed((at) => {
+      const was = at[grab.app] ?? NO_STEPS;
+      return was.narrow === steps.narrow &&
+        was.cramped === steps.cramped &&
+        was.short === steps.short &&
+        was.squat === steps.squat
+        ? at
+        : { ...at, [grab.app]: steps };
+    });
+  };
+
   // A window you are holding stops being yours when the demo moves on: the loop
   // reaches the next scene, brings another window forward, and the one under the
   // cursor is now behind it. Carrying on dragging it there would be dragging a
   // window nobody is looking at. The scene the drag itself asked for does not
-  // count, which is what the app check is for.
+  // count, which is what the app check is for. The same for a window being
+  // pulled by an edge.
   useEffect(() => {
     if (draggedWindow && SCENES[scene]?.app !== draggedWindow) {
       endWindowDrag();
     }
-  }, [draggedWindow, endWindowDrag, scene]);
+    if (resizedWindow && SCENES[scene]?.app !== resizedWindow) {
+      endWindowResize();
+    }
+  }, [draggedWindow, endWindowDrag, endWindowResize, resizedWindow, scene]);
 
   // The box holds its place as a fraction of the screen, but its own size does
   // not scale with the demo in lockstep, the caption has a floor, so a resize
@@ -2070,7 +2344,11 @@ export const SubtitlesDemo = () => {
   const windowProps = (app: AppId, place: string | undefined) => {
     const index = SCENES.findIndex((item) => item.app === app);
     const spotted = placed[app];
+    const steps = dressed[app] ?? NO_STEPS;
     return {
+      ref: (node: HTMLDivElement | null) => {
+        windowRefs.current[app] = node ?? undefined;
+      },
       className: cx(
         styles.demo_window,
         place,
@@ -2078,7 +2356,11 @@ export const SubtitlesDemo = () => {
         front !== app && styles.is_reachable,
         (callPlaying ? app === "meeting" : app === "player") &&
           styles.is_playing,
-        draggedWindow === app && styles.is_held
+        draggedWindow === app && styles.is_held,
+        steps.narrow && styles.is_narrow,
+        steps.cramped && styles.is_cramped,
+        steps.short && styles.is_short,
+        steps.squat && styles.is_squat
       ),
       onClick: () => jumpTo(index, true),
       // Placed by its own corner once dragged, rather than by the insets it
@@ -2154,7 +2436,21 @@ export const SubtitlesDemo = () => {
           </span>
         </div>
 
-        <div ref={stageRef} className={styles.stage}>
+        <div
+          ref={stageRef}
+          className={styles.stage}
+          data-resize={resizeCursor ?? undefined}
+          onPointerDownCapture={startWindowResize}
+          onPointerMove={resizeWindow}
+          onPointerUp={endWindowResize}
+          onPointerCancel={endWindowResize}
+          onLostPointerCapture={endWindowResize}
+          onPointerLeave={() => {
+            if (!resizeGrabRef.current) {
+              setResizeCursor(null);
+            }
+          }}
+        >
           {/* 1 · the call */}
           <div {...windowProps("meeting", styles.win_meeting)}>
             <div {...titlebarProps("meeting")}>
