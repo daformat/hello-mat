@@ -1573,11 +1573,11 @@ const NO_STEPS: Steps = {
   squat: false,
 };
 
-/** The model's unit, as the stylesheet sets it: clamp(4px, 0.8182cqw, 7.2px)
+/** The model's unit, as the stylesheet sets it: clamp(4px, 0.8182cqw, 8.51px)
  *  of the screen. Computed rather than read, because a custom property comes
  *  back from getComputedStyle as the clamp() it was written as. */
 const unitOf = (screenWidth: number) =>
-  Math.min(7.2, Math.max(4, 0.008182 * screenWidth));
+  Math.min(8.51, Math.max(4, 0.008182 * screenWidth));
 
 const cursorFor = (e: Edges): ResizeCursor =>
   (e.left && e.top) || (e.right && e.bottom)

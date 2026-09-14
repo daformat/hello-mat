@@ -180,6 +180,13 @@
   }
 
   margin-block: 1.5em;
+  /* Past the page's rails where the page has the margin for it: nothing under
+     a 900px viewport, then an eighth of what the viewport has over that, up to
+     70px a side, which is where the 900px column carries the screen to the
+     1040px it tops out at. A screen the width of the text column read as one
+     more paragraph; a little wider than the rails and it reads as the thing
+     the paragraphs are about. */
+  margin-inline: calc(-1 * clamp(0px, (100vw - 900px) / 8, 70px));
   /* None of this is text you would want to select: it is a drawing of a screen,
      and dragging the caption box across it would otherwise sweep a selection
      through the windows behind. */
@@ -196,7 +203,7 @@
    its floors while the screen shrank, and a title bar that is 3.4% of the width
    at full size was 10% of it in this page's narrow column, and the model stopped
    being to scale and started looking like a toy.
-   --u is capped at the 7.2px it reaches at the 880px the screen tops out at, so
+   --u is capped at the 8.5px it reaches at the 1040px the screen tops out at, so
    nothing changes at full size, and floored at 4px, because a model that scales
    the whole way down loses its hairlines and its text turns to grain. Below
    about 490px of screen the demo therefore stops shrinking and simply is what it
@@ -215,15 +222,16 @@
      the unit itself: an element's own container is the next one up, so the
      screen's width is available to everything it contains and not to the
      screen. It bottoms out at 8px, two units at the floor, which clears the
-     mark's box with the arc to spare. */
-  border-radius: clamp(8px, 1.6vw, 14px);
+     mark's box with the arc to spare, and tops out at 17px, two units at the
+     cap. */
+  border-radius: clamp(8px, 1.6vw, 17px);
   box-shadow: 0 1px 12px var(--color-shadow-1),
     0 24px 60px -22px var(--color-shadow-strong);
   container-type: inline-size;
   display: flex;
   flex-direction: column;
   margin-inline: auto;
-  max-width: 880px;
+  max-width: 1040px;
   overflow: hidden;
   position: relative;
 }
@@ -232,15 +240,16 @@
    one up, so cq units inside the container it establishes have to be resolved by
    something it contains.
 
-   7.2px at the top, a tenth off the 8 it was, taken when the screen went to
-   16:9: the stage lost a tenth of its height and the windows with it, and the
-   model is zoomed out by the same tenth so a window still holds the drawing it
-   held. 0.8182cqw is the slope that reaches 7.2 exactly at the 880 the screen
-   tops out at, so the model scales the whole way there rather than flattening
-   early against its own cap. */
+   0.8182cqw is the slope that reached 7.2px at the 880px the screen used to
+   top out at: a tenth off the 8 it was, taken when the screen went to 16:9,
+   so a window still held the drawing it held. The screen now runs on to
+   1040px where the page has the room, and the cap runs with it, to the 8.5px
+   the same slope reaches there: the model scales the whole way rather than
+   flattening early against its own cap, with the windows, which are drawn in
+   cqw, growing on without the text and the chrome that are drawn in units. */
 .menubar,
 .stage {
-  --u: clamp(4px, 0.8182cqw, 7.2px);
+  --u: clamp(4px, 0.8182cqw, 8.51px);
 }
 
 /* Above the windows and above the ⌘-tab panel, the way a menu bar is. The one
@@ -469,8 +478,9 @@
    Between those two the layout is interpolated rather than switched. Every
    number below is a clamp whose middle term is a straight line in cqw, built to
    meet the stack value exactly at 620px of screen and the fan value exactly at
-   880px, which is where the screen tops out. Outside that range the bounds take
-   over and it is one layout or the other, unchanged.
+   880px, which is where the screen used to top out. Outside that range the
+   bounds take over and it is one layout or the other, unchanged: the fan holds
+   its proportions on to the 1040px the screen now reaches.
 
    The line has to be written as `<slope>cqw - <intercept>px` because CSS cannot
    divide a length by a length: there is no way to express "how far between 620
@@ -822,14 +832,15 @@
    twice a second is not one you read the width of, which is why it looked like a
    bug that came and went with the animation.
 
-   0.5u and 0.125u put the pitch at 4.5px at the size the model tops out at,
-   which is 9 whole device pixels on a retina Mac, so every bar there is painted
-   the same. It was 5px, whole on a 1x display as well, until the unit came down
-   to 7.2; on a 1x display the CSS alone is back on a half pixel, and it is the
-   wave-fit effect that keeps the beat out of it. Both are fractions of --u so
-   the row still scales with the rest of the model; the phase lands exactly at
-   the top of the range, and everywhere else the bars are small enough that the
-   beat does not read.
+   0.5u and 0.125u put the pitch at 4.5px at the 7.2px unit the model used to
+   top out at, which is 9 whole device pixels on a retina Mac, so every bar
+   there was painted the same. It was 5px, whole on a 1x display as well, until
+   the unit came down to 7.2, and now that the unit runs on to 8.5px where the
+   page is wide the CSS alone is on a fraction at the top of the range as well:
+   it is the wave-fit effect below that keeps the beat out of it. Both are
+   fractions of --u so the row still scales with the rest of the model, and
+   everywhere the effect has not run the bars are small enough that the beat
+   does not read.
 
    The pitch is set by what the pane can hold: 96 bars want 431px and the podcast
    window offers about 530, so the row starts hard left, on the same edge as the
@@ -1668,7 +1679,7 @@
      unit came down to fit the fanned windows the caption had no reason to follow
      it. */
   /* The factor is the menu's Text Size, 1 at the app's 30pt default. */
-  font-size: calc(clamp(10px, 2.61cqw, 23px) * var(--text-scale, 1));
+  font-size: calc(clamp(10px, 2.61cqw, 27.2px) * var(--text-scale, 1));
   font-weight: 600;
   left: 50%;
   line-height: 1.34;
@@ -1961,7 +1972,7 @@
    here again because it sits in the screen, beside the bar, rather than in
    the stage. */
 .mn_root {
-  --u: clamp(4px, 0.8182cqw, 7.2px);
+  --u: clamp(4px, 0.8182cqw, 8.51px);
 }
 
 .mn_panel {
@@ -2141,7 +2152,7 @@
   flex-direction: column;
   /* The same clamp the live box has, floor included: the two are read as one
      stack and a history pill set at a different size would give that away. */
-  font-size: calc(clamp(10px, 2.61cqw, 23px) * var(--text-scale, 1));
+  font-size: calc(clamp(10px, 2.61cqw, 27.2px) * var(--text-scale, 1));
   gap: 0.2em;
   /* A pixel of the scroller past the boxes at either end, given back by the
      margin so nothing moves: the box at the end sits on a fraction of a pixel
@@ -2351,7 +2362,7 @@
    and sized by the component, as the stack is; its width is sprung between the
    closed pill and the open field. */
 .search {
-  --e: clamp(14px, 2.61cqw, 23px);
+  --e: clamp(14px, 2.61cqw, 27.2px);
 
   align-items: center;
   backdrop-filter: blur(6px);
@@ -2514,9 +2525,9 @@
 /* One segment per scene, sitting under the screen and as wide as it. They say
    how many scenes there are and how far through this one the loop is, and they
    are the way to skip ahead: the segment is the button. */
-/* Narrower than the screen it sits under, and centred: run the full 880px and
-   three segments read as a layout of their own rather than as a control
-   belonging to the demo above them. */
+/* Narrower than the screen it sits under, and centred: run the screen's full
+   width and three segments read as a layout of their own rather than as a
+   control belonging to the demo above them. */
 .scenes {
   display: flex;
   gap: 10px;
