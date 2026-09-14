@@ -1,5 +1,6 @@
 import {
   CSSProperties,
+  MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
   useCallback,
   useEffect,
@@ -31,6 +32,119 @@ const APPS = {
 /** The ⌘-tab tiles: each app's icon as the Dock draws it, its own shape,
  *  margins and shadow, read from the app itself on the site's side. */
 const DOCK = "/media/design-engineering/subtitles/dock";
+
+/** The app a box names, since 1.7.0: the icon as the Dock draws it, and the
+ *  name as the menu bar has it. */
+type SourceApp = { icon: string; name: string };
+
+// Which windows make a sound, and what a box wears while their audio is the
+// words: the call's and the player's. The notes never do, so a line said while
+// they are in front wears the call, which is still playing under them.
+const SOURCES: Partial<Record<AppId, SourceApp>> = {
+  meeting: { icon: "zoom", name: APPS.meeting },
+  player: { icon: "spotify", name: APPS.player },
+};
+
+// Translation, between the podcast's two lines, as the translation pages show
+// it: a first sentence in another language, shown as it was said; the status
+// menu opening and picking Translate To and this page's language; a second
+// sentence in that other language, shown in this one, with ⌃ giving back what
+// was said. The other language is Spanish here, so what the visitor hears
+// turn into their own is the one they most often have to follow.
+const TRANSLATE = {
+  first: "¿Y cuando es en otro idioma?",
+  source:
+    "La traducción se hace en tiempo real para ti: pulsa ⌃ para ver el original.",
+  shown: "The translation runs live for you: press ⌃ to reveal the original.",
+};
+
+/** The app's status menu, item for item as MenuBar.rebuild() has it in 1.7.0.
+ *  The rows with a Try badge act on the demo's box and stack; the rest is
+ *  what the menu looks like, and shakes its head at a click. */
+type MenuRow =
+  | { sep: true }
+  | {
+      label: string;
+      id?: string;
+      key?: string;
+      on?: boolean;
+      dim?: boolean;
+      /** A Try badge: this row does what it says here. */
+      demo?: boolean;
+      /** The rows of its submenu, hung off it. */
+      sub?: MenuRow[];
+    };
+const MENU: MenuRow[] = [
+  { label: "Multilingual · 560 ms · RTF 0.31", dim: true, id: "status" },
+  { sep: true },
+  { label: "Pause Subtitles", key: "⌥⌘S" },
+  { sep: true },
+  { label: "Check for Updates…" },
+  { label: "Check for Updates Automatically", on: true },
+  { sep: true },
+  { label: "Listen To", sub: [] },
+  { label: "Language / Models", sub: [] },
+  { label: "Translate To", id: "translate", sub: [] },
+  { label: "Translation Timing", id: "timing", sub: [] },
+  { sep: true },
+  {
+    label: "Text Size and Alignment",
+    id: "text",
+    demo: true,
+    sub: [
+      { label: "Small", id: "size-22", demo: true },
+      { label: "Medium", id: "size-30", demo: true },
+      { label: "Large", id: "size-40", demo: true },
+      { label: "Huge", id: "size-52", demo: true },
+      { sep: true },
+      { label: "Start Alignment", id: "align-start", demo: true },
+      { label: "Center Alignment", id: "align-center", demo: true },
+    ],
+  },
+  {
+    label: "Show Source App Name",
+    id: "icon",
+    demo: true,
+    sub: [
+      { label: "Off", id: "icon-off", demo: true },
+      { label: "Name Tab", id: "icon-tab", demo: true },
+      { label: "Header Row", id: "icon-header", demo: true },
+    ],
+  },
+  { label: "Show Overlay In Screen Share / Capture", on: true },
+  { label: "Fade Away Under Pointer", id: "reveal", demo: true },
+  { label: "Recent Boxes On ⌥", id: "history", demo: true },
+  { sep: true },
+  { label: "Reset Overlay Position", id: "reset", demo: true },
+  { sep: true },
+  { label: "Licensed" },
+  { label: "Settings…", key: "⌘," },
+  { label: "Check Audio Permission…" },
+  { sep: true },
+  { label: "Show Welcome Screen Again" },
+  { label: "About Subtitles" },
+  { sep: true },
+  { label: "Quit Subtitles", key: "⌘Q" },
+];
+/** Translate To's submenu: Off, then the sixteen. */
+const LANGUAGES: [string, string][] = [
+  ["en", "English"],
+  ["es", "Español"],
+  ["fr", "Français"],
+  ["it", "Italiano"],
+  ["pt", "Português"],
+  ["de", "Deutsch"],
+  ["nl", "Nederlands"],
+  ["tr", "Türkçe"],
+  ["ru", "Русский"],
+  ["ar", "العربية"],
+  ["hi", "हिन्दी"],
+  ["ja", "日本語"],
+  ["ko", "한국어"],
+  ["vi", "Tiếng Việt"],
+  ["uk", "Українська"],
+  ["zh", "中文"],
+];
 
 /** The folder glyph Notes puts before every folder in its sidebar. */
 const NOTES_FOLDER = (
@@ -68,7 +182,7 @@ const SCENES: Scene[] = [
   },
   {
     app: "player",
-    label: "A podcast",
+    label: "Podcast, live translation",
     lines: [
       "The same for a podcast, a lecture, or a video.",
       "And none of it leaves the Mac: it runs on the Neural Engine, on-device.",
@@ -79,7 +193,17 @@ const SCENES: Scene[] = [
 /** One closed caption in the stack. Carries an id because the demo speaks seven
  *  lines into fifteen slots, so the same sentence is often in the stack twice
  *  and its text cannot tell the two boxes apart. */
-type HistoryPage = { id: number; text: string };
+type HistoryPage = {
+  id: number;
+  text: string;
+  /** What was actually said when `text` is its translation, for ⌃. */
+  source: string | null;
+  app: SourceApp | null;
+};
+
+/** Show Source App Name, as the menu has it: the header row, the app's
+ *  default; the tab on the pill's top edge; or off. */
+type IconStyle = "header" | "nameTab" | "off";
 
 // ── searching the stack ────────────────────────────────────────────────────
 // The app's HistorySearch: case and accents fold on both sides, so "ete" finds
@@ -545,6 +669,737 @@ const attachSearch = (
 
 type Search = ReturnType<typeof attachSearch>;
 
+// A box's layer rebuilt once its entrance has played. Chrome on the GPU paints
+// a box that has just run a transform animation a fraction of a pixel down
+// from where it sits, on its top and bottom edges only, for as long as that
+// layer lives: the hairline there sits across two rows. Without will-change
+// for a frame the layer goes, and comes back whole. Blink only: Safari and
+// Firefox draw the box whole where it lands.
+const relayer = (el: HTMLElement) => {
+  if (!("userAgentData" in navigator)) {
+    return;
+  }
+  el.style.willChange = "auto";
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      el.style.willChange = "";
+    })
+  );
+};
+
+/** The stylesheet's names the name tab works with, module-scoped. */
+type TabNames = {
+  tabbed: string;
+  hasTab: string;
+  rim: string;
+  trace: string;
+  ringWhite: string;
+  ringBlack: string;
+  on: string;
+  visible: string;
+  movable: string;
+  app: string;
+  defs: string;
+  below: string;
+  history: string;
+};
+type TabState = {
+  row: HTMLElement | null;
+  rim: HTMLElement;
+  masks: { mask: SVGMaskElement; fill: SVGPathElement }[];
+  turn: number;
+  trace: SVGSVGElement | null;
+  key: string;
+  pad: [number, number];
+  lift: string;
+  raf: number;
+};
+type Snap = { x: (v: number) => number; y: (v: number) => number };
+
+// Show Source App Name → Name Tab, from the menu: the row sits on the pill's
+// top edge as a tab, flush with the leading side, as Pill.tabPath draws it,
+// and the box is masked to the silhouette of pill and tab. The mask is on the
+// box itself, because the box is what blurs the picture behind it: a mask
+// shapes an element's backdrop-filter along with it, where a blurred child of
+// a masked box would have nothing to blur. And a mask rather than a clip-path,
+// which Chrome would not put on the blur alongside the hole's mask; the
+// stylesheet intersects the two. The mask is an SVG mask element kept on the
+// body, redrawn as the box changes: an image would be loaded afresh each
+// time, asynchronously in Safari, and a box whose mask has not loaded is
+// masked to nothing. Two of them per box, taking turns, since Safari also
+// paints nothing for a box whose mask changed in place. What the mask costs is
+// anything hanging outside the box, which is why the ⇧ ring is a sibling
+// here, placed after the box whenever the box moves, changes class or changes
+// size, and fading as the box fades. The hairline is the ring between the
+// silhouette and the silhouette a device pixel in, cut from a box under the
+// text; mask and ring are snapped to the device's pixels together, from where
+// each engine puts the box's frame on them, so each takes whole pixels the
+// way a CSS box's own edge and inset shadow do. The numbers are the app's at
+// 30pt of text, in em of the box: 16pt corners on the pill and on the tab,
+// and an 8pt foot, the concave curve where the tab's inner side flares into
+// the pill's top. Ported from the site's script as it stands, engine notes
+// and all.
+class NameTab {
+  on = false;
+  private names: TabNames;
+  private boxes = new Map<HTMLElement, TabState>();
+  private defs: SVGSVGElement | null = null;
+  private writes = new WeakMap<Element, number[]>();
+  private retries = new WeakSet<Element>();
+  private sizes: ResizeObserver;
+  private moves: MutationObserver;
+  private static NS = "http://www.w3.org/2000/svg";
+  private static CORNER = 0.533;
+  private static FOOT = 0.267;
+  /** The ⇧ ring's distance from the shape, and a margin past it for its line. */
+  private static GROW = 3.5;
+  private static MARGIN = NameTab.GROW + 1.5;
+  // Which engine, for where a box's pixels fall. Each draws a mask, and a
+  // clip-path, in the box's own frame, and each sits that frame differently
+  // on the device's pixels: Blink keeps the box's fractional position and
+  // wants the transform that centres it whole in device pixels; Gecko snaps
+  // the frame to device pixels on its own; WebKit does too, and sits best
+  // with the transform whole in CSS pixels.
+  private static ENGINE: "blink" | "gecko" | "webkit" =
+    typeof navigator !== "undefined" && "userAgentData" in navigator
+      ? "blink"
+      : typeof CSS !== "undefined" && CSS.supports("-moz-appearance", "none")
+      ? "gecko"
+      : "webkit";
+
+  constructor(names: TabNames) {
+    this.names = names;
+    // Once per box per frame, whether the box or its row changed size.
+    this.sizes = new ResizeObserver((entries) => {
+      const seen = new Set<HTMLElement>();
+      entries.forEach((entry) => {
+        const box = (entry.target as Element).closest(
+          `.${names.tabbed}`
+        ) as HTMLElement | null;
+        if (box && !seen.has(box)) {
+          seen.add(box);
+          this.draw(box);
+        }
+      });
+    });
+    // A move is a redraw, since where the box sits decides the snapping; a
+    // move by whole pixels costs a key comparison.
+    this.moves = new MutationObserver((records) =>
+      records.forEach((r) => this.draw(r.target as HTMLElement))
+    );
+    window.addEventListener("resize", () =>
+      this.boxes.forEach((st, box) => {
+        if (box.isConnected) {
+          this.draw(box);
+        }
+      })
+    );
+  }
+
+  // The element's own transform made whole in the pixels its engine wants:
+  // whole device pixels for Blink, whole CSS pixels for WebKit, and nothing
+  // for Gecko, which snaps on its own. The demo positions a box by whole
+  // pixels and centres it with translateX(-50%), half of whatever width the
+  // text gave it, so the transform is the only fraction in where it lands.
+  // Written through the translate property, which the demo never touches.
+  private align(el: HTMLElement) {
+    if (NameTab.ENGINE === "gecko") {
+      return;
+    }
+    const m = getComputedStyle(el).transform;
+    let want = "";
+    if (m && m !== "none") {
+      const t = new DOMMatrixReadOnly(m);
+      const dpr = window.devicePixelRatio || 1;
+      const fix = (v: number) =>
+        Math.round(
+          (NameTab.ENGINE === "blink"
+            ? (Math.round(v * dpr) - v * dpr) / dpr
+            : Math.round(v) - v) * 1000
+        ) / 1000;
+      want = `${fix(t.e)}px ${fix(t.f)}px`;
+    }
+    // Compared as the engine gives it back: a trailing zero is dropped.
+    const have = el.style.translate || "";
+    if (
+      have === want ||
+      have === want.replace(/ 0px$/, "") ||
+      !this.mayWrite(el)
+    ) {
+      return;
+    }
+    el.style.translate = want;
+  }
+
+  // A write that changes how tall the stack's content is, after the demo has
+  // parked the stack at its end: a scroller keeps its scrollTop through that,
+  // so the stack drifts from its end by the change. Its distance from the
+  // end is kept instead. A stack below the live box has its near end at the
+  // top, where scrollTop already keeps it.
+  private keepEnd(stack: HTMLElement | null, write: () => void) {
+    if (!stack || stack.classList.contains(this.names.below)) {
+      write();
+      return;
+    }
+    const near = stack.scrollHeight - stack.clientHeight - stack.scrollTop;
+    write();
+    const top = stack.scrollHeight - stack.clientHeight - near;
+    if (Math.abs(stack.scrollTop - top) > 0.01) {
+      stack.scrollTop = top;
+    }
+  }
+
+  // A box in the stack is centred by the stack's column, which puts it half
+  // a pixel off whenever the stack is an odd number of pixels wider: it is
+  // placed instead by a margin of whole pixels, from the stack's own edge,
+  // which every engine paints where layout says. The gap between boxes is
+  // made whole the same way, so each box's top is whole as well.
+  private settle(history: HTMLElement) {
+    const dpr = window.devicePixelRatio || 1;
+    const em = parseFloat(getComputedStyle(history).fontSize) || 16;
+    const gap = `${Math.round(0.2 * em * dpr) / dpr}px`;
+    if (history.style.gap !== gap && this.mayWrite(history)) {
+      this.keepEnd(history, () => {
+        history.style.gap = gap;
+      });
+    }
+    const inner = history.clientWidth;
+    for (const el of Array.from(history.children) as HTMLElement[]) {
+      if (!this.boxes.has(el)) {
+        continue;
+      }
+      const m = `${Math.floor(((inner - el.offsetWidth) * dpr) / 2) / dpr}px`;
+      if (el.style.marginInlineStart !== m && this.mayWrite(el)) {
+        el.style.marginInlineStart = m;
+      }
+    }
+  }
+
+  // A budget on writes to an element's style: the live box is redrawn on
+  // every change to its style, and a redraw that always finds something to
+  // write is a loop that never yields. A write the budget refused is tried
+  // again once the budget has passed, so nothing is left where it was.
+  private mayWrite(el: HTMLElement) {
+    const now = performance.now();
+    const recent = (this.writes.get(el) || []).filter((t) => now - t < 500);
+    this.writes.set(el, recent);
+    if (recent.length >= 40) {
+      if (!this.retries.has(el)) {
+        this.retries.add(el);
+        setTimeout(() => {
+          this.retries.delete(el);
+          if (this.boxes.has(el)) {
+            this.draw(el);
+          } else {
+            this.align(el);
+          }
+        }, 600);
+      }
+      return false;
+    }
+    recent.push(now);
+    return true;
+  }
+
+  // The silhouette, as Pill.silhouette and Pill.tabPath trace it, in the box's
+  // own pixels with y running down. W×H is the box, T the tab's height, X the
+  // tab's width or nothing for a box with no tab, R the corner and F the foot.
+  // `o` moves the path inward, negative for the ring outside. `snap` puts
+  // every point on the device's pixels, and `shift` moves the whole path up
+  // and left by that much.
+  private static silhouette(
+    W: number,
+    H: number,
+    T: number,
+    X: number,
+    R: number,
+    F: number,
+    o: number,
+    rtl: boolean,
+    snap?: Snap,
+    shift?: [number, number]
+  ) {
+    const r = Math.max(R - o, 0);
+    const f = Math.max(F + o, 0);
+    const x = rtl ? (v: number) => W - v : (v: number) => v;
+    const cw = rtl ? 0 : 1;
+    const ccw = 1 - cw;
+    const n = (v: number) => Math.round(v * 100) / 100;
+    const sx = snap ? snap.x : (v: number) => v;
+    const sy = snap ? snap.y : (v: number) => v;
+    const dx = shift ? shift[0] : 0;
+    const dy = shift ? shift[1] : 0;
+    const to = (px: number, py: number) =>
+      `${n(sx(x(px)) - dx)} ${n(sy(py) - dy)}`;
+    const arc = (rad: number, sweep: number, px: number, py: number) =>
+      `A${n(rad)} ${n(rad)} 0 0 ${sweep} ${to(px, py)}`;
+    const d =
+      T > 0 && X > 0
+        ? [
+            `M${to(X + F, T + o)}`,
+            arc(f, cw, X - o, T - F),
+            `L${to(X - o, R)}`,
+            arc(r, ccw, X - R, o),
+            `L${to(R, o)}`,
+            arc(r, ccw, o, R),
+          ]
+        : [`M${to(R, o)}`, arc(r, ccw, o, R)];
+    d.push(
+      `L${to(o, H - R)}`,
+      arc(r, ccw, R, H - o),
+      `L${to(W - R, H - o)}`,
+      arc(r, ccw, W - o, H - R),
+      `L${to(W - o, T + R)}`,
+      arc(r, ccw, W - R, T + o),
+      "Z"
+    );
+    return d.join(" ");
+  }
+
+  // The mask's path: the silhouette, grown by `g` along the four outer sides
+  // and round the three corners the box itself rounds, so that the box's own
+  // edge, on whole pixels, is what cuts the fill, the blur and the box's inset
+  // hairline there; and exact through the tab's inner corner, which the box
+  // has no edge for.
+  private static maskPath(
+    W: number,
+    H: number,
+    T: number,
+    X: number,
+    R: number,
+    F: number,
+    g: number,
+    rtl: boolean,
+    snap: Snap
+  ) {
+    const x = rtl ? (v: number) => W - v : (v: number) => v;
+    const cw = rtl ? 0 : 1;
+    const ccw = 1 - cw;
+    const n = (v: number) => Math.round(v * 100) / 100;
+    const to = (px: number, py: number) =>
+      `${n(snap.x(x(px)))} ${n(snap.y(py))}`;
+    const arc = (rad: number, sweep: number, px: number, py: number) =>
+      `A${n(rad)} ${n(rad)} 0 0 ${sweep} ${to(px, py)}`;
+    const d =
+      T > 0 && X > 0
+        ? [
+            `M${to(X + F, T)}`,
+            arc(F, cw, X, T - F),
+            `L${to(X, R)}`,
+            arc(R, ccw, X - R, 0),
+            `L${to(X - R, -g)}`,
+            `L${to(R - g, -g)}`,
+            arc(R, ccw, -g, R - g),
+          ]
+        : [`M${to(R - g, -g)}`, arc(R, ccw, -g, R - g)];
+    d.push(
+      `L${to(-g, H - R + g)}`,
+      arc(R, ccw, R - g, H + g),
+      `L${to(W - R + g, H + g)}`,
+      arc(R, ccw, W + g, H - R + g)
+    );
+    if (T > 0 && X > 0) {
+      d.push(
+        `L${to(W + g, T + R)}`,
+        `L${to(W, T + R)}`,
+        arc(R, ccw, W - R, T),
+        "Z"
+      );
+    } else {
+      d.push(`L${to(W + g, R - g)}`, arc(R, ccw, W - R + g, -g), "Z");
+    }
+    return d.join(" ");
+  }
+
+  // The rim's path: the part of the hairline ring the box's own inset
+  // hairline does not draw, round the tab's inner corner, with straight cuts
+  // along the band's inner side so the two meet without a pixel drawn twice.
+  private static rimPath(
+    W: number,
+    H: number,
+    T: number,
+    X: number,
+    R: number,
+    F: number,
+    hair: number,
+    rtl: boolean,
+    snap: Snap,
+    shift: [number, number]
+  ) {
+    const r = Math.max(R - hair, 0);
+    const f = F + hair;
+    const x = rtl ? (v: number) => W - v : (v: number) => v;
+    const cw = rtl ? 0 : 1;
+    const ccw = 1 - cw;
+    const n = (v: number) => Math.round(v * 100) / 100;
+    const to = (px: number, py: number) =>
+      `${n(snap.x(x(px)) - shift[0])} ${n(snap.y(py) - shift[1])}`;
+    const arc = (rad: number, sweep: number, px: number, py: number) =>
+      `A${n(rad)} ${n(rad)} 0 0 ${sweep} ${to(px, py)}`;
+    const run = Math.sqrt(Math.max(R * R - r * r, 0));
+    return [
+      `M${to(X - R, hair)}`,
+      `L${to(X - R + run, hair)}`,
+      arc(R, cw, X, R),
+      `L${to(X, T - F)}`,
+      arc(F, ccw, X + F, T),
+      `L${to(W - R, T)}`,
+      arc(R, cw, W - hair, T + R - run),
+      `L${to(W - hair, T + R)}`,
+      arc(r, ccw, W - R, T + hair),
+      `L${to(X + F, T + hair)}`,
+      arc(f, cw, X - hair, T - F),
+      `L${to(X - hair, R)}`,
+      arc(r, ccw, X - R, hair),
+      "Z",
+    ].join(" ");
+  }
+
+  // Every box's mask element, in one SVG on the body: a mask inside the box
+  // it masks is a reference to itself, and the box is drawn as nothing.
+  private maskFor(id: string) {
+    let defs = this.defs;
+    if (!defs) {
+      defs = document.createElementNS(NameTab.NS, "svg") as SVGSVGElement;
+      defs.setAttribute("class", this.names.defs);
+      defs.setAttribute("width", "0");
+      defs.setAttribute("height", "0");
+      defs.setAttribute("aria-hidden", "true");
+      document.body.append(defs);
+      this.defs = defs;
+    }
+    const mask = document.createElementNS(NameTab.NS, "mask") as SVGMaskElement;
+    mask.setAttribute("id", id);
+    mask.setAttribute("maskUnits", "userSpaceOnUse");
+    mask.setAttribute("x", "0");
+    mask.setAttribute("y", "0");
+    defs.append(mask);
+    return mask;
+  }
+
+  /** The ring, on the box's containing block, where the box's own position is. */
+  private static holder(el: Element) {
+    let p = el.parentElement;
+    while (
+      p &&
+      p !== document.body &&
+      getComputedStyle(p).position === "static"
+    ) {
+      p = p.parentElement;
+    }
+    return p || document.body;
+  }
+
+  private place(box: HTMLElement) {
+    const st = this.boxes.get(box);
+    if (!st || !st.trace) {
+      return;
+    }
+    const on = box.classList.contains(this.names.movable);
+    st.trace.classList.toggle(this.names.on, on);
+    // Fading with the box, out as a line ends and back in with the next.
+    st.trace.classList.toggle(
+      this.names.visible,
+      box.classList.contains(this.names.visible)
+    );
+    if (!on) {
+      return;
+    }
+    const b = box.getBoundingClientRect();
+    const h = NameTab.holder(st.trace);
+    const p = h.getBoundingClientRect();
+    st.trace.style.left = `${
+      b.left - p.left - h.clientLeft - NameTab.MARGIN
+    }px`;
+    st.trace.style.top = `${b.top - p.top - h.clientTop - NameTab.MARGIN}px`;
+  }
+
+  // A box whose size is a fraction of a device pixel has its far edges drawn
+  // short of the silhouette drawn to its true size, so a box is padded out to
+  // whole device pixels on the right and at the bottom, by less than a pixel,
+  // which no text notices. Written only when it changes.
+  private whole(box: HTMLElement, st: TabState) {
+    if (st.raf) {
+      return;
+    }
+    const dpr = NameTab.ENGINE === "blink" ? 1 : window.devicePixelRatio || 1;
+    const rect = box.getBoundingClientRect();
+    const size: [number, number] = [rect.width, rect.height];
+    if (!size[0] || !size[1]) {
+      return;
+    }
+    const cs = getComputedStyle(box);
+    const floor = 4.67 * (parseFloat(cs.fontSize) || 16);
+    const ff = (((floor * dpr) % 1) + 1) % 1;
+    const lift =
+      ff < 0.03 || ff > 0.97 ? 0 : Math.round(((1 - ff) / dpr) * 64) / 64;
+    const want: { lift: string; pad: [number, number] } = {
+      lift: lift ? `calc(4.67em + ${lift}px)` : "",
+      pad: [st.pad[0], st.pad[1]],
+    };
+    const widest = size[0] >= (parseFloat(cs.maxWidth) || Infinity) - 0.05;
+    for (let i = 0; i < 2; i++) {
+      const natural = (size[i] ?? 0) - (st.pad[i] ?? 0);
+      const f = (((natural * dpr) % 1) + 1) % 1;
+      want.pad[i] =
+        (i === 0 && widest) || f < 0.03 || f > 0.97
+          ? 0
+          : Math.round(((1 - f) / dpr) * 64) / 64;
+    }
+    const same =
+      want.lift === st.lift &&
+      Math.abs(want.pad[0] - st.pad[0]) < 0.001 &&
+      Math.abs(want.pad[1] - st.pad[1]) < 0.001;
+    if (same || !this.mayWrite(box)) {
+      return;
+    }
+    // On the next frame, not now: most redraws come from the resize observer,
+    // and a size changed under it is a loop it reports on the console.
+    st.raf = requestAnimationFrame(() => {
+      st.raf = 0;
+      st.lift = want.lift;
+      st.pad = want.pad;
+      this.keepEnd(box.closest(`.${this.names.history}`), () => {
+        box.style.minWidth = want.lift;
+        box.style.paddingRight = want.pad[0]
+          ? `calc(0.73em + ${want.pad[0]}px)`
+          : "";
+        box.style.paddingBottom = want.pad[1]
+          ? `calc(0.47em + ${want.pad[1]}px)`
+          : "";
+      });
+    });
+  }
+
+  private draw(box: HTMLElement) {
+    const st = this.boxes.get(box);
+    if (!st || !this.on || !box.classList.contains(this.names.tabbed)) {
+      return;
+    }
+    // The live box carries the transform that centres it; a box in the stack
+    // is placed by settle, from the stack's edge.
+    if (st.trace) {
+      this.align(box);
+    }
+    this.whole(box, st);
+    const rect = box.getBoundingClientRect();
+    const W = rect.width;
+    const H = rect.height;
+    if (!W || !H) {
+      return;
+    }
+    const cs = getComputedStyle(box);
+    const em = parseFloat(cs.fontSize) || 16;
+    const tab =
+      st.row && !st.row.hidden ? st.row.getBoundingClientRect() : null;
+    const T = tab ? tab.height : 0;
+    const X = tab ? tab.width : 0;
+    const R = NameTab.CORNER * em;
+    const F = NameTab.FOOT * em;
+    const rtl = cs.direction === "rtl";
+    const hair = parseFloat(cs.getPropertyValue("--hairline")) || 1;
+    // Onto the device's pixels, so the fill's edge and the hairline inside it
+    // each take one whole pixel, the way the header row's inset shadow does.
+    const dpr = window.devicePixelRatio || 1;
+    const snap: Snap = {
+      x: (v) => Math.round(v * dpr) / dpr,
+      y: (v) => Math.round(v * dpr) / dpr,
+    };
+    // Nothing to redraw for a box that only moved by whole pixels.
+    const key = [W, H, T, X, rtl, hair, dpr].join(" ");
+    if (st.key === key) {
+      if (st.trace) {
+        this.place(box);
+      }
+      return;
+    }
+    st.key = key;
+    // Into whichever mask the box is not wearing, then the box is pointed at
+    // it: Safari paints a box whose mask changes under it as nothing.
+    st.turn = 1 - st.turn;
+    const next = st.masks[st.turn];
+    if (!next) {
+      return;
+    }
+    next.mask.setAttribute("x", "-1");
+    next.mask.setAttribute("y", "-1");
+    next.mask.setAttribute("width", String(W + 2));
+    next.mask.setAttribute("height", String(H + 2));
+    next.fill.setAttribute(
+      "d",
+      NameTab.maskPath(W, H, T, X, R, F, 0.5, rtl, snap)
+    );
+    box.style.setProperty("--ov-shape", `url(#${next.mask.id})`);
+    // The rim: what the box's own edge cannot draw, the tab's inner corner, as
+    // the ring between the silhouette and the silhouette a hairline in, cut
+    // from a box of the line's colour that covers only that corner.
+    if (T > 0 && X > 0) {
+      const x0 = rtl ? 0 : Math.max(Math.floor(X - R - 2), 0);
+      const x1 = rtl ? Math.min(Math.ceil(W - X + R + 2), W) : W;
+      const y1 = Math.min(Math.ceil(T + R + 2), H);
+      st.rim.style.display = "";
+      st.rim.style.left = `${x0}px`;
+      st.rim.style.top = "0px";
+      st.rim.style.width = `${x1 - x0}px`;
+      st.rim.style.height = `${y1}px`;
+      st.rim.style.clipPath = `path("${NameTab.rimPath(
+        W,
+        H,
+        T,
+        X,
+        R,
+        F,
+        hair,
+        rtl,
+        snap,
+        [x0, 0]
+      )}")`;
+    } else {
+      st.rim.style.display = "none";
+    }
+    if (!st.trace) {
+      return;
+    }
+    const w = W + NameTab.MARGIN * 2;
+    const h = H + NameTab.MARGIN * 2;
+    st.trace.setAttribute(
+      "viewBox",
+      `${-NameTab.MARGIN} ${-NameTab.MARGIN} ${w} ${h}`
+    );
+    st.trace.style.width = `${w}px`;
+    st.trace.style.height = `${h}px`;
+    const d = NameTab.silhouette(W, H, T, X, R, F, -NameTab.GROW, rtl);
+    st.trace
+      .querySelectorAll("path")
+      .forEach((path) => path.setAttribute("d", d));
+    this.place(box);
+  }
+
+  private dress(box: HTMLElement): TabState {
+    const had = this.boxes.get(box);
+    if (had) {
+      return had;
+    }
+    box.classList.add(this.names.tabbed);
+    const rim = document.createElement("span");
+    rim.className = this.names.rim;
+    rim.setAttribute("aria-hidden", "true");
+    box.prepend(rim);
+    // The masks, two to take turns: white where the box is, in the box's own
+    // pixels, and the box names one by its bare fragment.
+    const masks = ["a", "b"].map((side) => {
+      const mask = this.maskFor(`ov-shape-${this.boxes.size + 1}${side}`);
+      const fill = document.createElementNS(
+        NameTab.NS,
+        "path"
+      ) as SVGPathElement;
+      fill.setAttribute("fill", "#fff");
+      mask.append(fill);
+      return { mask, fill };
+    });
+    const st: TabState = {
+      row: box.querySelector(`.${this.names.app}`),
+      rim,
+      masks,
+      turn: 0,
+      trace: null,
+      key: "",
+      pad: [0, 0],
+      lift: "",
+      raf: 0,
+    };
+    this.boxes.set(box, st);
+    this.sizes.observe(box);
+    if (st.row) {
+      this.sizes.observe(st.row);
+    }
+    return st;
+  }
+
+  // A box back to a plain pill, or a header row: its classes off, its rim and
+  // its ring hidden. Its masks stay, unreferenced, for the next time.
+  private undress(box: HTMLElement) {
+    const st = this.boxes.get(box);
+    box.classList.remove(this.names.tabbed, this.names.hasTab);
+    if (!st) {
+      return;
+    }
+    st.rim.style.display = "none";
+    if (st.trace) {
+      st.trace.classList.remove(this.names.on, this.names.visible);
+    }
+  }
+
+  enable(flag: boolean) {
+    this.on = flag;
+    if (!this.on) {
+      this.boxes.forEach((st, box) => this.undress(box));
+    }
+  }
+
+  /** The stack's boxes, after the stack has been laid out: the stack's
+   *  centring transform made whole, and every box redrawn where it sits. */
+  refresh(history: HTMLElement) {
+    if (!this.on) {
+      return;
+    }
+    this.align(history);
+    this.settle(history);
+    if (!history.dataset.ovRise) {
+      // A box rises into the stack on a transform of its own; once it has
+      // landed, it is placed again from where it landed.
+      history.dataset.ovRise = "1";
+      history.addEventListener("animationend", (e) => {
+        if (this.boxes.has(e.target as HTMLElement)) {
+          this.draw(e.target as HTMLElement);
+        }
+      });
+    }
+    for (const el of Array.from(history.children) as HTMLElement[]) {
+      if (this.boxes.has(el)) {
+        this.draw(el);
+      }
+    }
+  }
+
+  /** `tab` is whether the box has an app to name; without one it is a plain
+   *  pill, clipped all the same. */
+  wear(box: HTMLElement, tab: boolean) {
+    if (!this.on) {
+      this.undress(box);
+      return;
+    }
+    this.dress(box);
+    box.classList.toggle(this.names.hasTab, tab);
+    this.draw(box);
+  }
+
+  ring(box: HTMLElement) {
+    const st = this.dress(box);
+    if (st.trace) {
+      return;
+    }
+    const svg = document.createElementNS(NameTab.NS, "svg") as SVGSVGElement;
+    svg.setAttribute("class", this.names.trace);
+    svg.setAttribute("aria-hidden", "true");
+    [this.names.ringWhite, this.names.ringBlack].forEach((tone) => {
+      const path = document.createElementNS(
+        NameTab.NS,
+        "path"
+      ) as SVGPathElement;
+      path.setAttribute("class", tone);
+      svg.append(path);
+    });
+    box.after(svg);
+    st.trace = svg;
+    this.moves.observe(box, {
+      attributes: true,
+      attributeFilter: ["style", "class"],
+    });
+    this.draw(box);
+  }
+}
+
 // The app's originXSpring and originYSpring. The live box hugs its text and
 // grows a line at a time as a sentence wraps, and a stack that jumped the line
 // with it read as a jolt; the box itself stays put, since it changes several
@@ -665,7 +1520,7 @@ const mmss = (seconds: number) =>
     "0"
   )}`;
 
-const cx = (...names: (string | undefined | false)[]) =>
+const cx = (...names: (string | undefined | false | null)[]) =>
   names.filter(Boolean).join(" ");
 
 /** Capturing can throw on a pointer the browser no longer knows about, and a
@@ -768,6 +1623,50 @@ export const SubtitlesDemo = () => {
   const [elapsed, setElapsed] = useState(START);
   const [committed, setCommitted] = useState("");
   const [tentative, setTentative] = useState("");
+  // The app the live box names, see SOURCES; and the status menu, which the
+  // loop opens between the podcast's two lines to pick Translate To.
+  const [boxApp, setBoxApp] = useState<SourceApp | null>(
+    SOURCES.meeting ?? null
+  );
+  const [menuOpen, setMenuOpen] = useState(false);
+  // By hand: a click on the glyph drops the menu, and it works as a menu
+  // does. The rows with a Try badge act on the demo; the rest shake their
+  // heads. A menu the visitor has up stays up through the scripted walk.
+  const [menuManual, setMenuManual] = useState(false);
+  const menuManualRef = useRef(false);
+  const [openSub, setOpenSub] = useState<string | null>(null);
+  const [subTop, setSubTop] = useState(0);
+  const [hotRow, setHotRow] = useState<string | null>(null);
+  const [hotSub, setHotSub] = useState<string | null>(null);
+  const [refused, setRefused] = useState<string | null>(null);
+  const [translateTo, setTranslateTo] = useState("off");
+  const menuRef = useRef<HTMLDivElement>(null);
+  const glyphRef = useRef<HTMLSpanElement>(null);
+  const subRef = useRef<HTMLDivElement>(null);
+  const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const walkRef = useRef<{ cancelled: boolean } | null>(null);
+  // What the menu's Try rows set: the box's size and alignment, whether it
+  // dissolves under the pointer, whether ⌥ raises the stack, and how the box
+  // names its app.
+  const [textScale, setTextScale] = useState(1);
+  const [textAlign, setTextAlign] = useState<"start" | "center">("start");
+  const [revealOn, setRevealOn] = useState(true);
+  const revealRef = useRef(true);
+  const [historyOn, setHistoryOn] = useState(true);
+  const historyOnRef = useRef(true);
+  const showHistoryRef = useRef<(() => void) | null>(null);
+  const retextRef = useRef<(() => void) | null>(null);
+  const [iconStyle, setIconStyle] = useState<IconStyle>("header");
+  const iconStyleRef = useRef<IconStyle>("header");
+  const nameTabRef = useRef<NameTab | null>(null);
+  // The line being said, for ⌃: the pair and the word reached, so the box can
+  // be redrawn in whichever language the key asks for while it is still typing.
+  const curRef = useRef<{
+    line: string;
+    source: string | null;
+    i: number;
+  } | null>(null);
+  const ctrlRef = useRef(false);
   const [captionVisible, setCaptionVisible] = useState(false);
   const [scene, setScene] = useState(0);
   // How far through the current scene the loop is, and how long the bar has to
@@ -789,7 +1688,10 @@ export const SubtitlesDemo = () => {
   // measures the live box in the same breath as the page that closed it.
   const shiftHeldRef = useRef(false);
   const captionVisibleRef = useRef(false);
-  const closePageRef = useRef<((line: string) => void) | null>(null);
+  const closePageRef = useRef<
+    | ((line: string, app: SourceApp | null, source: string | null) => void)
+    | null
+  >(null);
   const queueHoleRef = useRef<(() => void) | null>(null);
   // Windows that have been dragged off their CSS insets, each held as fractions
   // of the screen so they keep both their size and their place when it resizes.
@@ -867,6 +1769,336 @@ export const SubtitlesDemo = () => {
   // going, and only ever one thing. Being in front was never the right test, and
   // it stopped the screen dead the moment the notes came forward.
   const callPlaying = stack.indexOf("meeting") > stack.indexOf("player");
+  // The same, for the loop, which lives in an effect and cannot read state.
+  const stackRef = useRef(stack);
+  useEffect(() => {
+    stackRef.current = stack;
+  }, [stack]);
+
+  // ── the menu, by hand ────────────────────────────────────────────────────
+  //
+  // A click on the glyph drops the app's menu, and it works as a menu does:
+  // rows light under the pointer, a row with a submenu opens it, a click
+  // outside or on the glyph takes it down, Escape too. The rows the demo can
+  // act on wear a Try badge and do what they say; the rest shake their heads,
+  // small and quick, the way a refused click should, and the menu stays up.
+  // The demo also walks the menu itself to switch translation on: that walk
+  // opens the menu if it is down and takes it down after, but a menu the
+  // visitor has up stays up.
+  // Rows are known by their id, or by their label where they have none: the
+  // ones that only shake their heads.
+  const keyOf = (row: MenuRow) => ("sep" in row ? "" : row.id ?? row.label);
+  const rowById = (id: string): MenuRow | undefined => {
+    for (const row of MENU) {
+      if ("sep" in row) {
+        continue;
+      }
+      if (keyOf(row) === id) {
+        return row;
+      }
+      const inner = row.sub?.find((r) => !("sep" in r) && keyOf(r) === id);
+      if (inner) {
+        return inner;
+      }
+    }
+    return undefined;
+  };
+  const rowEnabled = (id: string | undefined) =>
+    !!id &&
+    !("sep" in (rowById(id) ?? { sep: true })) &&
+    !!(rowById(id) as { demo?: boolean }).demo;
+  const rowHasSub = (id: string | undefined) =>
+    !!id && !!(rowById(id) as { sub?: MenuRow[] } | undefined)?.sub;
+  const rowDim = (id: string | undefined) =>
+    id === "status" || (id === "timing" && translateTo === "off");
+  // The checks, from the demo's state: a toggle on or off, a choice among its
+  // group.
+  const checked = new Set<string>([
+    `size-${Math.round(textScale * 30)}`,
+    `align-${textAlign}`,
+    iconStyle === "nameTab"
+      ? "icon-tab"
+      : iconStyle === "off"
+      ? "icon-off"
+      : "icon-header",
+    ...(revealOn ? ["reveal"] : []),
+    ...(historyOn ? ["history"] : []),
+  ]);
+
+  // The submenu hangs off its row, its first item level with it.
+  const openSubmenu = useCallback((id: string) => {
+    const row = rowRefs.current[id];
+    const sub = subRef.current;
+    if (row && sub) {
+      setSubTop(
+        row.offsetTop - (parseFloat(getComputedStyle(sub).paddingTop) || 0)
+      );
+    }
+    setOpenSub((was) => {
+      if (was !== id) {
+        setHotSub(null);
+      }
+      return id;
+    });
+  }, []);
+  const closeMenuByHand = useCallback(() => {
+    menuManualRef.current = false;
+    setMenuManual(false);
+    setMenuOpen(false);
+    setOpenSub(null);
+    setHotRow(null);
+    setHotSub(null);
+  }, []);
+  // Taken down by the visitor while a walk is on: the walk finishes its
+  // business without the menu.
+  const dismissMenu = useCallback(() => {
+    if (walkRef.current) {
+      walkRef.current.cancelled = true;
+    }
+    closeMenuByHand();
+  }, [closeMenuByHand]);
+  const refuse = (id: string) => {
+    setRefused(null);
+    requestAnimationFrame(() => setRefused(id));
+    setTimeout(() => setRefused((was) => (was === id ? null : was)), 500);
+  };
+  const act = (id: string) => {
+    if (id.startsWith("size-")) {
+      setTextScale(Number(id.slice(5)) / 30);
+      queueHoleRef.current?.();
+    } else if (id.startsWith("align-")) {
+      setTextAlign(id.slice(6) === "center" ? "center" : "start");
+    } else if (id.startsWith("icon-")) {
+      const style = id.slice(5);
+      setIconStyle(
+        style === "tab" ? "nameTab" : style === "off" ? "off" : "header"
+      );
+    } else if (id === "reveal") {
+      revealRef.current = !revealRef.current;
+      setRevealOn(revealRef.current);
+      queueHoleRef.current?.();
+    } else if (id === "history") {
+      historyOnRef.current = !historyOnRef.current;
+      setHistoryOn(historyOnRef.current);
+      showHistoryRef.current?.();
+    } else if (id === "reset") {
+      setSpot(null);
+      queueHoleRef.current?.();
+    }
+  };
+  const settleRow = (id: string | undefined) => {
+    if (!id || rowDim(id)) {
+      setOpenSub(null);
+      return;
+    }
+    setHotRow(id);
+    if (rowHasSub(id) && rowEnabled(id)) {
+      openSubmenu(id);
+    } else {
+      setOpenSub(null);
+    }
+  };
+  // The pointer on its way to an open submenu crosses the rows between, and
+  // macOS gives it the benefit of the doubt: while it is moving towards the
+  // submenu, inside the triangle from where it was a moment ago to the
+  // submenu's near edge, the row it is crossing is not taken as the one it
+  // wants. Once it stops, or turns away, the row is.
+  const trackRef = useRef<{ x: number; y: number; t: number }[]>([]);
+  const aimRef = useRef(0);
+  const hoveredRef = useRef<string | null>(null);
+  const sample = (e: ReactPointerEvent) => {
+    const now = performance.now();
+    const track = trackRef.current;
+    track.push({ x: e.clientX, y: e.clientY, t: now });
+    while (track.length > 2 && now - (track[1]?.t ?? now) > 320) {
+      track.shift();
+    }
+  };
+  const toward = () => {
+    const sub = subRef.current;
+    const track = trackRef.current;
+    if (!sub || track.length < 2) {
+      return false;
+    }
+    const now = track[track.length - 1];
+    const from = track[0];
+    if (!now || !from) {
+      return false;
+    }
+    if (Math.abs(now.x - from.x) < 2 && Math.abs(now.y - from.y) < 2) {
+      return false;
+    }
+    const r = sub.getBoundingClientRect();
+    if (
+      now.x >= r.left &&
+      now.x <= r.right &&
+      now.y >= r.top &&
+      now.y <= r.bottom
+    ) {
+      return true;
+    }
+    const near =
+      Math.abs(from.x - r.right) < Math.abs(from.x - r.left) ? r.right : r.left;
+    const b = { x: near, y: r.top - 6 };
+    const c = { x: near, y: r.bottom + 6 };
+    const side = (
+      p: { x: number; y: number },
+      q: { x: number; y: number },
+      s: { x: number; y: number }
+    ) => (q.x - p.x) * (s.y - p.y) - (q.y - p.y) * (s.x - p.x);
+    const d1 = side(from, b, now);
+    const d2 = side(b, c, now);
+    const d3 = side(c, from, now);
+    return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
+  };
+  const onRootRowOver = (id: string | undefined) => (e: ReactPointerEvent) => {
+    if (!menuManualRef.current || !id) {
+      return;
+    }
+    sample(e);
+    hoveredRef.current = id;
+    clearTimeout(aimRef.current);
+    aimRef.current = 0;
+    if (openSub && id !== openSub && toward()) {
+      const later = () => {
+        aimRef.current = 0;
+        if (hoveredRef.current !== id) {
+          return;
+        }
+        const last = trackRef.current[trackRef.current.length - 1];
+        const still = !!last && performance.now() - last.t < 250 && toward();
+        if (still) {
+          aimRef.current = window.setTimeout(later, 150);
+        } else {
+          settleRow(id);
+        }
+      };
+      aimRef.current = window.setTimeout(later, 300);
+      return;
+    }
+    settleRow(id);
+  };
+  const onRootRowClick = (id: string | undefined) => () => {
+    if (!menuManualRef.current || !id || rowDim(id)) {
+      return;
+    }
+    if (rowHasSub(id)) {
+      if (rowEnabled(id)) {
+        openSubmenu(id);
+      } else {
+        refuse(id);
+      }
+      return;
+    }
+    if (!rowEnabled(id)) {
+      refuse(id);
+      return;
+    }
+    act(id);
+    closeMenuByHand();
+  };
+  const onSubRowClick = (id: string) => () => {
+    if (!menuManualRef.current) {
+      return;
+    }
+    // Translate To's languages have no badge: the walk picks them, and a
+    // click shakes its head like any other row without one.
+    if (openSub === "translate" || !rowEnabled(id)) {
+      refuse(id);
+      return;
+    }
+    act(id);
+    closeMenuByHand();
+  };
+  const onGlyphClick = (e: ReactMouseEvent) => {
+    e.stopPropagation();
+    if (menuOpen || menuManual) {
+      dismissMenu();
+    } else {
+      menuManualRef.current = true;
+      setMenuManual(true);
+      trackRef.current.length = 0;
+    }
+  };
+  // A click outside, or Escape, takes a menu opened by hand down.
+  useEffect(() => {
+    if (!menuManual) {
+      return;
+    }
+    const onDown = (e: PointerEvent) => {
+      const target = e.target as Node;
+      if (
+        menuRef.current?.contains(target) ||
+        glyphRef.current?.contains(target)
+      ) {
+        return;
+      }
+      dismissMenu();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        dismissMenu();
+      }
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown, true);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [dismissMenu, menuManual]);
+
+  // ── Show Source App Name ─────────────────────────────────────────────────
+  // The name tab lives beside React: it masks the live box and the stack's
+  // boxes to their silhouettes and keeps its own rim and ring. Made once, and
+  // told which style is on; the header row and off are React's alone.
+  useEffect(() => {
+    if (typeof ResizeObserver !== "function") {
+      return;
+    }
+    nameTabRef.current = new NameTab({
+      tabbed: styles.is_tabbed || "is_tabbed",
+      hasTab: styles.has_tab || "has_tab",
+      rim: styles.ov_rim || "ov_rim",
+      trace: styles.ov_trace || "ov_trace",
+      ringWhite: styles.ring_white || "ring_white",
+      ringBlack: styles.ring_black || "ring_black",
+      on: styles.is_on || "is_on",
+      visible: styles.is_visible || "is_visible",
+      movable: styles.is_movable || "is_movable",
+      app: styles.ov_app || "ov_app",
+      defs: styles.ov_defs || "ov_defs",
+      below: styles.is_below || "is_below",
+      history: styles.history || "history",
+    });
+  }, []);
+  useEffect(() => {
+    iconStyleRef.current = iconStyle;
+    const tab = nameTabRef.current;
+    const box = overlayRef.current;
+    const historyEl = historyRef.current;
+    tab?.enable(iconStyle === "nameTab");
+    if (box && tab) {
+      if (iconStyle === "nameTab") {
+        tab.ring(box);
+      }
+      tab.wear(box, iconStyle === "nameTab" && !!boxApp);
+    }
+    if (historyEl) {
+      for (const el of Array.from(historyEl.children) as HTMLElement[]) {
+        const named = el.dataset.named === "1";
+        const row = el.firstElementChild as HTMLElement | null;
+        if (row) {
+          row.hidden = !named || iconStyle === "off";
+        }
+        tab?.wear(el, named && iconStyle === "nameTab");
+      }
+      if (tab?.on) {
+        tab.refresh(historyEl);
+      }
+    }
+    queueHoleRef.current?.();
+  }, [boxApp, iconStyle]);
 
   const syncPaused = useCallback(() => {
     pausedRef.current = !onScreenRef.current || document.hidden;
@@ -1043,40 +2275,156 @@ export const SubtitlesDemo = () => {
     // hold, because those are the only two moments the loop knows how long the
     // next stretch will take. The second starts from wherever the first actually
     // got to, so the jitter in the typing corrects itself rather than piling up.
-    const say = async (line: string, from: number, to: number) => {
+    //
+    // `source` is what was actually said when `line` is its translation. While
+    // the line is up, typing or held, ⌃ swaps the box to the source and back,
+    // as it does in the app: `cur` is the pair and the word reached, and
+    // drawLive draws it in whichever language the key asks for. ⌃ swaps in a
+    // sentence that is not the same length as the one being drawn, so progress
+    // carries across as a fraction of the line rather than a word index, and
+    // the source keeps arriving word by word instead of landing in one block.
+    // `wears` is the app the line belongs to when the scene knows better than
+    // the stack: the podcast's first line starts while its ⌘-tab is still
+    // landing, and its words are the podcast's, not the call's still playing
+    // under it. Without it the box wears whatever is making the sound.
+    const drawLive = () => {
+      const cur = curRef.current;
+      if (!cur) {
+        return;
+      }
+      const text = ctrlRef.current && cur.source ? cur.source : cur.line;
+      if (cur.i < 0) {
+        setCommitted(text);
+        setTentative("");
+        return;
+      }
+      const words = text.split(" ");
+      let i = cur.i;
+      if (text !== cur.line) {
+        const of = cur.line.split(" ").length;
+        i = Math.min(Math.round((cur.i / of) * words.length), words.length - 1);
+      }
+      setCommitted(i ? `${words.slice(0, i).join(" ")} ` : "");
+      setTentative(words[i] ?? "");
+    };
+    // Which app is making the sound: the higher of the two that can in the
+    // stack, which is what callPlaying reads too.
+    const playing = () => {
+      const order = stackRef.current;
+      return (
+        (order.indexOf("meeting") > order.indexOf("player")
+          ? SOURCES.meeting
+          : SOURCES.player) ?? null
+      );
+    };
+
+    const say = async (
+      line: string,
+      from: number,
+      to: number,
+      source: string | null = null,
+      wears: SourceApp | null = null
+    ) => {
       const words = line.split(" ");
       const hold = holdFor(words.length);
       const typing = words.length * (WORD_MS + JITTER / 2);
       const typed = from + (to - from) * (typing / (typing + hold + GAP_MS));
 
-      setCommitted("");
-      setTentative("");
+      // The box wears the app its words arrive under, and keeps it when it
+      // closes into the stack, whatever is playing by then.
+      const app = wears ?? playing();
+      curRef.current = { line, source, i: 0 };
+      setBoxApp(app);
+      drawLive();
       showCaption(true);
       setProgress({ value: typed, ms: typing });
 
-      for (let i = 0; i < words.length; i++) {
-        if (jumpRef.current !== null) {
-          throw JUMPED;
+      try {
+        for (let i = 0; i < words.length; i++) {
+          if (jumpRef.current !== null) {
+            throw JUMPED;
+          }
+          const word = words[i] ?? "";
+          curRef.current.i = i;
+          drawLive();
+          // A comma or full stop gets a beat, the way speech does.
+          const punctuated = /[,.;:—]$/.test(word);
+          await step(WORD_MS + Math.random() * JITTER + (punctuated ? 180 : 0));
         }
-        const word = words[i] ?? "";
-        setCommitted(i ? `${words.slice(0, i).join(" ")} ` : "");
-        setTentative(word);
-        // A comma or full stop gets a beat, the way speech does.
-        const punctuated = /[,.;:—]$/.test(word);
-        await step(WORD_MS + Math.random() * JITTER + (punctuated ? 180 : 0));
+
+        // Everything commits once the utterance ends.
+        curRef.current.i = -1;
+        drawLive();
+        setProgress({ value: to, ms: hold + GAP_MS });
+
+        await step(hold);
+      } finally {
+        curRef.current = null;
       }
-
-      // Everything commits once the utterance ends.
-      setCommitted(line);
-      setTentative("");
-      setProgress({ value: to, ms: hold + GAP_MS });
-
-      await step(hold);
       showCaption(false);
       // The page has closed. The app records it here too, at the fade, because
       // fading is precisely when somebody looked away and will want it back.
-      closePageRef.current?.(line);
+      closePageRef.current?.(line, app, source);
       await step(GAP_MS);
+    };
+
+    // The app's status menu, walked as the translation pages walk it: the
+    // panel opens, Translate To lights, the submenu hangs off it, the language
+    // lights, blinks as macOS blinks the item it is about to act on, and takes
+    // the check. No pointer is drawn; the highlight moving is the hand.
+    // A menu the visitor has up is theirs to take down: the scripted close
+    // leaves it, its submenu closed and its rows cooled.
+    const closeMenu = () => {
+      if (menuManualRef.current) {
+        setOpenSub(null);
+        setHotRow(null);
+        setHotSub(null);
+        return;
+      }
+      setMenuOpen(false);
+      setOpenSub(null);
+      setHotRow(null);
+      setHotSub(null);
+    };
+    const pickTranslation = async (target: string) => {
+      const walk = { cancelled: false };
+      walkRef.current = walk;
+      const end = () => {
+        if (walkRef.current === walk) {
+          walkRef.current = null;
+        }
+        setTranslateTo(target);
+        if (!walk.cancelled) {
+          closeMenu();
+        }
+      };
+      if (!menuManualRef.current) {
+        setMenuOpen(true);
+      }
+      setHotRow("translate");
+      await step(500);
+      if (walk.cancelled) {
+        return end();
+      }
+      openSubmenu("translate");
+      await step(450);
+      if (walk.cancelled) {
+        return end();
+      }
+      setHotSub(target);
+      await step(650);
+      if (walk.cancelled) {
+        return end();
+      }
+      // macOS blinks the item it is about to act on.
+      for (let k = 0; k < 2; k++) {
+        setHotSub(null);
+        await step(70);
+        setHotSub(target);
+        await step(70);
+      }
+      end();
+      await step(350);
     };
 
     // ⌘-tab: panel up on the current app, selection moves, window fronts as the
@@ -1118,6 +2466,9 @@ export const SubtitlesDemo = () => {
         }
 
         const slice = 1 / current.lines.length;
+        // The scene's own app when it makes a sound, for the boxes to wear;
+        // the notes make none, and their lines are the call's.
+        const wears = SOURCES[current.app] ?? null;
         const deliberate = picked;
         picked = false;
         setScene(index);
@@ -1139,21 +2490,43 @@ export const SubtitlesDemo = () => {
               // a click it would read as the caption belonging to the window you
               // just left.
               await switchTo(current.app);
-              await say(opener, 0, slice);
+              await say(opener, 0, slice, null, wears);
             } else {
               // Deliberately concurrent: the caption keeps running straight
               // through the app switch, which is the whole point being made.
-              await both(say(opener, 0, slice), switchTo(current.app));
+              await both(
+                say(opener, 0, slice, null, wears),
+                switchTo(current.app)
+              );
             }
           } else {
-            await say(opener, 0, slice);
+            await say(opener, 0, slice, null, wears);
           }
 
           for (let j = 1; j < current.lines.length; j++) {
-            await say(current.lines[j] ?? "", j * slice, (j + 1) * slice);
+            let from = j * slice;
+            const to = (j + 1) * slice;
+            // Before the last line of the last scene: somebody speaks the other
+            // language and the box shows it as said; Translate To goes on; the
+            // next sentence arrives in this page's language, and ⌃ gives back
+            // what was actually said. It takes the first half of what the bar
+            // had left for the last line, which then takes the rest.
+            if (index === SCENES.length - 1 && j === current.lines.length - 1) {
+              const quarter = from + (to - from) / 4;
+              const mid = from + (to - from) / 2;
+              await say(TRANSLATE.first, from, quarter, null, wears);
+              await pickTranslation("en");
+              await say(TRANSLATE.shown, quarter, mid, TRANSLATE.source, wears);
+              from = mid;
+            }
+            await say(current.lines[j] ?? "", from, to, null, wears);
           }
 
           index = (index + 1) % SCENES.length;
+          // Each turn switches translation on; the next starts with it off.
+          if (index === 0) {
+            setTranslateTo("off");
+          }
         } catch (error) {
           if (error !== JUMPED) {
             throw error;
@@ -1172,9 +2545,40 @@ export const SubtitlesDemo = () => {
           setCommitted("");
           setTentative("");
           setProgress({ value: 0, ms: 0 });
+          // And no menu left open, translation off again.
+          closeMenu();
+          setTranslateTo("off");
         }
       }
     };
+
+    // ⌃ is the visitor's: while a translated line is up it shows what was
+    // said, word by word under the key if the line is still being typed.
+    // ⌃ swaps the stack's boxes too, in place, as the app's isSwappingLanguage
+    // does: each box keeps both languages from when it closed.
+    const redraw = () => {
+      drawLive();
+      retextRef.current?.();
+    };
+    const onCtrlDown = (event: KeyboardEvent) => {
+      if (event.key === "Control") {
+        ctrlRef.current = true;
+        redraw();
+      }
+    };
+    const onCtrlUp = (event: KeyboardEvent) => {
+      if (event.key === "Control") {
+        ctrlRef.current = false;
+        redraw();
+      }
+    };
+    const onCtrlBlur = () => {
+      ctrlRef.current = false;
+      redraw();
+    };
+    window.addEventListener("keydown", onCtrlDown);
+    window.addEventListener("keyup", onCtrlUp);
+    window.addEventListener("blur", onCtrlBlur);
 
     loop().catch((error) => {
       if (error !== CANCELLED) {
@@ -1184,12 +2588,15 @@ export const SubtitlesDemo = () => {
 
     return () => {
       cancelled = true;
+      window.removeEventListener("keydown", onCtrlDown);
+      window.removeEventListener("keyup", onCtrlUp);
+      window.removeEventListener("blur", onCtrlBlur);
       wakeRef.current = null;
       timers.forEach(clearTimeout);
       timers.clear();
       waking.clear();
     };
-  }, [reducedMotion, showApp, showCaption]);
+  }, [openSubmenu, reducedMotion, showApp, showCaption]);
 
   // Picking the scene that is already playing does nothing, whether you picked
   // it from the bar or by clicking its window: restarting it would punish a
@@ -1397,7 +2804,49 @@ export const SubtitlesDemo = () => {
       starved: styles.is_starved || "is_starved",
       visible: styles.is_visible || "is_visible",
       hidden: styles.is_hidden || "is_hidden",
+      app: styles.ov_app || "ov_app",
+      name: styles.ov_name || "ov_name",
+      text: styles.ov_text || "ov_text",
     };
+
+    // A box for the stack, wearing `app`: the row with the icon and the name,
+    // as the app's header row draws them since 1.7.0, and under it the text,
+    // which is what the search writes into. No row at all for a box with no
+    // known source, when the box is text alone, as the app's is.
+    const newBox = (app: SourceApp | null) => {
+      const el = document.createElement("div");
+      el.className = NAMES.line;
+      el.dataset.named = app ? "1" : "0";
+      const row = document.createElement("span");
+      row.className = NAMES.app;
+      if (app) {
+        const img = document.createElement("img");
+        img.alt = "";
+        img.src = `${DOCK}/${app.icon}.png`;
+        img.width = 84;
+        img.height = 84;
+        const name = document.createElement("span");
+        name.className = NAMES.name;
+        name.textContent = app.name;
+        row.append(img, name);
+      } else {
+        row.hidden = true;
+      }
+      if (iconStyleRef.current === "off") {
+        row.hidden = true;
+      }
+      const text = document.createElement("span");
+      text.className = NAMES.text;
+      el.append(row, text);
+      nameTabRef.current?.wear(el, !!app && iconStyleRef.current === "nameTab");
+      return el;
+    };
+    const textOf = (el: HTMLElement) =>
+      (el.querySelector(`.${NAMES.text}`) as HTMLElement | null) ?? el;
+    // A box's text in whichever language ⌃ asks for: a box that closed with
+    // nothing said in another language has only the one.
+    const lineText = (page: HistoryPage) =>
+      ctrlRef.current && page.source ? page.source : page.text;
 
     const past: HistoryPage[] = [];
     // Pages carry an id rather than being matched on their text. Seven lines
@@ -1587,6 +3036,7 @@ export const SubtitlesDemo = () => {
       lines.forEach((line, i) => {
         line.style.setProperty("--y", `${(ys[i] ?? 0).toFixed(1)}px`);
       });
+      nameTabRef.current?.refresh(historyEl);
     };
 
     // Pinned to the live box, so dragging the captions takes the stack with
@@ -1611,7 +3061,14 @@ export const SubtitlesDemo = () => {
       // by fractions of a pixel as a caption is typed. Left as a float it
       // crossed the half-pixel test below on its own every few frames, and every
       // crossing was a scroll correction the reader had not asked for.
-      historyEl.style.maxHeight = `${Math.max(0, Math.round(room - block))}px`;
+      // Plus the stack's own padding, a pixel past the boxes at either end,
+      // which its height has to carry on top of the room.
+      const cs = getComputedStyle(historyEl);
+      const slack =
+        (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+      historyEl.style.maxHeight = `${
+        Math.max(0, Math.round(room - block)) + slack
+      }px`;
 
       // Nowhere left to put it. Hidden rather than emptied, because the live box
       // shrinks again on the next page and the stack should still be there. A
@@ -1694,8 +3151,7 @@ export const SubtitlesDemo = () => {
         if (here && here.dataset.pid === String(page.id)) {
           return;
         }
-        const el = document.createElement("div");
-        el.className = NAMES.line;
+        const el = newBox(page.app);
         el.dataset.pid = String(page.id);
         historyEl.insertBefore(el, here ?? null);
         risen.push(el);
@@ -1713,7 +3169,7 @@ export const SubtitlesDemo = () => {
       kids.forEach((el) => {
         const page = pageOf(el);
         if (page) {
-          search.write(el, page.text);
+          search.write(textOf(el), lineText(page));
         }
         el.classList.remove(NAMES.hidden);
       });
@@ -1721,7 +3177,7 @@ export const SubtitlesDemo = () => {
       kids.forEach((el) => {
         const page = pageOf(el);
         if (page) {
-          el.classList.toggle(NAMES.hidden, !search.matches(page.text));
+          el.classList.toggle(NAMES.hidden, !search.matches(lineText(page)));
         }
       });
 
@@ -1759,6 +3215,7 @@ export const SubtitlesDemo = () => {
           "animationend",
           () => {
             rising = Math.max(0, rising - 1);
+            relayer(el);
           },
           { once: true }
         );
@@ -1769,13 +3226,24 @@ export const SubtitlesDemo = () => {
     // Deduplicated against the last entry, as the app's own closePage is: a page
     // can close twice in a beat, and two identical boxes read as a stutter
     // rather than as history.
-    const closePage = (line: string) => {
+    // Each box wears the app its words arrived under, as the app's pager tags
+    // it, not the app of whatever is playing when it closes.
+    const closePage = (
+      line: string,
+      app: SourceApp | null,
+      source: string | null
+    ) => {
       const trimmed = line.trim();
       const last = past[past.length - 1];
       if (!trimmed || (last && trimmed === last.text)) {
         return;
       }
-      past.push({ id: ++pageId, text: trimmed });
+      past.push({
+        id: ++pageId,
+        text: trimmed,
+        source: source ? source.trim() : null,
+        app,
+      });
       if (past.length > PAST_MAX) {
         past.splice(0, past.length - PAST_MAX);
       }
@@ -1789,10 +3257,30 @@ export const SubtitlesDemo = () => {
       }
     };
 
-    // Up while ⌥ is held, or while the search has it pinned, when it stays up
-    // whatever the modifier keys are doing.
+    // Up while ⌥ is held, never alongside ⇧, which is the app's rule too: the
+    // box is being picked up, and the stack is pinned to it. Or while the
+    // search has it pinned, when it stays up whatever the modifier keys are
+    // doing.
+    // Retexts the stack in place, for ⌃: the search reads whichever language
+    // is showing.
+    const retextHistory = () => {
+      boxes().forEach((el) => {
+        const page = past.find((p) => String(p.id) === el.dataset.pid);
+        if (!page) {
+          return;
+        }
+        const text = lineText(page);
+        search.write(textOf(el), text);
+        el.classList.toggle(NAMES.hidden, !search.matches(text));
+      });
+    };
+
+    // And never while the menu's Recent Boxes On ⌥ is off.
     const showHistory = () => {
-      const want = (altKey || search.pinned) && past.length > 0;
+      const want =
+        historyOnRef.current &&
+        ((altKey && !shiftHeldRef.current) || search.pinned) &&
+        past.length > 0;
 
       if (want) {
         // A fresh press builds the stack from nothing, so every box rises. Only
@@ -1844,7 +3332,7 @@ export const SubtitlesDemo = () => {
       // Shift keeps the box solid, the way it does in the app: you are about to
       // pick it up, and a hole under the hand you are picking it up with is no
       // help. The stack does too, because the stack is what is being read then.
-      if (!pointer || shiftHeldRef.current || raised) {
+      if (!pointer || !revealRef.current || shiftHeldRef.current || raised) {
         box.style.setProperty("--hole-x", "-999px");
         box.style.setProperty("--hole-y", "-999px");
         return;
@@ -1913,10 +3401,18 @@ export const SubtitlesDemo = () => {
         altKey = true;
         showHistory();
       }
+      // ⇧ takes the stack down while it is held; the ref is already set, since
+      // the effect that keeps it was declared before this one.
+      if (event.key === "Shift" && !event.repeat) {
+        showHistory();
+      }
     };
     const onKeyUp = (event: KeyboardEvent) => {
       if (event.key === "Alt") {
         altKey = false;
+        showHistory();
+      }
+      if (event.key === "Shift") {
         showHistory();
       }
     };
@@ -1928,6 +3424,8 @@ export const SubtitlesDemo = () => {
     };
 
     closePageRef.current = closePage;
+    showHistoryRef.current = showHistory;
+    retextRef.current = retextHistory;
     queueHoleRef.current = queueHole;
 
     historyEl.addEventListener("scroll", onScroll);
@@ -2407,7 +3905,17 @@ export const SubtitlesDemo = () => {
           scripted loop, not content, and the windows are drawings of apps.
           Screen readers get the page copy, and the scene buttons below, which
           are the only part of this anybody can operate. */}
-      <div ref={screenRef} className={styles.screen} aria-hidden="true">
+      <div
+        ref={screenRef}
+        className={styles.screen}
+        aria-hidden="true"
+        style={
+          {
+            "--text-scale": textScale,
+            "--text-align": textAlign,
+          } as CSSProperties
+        }
+      >
         <div className={styles.menubar}>
           {/* The left half of a real bar: the mark, the app in front, and its
               first menus. The name follows whichever window is in front, which
@@ -2426,7 +3934,15 @@ export const SubtitlesDemo = () => {
             <span className={styles.mb_menu}>View</span>
           </span>
           <span className={styles.mb_right}>
-            <span className={cx(styles.mb_glyph, styles.is_live)}>
+            <span
+              ref={glyphRef}
+              className={cx(
+                styles.mb_glyph,
+                styles.is_live,
+                (menuManual || menuOpen) && styles.is_menu
+              )}
+              onClick={onGlyphClick}
+            >
               <svg viewBox="0 0 16 14" fill="currentColor">
                 <path d="M8 0C12.4183 3.45921e-08 16 2.76601 16 6.17773C15.9998 9.58934 12.4182 12.3545 8 12.3545C7.95891 12.3545 7.91789 12.3549 7.87695 12.3545C7.2354 12.3471 6.62608 12.6326 6.12207 13.0293C5.08323 13.847 3.98202 14.2713 2.6416 13.8018C2.18877 13.6432 2.26424 13.0289 2.6416 12.8965C3.14721 12.719 3.16134 12.5345 3.35254 11.9893C3.49999 11.5685 3.22962 11.1513 2.85547 10.9082C1.10992 9.77516 9.73494e-05 8.07645 0 6.17773C0 2.76601 3.58172 0 8 0ZM3.53027 7.03613C3.19866 7.03637 2.9298 7.30507 2.92969 7.63672C2.92969 7.96846 3.19858 8.23805 3.53027 8.23828H8.21289C8.54478 8.23828 8.81445 7.96861 8.81445 7.63672C8.81434 7.30493 8.54471 7.03613 8.21289 7.03613H3.53027ZM10.416 7.03613C10.0843 7.03626 9.81554 7.305 9.81543 7.63672C9.81543 7.96853 10.0842 8.23816 10.416 8.23828H11.9189C12.2507 8.23809 12.5195 7.96849 12.5195 7.63672C12.5194 7.30504 12.2506 7.03632 11.9189 7.03613H10.416ZM3.53027 4.65723C3.19868 4.65742 2.9299 4.92622 2.92969 5.25781C2.92969 5.58958 3.19855 5.85918 3.53027 5.85938H6.18457C6.51646 5.85938 6.78613 5.5897 6.78613 5.25781C6.78592 4.92611 6.51633 4.65723 6.18457 4.65723H3.53027ZM8.36328 4.65723C8.03152 4.65723 7.76291 4.92611 7.7627 5.25781C7.7627 5.5897 8.03139 5.85938 8.36328 5.85938H13.0703C13.4022 5.85938 13.6719 5.5897 13.6719 5.25781C13.6717 4.92611 13.4021 4.65723 13.0703 4.65723H8.36328Z" />
               </svg>
@@ -2434,6 +3950,121 @@ export const SubtitlesDemo = () => {
             </span>
             <span className={styles.mb_time}>{clock}</span>
           </span>
+        </div>
+
+        {/* The app's status menu, under the glyph in the menu bar. The loop
+            opens it between the podcast's two lines and picks Translate To; a
+            click on the glyph opens it by hand, and the rows with a Try badge
+            do what they say here. */}
+        <div
+          ref={menuRef}
+          className={cx(
+            styles.mn_panel,
+            styles.mn_root,
+            (menuOpen || menuManual) && styles.is_open,
+            menuManual && styles.is_manual
+          )}
+          onPointerLeave={() => {
+            if (menuManualRef.current) {
+              // The row whose submenu is open keeps its light, as macOS keeps it.
+              setHotRow(openSub);
+            }
+          }}
+        >
+          {MENU.map((row, index) =>
+            "sep" in row ? (
+              <div key={index} className={styles.mn_sep} />
+            ) : (
+              <div
+                key={row.label}
+                ref={(node) => {
+                  if (row.id) {
+                    rowRefs.current[row.id] = node;
+                  }
+                }}
+                className={cx(
+                  styles.mn_row,
+                  row.id === "status" && styles.mn_status,
+                  (row.on || (row.id && checked.has(row.id))) && styles.is_on,
+                  rowDim(row.id) && styles.is_dim,
+                  hotRow === keyOf(row) && styles.is_hot,
+                  refused === keyOf(row) && styles.is_refused
+                )}
+                onPointerOver={onRootRowOver(keyOf(row))}
+                onClick={onRootRowClick(keyOf(row))}
+              >
+                <span className={styles.mn_check}>✓</span>
+                <span className={styles.mn_label}>{row.label}</span>
+                {row.demo && <span className={styles.mn_demo}>Try</span>}
+                {row.key && <span className={styles.mn_key}>{row.key}</span>}
+                {row.sub && (
+                  <span className={styles.mn_more}>
+                    <svg viewBox="0 0 6 10">
+                      <path
+                        d="M1 1l4 4-4 4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                )}
+              </div>
+            )
+          )}
+          {/* One submenu, hung off whichever row has it open: Translate To's
+              languages, or the Try rows' choices. */}
+          <div
+            ref={subRef}
+            className={cx(
+              styles.mn_panel,
+              styles.mn_sub,
+              openSub !== null && (menuOpen || menuManual) && styles.is_open
+            )}
+            style={{ top: subTop }}
+          >
+            {(openSub === "translate"
+              ? [
+                  { label: "Off", id: "off" } as MenuRow,
+                  { sep: true } as MenuRow,
+                  ...LANGUAGES.map(
+                    ([id, name]) => ({ label: name, id } as MenuRow)
+                  ),
+                ]
+              : (rowById(openSub ?? "") as { sub?: MenuRow[] } | undefined)
+                  ?.sub ?? []
+            ).map((row, index) =>
+              "sep" in row ? (
+                <div key={index} className={styles.mn_sep} />
+              ) : (
+                <div
+                  key={row.id ?? row.label}
+                  className={cx(
+                    styles.mn_row,
+                    row.id !== undefined &&
+                      (openSub === "translate"
+                        ? translateTo === row.id
+                        : checked.has(row.id)) &&
+                      styles.is_on,
+                    hotSub === keyOf(row) && styles.is_hot,
+                    refused === keyOf(row) && styles.is_refused
+                  )}
+                  onPointerOver={() => {
+                    if (menuManualRef.current) {
+                      setHotSub(keyOf(row));
+                    }
+                  }}
+                  onClick={onSubRowClick(keyOf(row))}
+                >
+                  <span className={styles.mn_check}>✓</span>
+                  <span className={styles.mn_label}>{row.label}</span>
+                  {row.demo && <span className={styles.mn_demo}>Try</span>}
+                </div>
+              )
+            )}
+          </div>
         </div>
 
         <div
@@ -2976,8 +4607,11 @@ export const SubtitlesDemo = () => {
               captionVisible && styles.is_visible,
               shiftHeld && styles.is_movable,
               stackUp && styles.is_solid,
-              dragging && styles.is_dragging
+              dragging && styles.is_dragging,
+              iconStyle === "nameTab" && styles.is_tabbed,
+              iconStyle === "nameTab" && boxApp && styles.has_tab
             )}
+            data-named={boxApp ? "1" : "0"}
             // Once moved it is placed by its centre, which is also how it is
             // dragged and how it is kept inside the screen.
             style={
@@ -2996,8 +4630,36 @@ export const SubtitlesDemo = () => {
             onPointerCancel={endDrag}
             onLostPointerCapture={endDrag}
           >
-            <span>{committed}</span>
-            <span className={styles.tentative}>{tentative}</span>
+            {/* The source app's row: the icon and name of the app whose audio
+                the words are, above the caption, the way the app draws it by
+                default since 1.7.0. */}
+            <span
+              className={styles.ov_app}
+              hidden={!boxApp || iconStyle === "off"}
+            >
+              {boxApp && (
+                <>
+                  <img
+                    src={`${DOCK}/${boxApp.icon}.png`}
+                    width={84}
+                    height={84}
+                    alt=""
+                  />
+                  <span className={styles.ov_name}>{boxApp.name}</span>
+                </>
+              )}
+            </span>
+            <span className={styles.ov_text}>
+              <span>{committed}</span>
+              <span className={styles.tentative}>{tentative}</span>
+            </span>
+            {/* The ⇧ ring, as the app draws it: one rounded rect stroked
+                twice, white dashes and black dashes a dash apart, so one tone
+                or the other shows against whatever the box sits over. */}
+            <svg className={styles.ov_ring} aria-hidden="true">
+              <rect className={styles.ring_white} />
+              <rect className={styles.ring_black} />
+            </svg>
           </div>
         </div>
       </div>
@@ -3037,16 +4699,27 @@ export const SubtitlesDemo = () => {
         Switch apps and the captions stay: the overlay is above every window,
         and lets clicks through.
       </p>
-      <p className={styles.caption}>
-        Click a window to bring it forward. Hold <kbd>⇧</kbd> and drag the
-        captions to move them, as you would in the app.
-      </p>
-      {/* Says nothing to a phone, and is hidden from one by the stylesheet. */}
+      <p className={styles.caption}>Click a window to bring it forward.</p>
+      {/* The rest say nothing to a phone, and are hidden from one by the
+          stylesheet. */}
       <p className={cx(styles.caption, styles.caption_try)}>
-        Point at the captions and they dissolve under you. Hold <kbd>⌥</kbd> to
-        stack the closed ones back up, and <kbd>⌥</kbd>
-        <kbd>F</kbd> to search them. All of it works here exactly as it does in
+        Hold <kbd>⇧</kbd> and drag the captions to move them, as you would in
         the app.
+      </p>
+      <p className={cx(styles.caption, styles.caption_try)}>
+        Point at the captions and they dissolve under you, as they do in the
+        app.
+      </p>
+      <p className={cx(styles.caption, styles.caption_try)}>
+        Hold <kbd>⌥</kbd> to rewind, and the last few boxes stack back up;{" "}
+        <kbd>⌥</kbd>
+        <kbd>F</kbd> searches them, and <kbd>⌃</kbd> shows a translated line as
+        it was said.
+      </p>
+      <p className={cx(styles.caption, styles.caption_try)}>
+        Click the <i className={styles.mb_inline} aria-hidden="true" /> in the
+        menu bar: the app&rsquo;s menu opens, and the items marked{" "}
+        <span className={styles.try_inline}>Try</span> all work in this demo.
       </p>
     </div>
   );

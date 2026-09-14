@@ -128,6 +128,74 @@ const SubtitlesAppPageContent = () => {
           scripted version because you are the one moving the window.
         </p>
 
+        <h3 id="naming-the-app">The box names its app</h3>
+        <p>
+          Since 1.7.0 the app&rsquo;s caption box carries a row above the text:
+          the icon and name of the app whose audio the words are, the way Live
+          Captions heads its box. The demo reads that off the windows the way
+          the app reads it off Core Audio: the call and the player make a sound,
+          the notes never do, and the frontmost of the two that can is the
+          source. So bringing the notes forward leaves zoom.us on the box, and
+          fronting the player hands it to Spotify. Each box in the stack keeps
+          the app its words arrived under, with the icon at full colour while
+          its text dims, because a dimmed icon reads as a disabled app rather
+          than a box that sits back. The boxes wear the app&rsquo;s 16pt corner
+          and a hairline one device pixel wide, and the text fills from the
+          leading edge now rather than re-centring on every word.
+        </p>
+        <p>
+          The ⇧ ring is the app&rsquo;s two-tone dash: white dashes and black
+          dashes a dash apart, so one tone or the other shows against whatever
+          the box sits over. It is an SVG rather than a dashed border, because a
+          border&rsquo;s dash is the browser&rsquo;s and cannot be phased.
+        </p>
+
+        <h3 id="translation">Translation, live</h3>
+        <p>
+          Between the podcast&rsquo;s two lines the demo does what the app does
+          with another language. A sentence arrives in Spanish, shown as it was
+          said; the status menu drops from the glyph in the menu bar and walks
+          Translate To to English, the highlight moving being the hand; and the
+          next sentence arrives in English. Hold <kbd>⌃</kbd> while that line is
+          up and it shows what was actually said, word by word if it is still
+          being typed, because the two sentences are not the same length and
+          progress carries across as a fraction rather than a word index. The
+          menu is drawn item for item from the app&rsquo;s own, and only
+          Translate To does anything.
+        </p>
+
+        <h3 id="the-menu">The menu is yours too</h3>
+        <p>
+          Click the glyph in the menu bar and the app&rsquo;s menu drops, item
+          for item as the app has it, and it works as a menu does: rows light
+          under the pointer, a row with a submenu opens it, a click outside or
+          Escape takes it down. The rows marked Try act on this demo: text size
+          and alignment, whether the box dissolves under the pointer, whether{" "}
+          <kbd>⌥</kbd> raises the stack, resetting the box&rsquo;s position, and
+          how the box names its app. Every other row shakes its head at a click,
+          small and quick, because refusing silently is indistinguishable from
+          being broken. A menu you have up stays up through the scripted
+          translation walk; one you closed is opened and closed by the walk as
+          before. The pointer on its way to an open submenu crosses the rows
+          between, and gets the benefit of the doubt the way macOS gives it:
+          while it is moving towards the submenu the row it is crossing is not
+          taken as the one it wants.
+        </p>
+        <p>
+          The one option with real machinery behind it is the Name Tab, the
+          app&rsquo;s second style for naming the source: the row becomes a tab
+          on the pill&rsquo;s top edge, and the box is masked to the silhouette
+          of pill and tab. The mask has to be on the box itself, because the box
+          is what blurs the picture behind it, and it has to be an SVG mask
+          element rather than an image, because Safari decodes an image mask
+          asynchronously and blinked at every word. Two of them per box take
+          turns, since Safari also paints nothing for a box whose mask changed
+          in place. The hairline and the ⇧ ring follow the silhouette, snapped
+          to the device&rsquo;s pixels from where each engine puts the
+          box&rsquo;s frame on them. All of that is a port of the site&rsquo;s
+          own script, engine notes and all.
+        </p>
+
         <h3 id="resizing">Resizing by the edges</h3>
         <p>
           The windows resize by any edge or corner, within four pixels either

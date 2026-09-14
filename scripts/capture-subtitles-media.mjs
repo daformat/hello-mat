@@ -92,7 +92,7 @@ const OPENER = "Universal subtitles for any app, live on your Mac.";
 // which closes the clip as it always did. The demo's own loop plays them, from
 // window.SUBTITLES_EPILOGUE; on the site itself the epilogue is off.
 const EPILOGUE = [
-  "Missed a line? Hold ⌥ and every caption that closed stacks back up.",
+  "Missed a line? Hold ⌥ to rewind: every caption that closed stacks back up.",
   "Press ⌥F and type: the stack narrows to the boxes that match.",
 ];
 
@@ -139,10 +139,37 @@ const isolate = ({ stageRules, frame, base }) => {
   document.body.append(demo);
   // The site's own images are root-absolute, /assets/…, which resolve to
   // nothing over file://. Pointed at the site's folder instead, so the ⌘-tab
-  // panel gets its icons.
+  // panel gets its icons; and kept pointed there, since the script sets the
+  // caption box's app icon anew as the source app changes, and builds a box
+  // for the stack with an icon of its own.
   if (base) {
-    document.querySelectorAll('img[src^="/"]').forEach((img) => {
-      img.src = base + img.getAttribute("src").slice(1);
+    const fix = (img) => {
+      const src = img.getAttribute("src");
+      if (src && src.startsWith("/")) {
+        img.src = base + src.slice(1);
+      }
+    };
+    document.querySelectorAll("img").forEach(fix);
+    new MutationObserver((records) => {
+      records.forEach((record) => {
+        if (record.type === "attributes" && record.target.tagName === "IMG") {
+          fix(record.target);
+        }
+        record.addedNodes.forEach((node) => {
+          if (node.nodeType !== 1) {
+            return;
+          }
+          if (node.tagName === "IMG") {
+            fix(node);
+          }
+          node.querySelectorAll?.("img").forEach(fix);
+        });
+      });
+    }).observe(document.body, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ["src"],
     });
   }
   document.body.style.cssText =

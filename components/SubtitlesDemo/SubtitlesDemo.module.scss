@@ -38,6 +38,15 @@
   --notes-bg: #fffffe;
   --tile-bg: linear-gradient(150deg, #fdfdff, #e9ebf2);
   --controls-bg: rgb(250 250 252 / 0.96);
+  /* The hairline round every caption box: a shade darker than the box in the
+     light appearance, where the picture behind is bright and a light rim would
+     read as a glint rather than an edge. Pill.outlineInk in the app. */
+  --pill-line: rgb(0 0 0 / 0.55);
+  /* The status menu's material and its highlight, the ones macOS gives a menu. */
+  --menu-bg: rgb(240 240 245 / 0.9);
+  --menu-accent: #2f6cf6;
+  /* One device pixel, the width the app draws its hairline at. */
+  --hairline: 1px;
   --panel-bg: rgb(248 248 252 / 0.55);
   --recess: rgb(0 0 0 / 0.045);
   --recess-deep: rgb(0 0 0 / 0.06);
@@ -108,6 +117,9 @@
     /* Lifted off the near-black, so the transport strip reads as a bar on the
        window rather than a hole in it. */
     --controls-bg: rgb(36 36 45 / 0.94);
+    --pill-line: rgb(210 210 211 / 0.16);
+    --menu-bg: rgb(44 44 50 / 0.9);
+    --menu-accent: #3b7cf7;
     --panel-bg: rgb(38 38 44 / 0.55);
     --recess: rgb(0 0 0 / 0.3);
     --recess-deep: rgb(0 0 0 / 0.42);
@@ -161,6 +173,10 @@
         transparent 70%
       ),
       linear-gradient(168deg, #1a1c2b 0%, #101119 52%, #0a0b10 100%);
+  }
+
+  @media (min-resolution: 2dppx) {
+    --hairline: 0.5px;
   }
 
   margin-block: 1.5em;
@@ -289,8 +305,24 @@
    top-right corner, exactly as the app draws it. */
 .mb_glyph {
   color: rgb(var(--ink) / 0.82);
+  cursor: default;
   display: inline-flex;
   position: relative;
+  z-index: 0;
+
+  /* Pressed, while its menu is up: a pill of highlight, wider than the glyph,
+     drawn behind it so nothing in the bar moves. */
+  &::before {
+    border-radius: 999px;
+    content: "";
+    inset: calc(-0.4 * var(--u)) calc(-0.8 * var(--u));
+    position: absolute;
+    z-index: -1;
+  }
+
+  &.is_menu::before {
+    background: rgb(var(--ink) / 0.14);
+  }
 
   svg {
     height: calc(1.48 * var(--u));
@@ -386,6 +418,13 @@
      feedback. */
   -webkit-tap-highlight-color: transparent;
   transition: box-shadow 0.28s ease;
+  /* A compositing layer of its own for every window. Without one the windows
+     share the page's backing store, and WebKit's repaint of a window behind,
+     whose content is still being written and dimmed through the filter, lands
+     inside the window in front for a few frames: the Notes document showing
+     through the Spotify window under the waveform. Safari only; Chrome never
+     showed it. */
+  will-change: transform;
   /* --z is a focus order, the way a desktop has one. Each window carries the
      first scene's value below and the component rewrites it inline from then
      on; the 1 is a fallback that should never be reached. */
@@ -461,9 +500,9 @@
   ); /* 10.5% ->  9.75% */
   left: clamp(9cqw, 23.4185cqw - 89.3945px, 13.26cqw); /*  9%   -> 13.26% */
   /* Narrower than the insets alone give, taken evenly from both sides so it
-     keeps its centre: five per cent off, then five per cent off that (1.85cqw
-     a side, then 3.6), so about a tenth all told at the fan's width. */
-  margin-inline: 3.6cqw;
+     keeps its centre: five per cent off, three times over (1.85cqw a side,
+     then 3.6, then 5.47), so about a seventh all told at the fan's width. */
+  margin-inline: 5.47cqw;
   right: clamp(9cqw, 23.4185cqw - 89.3945px, 13.26cqw); /*  9%   -> 13.26% */
   top: clamp(
     3.09559cqw,
@@ -1605,18 +1644,31 @@
      on a real screen. */
   --hole-x: -999px;
   --hole-y: -999px;
+  /* The gradient once, in a property, so the name tab can intersect its
+     silhouette with it below without restating it. */
+  --hole-mask: radial-gradient(
+    ellipse 13.33em 6.67em at var(--hole-x) var(--hole-y),
+    rgba(0, 0, 0, 0.05) 0%,
+    rgba(0, 0, 0, 0.05) 70%,
+    rgba(0, 0, 0, 0.198) 77.5%,
+    rgba(0, 0, 0, 0.525) 85%,
+    rgba(0, 0, 0, 0.852) 92.5%,
+    rgba(0, 0, 0, 1) 100%
+  );
 
   backdrop-filter: blur(6px);
   background: rgba(0, 0, 0, 0.72);
-  border-radius: 0.47em;
+  border-radius: 0.533em;
   bottom: 5.5%;
+  box-shadow: inset 0 0 0 var(--hairline) var(--pill-line);
   color: #fff;
   font-family: var(--demo-font);
   /* Off the screen rather than off --u, which is the one thing in here that does
      not scale with the chrome: this is what anybody actually reads, and when the
      unit came down to fit the fanned windows the caption had no reason to follow
      it. */
-  font-size: clamp(10px, 2.61cqw, 23px);
+  /* The factor is the menu's Text Size, 1 at the app's 30pt default. */
+  font-size: calc(clamp(10px, 2.61cqw, 23px) * var(--text-scale, 1));
   font-weight: 600;
   left: 50%;
   line-height: 1.34;
@@ -1635,23 +1687,16 @@
      A CSS mask is the inverse of the app's: there the gradient is subtracted
      from what is drawn, here it is what survives. So these alphas are 1 minus
      the ones in `buildMaskGradient`. */
-  mask-image: radial-gradient(
-    ellipse 13.33em 6.67em at var(--hole-x) var(--hole-y),
-    rgba(0, 0, 0, 0.05) 0%,
-    rgba(0, 0, 0, 0.05) 70%,
-    rgba(0, 0, 0, 0.198) 77.5%,
-    rgba(0, 0, 0, 0.525) 85%,
-    rgba(0, 0, 0, 0.852) 92.5%,
-    rgba(0, 0, 0, 1) 100%
-  );
+  mask-image: var(--hole-mask);
   /* Both of these are about the box keeping its shape while it is dragged. A
      percentage max-width and a fit-content width are both measured against the
      space left between the box's own left edge and the screen's right one, so
      carrying it towards an edge squeezed that space and the caption re-wrapped
      under the cursor. max-content asks the text how wide it wants to be instead,
-     and the cap is the same 80% of the screen expressed in --u, which is one
-     hundredth of it and does not care where the box sits. */
-  max-width: min(73cqw, 640px);
+     and the cap is a share of the screen in cqw, which does not care where the
+     box sits: 80.3cqw, or 704px on the widest screens, which is the 73cqw and
+     640px it had plus a tenth. The history pills cap the same way. */
+  max-width: min(80.3cqw, 704px);
   min-width: 4.67em;
   opacity: 0;
   padding: 0.47em 0.73em;
@@ -1660,8 +1705,11 @@
      something you can grab. */
   pointer-events: none;
   position: absolute;
-  text-align: center;
-  text-wrap: balance;
+  /* From the script's leading edge, as the app sets it since 1.7.0: the box
+     fills a word at a time, and a line that grows from a fixed edge is easier
+     to follow than one re-centred on every word. No balancing either: the
+     boxes wrap as the app's box does. The menu's Alignment can centre it. */
+  text-align: var(--text-align, start);
   transform: translateX(-50%);
   transition: opacity 0.4s ease;
   width: max-content;
@@ -1673,10 +1721,11 @@
 
   &.is_movable {
     cursor: grab;
-    /* Just enough to say it can be picked up now. */
-    outline: 1px dashed rgba(255, 255, 255, 0.2);
-    outline-offset: 3px;
     pointer-events: auto;
+  }
+
+  &.is_movable .ov_ring {
+    display: block;
   }
 
   /* Two ways the box goes solid, and both drop the mask rather than merely
@@ -1693,6 +1742,23 @@
     mask-image: none;
   }
 
+  /* Wearing the name tab, see .is_tabbed: the hole's gradient intersected
+     with the silhouette, and the silhouette alone where the box goes solid.
+     The in-box ring gives way to the trace outside it. */
+  &.is_tabbed {
+    mask-composite: intersect;
+    mask-image: var(--hole-mask), var(--ov-shape);
+  }
+
+  &.is_tabbed.is_movable,
+  &.is_tabbed.is_solid {
+    mask-image: var(--ov-shape);
+  }
+
+  &.is_tabbed .ov_ring {
+    display: none;
+  }
+
   &.is_dragging {
     cursor: grabbing;
   }
@@ -1701,6 +1767,359 @@
   .tentative {
     color: rgba(255, 255, 255, 0.55);
   }
+}
+
+/* The ⇧ ring, as the app draws it (SubtitleView.draw): a 1pt dashed line 3.5pt
+   outside the pill, tracing its corners, in two tones. White dashes of 3pt, and
+   black dashes phase-shifted by one dash into the gaps the white left, both at
+   0.75: the ring hangs over whatever is behind the box, and a single colour
+   loses to half of it, white vanishing against a white window and black
+   against a dark one. An SVG rather than a dashed border, since a border's
+   dash is the browser's and cannot be phased; the rect takes its geometry from
+   CSS so it follows the box as it grows. Only while ⇧ is held, which is also
+   when the mask is off. */
+.ov_ring {
+  display: none;
+  /* Sized outright: an svg is a replaced element, and inset alone leaves it at
+     its 300×150 default rather than stretching it to the box. */
+  height: calc(100% + 8px);
+  left: -4px;
+  overflow: visible;
+  pointer-events: none;
+  position: absolute;
+  top: -4px;
+  width: calc(100% + 8px);
+
+  rect {
+    fill: none;
+    height: calc(100% - 1px);
+    rx: calc(0.533em + 3.5px);
+    stroke-dasharray: 3 3;
+    stroke-width: 1;
+    width: calc(100% - 1px);
+    x: 0.5px;
+    y: 0.5px;
+  }
+}
+
+.ring_white {
+  stroke: rgb(255 255 255 / 0.75);
+}
+
+.ring_black {
+  stroke: rgb(0 0 0 / 0.75);
+  stroke-dashoffset: 3;
+}
+
+/* The source app's row: the icon and name of the app whose audio the box
+   holds, above the caption, the way the app draws it by default since 1.7.0.
+   The numbers are Pill.header's at 30pt, in em so they scale with the box: an
+   icon 0.9 of the text size, 10pt to the name, the name at 0.6 of the size in
+   a fixed light grey (Pill.tabInk, on the live box and in the stack alike,
+   rather than the text's white at the box's opacity), and 0.3 of the size
+   between the row and the text. The icon is the app's own as the Dock draws
+   it, at full strength even in the stack, where the text dims: a dimmed icon
+   reads as a disabled app rather than a box that sits back. A long name is cut
+   short with an ellipsis, as the app's is, rather than widening the box. */
+.ov_app {
+  align-items: center;
+  display: flex;
+  gap: 0.333em;
+  height: 0.9em;
+  margin-bottom: 0.3em;
+  min-width: 0;
+
+  &[hidden] {
+    display: none;
+  }
+
+  img {
+    display: block;
+    flex: none;
+    height: 0.9em;
+    width: 0.9em;
+  }
+}
+
+.ov_name {
+  color: #d2d2d3;
+  font-size: 0.6em;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ov_text {
+  display: block;
+}
+
+/* Show Source App Name → Name Tab, from the menu, see the NameTab class in
+   the component. The row becomes a tab on the pill's top edge, flush with the
+   leading side and squaring the corner under it, as Pill.tabPath draws it. The
+   box grows upward by the tab's height, Pill.tabHeight: the icon at 0.5 of the
+   size, 10pt above it and 5pt below, so 1em, the name at 13pt centred on the
+   icon, and the tab's ends at the text's own inset. The component keeps the
+   silhouette of pill and tab as an SVG mask element on the body and names it
+   in --ov-shape, and the box is masked to it, which is what keeps the fill,
+   the blur and the box's own hairline to the shape. A mask, not a clip-path:
+   Chrome puts only one of the two on the blur behind a box. The hairline round
+   the tab's inner corner is drawn in .ov_rim, where the box's own rounded rect
+   has no edge; the ⇧ ring traces the silhouette from outside the box in
+   .ov_trace, a sibling, because the mask would cut a child off. */
+.is_tabbed {
+  mask-image: var(--ov-shape, none);
+  will-change: transform;
+}
+
+.is_tabbed.has_tab {
+  padding-top: calc(1em + 0.47em);
+}
+
+.is_tabbed.has_tab .ov_app {
+  box-sizing: border-box;
+  gap: 0.233em;
+  height: 1em;
+  inset-inline-start: 0;
+  margin: 0;
+  max-width: calc(100% - 0.8em);
+  padding: 0.333em 0.733em 0.167em;
+  position: absolute;
+  top: 0;
+}
+
+.is_tabbed.has_tab .ov_app img {
+  height: 0.5em;
+  width: 0.5em;
+}
+
+.is_tabbed.has_tab .ov_name {
+  font-size: 0.433em;
+}
+
+/* The hairline's inner corner, over the fill and under the text: the ring
+   between the silhouette and the silhouette a pixel in, clipped from this box
+   of the line's colour, which the component places over that corner alone.
+   Never past the box: a child reaching past a box in the stack reaches past
+   the stack, which scrolls to show it. */
+.ov_rim {
+  background: var(--pill-line);
+  pointer-events: none;
+  position: absolute;
+  z-index: -1;
+}
+
+/* The ⇧ ring round a tabbed box, see .ov_ring: the same two tones, dashed and
+   phased, 3.5px outside the silhouette, placed and sized by the component. It
+   fades as the box does, on the box's own timing, since it is not inside the
+   box to fade with it. */
+.ov_trace {
+  opacity: 0;
+  overflow: visible;
+  pointer-events: none;
+  position: absolute;
+  transition: opacity 0.4s ease;
+  z-index: 11;
+
+  /* Two classes deep, over the demo's `svg { display: block }`: until ⇧
+     places it, the ring would otherwise sit unplaced at the stage's corner. */
+  &:not(.is_on) {
+    display: none;
+  }
+
+  &.is_visible {
+    opacity: 1;
+  }
+
+  path {
+    fill: none;
+    stroke-dasharray: 3 3;
+    stroke-width: 1;
+  }
+
+  .ring_white {
+    stroke: rgb(255 255 255 / 0.75);
+  }
+
+  .ring_black {
+    stroke: rgb(0 0 0 / 0.75);
+    stroke-dashoffset: 3;
+  }
+}
+
+/* The boxes' mask elements, out of the flow and out of every box. */
+.ov_defs {
+  height: 0;
+  position: absolute;
+  width: 0;
+}
+
+/* ── the status menu ─────────────────────────────────────────
+   The app's, dropped from the glyph in the menu bar. Sized off the bar's unit
+   so it stays a menu at every width; the material and the radius are the ones
+   macOS gives a menu, the accent row is the system highlight. Its unit is set
+   here again because it sits in the screen, beside the bar, rather than in
+   the stage. */
+.mn_root {
+  --u: clamp(4px, 0.8182cqw, 7.2px);
+}
+
+.mn_panel {
+  backdrop-filter: blur(40px) saturate(180%);
+  background: var(--menu-bg);
+  border-radius: calc(1 * var(--u));
+  box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.25), 0 10px 30px -6px rgb(0 0 0 / 0.35);
+  color: rgb(var(--ink) / 0.92);
+  display: none;
+  font-size: calc(1.25 * var(--u));
+  min-width: calc(31 * var(--u));
+  padding: calc(0.5 * var(--u));
+  pointer-events: none;
+  position: absolute;
+  right: calc(1.36 * var(--u));
+  text-align: start;
+  top: calc(3.25 * var(--u));
+  user-select: none;
+  white-space: nowrap;
+  /* Above the captions, the stack and the ⇧ ring: a menu is over everything. */
+  z-index: 20;
+
+  &.is_open {
+    display: block;
+  }
+}
+
+/* Opened by hand, the menu takes the pointer: rows light under it, and a
+   click lands. Scripted, it stays out of the pointer's way as before. */
+.mn_root.is_manual,
+.mn_root.is_manual .mn_panel {
+  pointer-events: auto;
+}
+
+.mn_root.is_manual .mn_row {
+  cursor: default;
+}
+
+/* The Try badge on the rows the demo can act on: at the end of the row,
+   before the key or the chevron, one size down and boxed, so it reads as a
+   tag on the item and not as part of its name. */
+.mn_demo {
+  background: rgb(var(--ink) / 0.1);
+  border-radius: calc(0.6 * var(--u));
+  color: rgb(var(--ink) / 0.62);
+  font-size: 0.78em;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-inline-start: calc(1.5 * var(--u));
+  padding: calc(0.1 * var(--u)) calc(0.5 * var(--u));
+
+  + .mn_key,
+  + .mn_more {
+    margin-inline-start: calc(0.45 * var(--u));
+  }
+}
+
+.mn_row.is_hot .mn_demo {
+  background: rgb(255 255 255 / 0.24);
+  color: #fff;
+}
+
+/* A row that does nothing here shakes its head at the click, small, quick
+   and damped: refusing silently is indistinguishable from being broken. */
+.mn_row.is_refused {
+  animation: mn-refuse 0.36s ease-out;
+}
+
+@keyframes mn-refuse {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  16% {
+    transform: translateX(-4px);
+  }
+
+  42% {
+    transform: translateX(3px);
+  }
+
+  68% {
+    transform: translateX(-2px);
+  }
+
+  88% {
+    transform: translateX(1px);
+  }
+}
+
+.mn_sub {
+  min-width: calc(19 * var(--u));
+  right: calc(100% - 0.3 * var(--u));
+  top: 0;
+}
+
+.mn_row {
+  align-items: center;
+  border-radius: calc(0.5 * var(--u));
+  display: flex;
+  gap: calc(0.5 * var(--u));
+  height: calc(2.3 * var(--u));
+  padding-inline: calc(0.6 * var(--u)) calc(1 * var(--u));
+  position: relative;
+
+  &.is_dim {
+    color: rgb(var(--ink) / 0.38);
+  }
+
+  &.is_dim .mn_key,
+  &.is_dim .mn_more {
+    color: rgb(var(--ink) / 0.3);
+  }
+
+  &.is_hot {
+    background: var(--menu-accent);
+    color: #fff;
+  }
+
+  &.is_hot .mn_key,
+  &.is_hot .mn_more {
+    color: rgb(255 255 255 / 0.85);
+  }
+
+  &.is_on .mn_check {
+    visibility: visible;
+  }
+}
+
+.mn_check {
+  flex: none;
+  font-weight: 600;
+  text-align: center;
+  visibility: hidden;
+  width: calc(1.5 * var(--u));
+}
+
+.mn_label {
+  flex: 1;
+}
+
+.mn_key,
+.mn_more {
+  color: rgb(var(--ink) / 0.5);
+  margin-inline-start: calc(2 * var(--u));
+}
+
+.mn_more svg {
+  display: block;
+  height: calc(1 * var(--u));
+  width: calc(0.6 * var(--u));
+}
+
+.mn_sep {
+  background: rgb(var(--ink) / 0.12);
+  height: 1px;
+  margin: calc(0.45 * var(--u)) calc(0.6 * var(--u));
 }
 
 /* The option stack: the last few closed boxes, above the live one.
@@ -1722,8 +2141,14 @@
   flex-direction: column;
   /* The same clamp the live box has, floor included: the two are read as one
      stack and a history pill set at a different size would give that away. */
-  font-size: clamp(10px, 2.61cqw, 23px);
+  font-size: calc(clamp(10px, 2.61cqw, 23px) * var(--text-scale, 1));
   gap: 0.2em;
+  /* A pixel of the scroller past the boxes at either end, given back by the
+     margin so nothing moves: the box at the end sits on a fraction of a pixel
+     as often as not, and the scroller's clip, which falls on the same
+     fraction, took the hairline row on that edge with it in Chrome. The
+     component adds the two pixels to the stack's height. */
+  margin-block: -1px;
   opacity: 0;
   /* The browser must not correct the scroll on its own here. A box mid-entrance
      is displaced by its own transform, which widens the scrollable overflow, and
@@ -1736,6 +2161,7 @@
   overflow-anchor: none;
   overflow-y: auto;
   overscroll-behavior: contain;
+  padding-block: 1px;
   pointer-events: none;
   position: absolute;
   scrollbar-width: none;
@@ -1783,23 +2209,39 @@
      by the box's own position in the view (--y) so the boxes together draw one
      fade. */
   &.is_clipped .hist_line {
-    mask-image: linear-gradient(
+    --stack-mask: linear-gradient(
       to bottom,
       transparent calc(0px - var(--y, 0px)),
       #000 calc(var(--fade, 2.2em) - var(--y, 0px)),
       #000 calc(var(--h, 100%) - var(--near-fade, 0px) - var(--y, 0px)),
       transparent calc(var(--h, 100%) - var(--y, 0px))
     );
+
+    mask-image: var(--stack-mask);
   }
 
   &.is_below.is_clipped .hist_line {
-    mask-image: linear-gradient(
+    --stack-mask: linear-gradient(
       to bottom,
       transparent calc(0px - var(--y, 0px)),
       #000 calc(var(--near-fade, 0px) - var(--y, 0px)),
       #000 calc(var(--h, 100%) - var(--fade, 2.2em) - var(--y, 0px)),
       transparent calc(var(--h, 100%) - var(--y, 0px))
     );
+
+    mask-image: var(--stack-mask);
+  }
+
+  /* A tabbed box in the stack: the fade intersected with its silhouette. */
+  &.is_clipped .hist_line.is_tabbed {
+    mask-composite: intersect;
+    mask-image: var(--stack-mask), var(--ov-shape);
+  }
+
+  /* Placed by the component from the stack's edge, on whole pixels, rather
+     than centred by the column: see the name tab's settle. */
+  .hist_line.is_tabbed {
+    align-self: flex-start;
   }
 
   /* Bottom-anchored by an auto margin rather than justify-content: flex-end,
@@ -1817,20 +2259,20 @@
 .hist_line {
   backdrop-filter: blur(6px);
   background: rgba(0, 0, 0, 0.66);
-  border-radius: 0.47em;
+  border-radius: 0.533em;
+  box-shadow: inset 0 0 0 var(--hairline) var(--pill-line);
   color: rgba(255, 255, 255, 0.65);
   flex: none;
   font-family: var(--demo-font);
   font-weight: 600;
   line-height: 1.34;
-  max-width: min(73cqw, 640px);
+  max-width: min(80.3cqw, 704px);
   /* The same floor the live box has, and for the same reason: `fittingSize`
      gives a history pill the app's 140pt minimum too, so a three-word line is a
      pill rather than a chip. */
   min-width: 4.67em;
   padding: 0.47em 0.73em;
-  text-align: center;
-  text-wrap: balance;
+  text-align: var(--text-align, start);
   width: max-content;
   will-change: transform;
 
@@ -1914,7 +2356,8 @@
   align-items: center;
   backdrop-filter: blur(6px);
   background: rgba(0, 0, 0, 0.66);
-  border-radius: calc(var(--e) * 0.467);
+  border-radius: calc(var(--e) * 0.533);
+  box-shadow: inset 0 0 0 var(--hairline) var(--pill-line);
   box-sizing: border-box;
   color: rgba(255, 255, 255, 0.65);
   cursor: text;
@@ -2091,6 +2534,9 @@
    The whole segment is the button, track, label, and the space around both, 
    rather than a 4px bar you have to aim at. */
 .scene_button {
+  /* Packed to the top: when one label wraps, the other two stay level with
+     its first line rather than drifting to the middle of the taller button. */
+  align-content: start;
   appearance: none;
   background: none;
   border: 0;
@@ -2175,11 +2621,40 @@
     text-align: center;
   }
 
+  /* Help text, not chrome: it can be selected and copied like any prose. */
+  user-select: text;
+
   /* The lines under the demo are one block of help text, so they sit closer to
      each other than the block does to the screen above it. */
   + .caption {
     margin-top: 6px;
   }
+}
+
+/* The app's menu bar glyph, in a line of text: the same shape the demo's bar
+   carries, in the text's own colour, a hair below the baseline as the bar's
+   sits below its cap height. */
+.mb_inline {
+  background: currentcolor;
+  display: inline-block;
+  height: 0.96em;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 14'%3E%3Cpath d='M8 0C12.4183 3.45921e-08 16 2.76601 16 6.17773C15.9998 9.58934 12.4182 12.3545 8 12.3545C7.95891 12.3545 7.91789 12.3549 7.87695 12.3545C7.2354 12.3471 6.62608 12.6326 6.12207 13.0293C5.08323 13.847 3.98202 14.2713 2.6416 13.8018C2.18877 13.6432 2.26424 13.0289 2.6416 12.8965C3.14721 12.719 3.16134 12.5345 3.35254 11.9893C3.49999 11.5685 3.22962 11.1513 2.85547 10.9082C1.10992 9.77516 9.73494e-05 8.07645 0 6.17773C0 2.76601 3.58172 0 8 0ZM3.53027 7.03613C3.19866 7.03637 2.9298 7.30507 2.92969 7.63672C2.92969 7.96846 3.19858 8.23805 3.53027 8.23828H8.21289C8.54478 8.23828 8.81445 7.96861 8.81445 7.63672C8.81434 7.30493 8.54471 7.03613 8.21289 7.03613H3.53027ZM10.416 7.03613C10.0843 7.03626 9.81554 7.305 9.81543 7.63672C9.81543 7.96853 10.0842 8.23816 10.416 8.23828H11.9189C12.2507 8.23809 12.5195 7.96849 12.5195 7.63672C12.5194 7.30504 12.2506 7.03632 11.9189 7.03613H10.416ZM3.53027 4.65723C3.19868 4.65742 2.9299 4.92622 2.92969 5.25781C2.92969 5.58958 3.19855 5.85918 3.53027 5.85938H6.18457C6.51646 5.85938 6.78613 5.5897 6.78613 5.25781C6.78592 4.92611 6.51633 4.65723 6.18457 4.65723H3.53027ZM8.36328 4.65723C8.03152 4.65723 7.76291 4.92611 7.7627 5.25781C7.7627 5.5897 8.03139 5.85938 8.36328 5.85938H13.0703C13.4022 5.85938 13.6719 5.5897 13.6719 5.25781C13.6717 4.92611 13.4021 4.65723 13.0703 4.65723H8.36328Z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  vertical-align: -0.16em;
+  width: 1.1em;
+}
+
+/* The menu's Try badge, in a line of text: the same box, one size down,
+   tinted from the text's own colour. */
+.try_inline {
+  background: color-mix(in srgb, currentcolor 13%, transparent);
+  border-radius: 0.65em;
+  display: inline-block;
+  font-size: 0.8em;
+  font-weight: 600;
+  line-height: 1.35;
+  padding: 0.08em 0.5em;
+  vertical-align: 0.08em;
 }
 
 /* Only says anything to a pointer and a keyboard, so it is only shown to one. */
@@ -2194,6 +2669,11 @@
 /* Everything here is decoration, so reduced motion switches the lot off. The
    component stops its own timers as well: this only covers the CSS. */
 @media (prefers-reduced-motion: reduce) {
+  /* No shake, but the refusal still has to be visible: the row blinks. */
+  .mn_row.is_refused {
+    background: rgb(var(--ink) / 0.12);
+  }
+
   .demo {
     *,
     *::before,
