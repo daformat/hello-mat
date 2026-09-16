@@ -182,6 +182,23 @@ const SubtitlesAppPageContent = () => {
           taken as the one it wants.
         </p>
         <p>
+          Every submenu the app has is in there, worded and grouped as the app
+          builds them, and they nest: Language / Models has English inside it,
+          and a submenu&rsquo;s submenu opens to the right, over the menu, or to
+          the left when the screen&rsquo;s edge leaves it no room there. Listen
+          To is filled from the demo&rsquo;s windows each time it opens, the way
+          the app reads Core Audio each time, with whichever of the call and the
+          player is playing marked so, and it redraws while the menu is up when
+          the sound is handed over. A menu the screen has no room for scrolls
+          inside itself, as a macOS menu taller than the screen does: a submenu
+          moves up first, no higher than the menu bar, and what still does not
+          fit scrolls under a chevron at either end, the rows passing under a
+          pointer resting on it. The material is a layer under each
+          panel&rsquo;s rows rather than a filter on the panel itself, because
+          an element that filters its backdrop walls its descendants off from
+          the screen, and a submenu is a descendant of the menu it hangs off.
+        </p>
+        <p>
           The one option with real machinery behind it is the Name Tab, the
           app&rsquo;s second style for naming the source: the row becomes a tab
           on the pill&rsquo;s top edge, and the box is masked to the silhouette
@@ -273,9 +290,13 @@ const SubtitlesAppPageContent = () => {
           document is a stack of grey rounded rectangles pretending to be
           sentences. Even the Apple mark in the menu bar is an inline path. The
           notes window itself is Apple&rsquo;s Notes, drawn in the demo&rsquo;s
-          own tokens: the toolbar in the title bar, then the folders, the list
-          and the note, so it follows the page into dark mode the way the real
-          one follows the Mac.
+          own tokens and laid out the way macOS 26 lays a sidebar window out:
+          the folders in a glass pane inset from the window&rsquo;s edges, with
+          the traffic lights in its header, then the main column with its own
+          toolbar, the list and the note, so it follows the page into dark mode
+          the way the real one follows the Mac. The podcast window is built the
+          same way, its library rail the pane and its title in the main
+          column&rsquo;s bar, and both bars drag the window.
         </p>
         <p>
           The three exceptions are the app icons in the ⌘-tab panel. They used

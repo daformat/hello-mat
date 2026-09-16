@@ -4,6 +4,8 @@ import {
   PointerEvent as ReactPointerEvent,
   useCallback,
   useEffect,
+  useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -58,9 +60,11 @@ const TRANSLATE = {
   shown: "The translation runs live for you: press ⌃ to reveal the original.",
 };
 
-/** The app's status menu, item for item as MenuBar.rebuild() has it in 1.7.0.
- *  The rows with a Try badge act on the demo's box and stack; the rest is
- *  what the menu looks like, and shakes its head at a click. */
+/** The app's status menu, item for item as MenuBar.rebuild() has it in 1.7.0,
+ *  submenus included: Listen To, Language / Models with its English third
+ *  level, Translate To, Translation Timing, and the Try rows' choices. The
+ *  rows with a Try badge act on the demo's box and stack; the rest is what the
+ *  menu looks like, and shakes its head at a click. */
 type MenuRow =
   | { sep: true }
   | {
@@ -69,11 +73,38 @@ type MenuRow =
       key?: string;
       on?: boolean;
       dim?: boolean;
+      /** A second line under the name, as the app notes its models and its
+       *  translation timings. */
+      note?: string;
       /** A Try badge: this row does what it says here. */
       demo?: boolean;
-      /** The rows of its submenu, hung off it. */
+      /** The rows of its submenu, hung off it. A row with one has an id,
+       *  which names the submenu's panel. */
       sub?: MenuRow[];
     };
+/** The sixteen languages, as Translate To and Language / Models list them. */
+const LANGUAGES: [string, string][] = [
+  ["en", "English"],
+  ["es", "Español"],
+  ["fr", "Français"],
+  ["it", "Italiano"],
+  ["pt", "Português"],
+  ["de", "Deutsch"],
+  ["nl", "Nederlands"],
+  ["tr", "Türkçe"],
+  ["ru", "Русский"],
+  ["ar", "العربية"],
+  ["hi", "हिन्दी"],
+  ["ja", "日本語"],
+  ["ko", "한국어"],
+  ["vi", "Tiếng Việt"],
+  ["uk", "Українська"],
+  ["zh", "中文"],
+];
+const LANGUAGE_NAME = Object.fromEntries(LANGUAGES);
+/** Language / Models' per-language rows: the pack's languages, by id. */
+const modelRows = (ids: string[]): MenuRow[] =>
+  ids.map((id) => ({ label: LANGUAGE_NAME[id] ?? id, id: `lang-${id}` }));
 const MENU: MenuRow[] = [
   { label: "Multilingual · 560 ms · RTF 0.31", dim: true, id: "status" },
   { sep: true },
@@ -82,10 +113,103 @@ const MENU: MenuRow[] = [
   { label: "Check for Updates…" },
   { label: "Check for Updates Automatically", on: true },
   { sep: true },
-  { label: "Listen To", sub: [] },
-  { label: "Language / Models", sub: [] },
-  { label: "Translate To", id: "translate", sub: [] },
-  { label: "Translation Timing", id: "timing", sub: [] },
+  // Listen To's rows past this one come from the demo's windows each time it
+  // opens, the way the app reads Core Audio each time: see listenRows.
+  {
+    label: "Listen To",
+    id: "listen",
+    sub: [{ label: "All system audio", id: "audio-all", on: true }],
+  },
+  {
+    label: "Language / Models",
+    id: "models",
+    sub: [
+      {
+        label: "Multilingual",
+        id: "lang-auto",
+        on: true,
+        note: "633 MB · default · detects the language itself",
+      },
+      { sep: true },
+      {
+        label: "English",
+        id: "english",
+        sub: [
+          {
+            label: "Nemotron · 560 ms",
+            note: "612 MB · punctuated · lowest latency",
+          },
+          {
+            label: "Nemotron · 1120 ms",
+            note: "612 MB · punctuated · the trained chunk size",
+          },
+          {
+            label: "Nemotron · 2240 ms",
+            note: "612 MB · punctuated · highest throughput",
+          },
+          {
+            label: "Parakeet EOU · 320 ms",
+            note: "215 MB · no punctuation · RTF 0.13–0.15",
+          },
+          {
+            label: "Parakeet EOU · 1280 ms",
+            note: "215 MB · no punctuation · highest throughput",
+          },
+          {
+            label: "Parakeet EOU · 160 ms",
+            note: "215 MB · no punctuation · ⚠︎ RTF 0.6–2.2 here",
+          },
+          {
+            label: "Parakeet Unified · punctuated",
+            note: "595 MB · punctuated · 2.08 s · Nemotron is faster",
+          },
+        ],
+      },
+      { sep: true },
+      { label: "Latin-script pack · 583 MB", dim: true },
+      ...modelRows(["es", "fr", "it", "pt", "de"]),
+      { sep: true },
+      { label: "Full vocabulary · 633 MB", dim: true },
+      ...modelRows([
+        "nl",
+        "tr",
+        "ru",
+        "ar",
+        "hi",
+        "ja",
+        "ko",
+        "vi",
+        "uk",
+        "zh",
+      ]),
+    ],
+  },
+  {
+    label: "Translate To",
+    id: "translate",
+    sub: [
+      { label: "Off", id: "off" },
+      { sep: true },
+      ...LANGUAGES.map(([id, name]): MenuRow => ({ label: name, id })),
+    ],
+  },
+  {
+    label: "Translation Timing",
+    id: "timing",
+    sub: [
+      {
+        label: "Live, Then Settle",
+        id: "timing-hybrid",
+        on: true,
+        note: "tail is dimmed until it settles · recommended",
+      },
+      {
+        label: "Always Live",
+        id: "timing-live",
+        note: "no lag · anything on screen may change",
+      },
+    ],
+  },
   { sep: true },
   {
     label: "Text Size and Alignment",
@@ -126,25 +250,36 @@ const MENU: MenuRow[] = [
   { sep: true },
   { label: "Quit Subtitles", key: "⌘Q" },
 ];
-/** Translate To's submenu: Off, then the sixteen. */
-const LANGUAGES: [string, string][] = [
-  ["en", "English"],
-  ["es", "Español"],
-  ["fr", "Français"],
-  ["it", "Italiano"],
-  ["pt", "Português"],
-  ["de", "Deutsch"],
-  ["nl", "Nederlands"],
-  ["tr", "Türkçe"],
-  ["ru", "Русский"],
-  ["ar", "العربية"],
-  ["hi", "हिन्दी"],
-  ["ja", "日本語"],
-  ["ko", "한국어"],
-  ["vi", "Tiếng Việt"],
-  ["uk", "Українська"],
-  ["zh", "中文"],
-];
+/** A panel is named by the row its submenu hangs off, and the root by "root":
+ *  the panel each row with an id sits in, as the ids on the way down to it. */
+const PANEL_PATH: Record<string, string[]> = {};
+const indexMenu = (rows: MenuRow[], path: string[]) => {
+  for (const row of rows) {
+    if ("sep" in row) {
+      continue;
+    }
+    if (row.id) {
+      PANEL_PATH[row.id] = path;
+    }
+    if (row.sub && row.id) {
+      indexMenu(row.sub, [...path, row.id]);
+    }
+  }
+};
+indexMenu(MENU, []);
+const panelKeyOf = (path: string[]) => path[path.length - 1] ?? "root";
+type MenuItem = Exclude<MenuRow, { sep: true }>;
+/** Which submenus are open, as the ids of the rows they hang off, root
+ *  downwards; and the lit row of each open panel, by the panel's name. */
+type MenuState = { open: string[]; hot: Record<string, string | null> };
+/** The lights of the panels no longer open taken away: a submenu closing
+ *  takes its lights with it, so it opens dark next time. */
+const pruneHot = (hot: MenuState["hot"], open: string[]) => {
+  const keep = new Set(["root", ...open]);
+  return Object.fromEntries(
+    Object.entries(hot).filter(([panel]) => keep.has(panel))
+  );
+};
 
 /** The folder glyph Notes puts before every folder in its sidebar. */
 const NOTES_FOLDER = (
@@ -1634,15 +1769,16 @@ export const SubtitlesDemo = () => {
   // heads. A menu the visitor has up stays up through the scripted walk.
   const [menuManual, setMenuManual] = useState(false);
   const menuManualRef = useRef(false);
-  const [openSub, setOpenSub] = useState<string | null>(null);
-  const [subTop, setSubTop] = useState(0);
-  const [hotRow, setHotRow] = useState<string | null>(null);
-  const [hotSub, setHotSub] = useState<string | null>(null);
+  const [menu, setMenu] = useState<MenuState>({ open: [], hot: {} });
+  // A refused row, as its panel's name and its own, since a label can appear
+  // in two panels.
   const [refused, setRefused] = useState<string | null>(null);
   const [translateTo, setTranslateTo] = useState("off");
   const menuRef = useRef<HTMLDivElement>(null);
   const glyphRef = useRef<HTMLSpanElement>(null);
-  const subRef = useRef<HTMLDivElement>(null);
+  // The open submenus' panels by name, and the rows with an id, for placing a
+  // submenu off its row and scrolling a row into view.
+  const panelRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const walkRef = useRef<{ cancelled: boolean } | null>(null);
   // What the menu's Try rows set: the box's size and alignment, whether it
@@ -1778,41 +1914,22 @@ export const SubtitlesDemo = () => {
   // ── the menu, by hand ────────────────────────────────────────────────────
   //
   // A click on the glyph drops the app's menu, and it works as a menu does:
-  // rows light under the pointer, a row with a submenu opens it, a click
-  // outside or on the glyph takes it down, Escape too. The rows the demo can
-  // act on wear a Try badge and do what they say; the rest shake their heads,
-  // small and quick, the way a refused click should, and the menu stays up.
+  // rows light under the pointer, a row with a submenu opens it, submenus nest
+  // (Language / Models has English inside it), a click outside or on the glyph
+  // takes it down, Escape too. The rows the demo can act on wear a Try badge
+  // and do what they say; the rest shake their heads, small and quick, the way
+  // a refused click should, and the menu stays up. Listen To is filled from
+  // the demo's windows, the way the app reads Core Audio each time it opens.
   // The demo also walks the menu itself to switch translation on: that walk
   // opens the menu if it is down and takes it down after, but a menu the
   // visitor has up stays up.
   // Rows are known by their id, or by their label where they have none: the
   // ones that only shake their heads.
   const keyOf = (row: MenuRow) => ("sep" in row ? "" : row.id ?? row.label);
-  const rowById = (id: string): MenuRow | undefined => {
-    for (const row of MENU) {
-      if ("sep" in row) {
-        continue;
-      }
-      if (keyOf(row) === id) {
-        return row;
-      }
-      const inner = row.sub?.find((r) => !("sep" in r) && keyOf(r) === id);
-      if (inner) {
-        return inner;
-      }
-    }
-    return undefined;
-  };
-  const rowEnabled = (id: string | undefined) =>
-    !!id &&
-    !("sep" in (rowById(id) ?? { sep: true })) &&
-    !!(rowById(id) as { demo?: boolean }).demo;
-  const rowHasSub = (id: string | undefined) =>
-    !!id && !!(rowById(id) as { sub?: MenuRow[] } | undefined)?.sub;
-  const rowDim = (id: string | undefined) =>
-    id === "status" || (id === "timing" && translateTo === "off");
+  const rowDim = (row: MenuItem) =>
+    !!row.dim || (row.id === "timing" && translateTo === "off");
   // The checks, from the demo's state: a toggle on or off, a choice among its
-  // group.
+  // group, Translate To's language.
   const checked = new Set<string>([
     `size-${Math.round(textScale * 30)}`,
     `align-${textAlign}`,
@@ -1821,33 +1938,75 @@ export const SubtitlesDemo = () => {
       : iconStyle === "off"
       ? "icon-off"
       : "icon-header",
+    translateTo,
     ...(revealOn ? ["reveal"] : []),
     ...(historyOn ? ["history"] : []),
   ]);
-
-  // The submenu hangs off its row, its first item level with it.
-  const openSubmenu = useCallback((id: string) => {
-    const row = rowRefs.current[id];
-    const sub = subRef.current;
-    if (row && sub) {
-      setSubTop(
-        row.offsetTop - (parseFloat(getComputedStyle(sub).paddingTop) || 0)
-      );
-    }
-    setOpenSub((was) => {
-      if (was !== id) {
-        setHotSub(null);
+  // Listen To, as the app builds it each time it opens: the source, then what
+  // is playing now with a dot, then the other apps that could be. The demo
+  // says which from its windows: the call and the player make a sound, and
+  // the higher of the two in the stack is the one playing, see callPlaying.
+  // Being state, the rows redraw while the menu is up when the sound is
+  // handed over, as the app's do.
+  const listenRows = (row: MenuItem): MenuRow[] => {
+    const apps = [
+      { name: APPS.meeting, playing: callPlaying },
+      { name: APPS.player, playing: !callPlaying },
+    ];
+    const rows: MenuRow[] = [...(row.sub ?? [])];
+    const group = (title: string, list: typeof apps, mark: string) => {
+      if (!list.length) {
+        return;
       }
-      return id;
-    });
-  }, []);
+      rows.push(
+        { sep: true },
+        { label: title, dim: true },
+        ...list.map((a): MenuRow => ({ label: a.name + mark }))
+      );
+    };
+    group(
+      "Playing now",
+      apps.filter((a) => a.playing),
+      " ●"
+    );
+    group(
+      "Other audio apps",
+      apps.filter((a) => !a.playing),
+      ""
+    );
+    return rows;
+  };
+  const subRows = (row: MenuItem): MenuRow[] =>
+    row.id === "listen" ? listenRows(row) : row.sub ?? [];
+
+  // The submenus under the panel at `path` closed, but for the one `path`
+  // itself names at its end; and one panel's light set, where `lit` says. A
+  // submenu closing takes its lights with it, so it opens dark next time.
+  const setOpenPath = useCallback(
+    (path: string[], lit?: [string, string | null]) => {
+      setMenu((was) => {
+        const hot = lit ? { ...was.hot, [lit[0]]: lit[1] } : was.hot;
+        return { open: path, hot: pruneHot(hot, path) };
+      });
+    },
+    []
+  );
+  // The submenu hangs off its row, its first item level with it, and is then
+  // kept on the screen: see placeSub, below.
+  const openSubmenu = useCallback(
+    (id: string) => {
+      const path = PANEL_PATH[id];
+      if (path) {
+        setOpenPath([...path, id], [panelKeyOf(path), id]);
+      }
+    },
+    [setOpenPath]
+  );
   const closeMenuByHand = useCallback(() => {
     menuManualRef.current = false;
     setMenuManual(false);
     setMenuOpen(false);
-    setOpenSub(null);
-    setHotRow(null);
-    setHotSub(null);
+    setMenu({ open: [], hot: {} });
   }, []);
   // Taken down by the visitor while a walk is on: the walk finishes its
   // business without the menu.
@@ -1857,10 +2016,11 @@ export const SubtitlesDemo = () => {
     }
     closeMenuByHand();
   }, [closeMenuByHand]);
-  const refuse = (id: string) => {
+  const refuse = (panelKey: string, rowKey: string) => {
+    const key = `${panelKey}/${rowKey}`;
     setRefused(null);
-    requestAnimationFrame(() => setRefused(id));
-    setTimeout(() => setRefused((was) => (was === id ? null : was)), 500);
+    requestAnimationFrame(() => setRefused(key));
+    setTimeout(() => setRefused((was) => (was === key ? null : was)), 500);
   };
   const act = (id: string) => {
     if (id.startsWith("size-")) {
@@ -1886,16 +2046,14 @@ export const SubtitlesDemo = () => {
       queueHoleRef.current?.();
     }
   };
-  const settleRow = (id: string | undefined) => {
-    if (!id || rowDim(id)) {
-      setOpenSub(null);
-      return;
-    }
-    setHotRow(id);
-    if (rowHasSub(id) && rowEnabled(id)) {
-      openSubmenu(id);
+  const settleRow = (row: MenuItem, path: string[]) => {
+    const panelKey = panelKeyOf(path);
+    if (rowDim(row)) {
+      setOpenPath(path, [panelKey, null]);
+    } else if (row.sub && row.id) {
+      setOpenPath([...path, row.id], [panelKey, row.id]);
     } else {
-      setOpenSub(null);
+      setOpenPath(path, [panelKey, keyOf(row)]);
     }
   };
   // The pointer on its way to an open submenu crosses the rows between, and
@@ -1910,14 +2068,16 @@ export const SubtitlesDemo = () => {
     const now = performance.now();
     const track = trackRef.current;
     track.push({ x: e.clientX, y: e.clientY, t: now });
+    // The first sample kept is the last one from before this last third of a
+    // second: where the pointer was when it set off, however long it rested
+    // there.
     while (track.length > 2 && now - (track[1]?.t ?? now) > 320) {
       track.shift();
     }
   };
-  const toward = () => {
-    const sub = subRef.current;
+  const toward = (sub: HTMLElement) => {
     const track = trackRef.current;
-    if (!sub || track.length < 2) {
+    if (track.length < 2) {
       return false;
     }
     const now = track[track.length - 1];
@@ -1937,6 +2097,7 @@ export const SubtitlesDemo = () => {
     ) {
       return true;
     }
+    // The near edge is the one that faces the row the submenu hangs off.
     const near =
       Math.abs(from.x - r.right) < Math.abs(from.x - r.left) ? r.right : r.left;
     const b = { x: near, y: r.top - 6 };
@@ -1951,64 +2112,69 @@ export const SubtitlesDemo = () => {
     const d3 = side(c, from, now);
     return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
   };
-  const onRootRowOver = (id: string | undefined) => (e: ReactPointerEvent) => {
-    if (!menuManualRef.current || !id) {
-      return;
-    }
-    sample(e);
-    hoveredRef.current = id;
-    clearTimeout(aimRef.current);
-    aimRef.current = 0;
-    if (openSub && id !== openSub && toward()) {
-      const later = () => {
-        aimRef.current = 0;
-        if (hoveredRef.current !== id) {
-          return;
-        }
-        const last = trackRef.current[trackRef.current.length - 1];
-        const still = !!last && performance.now() - last.t < 250 && toward();
-        if (still) {
-          aimRef.current = window.setTimeout(later, 150);
-        } else {
-          settleRow(id);
-        }
-      };
-      aimRef.current = window.setTimeout(later, 300);
-      return;
-    }
-    settleRow(id);
-  };
-  const onRootRowClick = (id: string | undefined) => () => {
-    if (!menuManualRef.current || !id || rowDim(id)) {
-      return;
-    }
-    if (rowHasSub(id)) {
-      if (rowEnabled(id)) {
-        openSubmenu(id);
-      } else {
-        refuse(id);
+  const onRowOver =
+    (row: MenuItem, path: string[]) => (e: ReactPointerEvent) => {
+      if (!menuManualRef.current) {
+        return;
       }
+      sample(e);
+      const key = `${panelKeyOf(path)}/${keyOf(row)}`;
+      hoveredRef.current = key;
+      clearTimeout(aimRef.current);
+      aimRef.current = 0;
+      // The open submenu of the panel this row is in, if it has one.
+      const openId = menu.open[path.length];
+      const sub = openId ? panelRefs.current[openId] : null;
+      if (sub && row.id !== openId && toward(sub)) {
+        const later = () => {
+          aimRef.current = 0;
+          if (hoveredRef.current !== key) {
+            return;
+          }
+          const last = trackRef.current[trackRef.current.length - 1];
+          const still =
+            !!last && performance.now() - last.t < 250 && toward(sub);
+          if (still) {
+            aimRef.current = window.setTimeout(later, 150);
+          } else {
+            settleRow(row, path);
+          }
+        };
+        aimRef.current = window.setTimeout(later, 300);
+        return;
+      }
+      settleRow(row, path);
+    };
+  const onRowClick = (row: MenuItem, path: string[]) => () => {
+    if (!menuManualRef.current || rowDim(row)) {
       return;
     }
-    if (!rowEnabled(id)) {
-      refuse(id);
-      return;
-    }
-    act(id);
-    closeMenuByHand();
-  };
-  const onSubRowClick = (id: string) => () => {
-    if (!menuManualRef.current) {
+    if (row.sub && row.id) {
+      openSubmenu(row.id);
       return;
     }
     // Translate To's languages have no badge: the walk picks them, and a
     // click shakes its head like any other row without one.
-    if (openSub === "translate" || !rowEnabled(id)) {
-      refuse(id);
+    if (!row.demo) {
+      refuse(panelKeyOf(path), keyOf(row));
       return;
     }
-    act(id);
+    act(row.id ?? "");
     closeMenuByHand();
+  };
+  // The row whose submenu is open keeps its light, as macOS keeps it; the
+  // others go dark as the pointer leaves the menu.
+  const onMenuLeave = () => {
+    if (!menuManualRef.current) {
+      return;
+    }
+    setMenu((was) => {
+      const hot: MenuState["hot"] = {};
+      was.open.forEach((id, depth) => {
+        hot[depth === 0 ? "root" : was.open[depth - 1] ?? "root"] = id;
+      });
+      return { ...was, hot };
+    });
   };
   const onGlyphClick = (e: ReactMouseEvent) => {
     e.stopPropagation();
@@ -2047,6 +2213,290 @@ export const SubtitlesDemo = () => {
       window.removeEventListener("keydown", onKey);
     };
   }, [dismissMenu, menuManual]);
+
+  // ── the menu on the screen ───────────────────────────────────────────────
+  // Every panel is kept inside the screen, a padding and a half from its
+  // bottom: a submenu moves up first, no higher than the menu's top under the
+  // bar, and what still does not fit scrolls, as a macOS menu taller than the
+  // screen does. The rows are in a holder capped to the room there is, the
+  // panel holds its full room, and a chevron band a row tall shows at
+  // whichever end has more, bare: the panel's own glass and rim, the rows
+  // clipped where it begins. The pointer resting on it scrolls the rows past,
+  // six a second, until that end shows; the wheel scrolls them too. A submenu
+  // is a child of its panel beside the holder, positioned off the panel, so
+  // the holder never clips it; one with no room either side slides back
+  // inside the screen, over what it must.
+  // All of it is measured, so it is done to the DOM once React has drawn the
+  // panels, in the layout effect below, and written as inline styles and data
+  // attributes React is not told about: the class names are React's, and it
+  // would take back a class added behind it the next time it wrote them.
+  const roomsRef = useRef<Map<string, number>>(new Map());
+  const rollingRef = useRef(0);
+  const geo = useMemo(() => {
+    const panelOf = (key: string) =>
+      key === "root" ? menuRef.current : panelRefs.current[key] ?? null;
+    const holderOf = (panel: HTMLElement) =>
+      panel.firstElementChild as HTMLElement | null;
+    const bandOf = (panel: HTMLElement, dir: "up" | "down") =>
+      panel.querySelector<HTMLElement>(`:scope > [data-band="${dir}"]`);
+    // How close to the screen's edge a panel may come: a padding and a half.
+    const margin = () => {
+      const root = menuRef.current;
+      return root ? 1.5 * parseFloat(getComputedStyle(root).paddingTop) : 0;
+    };
+    // The holder's box and the chevrons, from the room there is and how far
+    // the rows have gone up: a chevron takes its band off the holder's end
+    // while there is more to see that way. The top band coming and going
+    // moves the holder's top edge, and the scroll position moves with it, so
+    // the rows themselves stay put.
+    const layout = (key: string) => {
+      const panel = panelOf(key);
+      const wrap = panel && holderOf(panel);
+      const up = panel && bandOf(panel, "up");
+      const down = panel && bandOf(panel, "down");
+      if (!panel || !wrap || !up || !down) {
+        return;
+      }
+      const room = roomsRef.current.get(key) ?? 0;
+      // A holder scrolls only while its panel is short of room: otherwise it
+      // is not a scroll container at all, so a trackpad cannot rubber-band a
+      // menu that fits.
+      panel.toggleAttribute("data-capped", room > 0);
+      if (!room) {
+        panel.style.height = "";
+        wrap.style.maxHeight = "";
+        wrap.style.marginTop = "";
+        up.removeAttribute("data-shown");
+        down.removeAttribute("data-shown");
+        return;
+      }
+      const band = up.offsetHeight;
+      const pad = parseFloat(getComputedStyle(panel).paddingTop);
+      const gone = wrap.scrollTop - (up.hasAttribute("data-shown") ? band : 0);
+      const showUp = gone > 0;
+      const showDown = gone + room < wrap.scrollHeight - 1;
+      // The panel holds its full room, so the holder ends a band short of its
+      // bottom edge rather than the panel ending with the holder.
+      panel.style.height = `${room}px`;
+      wrap.style.maxHeight = `${
+        room - (showUp ? band : 0) - (showDown ? band : 0)
+      }px`;
+      wrap.style.marginTop = showUp ? `${band - pad}px` : "";
+      const want = Math.max(0, gone) + (showUp ? band : 0);
+      if (Math.abs(wrap.scrollTop - want) > 0.5) {
+        wrap.scrollTop = want;
+      }
+      up.toggleAttribute("data-shown", showUp);
+      down.toggleAttribute("data-shown", showDown);
+    };
+    // The panel kept inside the screen. One that may move (a submenu) goes up
+    // first, as far as the top; what still does not fit scrolls.
+    const fit = (key: string, movable: boolean) => {
+      const panel = panelOf(key);
+      const wrap = panel && holderOf(panel);
+      const root = menuRef.current;
+      if (!panel || !wrap || !root) {
+        return;
+      }
+      panel.style.height = "";
+      wrap.style.maxHeight = "";
+      wrap.style.marginTop = "";
+      // Uncapped, the holder has nothing to scroll and the browser puts it
+      // back to its top; said here so the measurement below never sees a
+      // scroll position a browser chose to keep.
+      wrap.scrollTop = 0;
+      roomsRef.current.set(key, 0);
+      const screen = screenRef.current;
+      if (!screen) {
+        layout(key);
+        return;
+      }
+      const s = screen.getBoundingClientRect();
+      const m = margin();
+      let r = panel.getBoundingClientRect();
+      if (movable && r.bottom > s.bottom - m) {
+        // No higher than the menu's own top: under the menu bar, as macOS
+        // keeps it.
+        const up = Math.min(
+          r.bottom - (s.bottom - m),
+          r.top - root.getBoundingClientRect().top
+        );
+        if (up > 0) {
+          panel.style.top = `${(parseFloat(panel.style.top) || 0) - up}px`;
+          r = panel.getBoundingClientRect();
+        }
+      }
+      const room = s.bottom - m - r.top;
+      if (r.height > room) {
+        roomsRef.current.set(key, room);
+      }
+      layout(key);
+    };
+    // A panel closed: back to its full height and its top, so it opens whole
+    // next time. The root stays in the DOM when the menu is down, so its
+    // holder is scrolled back by hand.
+    const unfit = (key: string) => {
+      const panel = panelOf(key);
+      const wrap = panel && holderOf(panel);
+      if (!panel || !wrap) {
+        return;
+      }
+      roomsRef.current.set(key, 0);
+      wrap.scrollTop = 0;
+      layout(key);
+    };
+    // The submenu hangs off its row, its first item level with it, and is
+    // then kept on the screen, see fit. A submenu's submenu opens to the
+    // right, over the menu, and to the left instead when the screen's edge
+    // leaves it no room there, as macOS places it; one with no room either
+    // side slides back inside, over what it must.
+    const place = (key: string, row: HTMLElement) => {
+      const sub = panelOf(key);
+      const parentKey = panelKeyOf(PANEL_PATH[key] ?? []);
+      const panel = panelOf(parentKey);
+      if (!sub || !panel) {
+        return;
+      }
+      sub.style.top = `${
+        row.getBoundingClientRect().top -
+        panel.getBoundingClientRect().top -
+        parseFloat(getComputedStyle(sub).paddingTop)
+      }px`;
+      sub.style.translate = "";
+      sub.removeAttribute("data-left");
+      fit(key, true);
+      const screen = screenRef.current;
+      if (!screen) {
+        return;
+      }
+      const s = screen.getBoundingClientRect();
+      const m = margin();
+      if (
+        parentKey !== "root" &&
+        sub.getBoundingClientRect().right > s.right - m
+      ) {
+        sub.setAttribute("data-left", "");
+      }
+      const r = sub.getBoundingClientRect();
+      const shift =
+        r.left < s.left + m
+          ? s.left + m - r.left
+          : r.right > s.right - m
+          ? s.right - m - r.right
+          : 0;
+      if (shift) {
+        sub.style.translate = `${shift}px 0`;
+      }
+    };
+    // The holder scrolled so the row shows whole.
+    const reveal = (row: HTMLElement | null | undefined) => {
+      const panel = row?.closest<HTMLElement>("[data-panel]");
+      const key = panel?.dataset.panel;
+      const wrap = panel && holderOf(panel);
+      if (!row || !panel || !key || !wrap || !roomsRef.current.get(key)) {
+        return;
+      }
+      const w = wrap.getBoundingClientRect();
+      const r = row.getBoundingClientRect();
+      if (r.top < w.top) {
+        wrap.scrollTop -= w.top - r.top;
+      } else if (r.bottom > w.bottom) {
+        wrap.scrollTop += r.bottom - w.bottom;
+      }
+      layout(key);
+    };
+    // The pointer resting on a band scrolls the rows past it, a few a second,
+    // until that end shows and the band goes. Either way the panel's
+    // submenu, if one was up, goes down, and its rows go dark.
+    const stopRoll = () => {
+      cancelAnimationFrame(rollingRef.current);
+      rollingRef.current = 0;
+    };
+    const roll = (key: string, dir: "up" | "down") => {
+      const panel = panelOf(key);
+      const wrap = panel && holderOf(panel);
+      const band = panel && bandOf(panel, dir);
+      const root = menuRef.current;
+      if (!panel || !wrap || !band || !root) {
+        return;
+      }
+      const sign = dir === "up" ? -1 : 1;
+      // Six rows a second: a row is two of the menu's ems tall.
+      const pace = (6 * 2 * parseFloat(getComputedStyle(root).fontSize)) / 1000;
+      stopRoll();
+      const path = key === "root" ? [] : [...(PANEL_PATH[key] ?? []), key];
+      setMenu((was) => ({
+        open: path,
+        hot: pruneHot({ ...was.hot, [key]: null }, path),
+      }));
+      let last = performance.now();
+      const step = (now: number) => {
+        // The panel gone from under the pointer, closed by something else:
+        // nothing left to scroll.
+        if (panelOf(key) !== panel) {
+          rollingRef.current = 0;
+          return;
+        }
+        wrap.scrollTop += sign * (now - last) * pace;
+        last = now;
+        layout(key);
+        rollingRef.current = band.hasAttribute("data-shown")
+          ? requestAnimationFrame(step)
+          : 0;
+      };
+      rollingRef.current = requestAnimationFrame(step);
+    };
+    return { layout, fit, unfit, place, reveal, roll, stopRoll };
+  }, []);
+  // The panels laid out as they open: the root fitted to the screen when the
+  // menu drops, each submenu placed off its row as it opens, and Listen To
+  // placed again when its rows redraw. Nothing is re-fitted that was already
+  // up, or a menu scrolled by hand would jump back to its top; the window
+  // resizing is the one time everything is done again.
+  const shown = menuOpen || menuManual;
+  const laidOutRef = useRef<{
+    shown: boolean;
+    open: string[];
+    listen: boolean;
+  }>({ shown: false, open: [], listen: callPlaying });
+  useLayoutEffect(() => {
+    const was = laidOutRef.current;
+    if (!shown) {
+      geo.stopRoll();
+      if (was.shown) {
+        geo.unfit("root");
+      }
+      laidOutRef.current = { shown: false, open: [], listen: callPlaying };
+      return;
+    }
+    if (!was.shown) {
+      geo.fit("root", false);
+    }
+    menu.open.forEach((id, depth) => {
+      const row = rowRefs.current[id];
+      const fresh = was.open[depth] !== id;
+      if (row && (fresh || (id === "listen" && was.listen !== callPlaying))) {
+        geo.place(id, row);
+      }
+    });
+    laidOutRef.current = { shown: true, open: menu.open, listen: callPlaying };
+  }, [callPlaying, geo, menu.open, shown]);
+  useEffect(() => {
+    if (!shown) {
+      return;
+    }
+    const onResize = () => {
+      geo.fit("root", false);
+      menu.open.forEach((id) => {
+        const row = rowRefs.current[id];
+        if (row) {
+          geo.place(id, row);
+        }
+      });
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [geo, menu.open, shown]);
 
   // ── Show Source App Name ─────────────────────────────────────────────────
   // The name tab lives beside React: it masks the live box and the stack's
@@ -2375,16 +2825,18 @@ export const SubtitlesDemo = () => {
     // A menu the visitor has up is theirs to take down: the scripted close
     // leaves it, its submenu closed and its rows cooled.
     const closeMenu = () => {
-      if (menuManualRef.current) {
-        setOpenSub(null);
-        setHotRow(null);
-        setHotSub(null);
-        return;
+      if (!menuManualRef.current) {
+        setMenuOpen(false);
       }
-      setMenuOpen(false);
-      setOpenSub(null);
-      setHotRow(null);
-      setHotSub(null);
+      setMenu({ open: [], hot: {} });
+    };
+    // The walk's hand on a row: scrolled into view first, should its panel
+    // be capped, then lit; or the panel's light taken away.
+    const light = (panel: string, id: string | null) => {
+      if (id) {
+        geo.reveal(rowRefs.current[id]);
+      }
+      setMenu((was) => ({ ...was, hot: { ...was.hot, [panel]: id } }));
     };
     const pickTranslation = async (target: string) => {
       const walk = { cancelled: false };
@@ -2401,7 +2853,7 @@ export const SubtitlesDemo = () => {
       if (!menuManualRef.current) {
         setMenuOpen(true);
       }
-      setHotRow("translate");
+      light("root", "translate");
       await step(500);
       if (walk.cancelled) {
         return end();
@@ -2411,16 +2863,16 @@ export const SubtitlesDemo = () => {
       if (walk.cancelled) {
         return end();
       }
-      setHotSub(target);
+      light("translate", target);
       await step(650);
       if (walk.cancelled) {
         return end();
       }
       // macOS blinks the item it is about to act on.
       for (let k = 0; k < 2; k++) {
-        setHotSub(null);
+        light("translate", null);
         await step(70);
-        setHotSub(target);
+        light("translate", target);
         await step(70);
       }
       end();
@@ -2596,7 +3048,7 @@ export const SubtitlesDemo = () => {
       timers.clear();
       waking.clear();
     };
-  }, [openSubmenu, reducedMotion, showApp, showCaption]);
+  }, [geo, openSubmenu, reducedMotion, showApp, showCaption]);
 
   // Picking the scene that is already playing does nothing, whether you picked
   // it from the bar or by clicking its window: restarting it would punish a
@@ -3471,7 +3923,9 @@ export const SubtitlesDemo = () => {
   const startWindowDrag = useCallback(
     (app: AppId, index: number) => (event: ReactPointerEvent<HTMLElement>) => {
       const stage = stageRef.current?.getBoundingClientRect();
-      const node = event.currentTarget.parentElement;
+      // The window itself, not the bar's parent: a sidebar drawn the Tahoe
+      // way carries its bar inside its pane.
+      const node = windowRefs.current[app];
       // Mouse only. On a phone the title bar is inside a page you are trying to
       // scroll, and a drag that starts there would take the window with you,
       // or eat the scroll. Tapping a window still brings it forward.
@@ -3883,9 +4337,11 @@ export const SubtitlesDemo = () => {
     };
   };
 
-  /** The title bar is the handle, the way it is on a real window. */
-  const titlebarProps = (app: AppId) => ({
-    className: styles.titlebar,
+  /** A title bar is a handle, the way it is on a real window; and every one
+   *  in the window is, since a sidebar drawn the Tahoe way carries its own,
+   *  with the traffic lights, beside the main column's. */
+  const titlebarProps = (app: AppId, bar?: string) => ({
+    className: cx(styles.titlebar, bar),
     onPointerDown: startWindowDrag(
       app,
       SCENES.findIndex((item) => item.app === app)
@@ -3898,6 +4354,148 @@ export const SubtitlesDemo = () => {
     // follows the cursor with no button held.
     onLostPointerCapture: endWindowDrag,
   });
+
+  // One panel of the menu: its rows in a scrolling holder, the one open
+  // submenu among them as a child beside the holder, and a chevron band at
+  // either end for when the holder is capped. The root is the panel at the
+  // empty path; a submenu's path is the ids of the rows down to it, and its
+  // name the last of them. Only the open chain is drawn: a submenu that is
+  // closed is not there, so it opens dark and whole next time for free.
+  const renderPanel = (rows: MenuRow[], path: string[]) => {
+    const key = panelKeyOf(path);
+    const root = path.length === 0;
+    const openId = menu.open[path.length];
+    const opener = openId
+      ? rows.find(
+          (row): row is MenuItem =>
+            !("sep" in row) && row.id === openId && !!row.sub
+        )
+      : undefined;
+    const chevron = (
+      <svg viewBox="0 0 10 6">
+        <path
+          d="M1 1l4 4 4-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+    const band = (dir: "up" | "down") => (
+      <div
+        key={dir}
+        className={cx(
+          styles.mn_arrow,
+          dir === "up" ? styles.is_up : styles.is_down
+        )}
+        data-band={dir}
+        onPointerEnter={() => {
+          if (menuManualRef.current) {
+            geo.roll(key, dir);
+          }
+        }}
+        onPointerLeave={geo.stopRoll}
+      >
+        {chevron}
+      </div>
+    );
+    return (
+      <div
+        key={key}
+        ref={
+          root
+            ? menuRef
+            : (node) => {
+                panelRefs.current[key] = node;
+              }
+        }
+        data-panel={key}
+        className={cx(
+          styles.mn_panel,
+          root ? styles.mn_root : styles.mn_sub,
+          (root ? menuOpen || menuManual : true) && styles.is_open,
+          root && menuManual && styles.is_manual
+        )}
+        onPointerLeave={root ? onMenuLeave : undefined}
+        onPointerMove={
+          root
+            ? (e) => {
+                if (menuManualRef.current) {
+                  sample(e);
+                }
+              }
+            : undefined
+        }
+      >
+        <div
+          className={styles.mn_scroll}
+          onScroll={() => geo.layout(key)}
+          // The wheel scrolling the rows takes the panel's submenu down, as
+          // the chevrons do.
+          onWheel={() => {
+            if (menuManualRef.current && menu.open.length > path.length) {
+              setOpenPath(path);
+            }
+          }}
+        >
+          {rows.map((row, index) =>
+            "sep" in row ? (
+              <div key={index} className={styles.mn_sep} />
+            ) : (
+              <div
+                key={keyOf(row)}
+                ref={(node) => {
+                  if (row.id) {
+                    rowRefs.current[row.id] = node;
+                  }
+                }}
+                className={cx(
+                  styles.mn_row,
+                  row.id === "status" && styles.mn_status,
+                  row.note && styles.has_note,
+                  (row.on || (row.id && checked.has(row.id))) && styles.is_on,
+                  rowDim(row) && styles.is_dim,
+                  menu.hot[key] === keyOf(row) && styles.is_hot,
+                  refused === `${key}/${keyOf(row)}` && styles.is_refused
+                )}
+                onPointerOver={onRowOver(row, path)}
+                onClick={onRowClick(row, path)}
+              >
+                <span className={styles.mn_check}>✓</span>
+                <span className={styles.mn_label}>
+                  {row.label}
+                  {row.note && (
+                    <span className={styles.mn_note}>{row.note}</span>
+                  )}
+                </span>
+                {row.demo && <span className={styles.mn_demo}>Try</span>}
+                {row.key && <span className={styles.mn_key}>{row.key}</span>}
+                {row.sub && (
+                  <span className={styles.mn_more}>
+                    <svg viewBox="0 0 6 10">
+                      <path
+                        d="M1 1l4 4-4 4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                )}
+              </div>
+            )
+          )}
+        </div>
+        {opener && renderPanel(subRows(opener), [...path, openId as string])}
+        {band("up")}
+        {band("down")}
+      </div>
+    );
+  };
 
   return (
     <div ref={rootRef} className={styles.demo}>
@@ -3956,116 +4554,7 @@ export const SubtitlesDemo = () => {
             opens it between the podcast's two lines and picks Translate To; a
             click on the glyph opens it by hand, and the rows with a Try badge
             do what they say here. */}
-        <div
-          ref={menuRef}
-          className={cx(
-            styles.mn_panel,
-            styles.mn_root,
-            (menuOpen || menuManual) && styles.is_open,
-            menuManual && styles.is_manual
-          )}
-          onPointerLeave={() => {
-            if (menuManualRef.current) {
-              // The row whose submenu is open keeps its light, as macOS keeps it.
-              setHotRow(openSub);
-            }
-          }}
-        >
-          {MENU.map((row, index) =>
-            "sep" in row ? (
-              <div key={index} className={styles.mn_sep} />
-            ) : (
-              <div
-                key={row.label}
-                ref={(node) => {
-                  if (row.id) {
-                    rowRefs.current[row.id] = node;
-                  }
-                }}
-                className={cx(
-                  styles.mn_row,
-                  row.id === "status" && styles.mn_status,
-                  (row.on || (row.id && checked.has(row.id))) && styles.is_on,
-                  rowDim(row.id) && styles.is_dim,
-                  hotRow === keyOf(row) && styles.is_hot,
-                  refused === keyOf(row) && styles.is_refused
-                )}
-                onPointerOver={onRootRowOver(keyOf(row))}
-                onClick={onRootRowClick(keyOf(row))}
-              >
-                <span className={styles.mn_check}>✓</span>
-                <span className={styles.mn_label}>{row.label}</span>
-                {row.demo && <span className={styles.mn_demo}>Try</span>}
-                {row.key && <span className={styles.mn_key}>{row.key}</span>}
-                {row.sub && (
-                  <span className={styles.mn_more}>
-                    <svg viewBox="0 0 6 10">
-                      <path
-                        d="M1 1l4 4-4 4"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.4"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                )}
-              </div>
-            )
-          )}
-          {/* One submenu, hung off whichever row has it open: Translate To's
-              languages, or the Try rows' choices. */}
-          <div
-            ref={subRef}
-            className={cx(
-              styles.mn_panel,
-              styles.mn_sub,
-              openSub !== null && (menuOpen || menuManual) && styles.is_open
-            )}
-            style={{ top: subTop }}
-          >
-            {(openSub === "translate"
-              ? [
-                  { label: "Off", id: "off" } as MenuRow,
-                  { sep: true } as MenuRow,
-                  ...LANGUAGES.map(
-                    ([id, name]) => ({ label: name, id } as MenuRow)
-                  ),
-                ]
-              : (rowById(openSub ?? "") as { sub?: MenuRow[] } | undefined)
-                  ?.sub ?? []
-            ).map((row, index) =>
-              "sep" in row ? (
-                <div key={index} className={styles.mn_sep} />
-              ) : (
-                <div
-                  key={row.id ?? row.label}
-                  className={cx(
-                    styles.mn_row,
-                    row.id !== undefined &&
-                      (openSub === "translate"
-                        ? translateTo === row.id
-                        : checked.has(row.id)) &&
-                      styles.is_on,
-                    hotSub === keyOf(row) && styles.is_hot,
-                    refused === keyOf(row) && styles.is_refused
-                  )}
-                  onPointerOver={() => {
-                    if (menuManualRef.current) {
-                      setHotSub(keyOf(row));
-                    }
-                  }}
-                  onClick={onSubRowClick(keyOf(row))}
-                >
-                  <span className={styles.mn_check}>✓</span>
-                  <span className={styles.mn_label}>{row.label}</span>
-                  {row.demo && <span className={styles.mn_demo}>Try</span>}
-                </div>
-              )
-            )}
-          </div>
-        </div>
+        {renderPanel(MENU, [])}
 
         <div
           ref={stageRef}
@@ -4132,173 +4621,58 @@ export const SubtitlesDemo = () => {
           </div>
 
           {/* 2 · what you switch to: Apple's Notes, drawn as it is in the
-              demo's tokens. The toolbar sits in the title bar, then three
-              columns, the folders, the list and the note, which is the
-              document the writer above types into. */}
+              demo's tokens and laid out the way macOS 26 lays a sidebar window
+              out: the folders in a pane inset from the window's edges, with the
+              traffic lights in its header; beside it the main column with its
+              own toolbar, then the list and the note, which is the document the
+              writer above types into. Both bars drag the window. */}
           <div
             {...windowProps("notes", cx(styles.win_notes, styles.app_notes))}
           >
-            <div {...titlebarProps("notes")}>
-              <span className={styles.lights}>
-                <i className={styles.l_close} />
-                <i className={styles.l_min} />
-                <i className={styles.l_max} />
-              </span>
-              <div className={styles.nt_tools}>
-                <span className={styles.nt_g}>
-                  <svg viewBox="0 0 24 24" fill="currentColor">
-                    <rect
-                      x="3"
-                      y="4"
-                      width="18"
-                      height="16"
-                      rx="2.5"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M9 4v16"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-                <span className={styles.nt_g}>
-                  <svg viewBox="0 0 24 24" fill="currentColor">
-                    <rect
-                      x="3"
-                      y="5"
-                      width="13"
-                      height="16"
-                      rx="2"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path d="M12 13l8.5-8.5 2 2L14 15h-2z" />
-                  </svg>
-                </span>
-                <span className={styles.nt_gap} />
-                <span className={styles.nt_aa}>Aa</span>
-                <span className={styles.nt_g}>
-                  <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path
-                      d="M3 7l2 2 3.5-3.5M3 15l2 2 3.5-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <rect x="11" y="6" width="10" height="2.2" rx="1" />
-                    <rect x="11" y="14" width="10" height="2.2" rx="1" />
-                  </svg>
-                </span>
-                <span className={styles.nt_g}>
-                  <svg viewBox="0 0 24 24" fill="currentColor">
-                    <rect
-                      x="3"
-                      y="4"
-                      width="18"
-                      height="16"
-                      rx="2"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M3 10h18M3 15h18M10 4v16M16 4v16"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                    />
-                  </svg>
-                </span>
-                <span className={styles.nt_g}>
-                  <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path
-                      d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-                <span className={styles.nt_g}>
-                  <svg viewBox="0 0 24 24" fill="currentColor">
-                    <rect
-                      x="3"
-                      y="4"
-                      width="18"
-                      height="16"
-                      rx="2"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <circle cx="8.5" cy="9" r="1.8" />
-                    <path d="M4 18l5-5 3.5 3.5 3-3L20 18z" />
-                  </svg>
-                </span>
-                <span className={styles.nt_g}>
-                  <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path
-                      d="M12 3v12M8 7l4-4 4 4"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-                <span className={styles.nt_search}>
-                  <span className={styles.nt_g}>
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                      <circle
-                        cx="10"
-                        cy="10"
-                        r="6"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.2"
-                      />
-                      <path
-                        d="M14.5 14.5L20 20"
-                        stroke="currentColor"
-                        strokeWidth="2.4"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </span>
-                  <span>Search</span>
-                </span>
-              </div>
-            </div>
             <div className={styles.win_content}>
               <div className={styles.nt}>
                 <div className={styles.nt_side}>
+                  <div {...titlebarProps("notes", styles.nt_side_bar)}>
+                    <span className={styles.lights}>
+                      <i className={styles.l_close} />
+                      <i className={styles.l_min} />
+                      <i className={styles.l_max} />
+                    </span>
+                    {/* New folder, and the sidebar toggle, hugging the pane's
+                        right edge as Notes sets them. */}
+                    <span className={styles.nt_side_tools}>
+                      <span className={styles.nt_g}>
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M3 6a2 2 0 0 1 2-2h4.5l2 2H19a2 2 0 0 1 2 2v3h-2V8H5v10h6v2H5a2 2 0 0 1-2-2z" />
+                          <path d="M18 13v3h3v2h-3v3h-2v-3h-3v-2h3v-3z" />
+                        </svg>
+                      </span>
+                      <span className={styles.nt_g}>
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                          <rect
+                            x="3"
+                            y="4"
+                            width="18"
+                            height="16"
+                            rx="2.5"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M9 4v16"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
+                    </span>
+                  </div>
                   <span className={styles.nt_h}>iCloud</span>
                   <span className={styles.nt_row}>
                     <span className={styles.nt_g}>{NOTES_FOLDER}</span>
@@ -4325,63 +4699,208 @@ export const SubtitlesDemo = () => {
                     <u>1</u>
                   </span>
                 </div>
-                <div className={styles.nt_list}>
-                  <span className={cx(styles.nt_item, styles.is_on)}>
-                    <b>Weekly sync</b>
-                    <span className={styles.nt_meta}>
-                      <span>14:32</span>
-                      <i className={styles.sk} style={{ width: "55%" }} />
+                <div className={styles.nt_main}>
+                  <div {...titlebarProps("notes", styles.nt_topbar)}>
+                    {/* A second set of lights, for a window pulled narrow
+                        enough to lose its pane. */}
+                    <span
+                      className={cx(styles.lights, styles.nt_lights_narrow)}
+                    >
+                      <i className={styles.l_close} />
+                      <i className={styles.l_min} />
+                      <i className={styles.l_max} />
                     </span>
-                  </span>
-                  <span className={styles.nt_item}>
-                    <i className={styles.sk} style={{ width: "62%" }} />
-                    <span className={styles.nt_meta}>
-                      <span>Yesterday</span>
-                      <i className={styles.sk} style={{ width: "48%" }} />
-                    </span>
-                  </span>
-                  <span className={styles.nt_item}>
-                    <i className={styles.sk} style={{ width: "44%" }} />
-                    <span className={styles.nt_meta}>
-                      <i className={styles.sk} style={{ width: "18%" }} />
-                      <i className={styles.sk} style={{ width: "52%" }} />
-                    </span>
-                  </span>
-                </div>
-                <div className={styles.nt_editor}>
-                  <span className={styles.nt_date}>
-                    7 September 2026 at 14:32
-                  </span>
-                  <div className={styles.notes_doc}>
-                    <b>Weekly sync</b>
-                    {NOTE_LINES_TOP.map((width, index) => (
-                      <i key={index} style={{ width }} />
-                    ))}
-                    <b className={styles.sub}>Actions</b>
-                    {notesLines.map((width, index) => (
-                      <i key={`${index}-${width}`} style={{ width }} />
-                    ))}
-                    {/* The line being written, with the caret at its end. */}
-                    <span className={styles.lw_write}>
-                      <i style={{ width: `${writing}%` }} />
-                      <span className={styles.notes_caret} />
-                    </span>
+                    <div className={styles.nt_tools}>
+                      <span className={styles.nt_g}>
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                          <rect
+                            x="3"
+                            y="5"
+                            width="13"
+                            height="16"
+                            rx="2"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path d="M12 13l8.5-8.5 2 2L14 15h-2z" />
+                        </svg>
+                      </span>
+                      <span className={styles.nt_gap} />
+                      {/* The format controls together in one capsule. */}
+                      <span className={styles.nt_group}>
+                        <span className={styles.nt_aa}>Aa</span>
+                        <span className={styles.nt_g}>
+                          <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                              d="M3 7l2 2 3.5-3.5M3 15l2 2 3.5-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <rect x="11" y="6" width="10" height="2.2" rx="1" />
+                            <rect
+                              x="11"
+                              y="14"
+                              width="10"
+                              height="2.2"
+                              rx="1"
+                            />
+                          </svg>
+                        </span>
+                        <span className={styles.nt_g}>
+                          <svg viewBox="0 0 24 24" fill="currentColor">
+                            <rect
+                              x="3"
+                              y="4"
+                              width="18"
+                              height="16"
+                              rx="2"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M3 10h18M3 15h18M10 4v16M16 4v16"
+                              stroke="currentColor"
+                              strokeWidth="1.6"
+                            />
+                          </svg>
+                        </span>
+                        <span className={styles.nt_g}>
+                          <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                              d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </span>
+                        <span className={styles.nt_g}>
+                          <svg viewBox="0 0 24 24" fill="currentColor">
+                            <rect
+                              x="3"
+                              y="4"
+                              width="18"
+                              height="16"
+                              rx="2"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <circle cx="8.5" cy="9" r="1.8" />
+                            <path d="M4 18l5-5 3.5 3.5 3-3L20 18z" />
+                          </svg>
+                        </span>
+                      </span>
+                      <span className={styles.nt_g}>
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                          <path
+                            d="M12 3v12M8 7l4-4 4 4"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
+                      <span className={styles.nt_search}>
+                        <span className={styles.nt_g}>
+                          <svg viewBox="0 0 24 24" fill="currentColor">
+                            <circle
+                              cx="10"
+                              cy="10"
+                              r="6"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.2"
+                            />
+                            <path
+                              d="M14.5 14.5L20 20"
+                              stroke="currentColor"
+                              strokeWidth="2.4"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        </span>
+                        <span>Search</span>
+                      </span>
+                    </div>
+                  </div>
+                  <div className={styles.nt_body}>
+                    <div className={styles.nt_list}>
+                      <span className={cx(styles.nt_item, styles.is_on)}>
+                        <b>Weekly sync</b>
+                        <span className={styles.nt_meta}>
+                          <span>14:32</span>
+                          <i className={styles.sk} style={{ width: "55%" }} />
+                        </span>
+                      </span>
+                      <span className={styles.nt_item}>
+                        <i className={styles.sk} style={{ width: "62%" }} />
+                        <span className={styles.nt_meta}>
+                          <span>Yesterday</span>
+                          <i className={styles.sk} style={{ width: "48%" }} />
+                        </span>
+                      </span>
+                      <span className={styles.nt_item}>
+                        <i className={styles.sk} style={{ width: "44%" }} />
+                        <span className={styles.nt_meta}>
+                          <i className={styles.sk} style={{ width: "18%" }} />
+                          <i className={styles.sk} style={{ width: "52%" }} />
+                        </span>
+                      </span>
+                    </div>
+                    <div className={styles.nt_editor}>
+                      <span className={styles.nt_date}>
+                        7 September 2026 at 14:32
+                      </span>
+                      <div className={styles.notes_doc}>
+                        <b>Weekly sync</b>
+                        {NOTE_LINES_TOP.map((width, index) => (
+                          <i key={index} style={{ width }} />
+                        ))}
+                        <b className={styles.sub}>Actions</b>
+                        {notesLines.map((width, index) => (
+                          <i key={`${index}-${width}`} style={{ width }} />
+                        ))}
+                        {/* The line being written, with the caret at its end. */}
+                        <span className={styles.lw_write}>
+                          <i style={{ width: `${writing}%` }} />
+                          <span className={styles.notes_caret} />
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* 3 · the podcast */}
+          {/* 3 · the podcast, laid out the same way: the library rail is the
+              pane with the lights, the main column has the bar with the title,
+              and the transport runs across the bottom under both. */}
           <div {...windowProps("player", styles.win_player)}>
-            <div {...titlebarProps("player")}>
-              <span className={styles.lights}>
-                <i className={styles.l_close} />
-                <i className={styles.l_min} />
-                <i className={styles.l_max} />
-              </span>
-              <span className={styles.win_title}>Interview · Episode 42</span>
-            </div>
             <div className={styles.win_content}>
               <div className={styles.scene} />
 
@@ -4391,6 +4910,13 @@ export const SubtitlesDemo = () => {
                   green, though: the accent is the app's own. */}
               <div className={styles.pod}>
                 <div className={styles.pod_side}>
+                  <div {...titlebarProps("player", styles.pod_side_bar)}>
+                    <span className={styles.lights}>
+                      <i className={styles.l_close} />
+                      <i className={styles.l_min} />
+                      <i className={styles.l_max} />
+                    </span>
+                  </div>
                   <i className={styles.pod_nav} />
                   <i className={styles.pod_nav} />
                   <i className={cx(styles.pod_nav, styles.is_on)} />
@@ -4399,38 +4925,55 @@ export const SubtitlesDemo = () => {
                   <i className={styles.pod_item} />
                   <i className={styles.pod_item} />
                   <i className={styles.pod_item} />
+                  <i className={styles.pod_item} />
                 </div>
 
-                <div className={styles.pod_main}>
-                  <div className={styles.pod_head}>
-                    <span className={styles.pod_art} />
-                    <span className={styles.pod_meta}>
-                      <em>Podcast</em>
-                      <b>The Long Way Round</b>
-                      <i>Episode 42 · Ana Ferreira</i>
+                <div className={styles.pod_main_col}>
+                  <div {...titlebarProps("player", styles.pod_topbar)}>
+                    <span
+                      className={cx(styles.lights, styles.pod_lights_narrow)}
+                    >
+                      <i className={styles.l_close} />
+                      <i className={styles.l_min} />
+                      <i className={styles.l_max} />
+                    </span>
+                    <span className={styles.win_title}>
+                      Interview · Episode 42
                     </span>
                   </div>
-                  <div ref={waveRef} className={styles.pod_wave}>
-                    {WAVE.map((height, index) => (
-                      <i
-                        key={index}
-                        className={cx(index < played && styles.is_played)}
-                        style={
-                          {
-                            "--i": index,
-                            "--h": `${height}%`,
-                          } as CSSProperties
-                        }
-                      />
-                    ))}
-                  </div>
-                  <div className={styles.pod_list}>
-                    {EPISODES.map((episode) => (
-                      <span key={episode.length} className={styles.pod_ep}>
-                        <i style={{ "--w": episode.width } as CSSProperties} />
-                        <em>{episode.length}</em>
+                  <div className={styles.pod_main}>
+                    <div className={styles.pod_head}>
+                      <span className={styles.pod_art} />
+                      <span className={styles.pod_meta}>
+                        <em>Podcast</em>
+                        <b>The Long Way Round</b>
+                        <i>Episode 42 · Ana Ferreira</i>
                       </span>
-                    ))}
+                    </div>
+                    <div ref={waveRef} className={styles.pod_wave}>
+                      {WAVE.map((height, index) => (
+                        <i
+                          key={index}
+                          className={cx(index < played && styles.is_played)}
+                          style={
+                            {
+                              "--i": index,
+                              "--h": `${height}%`,
+                            } as CSSProperties
+                          }
+                        />
+                      ))}
+                    </div>
+                    <div className={styles.pod_list}>
+                      {EPISODES.map((episode) => (
+                        <span key={episode.length} className={styles.pod_ep}>
+                          <i
+                            style={{ "--w": episode.width } as CSSProperties}
+                          />
+                          <em>{episode.length}</em>
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -4699,7 +5242,6 @@ export const SubtitlesDemo = () => {
         Switch apps and the captions stay: the overlay is above every window,
         and lets clicks through.
       </p>
-      <p className={styles.caption}>Click a window to bring it forward.</p>
       {/* The rest say nothing to a phone, and are hidden from one by the
           stylesheet. */}
       <p className={cx(styles.caption, styles.caption_try)}>

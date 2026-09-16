@@ -27,15 +27,8 @@
   --ink: 22 23 28;
   --bar-bg: rgb(246 246 250 / 0.35);
   --window-bg: #fdfdff;
-  /* Light title bars darken downwards, and want more of it than the dark ones:
-     against a white window a few per cent of ink is nothing, and the bar has to
-     read as a surface of its own. */
-  --titlebar-bg: linear-gradient(
-    rgb(var(--ink) / 0.06),
-    rgb(var(--ink) / 0.13)
-  );
   --meeting-bg: #f1f2f6;
-  --notes-bg: #fffffe;
+  --notes-bg: #fff;
   --tile-bg: linear-gradient(150deg, #fdfdff, #e9ebf2);
   --controls-bg: rgb(250 250 252 / 0.96);
   /* The hairline round every caption box: a shade darker than the box in the
@@ -43,17 +36,19 @@
      read as a glint rather than an edge. Pill.outlineInk in the app. */
   --pill-line: rgb(0 0 0 / 0.55);
   /* The status menu's material and its highlight, the ones macOS gives a menu. */
-  --menu-bg: rgb(240 240 245 / 0.9);
+  --menu-bg: rgb(244 244 248 / 0.78);
   --menu-accent: #2f6cf6;
   /* One device pixel, the width the app draws its hairline at. */
   --hairline: 1px;
   --panel-bg: rgb(248 248 252 / 0.55);
-  --recess: rgb(0 0 0 / 0.045);
-  --recess-deep: rgb(0 0 0 / 0.06);
-  /* The same value the title bar's gradient ends on, so the divider is one more
-     row of it rather than a line drawn under it. Move the gradient and this
-     moves with it. */
-  --window-line: rgb(var(--ink) / 0.13);
+  /* The one separator under a title bar: the value the old bar's gradient
+     ended on, at the 65% every separator inside a window draws at in light,
+     see --sep. */
+  --window-line: rgb(var(--ink) / 0.0845);
+  /* Every separator inside a window draws at this fraction of its strength:
+     65% in light, where the hairlines were reading as rules, and full in
+     dark. Written as a factor so each line keeps the alpha it was tuned at. */
+  --sep: 0.65;
   --played: #5856d6;
   /* A background window is not dimmed on a Mac, but the demo has three of them
      overlapping in a small space, and the front one has to win. This is the
@@ -77,10 +72,12 @@
     ),
     radial-gradient(42% 46% at 12% 90%, rgb(80 196 235 / 0.5), transparent 66%),
     linear-gradient(160deg, #c7c2ff 0%, #ead6f4 48%, #ffd8c2 100%);
+  /* The lavender pulled left and wider, under where the sidebar's glass now
+     sits, so the pane has the colour to carry through. */
   --scene-bg: radial-gradient(
-      42% 58% at 26% 32%,
+      52% 58% at 18% 32%,
       rgb(150 146 255 / 0.42),
-      transparent 66%
+      transparent 70%
     ),
     radial-gradient(38% 52% at 74% 28%, rgb(255 176 150 / 0.4), transparent 68%),
     radial-gradient(
@@ -93,46 +90,78 @@
      are deep because they fall on a near-black desktop, where only a heavy
      shadow reads at all; the same shadow on a light one is a smear. These are
      the same shapes at a third of the weight. */
-  --window-shadow: 0 1px 3px rgb(0 0 0 / 0.08),
-    0 10px 24px -12px rgb(0 0 0 / 0.2);
+  --window-shadow: 0 2px 6px rgb(0 0 0 / 0.06),
+    0 22px 44px -18px rgb(0 0 0 / 0.28);
   --window-shadow-front: 0 2px 6px rgb(0 0 0 / 0.1),
     0 20px 44px -14px rgb(0 0 0 / 0.28);
   --art-shadow: 0 8px 20px -10px rgb(0 0 0 / 0.35);
   /* The half-pixel ring macOS draws round a window, in place of a border: a
-     dark hairline outside, and on the dark desktop a light one inside too. */
-  --window-ring: 0 0 0 0.5px rgb(0 0 0 / 0.08);
+     dark hairline outside and, since Tahoe, a fine light rim inside the edge
+     in both appearances; the dark desktop gets a second inner one, see
+     .demo_window::after. */
+  --window-ring: 0 0 0 0.5px rgb(0 0 0 / 0.14),
+    inset 0 0 0 0.5px rgb(255 255 255 / 0.65);
   --window-inner: transparent;
+  /* Tahoe's sidebars. The sidebar's column is glass: what the window paints
+     there comes through it blurred, under a light tint, and the pane sits on
+     that with a tint of its own, a shade darker, a white-ish hairline around
+     it and a soft shadow under. The podcast's glass is nearly clear so its
+     gradient carries through, and its hairline reads at half strength over
+     the gradient. An inactive window loses the glass and goes flat, as
+     macOS's do. */
+  --vibrant-bg: rgb(255 255 255 / 0.55);
+  --vibrant-clear: rgb(255 255 255 / 0.12);
+  --pane-bg: rgb(0 0 0 / 0.05);
+  --pane-line: rgb(255 255 255 / 0.75);
+  --pod-pane-line: rgb(255 255 255 / 0.35);
+  --pane-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.07), 0 2px 4px rgb(0 0 0 / 0.05),
+    0 10px 24px -8px rgb(0 0 0 / 0.16);
+  /* Toolbar controls: the bar's own colour, lifted off it by a soft shadow;
+     in dark, a shade lighter than the bar so they read at all. */
+  --glass-bg: var(--notes-bg);
+  --glass-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.08),
+    0 2px 6px rgb(0 0 0 / 0.06);
+  /* The Notes toolbar's separator and the list's, a shade fainter than the
+     others. */
+  --nt-line: rgb(0 0 0 / 0.065);
   /* Dark: the palette everything in here was drawn against, unchanged. */
   @media (prefers-color-scheme: dark) {
     --ink: 255 255 255;
     --bar-bg: rgb(24 25 29 / 0.55);
     --window-bg: #101116;
-    --titlebar-bg: linear-gradient(
-      rgb(var(--ink) / 0.09),
-      rgb(var(--ink) / 0.045)
-    );
     --meeting-bg: #16171d;
-    --notes-bg: #17171a;
+    --notes-bg: #1f1f21;
     --tile-bg: linear-gradient(150deg, #262838, #191a24);
     /* Lifted off the near-black, so the transport strip reads as a bar on the
        window rather than a hole in it. */
     --controls-bg: rgb(36 36 45 / 0.94);
     --pill-line: rgb(210 210 211 / 0.16);
-    --menu-bg: rgb(44 44 50 / 0.9);
+    --menu-bg: rgb(40 40 46 / 0.78);
     --menu-accent: #3b7cf7;
     --panel-bg: rgb(38 38 44 / 0.55);
-    --recess: rgb(0 0 0 / 0.3);
-    --recess-deep: rgb(0 0 0 / 0.42);
     --window-line: rgb(var(--ink) / 0.045);
+    --sep: 1;
     --played: rgb(157 153 255 / 0.9);
     --content-dim: brightness(0.86);
-    --window-shadow: 0 2px 6px rgb(0 0 0 / 0.34),
-      0 14px 34px -10px rgb(0 0 0 / 0.6);
+    --window-shadow: 0 2px 8px rgb(0 0 0 / 0.36),
+      0 26px 52px -18px rgb(0 0 0 / 0.65);
     --window-shadow-front: 0 2px 6px rgb(0 0 0 / 0.36),
       0 26px 60px -10px rgb(0 0 0 / 0.72);
     --art-shadow: 0 10px 26px -8px rgb(0 0 0 / 0.8);
-    --window-ring: 0 0 0 0.5px rgb(0 0 0 / 0.6);
+    --window-ring: 0 0 0 0.5px rgb(0 0 0 / 0.7),
+      inset 0 0 0 0.5px rgb(255 255 255 / 0.13);
     --window-inner: rgb(255 255 255 / 0.1);
+    --vibrant-bg: rgb(30 30 33 / 0.5);
+    --vibrant-clear: rgb(30 30 33 / 0.12);
+    --pane-bg: rgb(0 0 0 / 0.2);
+    --pane-line: rgb(255 255 255 / 0.1);
+    --pod-pane-line: rgb(255 255 255 / 0.1);
+    --pane-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.5), 0 2px 4px rgb(0 0 0 / 0.25),
+      0 10px 24px -8px rgb(0 0 0 / 0.5);
+    --glass-bg: rgb(255 255 255 / 0.08);
+    --glass-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.4), 0 1px 2px rgb(0 0 0 / 0.3),
+      0 2px 6px rgb(0 0 0 / 0.25);
+    --nt-line: rgb(255 255 255 / 0.1);
     --desktop-bg: radial-gradient(
         55% 60% at 16% 10%,
         rgb(104 88 255 / 0.5),
@@ -158,9 +187,9 @@
        0.3 and the peach at 0.1, so the scene reads as a glow behind the show
        rather than two spots on it. */
     --scene-bg: radial-gradient(
-        52% 58% at 26% 32%,
+        62% 58% at 18% 32%,
         rgb(112 108 255 / 0.3),
-        transparent 66%
+        transparent 70%
       ),
       radial-gradient(
         60.7% 93% at 74% 28%,
@@ -416,7 +445,9 @@
    lights, a faded title, and a shallower shadow than the window on top of it. */
 .demo_window {
   background: var(--window-bg);
-  border-radius: calc(1.25 * var(--u));
+  /* Rounder since Tahoe, with the light rim inside the edge that --window-ring
+     carries and a softer, deeper shadow. */
+  border-radius: calc(2.4 * var(--u));
   box-shadow: var(--window-ring), var(--window-shadow);
   display: flex;
   flex-direction: column;
@@ -555,10 +586,13 @@
 
 /* The handle: a window is dragged by its bar, as on a real desktop, and no
    modifier, the caption box needs shift because it is what clicks fall
-   through, and a window is not. */
+   through, and a window is not. Since Tahoe the bar is the window's own
+   surface, its content's colour, with one separator under it, rather than a
+   lid on the window; a window whose content has a tint carries the tint up
+   into the bar. */
 .titlebar {
   align-items: center;
-  background: var(--titlebar-bg);
+  background: transparent;
   border-bottom: 1px solid var(--window-line);
   cursor: grab;
   display: flex;
@@ -572,9 +606,13 @@
   position: relative;
 }
 
+.win_meeting .titlebar {
+  background: var(--meeting-bg);
+}
+
 .lights {
   display: inline-flex;
-  gap: calc(0.68 * var(--u));
+  gap: calc(0.75 * var(--u));
 
   i {
     border-radius: 50%;
@@ -661,24 +699,127 @@
 
 /* The podcast window is shaped like a desktop music app: library rail,
    now-playing pane, transport bar. Still no images: the artwork is a gradient
-   and the waveform is 96 divs with a height each. */
+   and the waveform is 96 divs with a height each. Laid out the Tahoe way: the
+   rail is a pane inset from the window's edges with the traffic lights in its
+   header, the main column carries the bar with the title, and the transport
+   is a fixed height across the bottom that the pane stops above by the gap it
+   keeps from the top. */
+.win_player {
+  --bar-h: calc(5.85 * var(--u));
+}
+
 .pod {
   display: flex;
-  inset: 0 0 calc(4.77 * var(--u));
+  inset: 0 0 var(--bar-h);
   min-height: 0;
   position: absolute;
 }
 
-/* library rail */
+/* Sidebars are full-height panes inset from the window's edges, on glass. The
+   sidebar's column is a glass region, a pseudo-element under the pane, that
+   blurs what the window paints there: the podcast's gradient, the Notes
+   window's own surface. A backdrop filter gets a compositing layer of its own,
+   and that layer does not take the window's rounded clip: a square of blurred
+   picture showed past the corner. The region rounds its own outer corners to
+   the window's radius instead. Behind the front window the content is dimmed
+   with a filter, which walls a backdrop filter off from what is behind it, so
+   those go flat, as inactive windows do. */
+.nt::before,
+.pod::before {
+  backdrop-filter: blur(24px) saturate(140%);
+  background: var(--vibrant-bg);
+  border-radius: calc(2.4 * var(--u)) 0 0 calc(2.4 * var(--u));
+  content: "";
+  inset: 0 auto 0 0;
+  position: absolute;
+  width: calc(21.12% + 0.55 * var(--u));
+}
+
+/* The podcast's scene runs under the whole window, so its sidebar's glass is
+   nearly clear and tints to the window's own gradient; the scene is inside the
+   window, so the blur keeps seeing it behind the front one. */
+.pod::before {
+  background: var(--vibrant-clear);
+  width: calc(10.64 * var(--u));
+}
+
+.app_notes.is_narrow .nt::before,
+.win_player.is_narrow .pod::before {
+  display: none;
+}
+
+.demo_window:not(.is_front) .nt::before {
+  backdrop-filter: none;
+}
+
+/* The pane itself: a shade darker than the window it sits in, a white-ish
+   hairline around it, a soft shadow under, and its corners concentric with the
+   window's, the window's radius less the inset. The traffic lights sit in its
+   own header, with the pane's buttons, as Tahoe draws a sidebar window; the
+   main column carries its own bar beside it. */
+.nt_side,
 .pod_side {
-  background: var(--recess-deep);
-  border-right: 1px solid rgb(var(--ink) / 0.06);
+  background: var(--pane-bg);
+  border: 1px solid var(--pane-line);
+  border-radius: calc(1.85 * var(--u));
+  box-shadow: var(--pane-shadow);
+  margin: calc(0.55 * var(--u)) 0 calc(0.55 * var(--u)) calc(0.55 * var(--u));
+  padding-top: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.nt_main,
+.pod_main_col {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.nt_side_bar,
+.pod_side_bar {
+  border-bottom: 0;
+  flex: none;
+  justify-content: space-between;
+  margin-bottom: calc(0.2 * var(--u));
+  padding-inline: calc(0.3 * var(--u));
+}
+
+.pod_side_bar {
+  margin-bottom: 0;
+  padding-inline: 0;
+}
+
+.nt_topbar,
+.pod_topbar {
+  flex: none;
+}
+
+/* When a window is pulled narrow enough to lose its pane, a second set of
+   lights in the main bar takes over. */
+.nt_lights_narrow,
+.pod_lights_narrow {
+  display: none;
+}
+
+.app_notes.is_narrow .nt_lights_narrow,
+.win_player.is_narrow .pod_lights_narrow {
+  display: inline-flex;
+}
+
+/* library rail, 20% wider than it was, its hairline at half strength over the
+   gradient */
+.pod_side {
+  border-color: var(--pod-pane-line);
   display: flex;
   flex: none;
   flex-direction: column;
   gap: calc(1.14 * var(--u));
-  padding: calc(2.05 * var(--u)) calc(1.48 * var(--u));
-  width: calc(8.41 * var(--u));
+  padding: 0 calc(1.48 * var(--u)) calc(2.05 * var(--u));
+  width: calc(10.09 * var(--u));
 }
 
 .pod_nav,
@@ -991,19 +1132,22 @@
 }
 
 /* transport bar across the bottom of the window. A solid strip rather than a
-   gradient fade, the way a desktop player's is. */
+   gradient fade, the way a desktop player's is, at the fixed height the pod's
+   inset shares. */
 .win_controls {
   align-items: center;
   background: var(--controls-bg);
-  border-top: 1px solid rgb(var(--ink) / 0.08);
+  border-top: 1px solid rgb(var(--ink) / calc(0.08 * var(--sep)));
   bottom: 0;
+  box-sizing: border-box;
   color: rgb(var(--ink) / 0.72);
   display: flex;
   font-size: calc(1.25 * var(--u));
   font-variant-numeric: tabular-nums;
   gap: calc(1.36 * var(--u));
+  height: var(--bar-h);
   left: 0;
-  padding: calc(1.02 * var(--u)) calc(1.82 * var(--u));
+  padding: 0 calc(1.82 * var(--u));
   position: absolute;
   right: 0;
 }
@@ -1105,7 +1249,8 @@
 .tile {
   background: var(--tile-bg);
   border: 1.5px solid transparent;
-  border-radius: calc(0.8 * var(--u));
+  /* The frame's rounding, since Tahoe. */
+  border-radius: calc(1.3 * var(--u));
   display: grid;
   overflow: hidden;
   place-items: center;
@@ -1184,13 +1329,21 @@
   background: linear-gradient(145deg, #8a6fb8, #5f4a8a);
 }
 
+/* The call's controls float as a capsule over the tiles, on the pane's glass,
+   as Tahoe floats them. */
 .meet_bar {
-  background: var(--recess);
+  align-self: center;
+  backdrop-filter: blur(20px) saturate(160%);
+  background: var(--pane-bg);
+  border: 1px solid var(--pane-line);
+  border-radius: 999px;
   display: flex;
   flex: none;
   gap: calc(1.02 * var(--u));
   justify-content: center;
-  padding: calc(1.02 * var(--u));
+  margin-bottom: calc(0.9 * var(--u));
+  padding: calc(0.55 * var(--u)) calc(0.9 * var(--u));
+  width: max-content;
 }
 
 .meet_btn {
@@ -1214,9 +1367,10 @@
 }
 
 /* ── the notes you switch to ────────────────────────────────
-   Apple's, drawn as it is: the toolbar in the title bar, then three columns,
-   the folders, the list, the note, in the demo's tokens, so it follows the page
-   the way the real one follows the Mac. */
+   Apple's, drawn as it is and laid out the way macOS 26 lays it out: the
+   folders in a pane with the traffic lights in its header, then the main
+   column with its own toolbar, the list and the note, in the demo's tokens, so
+   it follows the page the way the real one follows the Mac. */
 
 .win_notes .win_content {
   background: var(--notes-bg);
@@ -1262,6 +1416,60 @@
     height: calc(1.5 * var(--u));
     width: calc(1.5 * var(--u));
   }
+
+  /* The toolbar's controls sit on glass: compose and share as circles, the
+     format controls together in a capsule, the search as one. */
+  > .nt_g {
+    background: var(--glass-bg);
+    border-radius: 50%;
+    box-shadow: var(--glass-shadow);
+    box-sizing: border-box;
+    height: calc(2.2 * var(--u));
+    padding: calc(0.42 * var(--u));
+    width: calc(2.2 * var(--u));
+  }
+
+  /* The compose glyph's pen leans to the top right and leaves the bottom left
+     empty, so centring the box does not centre the mark; a tenth to the right
+     does. */
+  > .nt_g:first-child svg {
+    transform: translateX(10%);
+  }
+}
+
+.nt_group {
+  align-items: center;
+  background: var(--glass-bg);
+  border-radius: 999px;
+  box-shadow: var(--glass-shadow);
+  display: inline-flex;
+  gap: calc(1.1 * var(--u));
+  padding: calc(0.3 * var(--u)) calc(0.9 * var(--u));
+}
+
+/* The main column's bar: as tall as its capsules need, with the fainter of
+   the separators under it. */
+.nt_topbar {
+  align-items: center;
+  border-bottom-color: var(--nt-line);
+  box-sizing: content-box;
+  height: auto;
+  padding-block: calc(0.94 * var(--u));
+
+  .nt_tools,
+  .nt_tools > * {
+    align-self: center;
+  }
+}
+
+/* The pane's two buttons, new folder and the sidebar toggle, hug its right
+   edge, as Notes sets them. */
+.nt_side_tools {
+  align-items: center;
+  color: rgb(var(--ink) / 0.55);
+  display: inline-flex;
+  gap: calc(0.9 * var(--u));
+  margin-inline-start: auto;
 }
 
 .nt_aa {
@@ -1276,9 +1484,9 @@
 
 .nt_search {
   align-items: center;
-  background: rgb(var(--ink) / 0.07);
-  border-radius: calc(0.5 * var(--u));
-  box-shadow: inset 0 0 0 0.5px rgb(var(--ink) / 0.1);
+  background: var(--glass-bg);
+  border-radius: 999px;
+  box-shadow: var(--glass-shadow);
   color: rgb(var(--ink) / 0.4);
   display: inline-flex;
   font-size: calc(1 * var(--u));
@@ -1298,19 +1506,26 @@
   display: flex;
   font-size: calc(1.05 * var(--u));
   height: 100%;
+  position: relative;
 }
 
+/* The folders' pane, drawn with the podcast's rail above: at 88% of the width
+   it had, its own bar at the top in place of the padding. */
 .nt_side {
-  background: rgb(var(--ink) / 0.04);
-  border-right: 1px solid rgb(var(--ink) / 0.08);
   color: rgb(var(--ink) / 0.85);
   display: flex;
   flex: none;
   flex-direction: column;
   gap: calc(0.25 * var(--u));
   min-width: 0;
-  padding: calc(1.2 * var(--u)) calc(0.8 * var(--u));
-  width: 24%;
+  padding: 0 calc(0.8 * var(--u)) calc(1.2 * var(--u));
+  width: 21.12%;
+}
+
+.nt_body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 
 .nt_h {
@@ -1330,8 +1545,15 @@
   padding-inline: calc(0.6 * var(--u));
   white-space: nowrap;
 
+  /* The chosen folder's name and count in the gold Notes gives them, since
+     Tahoe, as its glyph always was. */
   &.is_on {
     background: rgb(var(--ink) / 0.11);
+    color: #f2b300;
+  }
+
+  &.is_on u {
+    color: #f2b300;
   }
 
   /* The folders in the gold Notes gives them. */
@@ -1353,7 +1575,7 @@
 }
 
 .nt_list {
-  border-right: 1px solid rgb(var(--ink) / 0.08);
+  border-right: 1px solid var(--nt-line);
   display: flex;
   flex: none;
   flex-direction: column;
@@ -1364,7 +1586,7 @@
 }
 
 .nt_item {
-  border-bottom: 1px solid rgb(var(--ink) / 0.06);
+  border-bottom: 1px solid rgb(var(--ink) / calc(0.06 * var(--sep)));
   border-radius: calc(0.6 * var(--u));
   display: grid;
   gap: calc(0.35 * var(--u));
@@ -1429,6 +1651,11 @@
   .nt_list {
     width: 36%;
   }
+
+  /* With the pane gone the lights move to the main bar, as under is_narrow. */
+  .nt_lights_narrow {
+    display: inline-flex;
+  }
 }
 
 @container (max-width: 430px) {
@@ -1438,8 +1665,9 @@
 }
 
 /* The same two steps when the window itself is pulled narrow, as Notes takes
-   them: the folders go first, then the list, and the toolbar sheds its tools
-   from the right so the search field is never the thing that gets cut. */
+   them: the folders go first, then the list, and the toolbar sheds its
+   controls from the right so the search field is never the thing that gets
+   cut: the share circle first, then the format capsule. */
 .app_notes.is_narrow .nt_side {
   display: none;
 }
@@ -1448,7 +1676,7 @@
   width: 36%;
 }
 
-.app_notes.is_narrow .nt_tools .nt_g:nth-of-type(n + 7) {
+.app_notes.is_narrow .nt_tools > .nt_group + .nt_g {
   display: none;
 }
 
@@ -1456,8 +1684,7 @@
   display: none;
 }
 
-.app_notes.is_cramped .nt_tools .nt_aa,
-.app_notes.is_cramped .nt_tools .nt_g:nth-of-type(n + 5) {
+.app_notes.is_cramped .nt_group {
   display: none;
 }
 
@@ -1545,7 +1772,8 @@
   align-items: center;
   backdrop-filter: blur(40px) saturate(180%);
   background: var(--panel-bg);
-  border-radius: calc(1.93 * var(--u));
+  /* Rounder since Tahoe, as the windows are. */
+  border-radius: calc(2.7 * var(--u));
   display: flex;
   gap: calc(1.36 * var(--u));
   left: 50%;
@@ -1968,23 +2196,23 @@
 /* ── the status menu ─────────────────────────────────────────
    The app's, dropped from the glyph in the menu bar. Sized off the bar's unit
    so it stays a menu at every width; the material and the radius are the ones
-   macOS gives a menu, the accent row is the system highlight. Its unit is set
-   here again because it sits in the screen, beside the bar, rather than in
-   the stage. */
+   macOS gives a menu since Tahoe, rounder, with the rim the windows have, and
+   the accent row is the system highlight. Its unit is set here again because
+   it sits in the screen, beside the bar, rather than in the stage. */
 .mn_root {
   --u: clamp(4px, 0.8182cqw, 8.51px);
 }
 
 .mn_panel {
-  backdrop-filter: blur(40px) saturate(180%);
-  background: var(--menu-bg);
-  border-radius: calc(1 * var(--u));
-  box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.25), 0 10px 30px -6px rgb(0 0 0 / 0.35);
+  --mn-pad: calc(0.7 * var(--u));
+
+  border-radius: calc(1.6 * var(--u));
+  box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.22), 0 12px 34px -8px rgb(0 0 0 / 0.35);
   color: rgb(var(--ink) / 0.92);
   display: none;
   font-size: calc(1.25 * var(--u));
   min-width: calc(31 * var(--u));
-  padding: calc(0.5 * var(--u));
+  padding: var(--mn-pad);
   pointer-events: none;
   position: absolute;
   right: calc(1.36 * var(--u));
@@ -1997,6 +2225,89 @@
 
   &.is_open {
     display: block;
+  }
+
+  /* The material is a layer under the rows, not a filter on the panel itself:
+     an element that filters its backdrop walls its descendants off from the
+     screen, they see only what it paints, and a submenu is a descendant of the
+     menu it hangs off. With the filter on the panel, the submenu blurred the
+     menu's tint and showed the windows behind it sharp. On a layer of its own,
+     each panel's glass sees the screen. The rim is inside the box, so it sits
+     on this layer too, over the blur. */
+  &::before {
+    backdrop-filter: blur(40px) saturate(180%);
+    background: var(--menu-bg);
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 0.35);
+    content: "";
+    inset: 0;
+    position: absolute;
+    z-index: -1;
+  }
+}
+
+/* A panel the screen leaves no room for scrolls inside itself, as a macOS
+   menu taller than the screen does. The component puts the rows in this
+   holder and caps it; the holder takes over the panel's padding, so a row
+   shaking its head has the room it had, and no scrollbar shows. It is a
+   scroll container only while the panel is short of room, so a menu that fits
+   cannot be rubber-banded; and no bounce at the ends even then, as a macOS
+   menu has none. A submenu sits beside the holder, not in it, so the holder
+   never clips it. */
+.mn_scroll {
+  margin: calc(-1 * var(--mn-pad));
+  padding: var(--mn-pad);
+}
+
+.mn_panel[data-capped] > .mn_scroll {
+  overflow: hidden auto;
+  overscroll-behavior: none;
+  scrollbar-width: none;
+}
+
+.mn_scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* The chevron's band at either end: a row's height past the panel's padding,
+   the chevron centred in the row's part. The holder ends where the band
+   begins, so the band is the bare panel, glass and rim, with the chevron on
+   it; it shows only while there is more that way, and scrolls the rows under
+   the pointer. */
+.mn_arrow {
+  align-items: center;
+  color: rgb(var(--ink) / 0.6);
+  display: flex;
+  height: calc(2.5 * var(--u) + var(--mn-pad));
+  justify-content: center;
+  left: 0;
+  position: absolute;
+  right: 0;
+  visibility: hidden;
+  z-index: 1;
+
+  &[data-shown] {
+    visibility: visible;
+  }
+
+  &.is_up {
+    padding-top: var(--mn-pad);
+    top: 0;
+  }
+
+  &.is_down {
+    bottom: 0;
+    padding-bottom: var(--mn-pad);
+  }
+
+  svg {
+    display: block;
+    height: calc(0.6 * var(--u));
+    width: calc(1 * var(--u));
+  }
+
+  &.is_up svg {
+    transform: rotate(180deg);
   }
 }
 
@@ -2070,14 +2381,37 @@
   top: 0;
 }
 
+/* A submenu's own submenu goes the other way, over the menu, as macOS sends
+   it once the level above had to open towards the screen's edge; and back
+   again when the edge leaves it no room there either, see placeSub. */
+.mn_sub .mn_sub {
+  left: calc(100% - 0.3 * var(--u));
+  right: auto;
+}
+
+.mn_sub .mn_sub[data-left] {
+  left: auto;
+  right: calc(100% - 0.3 * var(--u));
+}
+
 .mn_row {
   align-items: center;
-  border-radius: calc(0.5 * var(--u));
+  border-radius: calc(0.9 * var(--u));
   display: flex;
   gap: calc(0.5 * var(--u));
-  height: calc(2.3 * var(--u));
+  height: calc(2.5 * var(--u));
   padding-inline: calc(0.6 * var(--u)) calc(1 * var(--u));
   position: relative;
+
+  /* A row with a note under its name, as the app draws its models and its
+     translation timings: two lines in the one colour, the check on the first,
+     the row as tall as they need. */
+  &.has_note {
+    align-items: flex-start;
+    height: auto;
+    line-height: calc(1.55 * var(--u));
+    padding-block: calc(0.45 * var(--u));
+  }
 
   &.is_dim {
     color: rgb(var(--ink) / 0.38);
@@ -2113,6 +2447,10 @@
 
 .mn_label {
   flex: 1;
+}
+
+.mn_note {
+  display: block;
 }
 
 .mn_key,
