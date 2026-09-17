@@ -1607,12 +1607,15 @@ class NameTab {
     this.place(box);
   }
 
+  // The class goes on every time, not only the first: a box that has been
+  // through Off or Header Row since (undress takes it off) is the same box
+  // with the same masks, and comes back to the tab as it went.
   private dress(box: HTMLElement): TabState {
+    box.classList.add(this.names.tabbed);
     const had = this.boxes.get(box);
     if (had) {
       return had;
     }
-    box.classList.add(this.names.tabbed);
     const rim = document.createElement("span");
     rim.className = this.names.rim;
     rim.setAttribute("aria-hidden", "true");
@@ -1649,13 +1652,16 @@ class NameTab {
   }
 
   // A box back to a plain pill, or a header row: its classes off, its rim and
-  // its ring hidden. Its masks stay, unreferenced, for the next time.
+  // its ring hidden. Its masks stay, unreferenced, for the next time; what it
+  // was last drawn as does not, so that the next draw draws it whole, rim and
+  // ring with it, even at the size it left at.
   private undress(box: HTMLElement) {
     const st = this.boxes.get(box);
     box.classList.remove(this.names.tabbed, this.names.hasTab);
     if (!st) {
       return;
     }
+    st.key = "";
     st.rim.style.display = "none";
     if (st.trace) {
       st.trace.classList.remove(this.names.on, this.names.visible);
@@ -2309,10 +2315,14 @@ export const SubtitlesDemo = () => {
     }
   };
   // The pointer on its way to an open submenu crosses the rows between, and
-  // macOS gives it the benefit of the doubt: while it is moving towards the
-  // submenu, inside the triangle from where it was a moment ago to the
-  // submenu's near edge, the row it is crossing is not taken as the one it
-  // wants. Once it stops, or turns away, the row is.
+  // macOS gives it the benefit of the doubt: while it is heading for the
+  // submenu, the row it is crossing is not taken as the one it wants. Heading
+  // for it means that, going as it goes, it would cross the submenu's near
+  // edge within the next half second. Once it stops, slows or turns away, the
+  // row is taken. Heading and pace are read from its last tenth of a second
+  // on the move, and the pace is what tells a pointer going for the submenu
+  // from one wandering down the rows a little sideways: that one would cross
+  // the edge too, a second or two on, and is on a row it wants long before.
   const trackRef = useRef<{ x: number; y: number; t: number }[]>([]);
   const aimRef = useRef(0);
   const hoveredRef = useRef<string | null>(null);
@@ -2320,12 +2330,22 @@ export const SubtitlesDemo = () => {
     const now = performance.now();
     const track = trackRef.current;
     track.push({ x: e.clientX, y: e.clientY, t: now });
-    // The first sample kept is the last one from before this last third of a
-    // second: where the pointer was when it set off, however long it rested
-    // there.
-    while (track.length > 2 && now - (track[1]?.t ?? now) > 320) {
+    // The last tenth of a second, and one sample from before it.
+    while (track.length > 2 && now - (track[1]?.t ?? now) > 100) {
       track.shift();
     }
+  };
+  const within = (sub: HTMLElement) => {
+    const track = trackRef.current;
+    const now = track[track.length - 1];
+    const r = sub.getBoundingClientRect();
+    return (
+      !!now &&
+      now.x >= r.left &&
+      now.x <= r.right &&
+      now.y >= r.top &&
+      now.y <= r.bottom
+    );
   };
   const toward = (sub: HTMLElement) => {
     const track = trackRef.current;
@@ -2337,32 +2357,37 @@ export const SubtitlesDemo = () => {
     if (!now || !from) {
       return false;
     }
-    if (Math.abs(now.x - from.x) < 2 && Math.abs(now.y - from.y) < 2) {
+    const dx = now.x - from.x;
+    const dy = now.y - from.y;
+    if (Math.abs(dx) < 2 && Math.abs(dy) < 2) {
       return false;
     }
-    const r = sub.getBoundingClientRect();
-    if (
-      now.x >= r.left &&
-      now.x <= r.right &&
-      now.y >= r.top &&
-      now.y <= r.bottom
-    ) {
+    // How long the pointer took over that: the time between samples, each
+    // stretch capped at about a frame, since no event comes while it rests,
+    // and a pointer that rested on a row and then set off is going at the
+    // pace it set off at, not at the rest's.
+    let dt = 0;
+    for (let i = 1; i < track.length; i++) {
+      dt += Math.min((track[i]?.t ?? 0) - (track[i - 1]?.t ?? 0), 20);
+    }
+    if (dt <= 0) {
+      return false;
+    }
+    if (within(sub)) {
       return true;
     }
+    const r = sub.getBoundingClientRect();
     // The near edge is the one that faces the row the submenu hangs off.
     const near =
-      Math.abs(from.x - r.right) < Math.abs(from.x - r.left) ? r.right : r.left;
-    const b = { x: near, y: r.top - 6 };
-    const c = { x: near, y: r.bottom + 6 };
-    const side = (
-      p: { x: number; y: number },
-      q: { x: number; y: number },
-      s: { x: number; y: number }
-    ) => (q.x - p.x) * (s.y - p.y) - (q.y - p.y) * (s.x - p.x);
-    const d1 = side(from, b, now);
-    const d2 = side(b, c, now);
-    const d3 = side(c, from, now);
-    return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
+      Math.abs(now.x - r.right) < Math.abs(now.x - r.left) ? r.right : r.left;
+    // When it would reach that edge: never, going away from it or along it;
+    // too late to count, at a crawl.
+    const when = ((near - now.x) / dx) * dt;
+    if (!(when > 0) || when > 500) {
+      return false;
+    }
+    const y = now.y + (dy / dx) * (near - now.x);
+    return y >= r.top - 6 && y <= r.bottom + 6;
   };
   const onRowOver =
     (row: MenuItem, path: string[]) => (e: ReactPointerEvent) => {
@@ -2381,6 +2406,11 @@ export const SubtitlesDemo = () => {
         const later = () => {
           aimRef.current = 0;
           if (hoveredRef.current !== key) {
+            return;
+          }
+          // Made it, and resting on the submenu's padding or a separator
+          // rather than a row, which would have taken over: it stays.
+          if (within(sub)) {
             return;
           }
           const last = trackRef.current[trackRef.current.length - 1];
