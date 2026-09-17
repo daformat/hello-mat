@@ -2,6 +2,7 @@ import {
   CSSProperties,
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
+  ReactNode,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -9,6 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { flushSync } from "react-dom";
 
 import styles from "./SubtitlesDemo.module.scss";
 
@@ -340,6 +342,161 @@ type HistoryPage = {
  *  default; the tab on the pill's top edge; or off. */
 type IconStyle = "header" | "nameTab" | "off";
 
+// ── the settings ───────────────────────────────────────────────────────────
+// The demo seeded with the app's settings, so the box it draws is the box the
+// reader has. The keys are the app's own (PreviewStyle in its
+// SettingsPreview.swift), so that struct encodes straight into the seed. Read
+// from window.SUBTITLES_SETTINGS, set before the page's script runs, and from
+// the page's query string, which wins key by key:
+// ?fontSize=40&iconStyle=nameTab&revealEnabled=0. A key left out keeps what
+// the demo always was, DEMO_DEFAULTS; a key that is not a setting, or a value
+// that is not one, is dropped. A setting changed later arrives as a
+// `subtitles:settings` event on the document whose detail holds the keys that
+// changed and nothing else, read the same way, and the demo follows it in
+// place: see applySettings.
+//
+//   fontSize            points: the menu's 22 / 30 / 40 / 52, or any other
+//   textAlignment       start | center
+//   iconStyle           off | nameTab | header
+//   maxLines            lines a box fills before it pages, 1 and up
+//   boxOpacity          0…1, how solid the box is behind the text
+//   blur                points, 0 for none
+//   revealEnabled       Fade Away Under Pointer
+//   revealOpacity       0…1, how much of the box the pointer takes
+//   revealWidth         points, the hole's full extent; or revealSize as
+//   revealHeight        {width, height} or [width, height], as CGSize encodes
+//   historyEnabled      Recent Boxes On ⌥
+//   historyDepth        boxes kept: 0 for none, anything past 2000 for all
+//   historyTextOpacity  0…1, the stack's text against the live box's white
+//   historyExpires      whether a silence forgets the stack
+//   historyExpiry       seconds of silence that does
+type Settings = {
+  fontSize: number;
+  textAlignment: "start" | "center";
+  iconStyle: IconStyle;
+  maxLines: number;
+  boxOpacity: number;
+  blur: number;
+  revealEnabled: boolean;
+  revealOpacity: number;
+  revealWidth: number;
+  revealHeight: number;
+  historyEnabled: boolean;
+  historyDepth: number;
+  historyTextOpacity: number;
+  historyExpires: boolean;
+  historyExpiry: number;
+};
+// What the demo runs on before it is seeded: the app's defaults where the demo
+// already drew them, and the demo's own where it differs. The stack keeps
+// fifteen boxes, not the app's every box, since a loop that repeats seven
+// lines would stack hundreds of them; it never forgets them, since the loop
+// never falls silent; and a box holds its whole sentence, however many lines,
+// rather than paging at the app's two.
+const DEMO_DEFAULTS: Settings = {
+  fontSize: 30,
+  textAlignment: "start",
+  iconStyle: "header",
+  maxLines: Infinity,
+  boxOpacity: 0.72,
+  blur: 6,
+  revealEnabled: true,
+  revealOpacity: 0.95,
+  revealWidth: 800,
+  revealHeight: 400,
+  historyEnabled: true,
+  historyDepth: 15,
+  historyTextOpacity: 0.65,
+  historyExpires: false,
+  historyExpiry: 30,
+};
+const readSettings = (given: unknown): Partial<Settings> => {
+  const NUMBER: Partial<Record<keyof Settings, [number, number]>> = {
+    fontSize: [1, 400],
+    maxLines: [1, 50],
+    boxOpacity: [0, 1],
+    blur: [0, 200],
+    revealOpacity: [0, 1],
+    revealWidth: [1, 1e5],
+    revealHeight: [1, 1e5],
+    historyDepth: [0, Infinity],
+    historyTextOpacity: [0, 1],
+    historyExpiry: [0, 1e7],
+  };
+  const WHOLE = ["maxLines", "historyDepth"];
+  const FLAG = ["revealEnabled", "historyEnabled", "historyExpires"];
+  const WORD: Partial<Record<keyof Settings, string[]>> = {
+    textAlignment: ["start", "center"],
+    iconStyle: ["off", "nameTab", "header"],
+  };
+  const out: Record<string, unknown> = {};
+  const take = (key: string, value: unknown) => {
+    if (key === "revealSize") {
+      if (!value || typeof value !== "object") {
+        return;
+      }
+      const size = value as { width?: unknown; height?: unknown };
+      const pair = Array.isArray(value) ? (value as unknown[]) : null;
+      take("revealWidth", pair ? pair[0] : size.width);
+      take("revealHeight", pair ? pair[1] : size.height);
+    } else if (key in NUMBER) {
+      const range = NUMBER[key as keyof Settings] ?? [0, 0];
+      let n = typeof value === "string" ? parseFloat(value) : Number(value);
+      if (Number.isNaN(n) || n < range[0] || n > range[1]) {
+        return;
+      }
+      if (WHOLE.includes(key) && Number.isFinite(n)) {
+        n = Math.round(n);
+      }
+      out[key] = n;
+    } else if (FLAG.includes(key)) {
+      out[key] =
+        typeof value === "string"
+          ? !/^(0|false|off|no)$/i.test(value.trim())
+          : !!value;
+    } else if (key in WORD) {
+      if (
+        typeof value === "string" &&
+        WORD[key as keyof Settings]?.includes(value)
+      ) {
+        out[key] = value;
+      }
+    }
+  };
+  if (given && typeof given === "object") {
+    Object.entries(given as Record<string, unknown>).forEach(([k, v]) =>
+      take(k, v)
+    );
+  }
+  return out as Partial<Settings>;
+};
+/** The page's seed: the window's, under the query string's. */
+const seedSettings = (): Partial<Settings> => {
+  const out = readSettings(
+    (window as { SUBTITLES_SETTINGS?: unknown }).SUBTITLES_SETTINGS
+  );
+  try {
+    Object.assign(
+      out,
+      readSettings(Object.fromEntries(new URLSearchParams(location.search)))
+    );
+  } catch {
+    // no location to read
+  }
+  return out;
+};
+/** The words of `text` from `from` up to `to`, counted in a line `of` words
+ *  long: a page of the line itself, or the same stretch of its source, which
+ *  is not the same length and is taken as a fraction of it, as the box draws
+ *  the source under ⌃. */
+const pageOf = (text: string, from: number, to: number, of: number) => {
+  const words = text.split(" ");
+  const at = (k: number) =>
+    of === words.length ? k : Math.round((k / of) * words.length);
+  const start = Math.min(at(from), words.length - 1);
+  return words.slice(start, Math.max(start + 1, at(to))).join(" ");
+};
+
 // ── searching the stack ────────────────────────────────────────────────────
 // The app's HistorySearch: case and accents fold on both sides, so "ete" finds
 // "été" and "Zurich" finds "Zürich", and every occurrence counts. Folded one
@@ -390,8 +547,48 @@ const searchRanges = (query: string, text: string) => {
 const searchMatches = (text: string, query: string) =>
   !query || searchRanges(query, text).length > 0;
 
-/** `text` into `el`, with the hits wrapped so they can be lit. A background
- *  changes no glyph's advance, so a box measures the same lit or not. */
+// A keyboard shortcut said inside a box is drawn as a keycap: a run of
+// modifier glyphs, with the key letter it may carry (⌥F), becomes a <kbd>,
+// and whatever the sentence glues to it stays text, the comma in "pulsa ⌥,".
+// Drawn from the text as the live box types it and as the stack's boxes are
+// written, so no line carries markup for it.
+const KEYCAP = /[⌥⇧⌃⌘]+[A-Z0-9]?/g;
+/** `text` into `el`, its shortcuts as keycaps. */
+const appendKeys = (el: HTMLElement, text: string) => {
+  let at = 0;
+  for (const m of text.matchAll(KEYCAP)) {
+    if (m.index > at) {
+      el.append(text.slice(at, m.index));
+    }
+    const key = document.createElement("kbd");
+    key.textContent = m[0];
+    el.append(key);
+    at = m.index + m[0].length;
+  }
+  if (at < text.length) {
+    el.append(text.slice(at));
+  }
+};
+/** The same, for React: `text` as strings and <kbd> elements. */
+const keycaps = (text: string): ReactNode[] => {
+  const out: ReactNode[] = [];
+  let at = 0;
+  for (const m of text.matchAll(KEYCAP)) {
+    if (m.index > at) {
+      out.push(text.slice(at, m.index));
+    }
+    out.push(<kbd key={m.index}>{m[0]}</kbd>);
+    at = m.index + m[0].length;
+  }
+  if (at < text.length) {
+    out.push(text.slice(at));
+  }
+  return out;
+};
+
+/** `text` into `el`, with the hits wrapped so they can be lit, and its
+ *  shortcuts as keycaps, hits and all. A background changes no glyph's
+ *  advance, so a box measures the same lit or not. */
 const writeLit = (
   el: HTMLElement,
   text: string,
@@ -402,16 +599,16 @@ const writeLit = (
   let at = 0;
   searchRanges(query, text).forEach(([from, to]) => {
     if (from > at) {
-      el.append(text.slice(at, from));
+      appendKeys(el, text.slice(at, from));
     }
     const lit = document.createElement("span");
     lit.className = hitClass;
-    lit.textContent = text.slice(from, to);
+    appendKeys(lit, text.slice(from, to));
     el.append(lit);
     at = to;
   });
   if (at < text.length) {
-    el.append(text.slice(at));
+    appendKeys(el, text.slice(at));
   }
 };
 
@@ -1644,6 +1841,7 @@ const RATE = 4; // seconds of episode per second of demo
 const WORD_MS = 130; // roughly conversational pace
 const JITTER = 80;
 const GAP_MS = 500; // blank between boxes
+const FADE_MS = 400; // .overlay's opacity transition, in the stylesheet
 
 /** A finished box holds long enough to actually be read: a base beat plus time
  *  per word, so a long caption is not gone before you reach the end. */
@@ -1781,19 +1979,21 @@ export const SubtitlesDemo = () => {
   const panelRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const walkRef = useRef<{ cancelled: boolean } | null>(null);
-  // What the menu's Try rows set: the box's size and alignment, whether it
-  // dissolves under the pointer, whether ⌥ raises the stack, and how the box
-  // names its app.
-  const [textScale, setTextScale] = useState(1);
-  const [textAlign, setTextAlign] = useState<"start" | "center">("start");
-  const [revealOn, setRevealOn] = useState(true);
-  const revealRef = useRef(true);
-  const [historyOn, setHistoryOn] = useState(true);
-  const historyOnRef = useRef(true);
+  // The settings, see Settings: the demo's defaults until the seed arrives,
+  // after mount, since the query string is the browser's to give; then the
+  // seed, and whatever the menu's Try rows and the page's `subtitles:settings`
+  // events change, the last write standing. In a ref as well, for the loop
+  // and the stack, which read them as they need them.
+  const [settings, setSettings] = useState<Settings>(DEMO_DEFAULTS);
+  const settingsRef = useRef<Settings>(DEMO_DEFAULTS);
+  const textScale = settings.fontSize / 30;
+  const textAlign = settings.textAlignment;
+  const iconStyle = settings.iconStyle;
   const showHistoryRef = useRef<(() => void) | null>(null);
+  const trimHistoryRef = useRef<(() => void) | null>(null);
+  const forgetRef = useRef<(() => void) | null>(null);
+  const spokeRef = useRef<(() => void) | null>(null);
   const retextRef = useRef<(() => void) | null>(null);
-  const [iconStyle, setIconStyle] = useState<IconStyle>("header");
-  const iconStyleRef = useRef<IconStyle>("header");
   const nameTabRef = useRef<NameTab | null>(null);
   // The line being said, for ⌃: the pair and the word reached, so the box can
   // be redrawn in whichever language the key asks for while it is still typing.
@@ -1801,7 +2001,12 @@ export const SubtitlesDemo = () => {
     line: string;
     source: string | null;
     i: number;
+    /** The first word of the page on screen: 0 until the pager, under a
+     *  seeded maxLines, turns the page. */
+    from: number;
   } | null>(null);
+  // The box's text block, measured for the pager.
+  const textRef = useRef<HTMLSpanElement>(null);
   const ctrlRef = useRef(false);
   const [captionVisible, setCaptionVisible] = useState(false);
   const [scene, setScene] = useState(0);
@@ -1869,7 +2074,13 @@ export const SubtitlesDemo = () => {
   // difference between the two: the buttons are a request to go somewhere, and
   // watching the ⌘-tab get there is the point of them, while clicking a window
   // is reaching for that window, the machinery in between would be in the way.
-  const jumpRef = useRef<{ index: number; direct: boolean } | null>(null);
+  // `fade`: a caption was up when the scene was picked, and fades out whole
+  // before the next turn does anything, rather than being wiped mid-fade.
+  const jumpRef = useRef<{
+    index: number;
+    direct: boolean;
+    fade: boolean;
+  } | null>(null);
   // Cuts every wait the loop is sitting in short. Without it a click landed
   // whenever the current wait happened to end, and a finished caption holds for
   // up to 4.2 seconds, long enough to read as nothing having happened.
@@ -1928,10 +2139,15 @@ export const SubtitlesDemo = () => {
   const keyOf = (row: MenuRow) => ("sep" in row ? "" : row.id ?? row.label);
   const rowDim = (row: MenuItem) =>
     !!row.dim || (row.id === "timing" && translateTo === "off");
-  // The checks, from the demo's state: a toggle on or off, a choice among its
-  // group, Translate To's language.
+  // The checks, from the settings: a toggle on or off, a choice among its
+  // group, Translate To's language. The size row within half a point of the
+  // size, as the app's menu checks it, and none for any other size: a size
+  // seeded off the menu's four checks no row, as the app's does.
+  const sizeRow = [22, 30, 40, 52].find(
+    (pt) => Math.abs(pt - settings.fontSize) < 0.5
+  );
   const checked = new Set<string>([
-    `size-${Math.round(textScale * 30)}`,
+    sizeRow ? `size-${sizeRow}` : "",
     `align-${textAlign}`,
     iconStyle === "nameTab"
       ? "icon-tab"
@@ -1939,8 +2155,8 @@ export const SubtitlesDemo = () => {
       ? "icon-off"
       : "icon-header",
     translateTo,
-    ...(revealOn ? ["reveal"] : []),
-    ...(historyOn ? ["history"] : []),
+    ...(settings.revealEnabled ? ["reveal"] : []),
+    ...(settings.historyEnabled ? ["history"] : []),
   ]);
   // Listen To, as the app builds it each time it opens: the source, then what
   // is playing now with a dot, then the other apps that could be. The demo
@@ -2022,25 +2238,61 @@ export const SubtitlesDemo = () => {
     requestAnimationFrame(() => setRefused(key));
     setTimeout(() => setRefused((was) => (was === key ? null : was)), 500);
   };
+  // A change to the settings, in place: the keys given, read as the seed is,
+  // written over the settings, and the demo dressed to them again. The box
+  // and the stack follow the state through the screen's custom properties and
+  // the menu's checks with it; the stack's own business, its switch, a
+  // shallower depth losing its oldest boxes at once, the expiry re-armed on
+  // the new terms, is the stack effect's, reached through its refs. What is
+  // not given stays: the menu's rows come through here, and so does the page,
+  // through a `subtitles:settings` event on the document with the keys that
+  // changed, and only those.
+  const applySettings = useCallback((given: unknown) => {
+    const changed = readSettings(given);
+    if (!Object.keys(changed).length) {
+      return;
+    }
+    const next = { ...settingsRef.current, ...changed };
+    settingsRef.current = next;
+    setSettings(next);
+    if ("historyEnabled" in changed) {
+      showHistoryRef.current?.();
+    }
+    if ("historyDepth" in changed) {
+      trimHistoryRef.current?.();
+    }
+    if ("historyExpires" in changed || "historyExpiry" in changed) {
+      forgetRef.current?.();
+    }
+    queueHoleRef.current?.();
+  }, []);
+  // The seed, once the page is in a browser to read it from; and the page's
+  // later changes, as they come.
+  useEffect(() => {
+    applySettings(seedSettings());
+    const onSettings = (e: Event) =>
+      applySettings((e as CustomEvent<unknown>).detail);
+    document.addEventListener("subtitles:settings", onSettings);
+    return () => document.removeEventListener("subtitles:settings", onSettings);
+  }, [applySettings]);
+  // The Try rows go through applySettings, each writing only the key it
+  // changed, as the app's own changes do: a size picked here survives the app
+  // changing its blur, and a size the app changes afterwards wins over it.
   const act = (id: string) => {
     if (id.startsWith("size-")) {
-      setTextScale(Number(id.slice(5)) / 30);
-      queueHoleRef.current?.();
+      applySettings({ fontSize: Number(id.slice(5)) });
     } else if (id.startsWith("align-")) {
-      setTextAlign(id.slice(6) === "center" ? "center" : "start");
+      applySettings({ textAlignment: id.slice(6) });
     } else if (id.startsWith("icon-")) {
       const style = id.slice(5);
-      setIconStyle(
-        style === "tab" ? "nameTab" : style === "off" ? "off" : "header"
-      );
+      applySettings({
+        iconStyle:
+          style === "tab" ? "nameTab" : style === "off" ? "off" : "header",
+      });
     } else if (id === "reveal") {
-      revealRef.current = !revealRef.current;
-      setRevealOn(revealRef.current);
-      queueHoleRef.current?.();
+      applySettings({ revealEnabled: !settingsRef.current.revealEnabled });
     } else if (id === "history") {
-      historyOnRef.current = !historyOnRef.current;
-      setHistoryOn(historyOnRef.current);
-      showHistoryRef.current?.();
+      applySettings({ historyEnabled: !settingsRef.current.historyEnabled });
     } else if (id === "reset") {
       setSpot(null);
       queueHoleRef.current?.();
@@ -2523,7 +2775,6 @@ export const SubtitlesDemo = () => {
     });
   }, []);
   useEffect(() => {
-    iconStyleRef.current = iconStyle;
     const tab = nameTabRef.current;
     const box = overlayRef.current;
     const historyEl = historyRef.current;
@@ -2743,20 +2994,44 @@ export const SubtitlesDemo = () => {
         return;
       }
       const text = ctrlRef.current && cur.source ? cur.source : cur.line;
-      if (cur.i < 0) {
-        setCommitted(text);
-        setTentative("");
-        return;
-      }
       const words = text.split(" ");
+      // The page's first word and the word reached: the line's own, or the
+      // source's, taken as fractions of the line.
+      let from = cur.from;
       let i = cur.i;
       if (text !== cur.line) {
         const of = cur.line.split(" ").length;
-        i = Math.min(Math.round((cur.i / of) * words.length), words.length - 1);
+        const at = (k: number) =>
+          Math.min(Math.round((k / of) * words.length), words.length - 1);
+        from = at(from);
+        if (i >= 0) {
+          i = Math.max(at(i), from);
+        }
       }
-      setCommitted(i ? `${words.slice(0, i).join(" ")} ` : "");
+      if (i < 0) {
+        setCommitted(words.slice(from).join(" "));
+        setTentative("");
+        return;
+      }
+      setCommitted(i > from ? `${words.slice(from, i).join(" ")} ` : "");
       setTentative(words[i] ?? "");
     };
+    // How many lines the box's text takes, for the app's maxLines: the text
+    // block's height in its own line-height. Read with the word in the page,
+    // which React is made to put there first, and before the frame is
+    // painted, so nothing is seen to overflow.
+    const linesOf = () => {
+      const text = textRef.current;
+      if (!text) {
+        return 0;
+      }
+      const cs = getComputedStyle(text);
+      const line = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.34;
+      return Math.round(text.getBoundingClientRect().height / line);
+    };
+    // Whether a box pages at the settings' maxLines, read as it is needed,
+    // since the settings can change under the loop.
+    const paged = () => Number.isFinite(settingsRef.current.maxLines);
     // Which app is making the sound: the higher of the two that can in the
     // stack, which is what callPlaying reads too.
     const playing = () => {
@@ -2783,7 +3058,11 @@ export const SubtitlesDemo = () => {
       // The box wears the app its words arrive under, and keeps it when it
       // closes into the stack, whatever is playing by then.
       const app = wears ?? playing();
-      curRef.current = { line, source, i: 0 };
+      // The first word of the page on screen: the line's, until the pager
+      // below turns the page.
+      let page = 0;
+      const cur = { line, source, i: 0, from: 0 };
+      curRef.current = cur;
       setBoxApp(app);
       drawLive();
       showCaption(true);
@@ -2795,15 +3074,35 @@ export const SubtitlesDemo = () => {
             throw JUMPED;
           }
           const word = words[i] ?? "";
-          curRef.current.i = i;
-          drawLive();
+          cur.i = i;
+          // The app's pager, under a seeded maxLines: a word that takes the
+          // box past its lines closes the page before it into the stack and
+          // starts the next from that word. The box is redrawn synchronously
+          // so the measurement sees the word; the box holds its whole
+          // sentence otherwise.
+          if (paged()) {
+            flushSync(drawLive);
+            if (i > page && linesOf() > settingsRef.current.maxLines) {
+              closePageRef.current?.(
+                pageOf(line, page, i, words.length),
+                app,
+                source && pageOf(source, page, i, words.length)
+              );
+              page = i;
+              cur.from = i;
+              flushSync(drawLive);
+            }
+          } else {
+            drawLive();
+          }
+          spokeRef.current?.();
           // A comma or full stop gets a beat, the way speech does.
           const punctuated = /[,.;:—]$/.test(word);
           await step(WORD_MS + Math.random() * JITTER + (punctuated ? 180 : 0));
         }
 
         // Everything commits once the utterance ends.
-        curRef.current.i = -1;
+        cur.i = -1;
         drawLive();
         setProgress({ value: to, ms: hold + GAP_MS });
 
@@ -2814,7 +3113,13 @@ export const SubtitlesDemo = () => {
       showCaption(false);
       // The page has closed. The app records it here too, at the fade, because
       // fading is precisely when somebody looked away and will want it back.
-      closePageRef.current?.(line, app, source);
+      closePageRef.current?.(
+        page ? pageOf(line, page, words.length, words.length) : line,
+        app,
+        page && source
+          ? pageOf(source, page, words.length, words.length)
+          : source
+      );
       await step(GAP_MS);
     };
 
@@ -2909,6 +3214,13 @@ export const SubtitlesDemo = () => {
       // Set by a jump, cleared by the scene that answers it: the switch that
       // gets there runs on its own rather than under the first caption.
       let picked = false;
+      // Set by a jump that found a caption up: that caption fades out whole
+      // before the next turn does anything, rather than being wiped mid-fade.
+      let fading = false;
+      // Off React's own stack before the first word: the pager in `say`
+      // flushes a render to measure the box, which React refuses from inside
+      // the effect this loop is started by.
+      await step(0);
 
       for (;;) {
         const current = SCENES[index];
@@ -2930,6 +3242,10 @@ export const SubtitlesDemo = () => {
         setProgress({ value: 0, ms: 0 });
 
         try {
+          if (fading) {
+            fading = false;
+            await step(FADE_MS);
+          }
           // Against what is actually in front, not against what the last switch
           // meant to leave there: an interrupted one may have fronted its window
           // already, and this scene's may be it.
@@ -2987,15 +3303,16 @@ export const SubtitlesDemo = () => {
           // next turn of the loop get there, which is also what makes a second
           // click during a switch work: it lands here again. A window click has
           // already fronted its window, so the next turn finds nothing to switch
-          // and goes straight to the captions.
+          // and goes straight to the captions. The caption that was up keeps
+          // its words while the box fades: the next line's own drawLive
+          // replaces them, under a box that is only shown again once it has.
           const jump = jumpRef.current;
           jumpRef.current = null;
           index = jump?.index ?? index;
           picked = jump ? !jump.direct : false;
+          fading = jump?.fade ?? false;
           setSwitcherVisible(false);
           showCaption(false);
-          setCommitted("");
-          setTentative("");
           setProgress({ value: 0, ms: 0 });
           // And no menu left open, translation off again.
           closeMenu();
@@ -3078,7 +3395,7 @@ export const SubtitlesDemo = () => {
       // whatever wait it started before the click, which for a caption that has
       // finished typing is a hold of up to 4.2 seconds. Woken, it unwinds on the
       // next microtask and the ⌘-tab panel is up within the frame.
-      jumpRef.current = { index, direct };
+      jumpRef.current = { index, direct, fade: captionVisibleRef.current };
       setScene(index);
       setCaptionVisible(false);
       setProgress({ value: 0, ms: 0 });
@@ -3237,7 +3554,11 @@ export const SubtitlesDemo = () => {
     // The demo speaks seven distinct lines, so a full buffer repeats them. The
     // app would do the same with a speaker who repeats themselves: closePage
     // only refuses a line identical to the one before it.
-    const PAST_MAX = 15;
+    //
+    // Or the settings' depth, within the app's own historyDepthCap. Read at
+    // each close rather than once, since the settings can change, see
+    // applySettings.
+    const pastMax = () => Math.min(settingsRef.current.historyDepth, 2000);
     // Below this there is not enough room to be worth drawing: the app's 40pt.
     const MIN_ROOM = 1.33;
     const FADE_MAX = 2.2;
@@ -3284,13 +3605,16 @@ export const SubtitlesDemo = () => {
       } else {
         row.hidden = true;
       }
-      if (iconStyleRef.current === "off") {
+      if (settingsRef.current.iconStyle === "off") {
         row.hidden = true;
       }
       const text = document.createElement("span");
       text.className = NAMES.text;
       el.append(row, text);
-      nameTabRef.current?.wear(el, !!app && iconStyleRef.current === "nameTab");
+      nameTabRef.current?.wear(
+        el,
+        !!app && settingsRef.current.iconStyle === "nameTab"
+      );
       return el;
     };
     const textOf = (el: HTMLElement) =>
@@ -3668,6 +3992,13 @@ export const SubtitlesDemo = () => {
           () => {
             rising = Math.max(0, rising - 1);
             relayer(el);
+            // The last entrance over, the geometry is honest again: a wheel
+            // turned during the rise went unread, so read it now, and draw
+            // the near band it may have earned.
+            if (!rising) {
+              parked = nearDistance() < 1;
+              updateFade();
+            }
           },
           { once: true }
         );
@@ -3696,9 +4027,10 @@ export const SubtitlesDemo = () => {
         source: source ? source.trim() : null,
         app,
       });
-      if (past.length > PAST_MAX) {
-        past.splice(0, past.length - PAST_MAX);
+      if (past.length > pastMax()) {
+        past.splice(0, past.length - pastMax());
       }
+      forget();
       // A stack already up takes the box in. One that is not may be wanted
       // anyway: ⌥ pressed before anything had closed, and still held, which
       // the app's poll answers the moment a first page does.
@@ -3707,6 +4039,53 @@ export const SubtitlesDemo = () => {
       } else {
         showHistory();
       }
+    };
+    // A shallower stack, from applySettings, loses its oldest boxes now, not
+    // at the next close.
+    const trimHistory = () => {
+      if (past.length > pastMax()) {
+        past.splice(0, past.length - pastMax());
+        if (raised) {
+          paintHistory();
+        }
+      }
+    };
+    // The app's expiry for the stack, under a seeded historyExpires:
+    // forgotten once no word has arrived for historyExpiry seconds, and not
+    // while it is up, since someone holding ⌥ is reading it. Off by default,
+    // see DEMO_DEFAULTS: the loop never falls silent, though one parked out of
+    // view does, as the app's overlay does over a paused call. Counted from
+    // the last word, as the app counts it, at the close as well as at the
+    // word: a page that closes once the silence has begun goes with the rest,
+    // rather than standing until the next word, which a parked loop never
+    // says.
+    let lastTextAt = -Infinity;
+    let forgetting = 0;
+    const forgotten = () => {
+      if (raised) {
+        forgetting = window.setTimeout(forgotten, 1000);
+        return;
+      }
+      if (!past.length) {
+        return;
+      }
+      past.length = 0;
+      showHistory();
+    };
+    const forget = () => {
+      clearTimeout(forgetting);
+      const S = settingsRef.current;
+      if (!S.historyExpires) {
+        return;
+      }
+      forgetting = window.setTimeout(
+        forgotten,
+        Math.max(0, lastTextAt + S.historyExpiry * 1000 - performance.now())
+      );
+    };
+    const spoke = () => {
+      lastTextAt = performance.now();
+      forget();
     };
 
     // Up while ⌥ is held, never alongside ⇧, which is the app's rule too: the
@@ -3730,7 +4109,7 @@ export const SubtitlesDemo = () => {
     // And never while the menu's Recent Boxes On ⌥ is off.
     const showHistory = () => {
       const want =
-        historyOnRef.current &&
+        settingsRef.current.historyEnabled &&
         ((altKey && !shiftHeldRef.current) || search.pinned) &&
         past.length > 0;
 
@@ -3784,7 +4163,12 @@ export const SubtitlesDemo = () => {
       // Shift keeps the box solid, the way it does in the app: you are about to
       // pick it up, and a hole under the hand you are picking it up with is no
       // help. The stack does too, because the stack is what is being read then.
-      if (!pointer || !revealRef.current || shiftHeldRef.current || raised) {
+      if (
+        !pointer ||
+        !settingsRef.current.revealEnabled ||
+        shiftHeldRef.current ||
+        raised
+      ) {
         box.style.setProperty("--hole-x", "-999px");
         box.style.setProperty("--hole-y", "-999px");
         return;
@@ -3877,6 +4261,9 @@ export const SubtitlesDemo = () => {
 
     closePageRef.current = closePage;
     showHistoryRef.current = showHistory;
+    trimHistoryRef.current = trimHistory;
+    forgetRef.current = forget;
+    spokeRef.current = spoke;
     retextRef.current = retextHistory;
     queueHoleRef.current = queueHole;
 
@@ -3898,7 +4285,13 @@ export const SubtitlesDemo = () => {
 
     return () => {
       closePageRef.current = null;
+      showHistoryRef.current = null;
+      trimHistoryRef.current = null;
+      forgetRef.current = null;
+      spokeRef.current = null;
+      retextRef.current = null;
       queueHoleRef.current = null;
+      clearTimeout(forgetting);
       historyEl.removeEventListener("scroll", onScroll);
       screen.removeEventListener("pointermove", onPointerMove);
       screen.removeEventListener("pointerleave", onPointerLeave);
@@ -4507,10 +4900,21 @@ export const SubtitlesDemo = () => {
         ref={screenRef}
         className={styles.screen}
         aria-hidden="true"
+        // What is the box's rather than the loop's, as custom properties every
+        // box on the screen wears, the stack's and the search pill with the
+        // live one, with the app's defaults as the stylesheet's fallbacks. The
+        // hole's radii in em of the box at the app's 30pt: its 800 × 400 are
+        // 13.33 × 6.67em.
         style={
           {
             "--text-scale": textScale,
             "--text-align": textAlign,
+            "--box-alpha": settings.boxOpacity,
+            "--box-blur": `${settings.blur}px`,
+            "--hole-strength": settings.revealOpacity,
+            "--hole-w": `${(settings.revealWidth / 60).toFixed(3)}em`,
+            "--hole-h": `${(settings.revealHeight / 60).toFixed(3)}em`,
+            "--hist-text-alpha": settings.historyTextOpacity,
           } as CSSProperties
         }
       >
@@ -5192,9 +5596,9 @@ export const SubtitlesDemo = () => {
                 </>
               )}
             </span>
-            <span className={styles.ov_text}>
-              <span>{committed}</span>
-              <span className={styles.tentative}>{tentative}</span>
+            <span ref={textRef} className={styles.ov_text}>
+              <span>{keycaps(committed)}</span>
+              <span className={styles.tentative}>{keycaps(tentative)}</span>
             </span>
             {/* The ⇧ ring, as the app draws it: one rounded rect stroked
                 twice, white dashes and black dashes a dash apart, so one tone
@@ -5238,10 +5642,6 @@ export const SubtitlesDemo = () => {
         ))}
       </div>
 
-      <p className={styles.caption}>
-        Switch apps and the captions stay: the overlay is above every window,
-        and lets clicks through.
-      </p>
       {/* The rest say nothing to a phone, and are hidden from one by the
           stylesheet. */}
       <p className={cx(styles.caption, styles.caption_try)}>

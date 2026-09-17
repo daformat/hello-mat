@@ -199,6 +199,20 @@ const SubtitlesAppPageContent = () => {
           the screen, and a submenu is a descendant of the menu it hangs off.
         </p>
         <p>
+          The demo can also be seeded with the app&rsquo;s own settings, under
+          the app&rsquo;s own names, from the query string:{" "}
+          <code>?fontSize=40&amp;iconStyle=nameTab&amp;maxLines=2</code> draws
+          the box the reader of that URL would have. Seeded, it follows the app
+          where it did not before: a box pages a word at a time once it fills
+          its lines, the page before the overflowing word closing into the
+          stack; the stack keeps as many boxes as the depth says, and forgets
+          them after that many seconds of silence if it is told to. The menu
+          reads the same settings, so a size off its four checks no row, as the
+          app&rsquo;s menu does, and its Try rows write back through the same
+          path, each only the key it changed, so the last write wins whichever
+          side it came from.
+        </p>
+        <p>
           The one option with real machinery behind it is the Name Tab, the
           app&rsquo;s second style for naming the source: the row becomes a tab
           on the pill&rsquo;s top edge, and the box is masked to the silhouette
