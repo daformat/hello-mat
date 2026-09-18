@@ -506,6 +506,38 @@ export const COMPONENTS = {
       dateModified: "2026-09-05",
     },
   },
+  "beam-demo": {
+    oss: false,
+    video: {
+      dark: {
+        src: "/media/design-engineering/beam/beam-overview-dark.mp4",
+        type: "video/mp4",
+      },
+      light: {
+        src: "/media/design-engineering/beam/beam-overview-light.mp4",
+        type: "video/mp4",
+      },
+    },
+    // The video's own first frame, at the video's exact dimensions, so
+    // the still and the first painted frame are the same image.
+    poster: {
+      dark: "/media/design-engineering/beam/beam-overview-dark-poster.webp",
+      light: "/media/design-engineering/beam/beam-overview-light-poster.webp",
+    },
+    videoDuration: 28.2,
+    metas: {
+      shortTitle: "The demo for beam, the browser",
+      title: "A browser demo that captures the web into a note",
+      description:
+        "beam's landing page demo, ported to React: one fake browser window that turns into a notes app, lifts blocks off three fake web pages into a journal, and publishes the note, with no video anywhere in it.",
+      url: "/design-engineering/beam-demo",
+      image: "/media/design-engineering/beam/og-beam-light.png",
+      imageWidth: 1200,
+      imageHeight: 630,
+      datePublished: "2026-09-18",
+      dateModified: "2026-09-18",
+    },
+  },
 } as const satisfies Record<string, Component>;
 
 export type Component = {
@@ -531,7 +563,7 @@ export const COMPONENT_RELATIONS = {
   details: ["toc", "publish-button", "collapsible-toolbar"],
   "images-and-embeds": ["carousel-component", "tilting-tile", "details"],
   "collapsible-toolbar": ["dock-component", "toc", "publish-button"],
-  "publish-button": ["details", "number-flow-input", "collapsible-toolbar"],
+  "publish-button": ["beam-demo", "details", "number-flow-input"],
   "dock-component": ["collapsible-toolbar", "tilting-tile", "slider"],
   "carousel-component": ["swipeable-cards", "slider", "stacking-cards"],
   "stacking-cards": ["carousel-component", "swipeable-cards", "tilting-tile"],
@@ -544,12 +576,13 @@ export const COMPONENT_RELATIONS = {
   ],
   slider: ["carousel-component", "number-flow-input", "swipeable-cards"],
   "tilting-tile": ["stacking-cards", "dock-component", "images-and-embeds"],
-  "subtitles-app": ["contrast-colors", "tilting-tile", "images-and-embeds"],
+  "subtitles-app": ["beam-demo", "contrast-colors", "tilting-tile"],
   "contrast-colors": [
     "subtitles-app",
     "split-flap-display",
     "images-and-embeds",
   ],
+  "beam-demo": ["subtitles-app", "publish-button", "stacking-cards"],
 } as const satisfies Record<ComponentId, readonly ComponentId[]>;
 
 export const getRelatedComponents = (
@@ -604,6 +637,7 @@ export const COMPONENTS_ORDER = createComponentOrder([
   "tilting-tile",
   "subtitles-app",
   "contrast-colors",
+  "beam-demo",
 ] as const);
 
 export const getNextComponent = (

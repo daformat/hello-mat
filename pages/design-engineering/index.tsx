@@ -15,7 +15,7 @@ const DesignEngineeringIndex = () => (
     <PageMetas
       shortTitle="Design engineering gallery"
       title="Design engineering portfolio: React interface components"
-      description="Fifteen interface components pulled apart and written up: carousels with real momentum, scroll-driven animations, accessible contrast, and the details that decide how each one feels."
+      description="Sixteen interface components pulled apart and written up: carousels with real momentum, scroll-driven animations, accessible contrast, and the details that decide how each one feels."
       url={GALLERY_PATH}
       image="https://hello-mat.com/media/hello-mat-light.png"
       imageWidth={1200}
@@ -23,7 +23,7 @@ const DesignEngineeringIndex = () => (
     />
 
     {/* The gallery as a list, in the order it is presented, so the articles are
-        discoverable as a set rather than fifteen unrelated pages. */}
+        discoverable as a set rather than sixteen unrelated pages. */}
     <JsonLd
       id="gallery"
       data={{

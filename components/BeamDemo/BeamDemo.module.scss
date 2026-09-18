@@ -1,0 +1,2085 @@
+@use "/styles/lib/mixins.scss";
+@use "/styles/lib/palette.scss";
+
+/*
+ * The product demo from beam's landing page (beamapp.co, 2021), ported from
+ * the site's SCSS partials. One fake beam window, drawn in beam's own colours,
+ * plays four short chapters under a title that changes with each: the notes,
+ * capturing the web into them, making it yours, publishing it.
+ *
+ * The window keeps beam's palette because it is a drawing of beam: white with
+ * a stone grey chrome on a light page, and the near-black the app used on a
+ * dark one. What is the page's rather than the window's, the title above it,
+ * the chapter bar under it and the glow it sits on, is drawn in the page's own
+ * tokens, so the demo reads as part of the page rather than as a screenshot
+ * pasted into it.
+ */
+
+.demo {
+  /* Light: beam in the daytime. The names are the site's, with its palette
+     folded in: niobium, corduroy, stone grey, alpha grey, mercury, nero. */
+  --bw-text: #393e47;
+  --bw-bg: #fff;
+  --bw-border: rgb(0 0 0 / 0.17);
+  --bw-outer-border: transparent;
+  --bw-header-border: rgb(0 0 0 / 0.17);
+  --bw-header-bg: rgb(240 240 242 / 0.8);
+  --bw-top-gradient: rgb(255 255 255 / 0.3);
+  --bw-tab-border-hover: rgb(0 0 0 / 0.1);
+  --bw-tab-bg-hover: transparent;
+  --bw-tab-border-active: rgb(0 0 0 / 0.1);
+  --bw-tab-bg-active: #fff;
+  --bw-tab-border-current: rgb(0 0 0 / 0.1);
+  --bw-tab-bg-current: #fff;
+  --bw-writing-tab: #797b80;
+  --bw-writing-tab-active: #393e47;
+  --bw-controls: #a6a8ab;
+  --bw-controls-accent: #797b80;
+  --bw-controls-hover: #393e47;
+  --bw-controls-active: #393e47;
+  --bw-controls-bg-active: rgb(198 200 204 / 0.4);
+  --bw-placeholder: rgb(206 210 217 / 0.5);
+  --bw-capture: rgb(55 0 255 / 0.14);
+  --bw-omnibox-bg: #fff;
+  --bw-omnibox-border: rgb(0 0 0 / 0.15);
+  --bw-omnibox-shadow: #{rgba(palette.$light-ivory-2, 0.3)};
+  --bw-omnibox-icon: #a6a8ab;
+  --bw-omnibox-placeholder: #c6c8cc;
+  --bw-omnibox-selected: rgb(17 121 207 / 0.1);
+  --bw-menu-open: #f0f0f2;
+  --bw-bullet: #c6c8cc;
+  --bw-tooltip-bg: #fafafa;
+  --bw-tooltip-color: #797b80;
+  --bw-tooltip-shadow: #{rgba(palette.$light-ivory-3, 0.12)};
+  /* The shadows in the page's own warm browns rather than the site's black:
+     a grey shadow on the page's peach ground read as a smudge, and the
+     page's maroon shadow token, tried first, as a bruise. The window's is
+     lighter than the site's 0.3 as well, since a warm shadow reads darker
+     on warm ground than a grey one does on grey. */
+  --bw-shadow: #{rgba(palette.$light-ivory-3, 0.22)};
+  --scene-opacity: 0.8;
+  /* The site's four washes, green, beam purple, sanskrit and shiraz, at the
+     strength its body::before gave them while the demo was in view. Kept as
+     beam's colours rather than mixed from the page's: they are the brand,
+     and the page's peach would have made them mud. */
+  --glow-1: rgb(18 178 130 / 0.45);
+  --glow-2: rgb(115 115 255 / 0.55);
+  --glow-3: rgb(255 178 64 / 0.24);
+  --glow-4: rgb(207 58 97 / 0.42);
+  --glow-opacity: 0.5;
+
+  @media (prefers-color-scheme: dark) {
+    --bw-text: #ededed;
+    --bw-bg: #1c1c1f;
+    --bw-border: rgb(71 71 71 / 0.75);
+    --bw-outer-border: #1c1c1f;
+    --bw-header-border: rgb(0 0 0 / 0.5);
+    --bw-header-bg: rgb(42 42 46 / 0.8);
+    --bw-top-gradient: rgb(255 255 255 / 0.02);
+    --bw-tab-border-hover: rgb(255 255 255 / 0.125);
+    --bw-tab-bg-hover: rgb(255 255 255 / 0.05);
+    --bw-tab-border-active: rgb(255 255 255 / 0.25);
+    --bw-tab-bg-active: rgb(255 255 255 / 0.05);
+    --bw-tab-border-current: rgb(255 255 255 / 0.125);
+    --bw-tab-bg-current: rgb(255 255 255 / 0.085);
+    --bw-writing-tab: #a4a4a4;
+    --bw-writing-tab-active: #ededed;
+    --bw-controls: #737373;
+    --bw-controls-accent: #a4a4a4;
+    --bw-controls-hover: #ededed;
+    --bw-controls-active: #ededed;
+    --bw-controls-bg-active: #4d4d4d;
+    --bw-placeholder: rgb(206 210 217 / 0.05);
+    --bw-capture: rgb(115 115 255 / 0.32);
+    --bw-omnibox-bg: #2a2a2e;
+    --bw-omnibox-border: rgb(255 255 255 / 0.15);
+    --bw-omnibox-shadow: rgb(0 0 0 / 0.7);
+    --bw-omnibox-icon: #737373;
+    --bw-omnibox-placeholder: #4d4d4d;
+    --bw-omnibox-selected: rgb(58 150 207 / 0.14);
+    --bw-menu-open: #2a2a2e;
+    --bw-bullet: #4d4d4d;
+    --bw-tooltip-bg: #232326;
+    --bw-tooltip-color: #a4a4a4;
+    --bw-tooltip-shadow: rgb(0 0 0 / 0.24);
+    --bw-shadow: rgb(0 0 0 / 0.5);
+    --scene-opacity: 0.9;
+    --glow-1: rgb(18 178 130 / 0.3);
+    --glow-2: rgb(115 115 255 / 0.38);
+    --glow-3: rgb(255 178 64 / 0.13);
+    --glow-4: rgb(207 58 97 / 0.3);
+    --glow-opacity: 0.55;
+  }
+
+  container-type: inline-size;
+  /* As much above the title as there is below it: the title's own 2em to
+     the stage, and the stage's 1em of padding to the window, less the
+     0.75em the paragraph before the demo already leaves. */
+  margin-block: var(--demo-top, 1.5em) 1.5em;
+  /* Past the page's rails where the page has the margin for it: see
+     --breakout on .room, which sizes the space above the demo by it too. */
+  margin-inline: calc(-1 * var(--breakout, 0px));
+  /* Not clipped: the window leans into the third dimension while it
+     captures, and the pair of them spans about 1.15 windows, which the 85%
+     the window is of the stage leaves room for, and which on a phone column,
+     where the em is at its floor and the window is nearer nine tenths, runs
+     a few pixels into the column's gutters rather than being cut off at
+     them. The shadow needs the same. */
+  /* Nothing in the window is text you would want to select: it is a drawing
+     of an app. The title above it stays selectable. */
+  user-select: none;
+
+  svg {
+    display: block;
+  }
+}
+
+/* The block around the demo and the rest of the page: what the reveal on
+   scroll is written on. Not .reveal, which is the publish button's. */
+.scroll_reveal {
+  /* The reveal on scroll: the window's scale, and how far in the title and
+     the block are, as the window comes up the viewport. Where the browser
+     has view timelines, all of it is driven by the stage's own, below, and
+     is right on the first paint; where it does not, the component writes
+     them from an IntersectionObserver, and these are what the page shows
+     until it has, the unrevealed state, since a window that has yet to be
+     scrolled to is the common case. */
+  --window-scale: 0.9;
+  --title-t: 0;
+  --slide-t: 0;
+
+  /* A container, so the room below can size the title's line and the
+     window's em the way the demo does, off the column's width; and the box
+     the arrow is placed in. */
+  container-type: inline-size;
+  /* Clipped below: on a page that has just loaded the block is slid down
+     by the whole room, and what hangs past this box's end, the last room's
+     worth of the article, would otherwise add itself to the page's height
+     and take itself off again as the block slid up, which the scrollbar
+     showed. Visible across, since the demo goes past the column's rails. */
+  overflow: visible clip;
+  position: relative;
+  /* The marker's timeline is named for the title, the arrow and the block,
+     which are not its descendants. */
+  timeline-scope: --beam-stage;
+}
+
+/* The numbers the room above the demo is sized by. On an element of their
+   own inside the container rather than on it: a container query unit on the
+   container itself measures the next container up, which here would be the
+   viewport. */
+.room {
+  /* How far past the column's rails the demo goes, a side: nothing under a
+     950px viewport, 40px from there, and a sixth of what the viewport has
+     over 950 on top of that, up to 120px, and never past the 958px the demo
+     is capped at all told. Further out than the Subtitles demo goes, since
+     the column's margins are fluid and a browser window in a frame not much
+     wider than the prose read as one more paragraph. */
+  --breakout: 0px;
+  /* The demo's width: the column, and the breakout. The title's size and
+     the window's em are then as the demo sets them, off that width. */
+  --demo-width: calc(100cqw + 2 * var(--breakout));
+  --title-font: clamp(22px, 0.052 * var(--demo-width), 28px);
+  --title-lines: 1.3;
+  /* The demo's top margin: see .demo. */
+  --demo-top: calc(2 * var(--title-font) + 0.25em);
+  --window-em: clamp(6px, 0.0162 * var(--demo-width), 20px);
+  /* The window's height: 31.45em, or less where the column is narrower
+     than the 52.5em the window would be at its em's floor, since the box
+     keeps its proportions there and its width is the column's. */
+  --window-height: min(31.45 * var(--window-em), 0.599 * var(--demo-width));
+  /* The stage: the window's height and the stage's padding. */
+  --stage-height: calc(var(--window-height) + 3em);
+  /* How much of the stage is under the fold's edge on a page that has just
+     loaded: a quarter, past the 40px the observer keeps off the bottom.
+     About what shows on a viewport too short for any room, where the demo
+     sits where the prose puts it, so a tall viewport shows no more of the
+     window than a short one does; and well under the half at which the
+     title starts to come in, so the page opens with nothing yet revealed. */
+  --peek: calc(40px + 0.25 * var(--stage-height));
+  /* The room above the demo, then: what the viewport has, less the peek and
+     less what the page has above the demo, which the page says as
+     --demo-lead. Written as a distance from the bottom rather than a share
+     of the height, so the window peeks up by the same amount on a tall
+     viewport as on a short one. On a short viewport, or a narrow one where
+     the intro runs long, that is nothing, and the demo sits where the prose
+     puts it, which is already under the fold. */
+  --gap: max(0px, calc(100vh - var(--peek) - var(--demo-lead, 100vh)));
+  /* What the block has above the stage: the demo's margin, and the title's
+     line and its margin. */
+  --above-stage: calc(
+    var(--demo-top) + (var(--title-lines) + 2) * var(--title-font)
+  );
+  /* What is empty between the prose and the window's top edge on a page
+     that has just loaded, which is where the arrow is centred: the room,
+     with the block slid down over it; what the block has above the stage,
+     invisible until scrolled to; the stage's padding; and the twentieth of
+     its height the window's top edge sits down by at nine tenths of its
+     size. */
+  --room: calc(var(--gap) + var(--above-stage) + 1em + 1.65 * var(--window-em));
+
+  @container (max-width: 500px) {
+    --title-lines: 2.6;
+  }
+
+  @media (min-width: 950px) {
+    --breakout: min(120px, 40px + (100vw - 950px) / 6, (958px - 100cqw) / 2);
+  }
+}
+
+/* The room above the demo. */
+.lead_space {
+  height: var(--gap);
+}
+
+/* Where the stage is drawn on a page that has just loaded, as a box of its
+   own that never moves: the block below slides, by the whole of the room,
+   and a timeline read off the stage itself would read its laid-out box and
+   know nothing of the slide. So the scroll's timeline, and the observer
+   behind the script, read this instead, and the reveal is a function of
+   the scroll alone. */
+.marker {
+  height: var(--stage-height);
+  left: 0;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  top: calc(var(--gap) + var(--above-stage));
+  view-timeline: --beam-stage block;
+  visibility: hidden;
+}
+
+/* Out of the flow, so it takes no room of its own, in the middle of the room
+   there is, which is never less than what the demo keeps above its title
+   and the title keeps above the window: room enough for an arrow. */
+.hint {
+  animation: hint-bob 1.8s ease-in-out infinite;
+  appearance: none;
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: block;
+  left: 50%;
+  margin-left: -22px;
+  /* Gone over the first quarter or so of the block's way up: an arrow that
+     hung about while the thing it pointed at arrived would be in the way. */
+  opacity: calc(0.6 * max(0, 1 - 3.67 * var(--slide-t)));
+  padding: 8px;
+  position: absolute;
+  top: calc(var(--room) / 2 - 22px);
+
+  svg {
+    display: block;
+    height: 28px;
+    width: 28px;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-border-1-outline);
+    outline-offset: 2px;
+  }
+}
+
+@keyframes hint-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+/* The demo and the rest of the page, sliding up into place as the window is
+   scrolled to, and back down as it is scrolled away from. The site slid its
+   title 10em; the whole block goes the whole of the room here, so that once
+   the window is up, the room it peeked up from under is gone, and the demo
+   sits where the prose puts it with nothing blank above it. */
+.slide {
+  /* Laid out the whole room up, over the room, and slid the whole room down
+     until scrolled to: on load the window peeks up from where the room
+     says, and the page is no taller for the room. */
+  margin-top: calc(-1 * var(--gap));
+  transform: translateY(calc(var(--gap) * (1 - var(--slide-t))));
+}
+
+/* The title above the window: the beam site set it at 26px, 28 above 500px,
+   in the secondary text colour with the strong in the primary. The page's own
+   tokens here, at the same weights. Two lines are reserved under 500px, where
+   the site broke every title with a <br>. Qualified with the root because
+   `.prose p` sets a margin of its own. */
+.demo .title {
+  color: var(--text-primary);
+  display: grid;
+  font-size: clamp(22px, 5.2cqw, 28px);
+  font-weight: 400;
+  line-height: 1.3;
+  margin: 0 auto 2em;
+  min-height: 2.6em;
+  /* In over the last stretch of the scroll, while the block it is on slides
+     up into place. */
+  opacity: var(--title-t);
+  text-align: center;
+  text-wrap: balance;
+  user-select: text;
+
+  > * {
+    grid-area: 1 / 1;
+  }
+
+  strong {
+    color: var(--text-strong);
+    display: inline-block;
+    font-weight: 600;
+  }
+
+  @container (min-width: 500px) {
+    min-height: 1.3em;
+
+    br {
+      display: none;
+    }
+  }
+}
+
+/* One title in, one out: the site cloned the heading and swapped it on
+   animationend. The strong bounces up 30px a beat behind the fade, with the
+   site's own overshooting curve. */
+.title_line {
+  --slide-easing: cubic-bezier(0, 1.05, 0.52, 1.5);
+
+  &.is_in {
+    animation: title-fade-in 0.2s ease-in-out 0.05s backwards;
+
+    strong {
+      animation: title-fade-in 0.2s ease-in-out 0.05s both,
+        title-rise 0.3s var(--slide-easing) 0.05s both;
+    }
+  }
+
+  &.is_out {
+    animation: title-fade-out 0.2s ease-in-out 0.05s forwards;
+    pointer-events: none;
+
+    strong {
+      animation: title-fade-out 0.2s ease-in-out 0.05s both,
+        title-sink 0.3s var(--slide-easing) 0.05s both;
+    }
+  }
+}
+
+@keyframes title-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes title-fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes title-rise {
+  from {
+    transform: translateY(30px);
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+@keyframes title-sink {
+  from {
+    transform: none;
+  }
+
+  to {
+    transform: translateY(-30px);
+  }
+}
+
+/* The stage the window stands on. The site had the window float over its
+   page-wide gradient; here the same four washes are painted behind the window
+   alone, blurred, so the page's ground shows through round them. */
+.stage {
+  /* The window's em. On the site the window was 52.5em wide at most and its
+     em went 12, 14, 18px by breakpoint, and under that the window reflowed,
+     tabs truncating and columns squeezing. Here the em follows the stage,
+     at the slope that makes the window 85% of it, and runs on to 20px where
+     the stage has grown past the site's largest, and down to 6px on a phone
+     column: every length inside the window is in em of this, so the drawing
+     scales as one piece most of the way down, and only under the floor,
+     where the box is narrower than the 52.5em it would be, does it reflow,
+     and then by a little. The box keeps its proportions even there, see
+     .windows. The other 15% is for the capture pose: tilted, with the
+     journal out to its left, the pair spans about 1.15 windows, measured on
+     the site, and this is what lets them fit. */
+  --window-em: clamp(6px, 1.62cqw, 20px);
+
+  /* A stacking context of its own, so the glow's layers, behind everything
+     in the stage at z-index -1, stay above the page behind the stage. */
+  isolation: isolate;
+  padding-block: 1em 2em;
+  position: relative;
+
+  /* Four soft circles, radii in the window's em so they scale with the
+     drawing, each transparent by seven tenths of its radius, in a box just
+     inside the stage, and placed round the window rather than under it:
+     green off its lower left, purple under it, orange under its right, red
+     off its right, the corners the site's washes came from. The blur, in
+     the window's em too, is what carries them past the box.
+
+     Two layers: the purple, which sits under the window's middle, is on a
+     layer of its own, so it can be dimmed while the capture pose is on.
+     The pose moves the window off to the right and the journal off to the
+     left, and what was under the window is in plain view between them. */
+  &::before,
+  &::after {
+    content: "";
+    filter: blur(calc(1.5 * var(--window-em)));
+    inset: 4% 3%;
+    opacity: var(--glow-opacity);
+    pointer-events: none;
+    position: absolute;
+    transition: mixins.theme-transition(opacity);
+    /* Under the windows. Positioned, the two paint in tree order with the
+       scene, which is positioned too by its perspective, and the layer
+       after it painted over the windows. */
+    z-index: -1;
+  }
+
+  &::before {
+    background: radial-gradient(
+        circle calc(24 * var(--window-em)) at 16% 62%,
+        var(--glow-1),
+        transparent 70%
+      ),
+      radial-gradient(
+        circle calc(24 * var(--window-em)) at 70% 78%,
+        var(--glow-3),
+        transparent 70%
+      ),
+      radial-gradient(
+        circle calc(24 * var(--window-em)) at 88% 46%,
+        var(--glow-4),
+        transparent 70%
+      );
+  }
+
+  /* The purple, at half strength and flat out to half its radius rather
+     than peaking at its centre, so there is no bright spot under the window
+     even so, then the same fade as the others. */
+  &::after {
+    background: radial-gradient(
+      circle calc(26 * var(--window-em)) at 40% 82%,
+      color-mix(in srgb, var(--glow-2) 50%, transparent) 0%,
+      color-mix(in srgb, var(--glow-2) 50%, transparent) 50%,
+      transparent 70%
+    );
+    transition: opacity 0.5s ease-in-out;
+  }
+
+  /* Down to a third while the windows are apart. */
+  &:has(.is_rotated)::after {
+    opacity: calc(var(--glow-opacity) / 3);
+  }
+}
+
+/* The window and its double sit in one 3D scene. The site put the
+   perspective at 150vw, with the window at about five sixths of the viewport;
+   the window is nearly the whole stage here, so the stage's width stands in
+   for the viewport's at the multiple that keeps the eye the same distance
+   from the window, about 1.8 widths. */
+.scene {
+  /* A little of the page's ground through the window in light mode, so a
+     white window sits into the peach rather than on top of it. */
+  opacity: var(--scene-opacity, 1);
+  perspective: 180cqw;
+  perspective-origin: center;
+}
+
+/* The box both windows share. Its transform is the site's, custom properties
+   and all: --tX and --rotate are what the capture pose sets, and the trailing
+   translateX walks the box back right along its rotated axis so the tilted
+   window ends up beside where the flat one stood rather than off to the left.
+   Sized in em of --window-em, so the whole drawing scales with the stage and
+   tops out at the 52.5em the site gave it at its widest, and 31.45em tall,
+   a line and a half short of the site's 33em, at every size. */
+.windows {
+  --tx: 0;
+  --rotate: 0deg;
+
+  /* The box keeps its proportions where the column is narrower than the
+     52.5em it would be at the em's floor: the height follows the width. */
+  aspect-ratio: 52.5 / 31.45;
+  font-size: var(--window-em);
+  margin-inline: auto;
+  max-height: 31.45em;
+  max-width: 52.5em;
+  position: relative;
+  transform: translate3d(var(--tx), 0, 0) rotateY(var(--rotate))
+    translateX(calc(var(--tx) * -1.85));
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.37, 1.51, 0.61, 0.99);
+  width: 100%;
+
+  &.is_rotated {
+    --tx: -37%;
+    --rotate: 25deg;
+  }
+
+  /* As the window first comes up from under the fold it hops, once: the
+     site's bump, an em up and back over half a second. On the host rather
+     than the window, whose transform the scroll has. */
+  &.is_arriving .host:not(.is_double) {
+    animation: bump 0.5s ease-in-out var(--bump-delay, 0s);
+  }
+}
+
+@keyframes bump {
+  0% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-1em);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* The reveal, driven by the scroll itself. The marker's view timeline runs
+   from its top edge reaching the bottom of the viewport to its bottom edge
+   reaching it, so a point on it is the share of the stage that would be in
+   view had the block not slid; the 40px is the margin the component's
+   observer keeps off the bottom, so the two agree. Everything starts at the
+   quarter the page opens on: the block and the window's scale at once, the
+   title from the half, and all of it is settled on the first paint, with no
+   script to wait for. */
+@supports (animation-timeline: view()) {
+  .window {
+    animation: window-rise linear both;
+    animation-range: entry calc(25% + 40px) entry calc(65% + 40px);
+    animation-timeline: --beam-stage;
+  }
+
+  .demo .title {
+    animation: title-fade-up linear both;
+    animation-range: entry calc(50% + 40px) entry calc(80% + 40px);
+    animation-timeline: --beam-stage;
+  }
+
+  .slide {
+    animation: slide-up linear both;
+    animation-range: entry calc(25% + 40px) entry calc(80% + 40px);
+    animation-timeline: --beam-stage;
+  }
+
+  .hint {
+    animation: hint-bob 1.8s ease-in-out infinite, hint-fade linear both;
+    animation-range: normal, entry calc(25% + 40px) entry calc(40% + 40px);
+    animation-timeline: auto, --beam-stage;
+  }
+}
+
+@keyframes window-rise {
+  from {
+    transform: scale(0.9);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes title-fade-up {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(var(--gap));
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+@keyframes hint-fade {
+  from {
+    opacity: 0.6;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+/* The host box of one window: what the site's <beam-window> element was. The
+   double, marked .is_double, is laid over the same box and pushed 9em back
+   while the capture pose is on, and parked a pixel behind the front window,
+   dimmed, the rest of the time, where the front window covers it whole.
+
+   It also slides left by the box's own --tx. On the site that was an
+   accident of inheritance, the clone's transform read the custom property the
+   script had set on the box and never had one of its own, and it is what put
+   the journal out to the left of the tilted browser rather than straight
+   behind it, so it is kept, on purpose this time. */
+.host {
+  --tz: -1px;
+  --scale: 1;
+  --opacity: 1;
+
+  color: var(--bw-text);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  height: 100%;
+  line-height: 1.5;
+  opacity: var(--opacity);
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  width: 100%;
+
+  &.is_double {
+    --scale: 0.9;
+    --opacity: 0.85;
+
+    inset: 0;
+    position: absolute;
+    transform: translate3d(var(--tx), 0, var(--tz)) scale(var(--scale));
+  }
+
+  .is_rotated &.is_double {
+    --tz: -9em;
+    --opacity: 1;
+  }
+}
+
+/* The page's own prose rules reach in here, `.prose p` with its margins and
+   `.prose ul li` with its masked bullet, and the drawing has to outrank them:
+   this undoes them at two classes' weight, and every rule for the drawing
+   below sits inside .window, one class deeper than it needs to be, so the
+   drawing's own margins and bullets win over both. */
+.demo .window {
+  p,
+  ul,
+  li {
+    margin: 0;
+    max-width: none;
+  }
+
+  li::before {
+    content: none;
+  }
+}
+
+.window {
+  background-color: var(--bw-bg);
+  border-radius: 0.625em;
+  box-shadow: 0 0.2857em 1.4286em var(--bw-shadow),
+    0 0 0 1px var(--bw-outer-border);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  /* Scaled by the scroll, nine tenths to one as the window comes up. No
+     transition: it follows the scroll, and a transition would follow it
+     late. */
+  transform: scale(var(--window-scale));
+  width: 100%;
+
+  /* The site's edge: a hairline inside the corner and a whisper of a gradient
+     off the top edge, drawn over everything, clicks passed through. */
+  &::after {
+    background-image: linear-gradient(
+      to bottom,
+      var(--bw-top-gradient),
+      transparent 0.4286em
+    );
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px var(--bw-border), inset 0 0 0 1px var(--bw-bg);
+    content: "";
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+  }
+
+  button {
+    cursor: default;
+    font-family: inherit;
+
+    > * {
+      pointer-events: none;
+    }
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  /* -------------------------------------------------------------- modes */
+
+  &.is_writing .header {
+    background-color: var(--bw-bg);
+    box-shadow: inset 0 -0.5px 0 transparent;
+  }
+
+  /* Writing: the browser's tabs lift out of the bar and the notes' come up
+     into it, the two rows passing each other. */
+  &.is_writing .tabs > * {
+    opacity: 0;
+    transform: translate3d(0, -1.25em, 0);
+  }
+
+  &.is_writing .tabs > .tabs_writing {
+    opacity: 1;
+    transform: none;
+  }
+
+  &.is_web .content > .writing {
+    opacity: 0;
+    pointer-events: none;
+    transform: translate3d(0, 0.25em, 0) scale(0.95);
+  }
+
+  &.is_writing .content > .writing {
+    opacity: 1;
+  }
+
+  &.is_writing .content > .html_doc {
+    opacity: 0;
+    pointer-events: none;
+    transform: translate3d(0, 0.5em, 0) scale(0.95);
+  }
+
+  &.is_capturing .capture_frame {
+    opacity: 1;
+  }
+
+  &.is_omnibox:not(.is_capturing) .omnibox_frame {
+    opacity: 1;
+    pointer-events: all;
+
+    .omnibox {
+      transform: none;
+    }
+  }
+
+  /* ---------------------------------------------------------------- header */
+
+  .header {
+    align-items: center;
+    background-color: var(--bw-header-bg);
+    box-shadow: inset 0 -0.5px 0 var(--bw-header-border);
+    display: flex;
+    flex-grow: 0;
+    gap: 0.7143em;
+    padding: 0.6875em 0.875em 0.6875em 1em;
+    transition: background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+
+  .traffic_lights {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.45em;
+
+    button {
+      --size: 0.65em;
+
+      background-color: var(--color);
+      border: 0;
+      border-radius: 50%;
+      display: inline-block;
+      font-size: 1em;
+      height: var(--size);
+      padding: 0;
+      width: var(--size);
+    }
+  }
+
+  .traffic_close {
+    --color: #fc605c;
+  }
+
+  .traffic_minimize {
+    --color: #fcbb40;
+  }
+
+  .traffic_expand {
+    --color: #34c648;
+  }
+
+  .tabs {
+    align-items: center;
+    display: inline-flex;
+    flex-grow: 1;
+    gap: 0.25em;
+    overflow: hidden;
+    position: relative;
+
+    > * {
+      transition: opacity 0.15s ease-in-out,
+        transform 0.2s cubic-bezier(0.34, 0, 0.24, 1);
+    }
+  }
+
+  .tab {
+    --border-color: transparent;
+    --background-color: transparent;
+
+    align-items: center;
+    background-color: var(--background-color);
+    border: 0.5px solid var(--border-color);
+    border-radius: 0.54545455em;
+    color: currentcolor;
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    font-size: 0.6875em;
+    gap: 0.2078em;
+    justify-content: center;
+    line-height: 1.5;
+    margin: 0;
+    max-width: calc(50% - 1.2468em);
+    overflow: hidden;
+    padding: 0.54545455em 0.72727273em;
+    position: relative;
+    transform: translateZ(0);
+
+    &.is_pinned {
+      flex-grow: 0;
+
+      .favicon {
+        margin-right: 0;
+      }
+
+      .tab_label,
+      .tab_url {
+        display: none;
+      }
+    }
+
+    &:hover,
+    &:focus {
+      --border-color: var(--bw-tab-border-hover);
+      --background-color: var(--bw-tab-bg-hover);
+    }
+
+    &:disabled {
+      pointer-events: none;
+    }
+
+    &.is_current {
+      --border-color: var(--bw-tab-border-current);
+      --background-color: var(--bw-tab-bg-current);
+
+      > * {
+        transition: opacity 0.15s ease-in-out,
+          transform 0.2s cubic-bezier(0.29, -0.13, 0.34, 1.44);
+      }
+
+      /* Hovering the tab you are on shows where it is: the title lifts out and
+       the address comes up under it. */
+      &:not(.is_pinned):hover {
+        > * {
+          opacity: 0;
+          transform: translate3d(0, -1.25em, 0);
+        }
+
+        .tab_url {
+          opacity: 1;
+          transform: none;
+        }
+      }
+    }
+
+    &:active {
+      --border-color: var(--bw-tab-border-active);
+
+      &:not(.is_current) {
+        --background-color: var(--bw-tab-bg-active);
+      }
+    }
+  }
+
+  .favicon {
+    --size: 1.45454545em;
+
+    color: var(--bw-text);
+    flex-shrink: 0;
+    height: var(--size);
+    margin-right: 0.25em;
+    width: var(--size);
+
+    > svg {
+      height: 100%;
+      width: 100%;
+    }
+  }
+
+  .tab_label {
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tab_url {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    opacity: 0;
+    overflow: hidden;
+    padding: 0 0.5em;
+    position: absolute;
+    text-overflow: ellipsis;
+    transform: translateY(1.25em);
+    white-space: nowrap;
+    width: 100%;
+
+    svg {
+      --size: 1.45454545em;
+
+      height: var(--size);
+      opacity: 0.5;
+      width: var(--size);
+    }
+  }
+
+  .separator {
+    align-self: center;
+    background-color: var(--bw-placeholder);
+    flex-shrink: 0;
+    height: 0.75em;
+    margin: 0 -0.5px;
+    transition: opacity 0.15s ease-in-out;
+    width: 0.5px;
+
+    /* Gone beside the tab that is lit, on either side of it: the site could
+     only see the tab before it, and hid the one after with a box-shadow. */
+    .tab:hover + &,
+    .tab.is_current + &,
+    &:has(+ .tab:hover),
+    &:has(+ .tab.is_current) {
+      opacity: 0;
+    }
+  }
+
+  .tabs_writing {
+    display: flex;
+    gap: 0.27272727em;
+    justify-content: center;
+    opacity: 0;
+    position: absolute;
+    transform: translateY(1.25em);
+    width: 100%;
+
+    .tab {
+      color: var(--bw-writing-tab);
+      display: inline-block;
+      flex-grow: 0;
+      max-width: none;
+
+      &:not(:focus, :hover) {
+        background: none;
+        border-color: transparent;
+      }
+
+      &.is_current:not(:hover) {
+        background: none;
+        border-color: transparent;
+      }
+
+      &.is_current,
+      &:hover,
+      &:focus {
+        color: var(--bw-writing-tab-active);
+      }
+    }
+
+    /* Between notes the rules stay up beside the current tab, and only give
+     way to a hover. */
+    .tab.is_current + .separator,
+    .separator:has(+ .tab.is_current) {
+      opacity: 1;
+    }
+
+    .tab:hover + .separator,
+    .separator:has(+ .tab:hover) {
+      opacity: 0;
+    }
+  }
+
+  .controls {
+    align-items: center;
+    color: var(--bw-controls);
+    display: inline-flex;
+    flex-direction: row;
+    gap: 0.625em;
+
+    button {
+      align-items: center;
+      background-color: transparent;
+      border: 0;
+      border-radius: 0.2857em;
+      color: currentcolor;
+      display: flex;
+      flex-direction: row;
+      font-size: 1em;
+      justify-content: center;
+      margin: 0;
+      padding: 0.125em;
+
+      &:hover,
+      &:focus-visible {
+        color: var(--bw-controls-hover);
+      }
+
+      &:active {
+        background-color: var(--bw-controls-bg-active);
+        color: var(--bw-controls-active);
+      }
+
+      svg {
+        --size: 1.5em;
+
+        height: var(--size);
+        max-width: var(--size);
+        min-width: var(--size);
+        width: var(--size);
+      }
+    }
+  }
+
+  /* --------------------------------------------------------------- content */
+
+  .content {
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow-y: hidden;
+    position: relative;
+
+    > .html_doc,
+    > .writing {
+      transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+    }
+
+    /* The page that is not showing is kept laid out under the one that is, so
+     a capture can be aimed at it the moment its tab is clicked. */
+    > .html_doc:not(.is_current),
+    > .writing > *:not(.is_current) {
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      position: absolute;
+    }
+  }
+
+  /* A line of grey, standing in for a line of anything. */
+  .placeholder {
+    background-color: var(--bw-placeholder);
+    border-radius: 0.1786em;
+    display: inline-block;
+    height: 0.72727273em;
+    width: 100%;
+  }
+
+  /* ------------------------------------------------------------- web pages */
+
+  /* A pane scrolls only once its content overflows it, which the component
+     checks and marks: a pane that could scroll but had nothing to scroll
+     still took the wheel and bounced, over content that plainly did not
+     move. */
+  .html_doc {
+    --placeholder-margin-bottom: 0.62545455em;
+
+    flex-shrink: 1;
+    justify-content: flex-start;
+    max-height: 100%;
+    overflow-y: hidden;
+    padding: 1.45454545em;
+    scrollbar-width: none;
+
+    &.is_scrollable {
+      overflow-y: auto;
+    }
+
+    .circle {
+      --size: 2.90909091em;
+
+      background-color: var(--bw-placeholder);
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+      height: var(--size);
+      width: var(--size);
+    }
+
+    .img,
+    p {
+      margin: 0 0 var(--placeholder-margin-bottom, 0);
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    p {
+      &.medium {
+        width: 60%;
+      }
+
+      &.small {
+        width: 42%;
+      }
+    }
+
+    .img {
+      /* The site's 13.55em, less what keeps the paper inside a window a
+         line and a half shorter than the site's: a page that overflowed by
+         a line would scroll that line and bounce. The site drew these
+         smaller under 500px, where its window reflowed; the window here is
+         the same drawing at every size. */
+      &.large {
+        height: 11.3em;
+      }
+
+      &.small {
+        height: 5.09090909em;
+      }
+    }
+  }
+
+  /* A block a capture can be aimed at. The site marked these with a class per
+   slot; the slot is a data attribute here, and what the block holds is what a
+   capture lifts into the journal. */
+  .slot {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 0;
+  }
+
+  .beam_times {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+
+    .doc_header {
+      margin: 0.5em 0 1.09090909em;
+      text-align: center;
+
+      svg {
+        height: 2em;
+        margin-inline: auto;
+        width: 15.54545455em;
+      }
+    }
+
+    .doc_menu {
+      display: flex;
+      gap: 1.1429em;
+      margin-bottom: 1.45454545em;
+
+      .placeholder {
+        flex-grow: 1;
+        height: 1.45454545em;
+      }
+    }
+
+    .doc_main {
+      display: flex;
+      flex-direction: row;
+      gap: 1.45454545em;
+
+      > * {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+
+        &:nth-child(2) {
+          flex-basis: 25%;
+        }
+
+        > .slot {
+          margin-bottom: calc(var(--placeholder-margin-bottom) * 3.2);
+        }
+      }
+    }
+  }
+
+  .bmail {
+    .doc_header {
+      padding-bottom: 1.09090909em;
+      text-align: left;
+
+      svg {
+        height: 1.81818182em;
+        width: 5.36363636em;
+      }
+    }
+
+    .doc_main {
+      display: flex;
+      gap: 0.72727273em;
+      width: 100%;
+
+      > * {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+
+        &:first-child {
+          max-width: 20%;
+          min-width: 7.27272727em;
+        }
+
+        &:nth-child(2) {
+          display: flex;
+          flex-direction: row;
+          gap: 0.72727273em;
+          margin-right: 1.45454545em;
+
+          > div {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+
+            &:first-child {
+              align-items: flex-end;
+              max-width: 4.36363636em;
+            }
+
+            > .slot,
+            > .img,
+            > .circle {
+              margin-bottom: var(--placeholder-margin-bottom);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .youtube {
+    .doc_header {
+      align-items: center;
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-start;
+      padding-bottom: 0.72727273em;
+
+      svg {
+        height: 2.54545455em;
+        width: 2.54545455em;
+      }
+
+      .circle {
+        --size: 2.1em;
+
+        margin-left: 0.58181818em;
+      }
+
+      > div {
+        display: flex;
+
+        &:first-of-type {
+          flex-grow: 1;
+        }
+      }
+    }
+
+    .doc_main {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      gap: 1.45454545em;
+
+      > div {
+        &:first-of-type {
+          flex-grow: 1;
+
+          /* The site's 17em, less what keeps the page inside the shorter
+             window, as with the paper's. */
+          .img.large {
+            height: 16em;
+          }
+
+          p.medium {
+            width: 65%;
+          }
+        }
+
+        &:last-of-type {
+          min-width: 8.72727273em;
+          width: 28%;
+
+          .img.small {
+            height: auto;
+            padding-top: 50%;
+          }
+
+          > .slot:not(:last-of-type) {
+            margin-bottom: 1.09090909em;
+          }
+        }
+
+        .slot {
+          align-items: flex-start;
+          justify-content: flex-start;
+
+          .placeholder.img {
+            margin-bottom: 0.72727273em;
+          }
+        }
+      }
+    }
+  }
+
+  /* --------------------------------------------------------------- writing */
+
+  .writing {
+    inset: 0;
+    overflow-y: hidden;
+    position: absolute;
+
+    > * {
+      height: 100%;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      transition: opacity 0.15s ease-in-out;
+
+      &.is_scrollable {
+        overflow-y: auto;
+      }
+    }
+
+    .view {
+      margin: 7% auto;
+    }
+
+    /* A note's title, drawn as the app drew its h1: not a heading of the page,
+     which has its own and a table of contents that would list these. */
+    .heading {
+      font-size: 1.27272727em;
+      font-weight: 500;
+      line-height: 1.5;
+      margin: 2.18181818em 0 0.72727273em;
+    }
+  }
+
+  .journal,
+  .note_page {
+    .view {
+      font-size: 0.875em;
+      list-style-type: none;
+      max-width: 28.18181818em;
+      padding: 0 1.6327em 0 2.0408em;
+      text-align: left;
+
+      > li {
+        margin: 0 0 4.36363636em;
+      }
+
+      ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+
+        li {
+          position: relative;
+
+          &::before {
+            background-color: var(--bw-bullet);
+            border-radius: 50%;
+            content: "";
+            display: inline-block;
+            height: 0.3125em;
+            left: -1.25454545em;
+            margin: 0;
+            mask: none;
+            position: absolute;
+            top: 0.65em;
+            width: 0.3125em;
+          }
+        }
+      }
+    }
+  }
+
+  .all_notes {
+    height: 100%;
+
+    .view {
+      display: flex;
+      flex-direction: column;
+      max-width: 27.27272727em;
+      padding: 0 1.45454545em;
+      width: 100%;
+    }
+
+    .notes_header {
+      border-bottom: 1px solid var(--bw-placeholder);
+      flex-grow: 0;
+      margin-bottom: 0.35em;
+      margin-top: 0.25em;
+      padding-bottom: 0.35em;
+      text-align: left;
+
+      .placeholder {
+        display: inline-block;
+        height: 1.09090909em;
+
+        &.small {
+          width: 5.09090909em;
+        }
+      }
+    }
+
+    .notes_main {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    .notes_row {
+      display: flex;
+      flex-direction: row;
+      height: 1.81818182em;
+
+      > * {
+        flex-grow: 0;
+        text-align: right;
+        width: 4.36363636em;
+
+        &:first-child {
+          flex-grow: 1;
+          text-align: left;
+        }
+      }
+
+      .placeholder {
+        display: inline-block;
+        height: 0.72727273em;
+
+        &.large {
+          width: 60%;
+        }
+
+        &.small {
+          width: 35%;
+        }
+
+        &.medium {
+          width: 30%;
+        }
+      }
+    }
+  }
+
+  .note_page {
+    margin-bottom: 4.36363636em;
+
+    /* The header is 1.27em of the view, and the title 1.27em of that again,
+       as the site had it: the site's h1 kept its own size inside the header
+       rather than taking the header's, and it is that, some 20px against a
+       13px button, that makes the button read as small beside it. */
+    .note_header {
+      align-items: center;
+      display: flex;
+      flex-direction: row;
+      font-size: 1.27272727em;
+      margin: -0.25em 0 0.92561984em;
+
+      .heading {
+        flex-grow: 1;
+        margin: 0;
+      }
+    }
+  }
+
+  /* What a note holds: lines of grey, an image, and whatever a capture brought
+   in. A captured block comes in lit in the capture colour and settles to grey
+   once its entrance is over. */
+  .note_content {
+    li.media {
+      margin-top: 0.36363636em;
+
+      &::before {
+        display: none;
+      }
+    }
+
+    .placeholder {
+      --height: 1.45454545em;
+
+      display: inline-block;
+      height: var(--height);
+      transition: background-color 0.2s ease-in-out;
+
+      &.img.large {
+        --height: 9.09090909em;
+      }
+
+      &.img.small {
+        --height: 3.09090909em;
+      }
+
+      &.circle {
+        --height: 2.90909091em;
+
+        border-radius: 50%;
+        width: 2.90909091em;
+      }
+    }
+
+    p.placeholder {
+      height: 1em;
+      margin: 0;
+
+      &.medium {
+        width: 60%;
+      }
+
+      &.small {
+        width: 42%;
+      }
+    }
+
+    .is_insert {
+      .placeholder {
+        background-color: var(--bw-capture);
+      }
+
+      &.media .placeholder {
+        animation: placeholder-in 0.15s ease-in-out;
+      }
+
+      &:not(.media) {
+        animation: placeholder-in 0.15s ease-in-out;
+        display: inline-block;
+        width: 100%;
+      }
+    }
+  }
+
+  @keyframes placeholder-in {
+    0% {
+      font-size: 0;
+      height: 0;
+      line-height: 0;
+      opacity: 0;
+    }
+
+    100% {
+      height: var(--height);
+      opacity: 1;
+    }
+  }
+
+  /* ---------------------------------------------------------- the capture */
+
+  /* The lit rectangle that walks over the blocks of a page. Its position is
+   written by the component in the content box's own pixels, and the box goes
+   with the page when the page scrolls. */
+  .capture_frame {
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    transition: opacity 0.2s ease-in-out;
+  }
+
+  .highlight {
+    --padding: 0.3571em;
+    --x: 50%;
+    --y: 50%;
+    --width: 0px;
+    --height: 0px;
+    --ease: cubic-bezier(0.42, 0, 0.4, 1.17);
+
+    background-color: var(--bw-capture);
+    border-radius: 0.2143em;
+    box-sizing: content-box;
+    height: var(--height);
+    left: calc(var(--x) - var(--padding));
+    padding: var(--padding);
+    pointer-events: none;
+    position: absolute;
+    top: calc(var(--y) - var(--padding));
+    transition: left 0.2s var(--ease), top 0.2s var(--ease),
+      width 0.2s var(--ease), height 0.2s var(--ease);
+    width: var(--width);
+
+    &.is_shot {
+      animation: shoot 0.2s ease-in-out;
+    }
+  }
+
+  @keyframes shoot {
+    0% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(0.9);
+    }
+
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  /* ------------------------------------------------------------- omnibox */
+
+  .omnibox_frame {
+    --omnibox-transition-duration: 0.1s;
+
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    inset: 0;
+    justify-content: flex-start;
+    opacity: 0;
+    padding: 1em;
+    pointer-events: none;
+    position: absolute;
+    transition: opacity var(--omnibox-transition-duration) ease-in-out;
+    /* Over everything in the window, the publish button's tooltip included,
+       which has a z-index of its own and came through the omnibox. */
+    z-index: 4;
+  }
+
+  .omnibox {
+    background-color: var(--bw-omnibox-bg);
+    border: 0.5px solid var(--bw-omnibox-border);
+    border-radius: 0.625em;
+    box-shadow: 0 0.7143em 2.1429em var(--bw-omnibox-shadow);
+    margin: 1.75em;
+    max-width: 42.5em;
+    padding: 0.36363636em;
+    position: relative;
+    transform: scale(0.8) translateY(1em);
+    transition: transform var(--omnibox-transition-duration) ease-in-out;
+    width: calc(100% - 1.75em * 2);
+
+    input {
+      appearance: none;
+      background-color: transparent;
+      border: 0;
+      caret-color: var(--bw-capture);
+      color: inherit;
+      font-family: inherit;
+      font-size: 1.21428571em;
+      padding: 0;
+      width: 100%;
+
+      &:focus {
+        outline: 0;
+      }
+
+      &::placeholder {
+        color: var(--bw-omnibox-placeholder);
+      }
+    }
+  }
+
+  .omnibox_row {
+    display: flex;
+    flex-direction: row;
+    font-size: 0.875em;
+    gap: 0.85714286em;
+    padding: 0.71428571em 0.85714286em;
+
+    .omnibox_icon {
+      align-items: center;
+      color: var(--bw-omnibox-icon);
+      display: flex;
+      justify-content: center;
+      min-width: 1.14285714em;
+
+      svg {
+        --size: 1.14285714em;
+
+        height: var(--size);
+        width: var(--size);
+      }
+    }
+
+    .omnibox_content {
+      align-items: center;
+      display: flex;
+      flex-direction: row;
+      flex-grow: 1;
+      justify-content: flex-start;
+      text-align: left;
+    }
+
+    &.is_result {
+      align-items: center;
+      appearance: none;
+      background-color: transparent;
+      border: 0;
+      border-radius: 0.42857143em;
+      color: inherit;
+      display: flex;
+      flex-direction: row;
+      flex-grow: 1;
+      width: 100%;
+
+      &:hover,
+      &:focus {
+        background-color: var(--bw-omnibox-selected);
+        outline: none;
+      }
+    }
+
+    /* The first hit is lit while the field has the focus, since Enter there
+       takes it; once the arrows have moved the focus to a row, the row's own
+       focus is the light. */
+    .omnibox:has(input:focus) &.is_selected {
+      background-color: var(--bw-omnibox-selected);
+    }
+
+    /* The easter egg's row, refusing: there is nothing to download any more,
+       and a refusal you can see is the difference between a joke and a bug.
+       The Subtitles site's shake, small, quick and damped: four swings, each
+       smaller than the last, rather than the beam site's nine at full width,
+       which read as a rattle. */
+    &.is_refused {
+      animation: refuse 0.36s ease-out;
+    }
+
+    /* A rule between the field and the first hit. */
+    &:not(.is_result) + .is_result {
+      margin-top: 0.75em;
+
+      &::before {
+        background-color: var(--bw-omnibox-border);
+        content: "";
+        height: 0.5px;
+        left: 0;
+        opacity: 0.5;
+        position: absolute;
+        right: 0;
+        top: 3.65em;
+      }
+    }
+  }
+
+  /* -------------------------------------------------------- the publish button */
+
+  /* An icon until you reach for it, then an icon with its name: beam's reveal
+   button, which this site has already taken apart on its own page. The site
+   measured the label and handed the width over as a custom property, which is
+   what the component does here too. */
+  .reveal {
+    --label-width: 0px;
+
+    align-items: center;
+    background-color: transparent;
+    border: 0;
+    border-radius: 0.3333em;
+    color: var(--bw-controls-accent);
+    display: inline-flex;
+    /* Nine tenths of the site's 0.86em: everything in the button, icon,
+       label and padding, is in em of this. */
+    font-size: 0.774em;
+    margin: 0;
+    padding: 0.25em;
+    position: relative;
+    /* A couple of pixels down from the header's centre line, where the
+       title's cap height wants it. */
+    top: 0.1667em;
+    transition: color 0.18s ease-in-out, background-color 0.18s ease-in-out;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--bw-controls-hover);
+    }
+
+    &:active,
+    &.is_active {
+      background-color: var(--bw-controls-bg-active);
+      color: var(--bw-controls-active);
+    }
+
+    &:is(:hover, :focus-visible, .is_active) {
+      background-color: var(--bw-menu-open);
+
+      .reveal_label {
+        opacity: 1;
+        width: var(--label-width);
+      }
+    }
+
+    /* Safari makes a mess of an elastic curve on width, so the close is plain. */
+    &:not(:hover, :focus-visible, .is_active) .reveal_label {
+      transition: width 0.15s ease-in-out, opacity 0.15s ease-in-out;
+    }
+
+    &.is_published .reveal_icon {
+      animation: bump-link 0.3s ease-in-out;
+    }
+  }
+
+  .reveal_icon {
+    display: inline-flex;
+    transition: color 0.18s ease-in-out;
+
+    svg {
+      height: 1.1em;
+      width: 1.1em;
+    }
+
+    .is_check path {
+      animation: draw-tick 0.25s ease-in-out both;
+      stroke-dasharray: 130%;
+    }
+  }
+
+  @keyframes draw-tick {
+    0% {
+      opacity: 0.05;
+      stroke-dashoffset: 130%;
+      stroke-width: 0;
+    }
+
+    50% {
+      opacity: 0.4;
+      stroke-dashoffset: 95%;
+    }
+
+    100% {
+      opacity: 1;
+      stroke-dashoffset: 0;
+    }
+  }
+
+  /* The site set the label at 0.75rem, 12px whatever the window's size; in
+     em of the button here, at what comes to 12px at the window's usual
+     size, so it scales with the drawing. */
+  .reveal_label {
+    display: inline-block;
+    font-size: 0.8em;
+    opacity: 0;
+    overflow-x: hidden;
+    text-align: left;
+    transition: width 0.18s cubic-bezier(0.26, 0.04, 0.35, 1.33),
+      opacity 0.18s cubic-bezier(0.26, 0.04, 0.35, 1.33);
+    vertical-align: middle;
+    white-space: nowrap;
+    width: 0;
+
+    &::before {
+      content: "\a0";
+      display: inline-block;
+    }
+  }
+
+  @keyframes bump-link {
+    0% {
+      transform: scale(1);
+    }
+
+    40% {
+      transform: scale(1.5);
+    }
+
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  /* "URL copied", over the button: beam's tooltip, the part of it this needs. */
+  .tooltip {
+    --offset: 0.3077em;
+
+    background-color: var(--bw-tooltip-bg);
+    border-radius: 0.3em;
+    bottom: calc(100% + var(--offset));
+    box-shadow: 0 0 0.4103em var(--bw-tooltip-shadow);
+    color: var(--bw-tooltip-color);
+    font-size: 0.8125em;
+    left: 50%;
+    opacity: 0;
+    padding: 0.4375em;
+    pointer-events: none;
+    position: absolute;
+    transform: translate(-50%, 25%) scale(0.5);
+    transform-origin: 50% 100%;
+    transition: transform 0.15s cubic-bezier(0.5, 0, 0.22, 1.17),
+      opacity 0.15s cubic-bezier(0.5, 0, 0.22, 1.17);
+    white-space: nowrap;
+    z-index: 3;
+
+    &.is_shown {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+  }
+}
+
+@keyframes refuse {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  16% {
+    transform: translateX(-4px);
+  }
+
+  42% {
+    transform: translateX(3px);
+  }
+
+  68% {
+    transform: translateX(-2px);
+  }
+
+  88% {
+    transform: translateX(1px);
+  }
+}
+
+/* ------------------------------------------------------- the chapter bar */
+
+/* One segment per chapter, the way the Subtitles demo marks its scenes: how
+   far through the loop is, and the way to skip ahead. */
+.chapters {
+  display: flex;
+  gap: 10px;
+  margin-inline: auto;
+  margin-top: 8px;
+  max-width: min(100%, 520px);
+}
+
+.chapter_button {
+  align-content: start;
+  appearance: none;
+  background: none;
+  border: 0;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: grid;
+  flex: 1;
+  font: inherit;
+  gap: 7px;
+  padding: 6px 0;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-border-1-outline);
+    outline-offset: 4px;
+  }
+
+  &.is_current {
+    cursor: default;
+  }
+}
+
+.chapter_track {
+  background: var(--color-bullet);
+  border-radius: 999px;
+  height: 4px;
+  overflow: hidden;
+  transition: mixins.theme-transition(background-color);
+}
+
+.chapter_fill {
+  background: var(--text-primary);
+  display: block;
+  height: 100%;
+  opacity: 0.55;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition-property: transform;
+  transition-timing-function: linear;
+}
+
+.chapter_label {
+  font-size: 1em;
+  opacity: 0.45;
+  text-align: center;
+  transition: mixins.theme-transition(opacity);
+}
+
+.chapter_button:hover .chapter_label,
+.chapter_button.is_current .chapter_label {
+  opacity: 0.8;
+}
+
+/* The line under the demo: help text, selectable like any prose. Qualified
+   with the root because `.prose p` sets a margin of its own. */
+.demo .caption {
+  color: var(--text-primary);
+  font-size: 0.85em;
+  margin-block: 1.2em 0;
+  opacity: 0.7;
+  text-align: center;
+  user-select: text;
+}
+
+/* Only says anything to a pointer, so it is only shown to one. */
+.caption_try {
+  display: none;
+
+  @media (hover: hover) and (pointer: fine) {
+    display: block;
+  }
+}
+
+/* Everything here is decoration, so reduced motion switches the lot off. The
+   component stops its own loop as well: this only covers the CSS. */
+@media (prefers-reduced-motion: reduce) {
+  .scroll_reveal {
+    /* No reveal: the window at its size, the title and the block in place,
+       whatever the scroll. */
+    --window-scale: 1;
+    --title-t: 1;
+    --slide-t: 1;
+  }
+
+  .slide,
+  .hint {
+    animation: none !important; // stylelint-disable-line declaration-no-important
+  }
+
+  .demo {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important; // stylelint-disable-line declaration-no-important
+      animation-iteration-count: 1 !important; // stylelint-disable-line declaration-no-important
+      transition-duration: 0.001ms !important; // stylelint-disable-line declaration-no-important
+    }
+
+    .window,
+    .title {
+      animation: none !important; // stylelint-disable-line declaration-no-important
+    }
+  }
+}
