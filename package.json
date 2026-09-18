@@ -27,7 +27,7 @@
   "dependencies": {
     "@daformat/contrast-color": "^1.0.0",
     "@daformat/react-headless-carousel": "^1.2.0",
-    "@daformat/react-number-flow-input": "^1.1.1",
+    "@daformat/react-number-flow-input": "1.1.2",
     "@daformat/react-split-flap-display": "1.0.2",
     "@daformat/react-swipeable-cards": "^1.0.4",
     "next": "15.5.25",
