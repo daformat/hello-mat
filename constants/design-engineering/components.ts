@@ -527,7 +527,7 @@ export const COMPONENTS = {
     videoDuration: 28.2,
     metas: {
       shortTitle: "The demo for beam, the browser",
-      title: "A browser demo that captures the web into a note",
+      title: "A browser that captures the web into a note",
       description:
         "beam's landing page demo, ported to React: one fake browser window that turns into a notes app, lifts blocks off three fake web pages into a journal, and publishes the note, with no video anywhere in it.",
       url: "/design-engineering/beam-demo",
