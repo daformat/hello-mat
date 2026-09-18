@@ -62,10 +62,10 @@
      strength its body::before gave them while the demo was in view. Kept as
      beam's colours rather than mixed from the page's: they are the brand,
      and the page's peach would have made them mud. */
-  --glow-1: rgb(18 178 130 / 0.45);
+  --glow-1: rgb(18 178 130 / 0.25);
   --glow-2: rgb(115 115 255 / 0.55);
   --glow-3: rgb(255 178 64 / 0.24);
-  --glow-4: rgb(207 58 97 / 0.42);
+  --glow-4: rgb(207 58 97 / 0.18);
   --glow-opacity: 0.5;
 
   @media (prefers-color-scheme: dark) {
@@ -104,10 +104,10 @@
     --bw-tooltip-shadow: rgb(0 0 0 / 0.24);
     --bw-shadow: rgb(0 0 0 / 0.5);
     --scene-opacity: 0.9;
-    --glow-1: rgb(18 178 130 / 0.3);
-    --glow-2: rgb(115 115 255 / 0.38);
-    --glow-3: rgb(255 178 64 / 0.13);
-    --glow-4: rgb(207 58 97 / 0.3);
+    --glow-1: rgb(18 178 130 / 0.35);
+    --glow-2: rgb(115 115 255 / 0.48);
+    --glow-3: rgb(255 178 64 / 0.23);
+    --glow-4: rgb(207 58 97 / 0.25);
     --glow-opacity: 0.55;
   }
 
@@ -450,7 +450,7 @@
   &::after {
     content: "";
     filter: blur(calc(1.5 * var(--window-em)));
-    inset: 4% 3%;
+    inset: 4% 1%;
     opacity: var(--glow-opacity);
     pointer-events: none;
     position: absolute;
