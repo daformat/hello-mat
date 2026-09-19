@@ -159,9 +159,15 @@ const SubtitlesAppPageContent = () => {
           next sentence arrives in English. Hold <kbd>⌃</kbd> while that line is
           up and it shows what was actually said, word by word if it is still
           being typed, because the two sentences are not the same length and
-          progress carries across as a fraction rather than a word index. The
-          menu is drawn item for item from the app&rsquo;s own, and only
-          Translate To does anything.
+          progress carries across as a fraction rather than a word index. Then
+          the menu walks to Show Both Languages, under the same Translate To,
+          and a third sentence says so with its original under it, at the
+          app&rsquo;s own proportions, and the podcast&rsquo;s last line arrives
+          the same way; <kbd>⌃</kbd> does nothing while both are on screen,
+          since there is nothing left to reveal. Listen To has the microphone
+          too: pick it and every box wears the app&rsquo;s red mic tile whatever
+          window plays, with the orange in-use pill up in the menu bar, until
+          you pick it again.
         </p>
 
         <h3 id="the-menu">The menu is yours too</h3>
