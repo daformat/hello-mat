@@ -543,6 +543,23 @@
   &.is_held .titlebar {
     cursor: grabbing;
   }
+
+  /* Once dragged or pulled, placed by its own corner in fractions of the
+     stage, written on the window by the component (placeWindow) in place of
+     the insets it was laid out with below, and of the margin the call window
+     is centred by: the position is absolute, and a margin the window was
+     centred with would move it by that much the moment it is picked up, which
+     is what sent the call window right on press. In fractions so it keeps its
+     size and its spot at any width. The steps it has been pulled past are
+     attributes on it too, see [data-narrow] and the rest. */
+  &[data-placed] {
+    height: var(--win-h);
+    inset: auto;
+    left: var(--win-x);
+    margin-inline: 0;
+    top: var(--win-y);
+    width: var(--win-w);
+  }
 }
 
 /* Two layouts, and every width in between.
@@ -791,8 +808,8 @@
   width: calc(10.64 * var(--u));
 }
 
-.app_notes.is_narrow .nt::before,
-.win_player.is_narrow .pod::before {
+.app_notes[data-narrow] .nt::before,
+.win_player[data-narrow] .pod::before {
   display: none;
 }
 
@@ -853,8 +870,8 @@
   display: none;
 }
 
-.app_notes.is_narrow .nt_lights_narrow,
-.win_player.is_narrow .pod_lights_narrow {
+.app_notes[data-narrow] .nt_lights_narrow,
+.win_player[data-narrow] .pod_lights_narrow {
   display: inline-flex;
 }
 
@@ -1081,30 +1098,30 @@
    and the title down so the name still reads on one or two lines; short loses
    the rest of the show, squat the waveform too, and what is left is the head
    and the transport, which is the least a player can be and still be one. */
-.win_player.is_narrow .pod_side,
-.win_player.is_narrow .pod_list {
+.win_player[data-narrow] .pod_side,
+.win_player[data-narrow] .pod_list {
   display: none;
 }
 
-.win_player.is_cramped .pod_art {
+.win_player[data-cramped] .pod_art {
   width: calc(6 * var(--u));
 }
 
-.win_player.is_cramped .pod_meta b {
+.win_player[data-cramped] .pod_meta b {
   font-size: calc(1.7 * var(--u));
 }
 
-.win_player.is_short .pod_list {
+.win_player[data-short] .pod_list {
   display: none;
 }
 
-.win_player.is_short .pod_main {
+.win_player[data-short] .pod_main {
   gap: calc(1.4 * var(--u));
   justify-content: flex-start;
   padding-block: calc(1.4 * var(--u));
 }
 
-.win_player.is_squat .pod_wave {
+.win_player[data-squat] .pod_wave {
   display: none;
 }
 
@@ -1326,11 +1343,11 @@
 
 /* Pulled short, the names go and the faces come down a size, so four people
    still fit in two rows rather than the names landing on the faces. */
-.demo_window.is_short .meet_grid .tile em {
+.demo_window[data-short] .meet_grid .tile em {
   display: none;
 }
 
-.demo_window.is_short .meet_grid .face {
+.demo_window[data-short] .meet_grid .face {
   font-size: calc(0.95 * var(--u));
   height: calc(2.9 * var(--u));
   width: calc(2.9 * var(--u));
@@ -1700,7 +1717,7 @@
     width: 36%;
   }
 
-  /* With the pane gone the lights move to the main bar, as under is_narrow. */
+  /* With the pane gone the lights move to the main bar, as under data-narrow. */
   .nt_lights_narrow {
     display: inline-flex;
   }
@@ -1716,23 +1733,23 @@
    them: the folders go first, then the list, and the toolbar sheds its
    controls from the right so the search field is never the thing that gets
    cut: the share circle first, then the format capsule. */
-.app_notes.is_narrow .nt_side {
+.app_notes[data-narrow] .nt_side {
   display: none;
 }
 
-.app_notes.is_narrow .nt_list {
+.app_notes[data-narrow] .nt_list {
   width: 36%;
 }
 
-.app_notes.is_narrow .nt_tools > .nt_group + .nt_g {
+.app_notes[data-narrow] .nt_tools > .nt_group + .nt_g {
   display: none;
 }
 
-.app_notes.is_cramped .nt_list {
+.app_notes[data-cramped] .nt_list {
   display: none;
 }
 
-.app_notes.is_cramped .nt_group {
+.app_notes[data-cramped] .nt_group {
   display: none;
 }
 
@@ -2069,6 +2086,16 @@
 
   &.is_dragging {
     cursor: grabbing;
+  }
+
+  /* Once moved, placed by its centre, which is also how it is dragged and how
+     it is kept inside the screen: written on the box by the component
+     (placeCaption), as a window's place is. */
+  &[data-spotted] {
+    bottom: auto;
+    left: var(--spot-x);
+    top: var(--spot-y);
+    transform: translate(-50%, -50%);
   }
 
   /* The in-flight word, before the recogniser commits it. */

@@ -1953,13 +1953,6 @@ const EDGE_SLOP = 4;
 /** How much less than the corner radius the corner's grab reaches inward. */
 const CORNER_TRIM = 8;
 
-const NO_STEPS: Steps = {
-  narrow: false,
-  cramped: false,
-  short: false,
-  squat: false,
-};
-
 /** The model's unit, as the stylesheet sets it: clamp(4px, 0.8182cqw, 8.51px)
  *  of the screen. Computed rather than read, because a custom property comes
  *  back from getComputedStyle as the clamp() it was written as. */
@@ -2088,7 +2081,25 @@ export const SubtitlesDemo = () => {
   // Where the caption box has been dragged to, as the fraction of the screen its
   // centre sits at, not pixels, so it keeps its place when the demo resizes.
   // Null until somebody moves it, which leaves the CSS to place it.
-  const [spot, setSpot] = useState<{ x: number; y: number } | null>(null);
+  // Written to the box as two custom properties and a data-spotted flag, as
+  // the windows' places are (see placeWindow): a drag fires on every move.
+  const spotRef = useRef<{ x: number; y: number } | null>(null);
+  const placeCaption = useCallback((spot: { x: number; y: number } | null) => {
+    spotRef.current = spot;
+    const box = overlayRef.current;
+    if (!box) {
+      return;
+    }
+    if (spot) {
+      box.style.setProperty("--spot-x", `${spot.x * 100}%`);
+      box.style.setProperty("--spot-y", `${spot.y * 100}%`);
+      box.setAttribute("data-spotted", "");
+    } else {
+      box.style.removeProperty("--spot-x");
+      box.style.removeProperty("--spot-y");
+      box.removeAttribute("data-spotted");
+    }
+  }, []);
   const [shiftHeld, setShiftHeld] = useState(false);
   const [dragging, setDragging] = useState(false);
   // The live box goes solid while the stack is up, the way it does under shift.
@@ -2105,16 +2116,53 @@ export const SubtitlesDemo = () => {
     | null
   >(null);
   const queueHoleRef = useRef<(() => void) | null>(null);
-  // Windows that have been dragged off their CSS insets, each held as fractions
-  // of the screen so they keep both their size and their place when it resizes.
-  const [placed, setPlaced] = useState<Partial<Record<AppId, Placement>>>({});
-  const [draggedWindow, setDraggedWindow] = useState<AppId | null>(null);
-  // Resizing, by any edge or corner: the window being pulled, the steps each
-  // window has crossed, and which edge's cursor the stage should show.
-  const [resizedWindow, setResizedWindow] = useState<AppId | null>(null);
-  const [dressed, setDressed] = useState<Partial<Record<AppId, Steps>>>({});
-  const [resizeCursor, setResizeCursor] = useState<ResizeCursor | null>(null);
+  // Where a window or the caption box has been put is written to the DOM, not
+  // held in state: a drag or a resize fires on every pointer move, and a
+  // render of the whole demo per move, menu and captions and all, is what
+  // made a window lag the hand. Each moved window carries its place as four
+  // custom properties and a data-placed flag the stylesheet reads, and the
+  // same fractions of the stage stay in a ref for the next gesture to start
+  // from and for a resize of the screen to keep. The steps a window has been
+  // pulled past (narrow, cramped, short, squat) are data attributes on it for
+  // the same reason, and the resize cursor a data attribute on the stage.
+  const placedRef = useRef<Partial<Record<AppId, Placement>>>({});
   const windowRefs = useRef<Partial<Record<AppId, HTMLDivElement>>>({});
+  const placeWindow = useCallback((app: AppId, place: Placement) => {
+    placedRef.current[app] = place;
+    const win = windowRefs.current[app];
+    if (!win) {
+      return;
+    }
+    win.style.setProperty("--win-x", `${place.left * 100}%`);
+    win.style.setProperty("--win-y", `${place.top * 100}%`);
+    win.style.setProperty("--win-w", `${place.width * 100}%`);
+    win.style.setProperty("--win-h", `${place.height * 100}%`);
+    win.setAttribute("data-placed", "");
+  }, []);
+  const dressWindow = (app: AppId, steps: Steps) => {
+    const win = windowRefs.current[app];
+    if (!win) {
+      return;
+    }
+    win.toggleAttribute("data-narrow", steps.narrow);
+    win.toggleAttribute("data-cramped", steps.cramped);
+    win.toggleAttribute("data-short", steps.short);
+    win.toggleAttribute("data-squat", steps.squat);
+  };
+  const setResizeCursor = useCallback((cursor: ResizeCursor | null) => {
+    const stage = stageRef.current;
+    if (!stage) {
+      return;
+    }
+    if (cursor) {
+      stage.dataset.resize = cursor;
+    } else {
+      delete stage.dataset.resize;
+    }
+  }, []);
+  // The window being dragged or pulled: two writes a gesture, not one a move.
+  const [draggedWindow, setDraggedWindow] = useState<AppId | null>(null);
+  const [resizedWindow, setResizedWindow] = useState<AppId | null>(null);
   const resizeGrabRef = useRef<{
     app: AppId;
     edges: Edges;
@@ -2414,7 +2462,7 @@ export const SubtitlesDemo = () => {
     } else if (id === "history") {
       applySettings({ historyEnabled: !settingsRef.current.historyEnabled });
     } else if (id === "reset") {
-      setSpot(null);
+      placeCaption(null);
       queueHoleRef.current?.();
     }
   };
@@ -3708,9 +3756,9 @@ export const SubtitlesDemo = () => {
         y: centre.y - (event.clientY - stage.top) / stage.height,
       };
       setDragging(true);
-      setSpot(insideStage(centre.x, centre.y));
+      placeCaption(insideStage(centre.x, centre.y));
     },
-    [insideStage]
+    [insideStage, placeCaption]
   );
 
   const onDrag = useCallback(
@@ -3720,14 +3768,14 @@ export const SubtitlesDemo = () => {
       if (!grab || !stage) {
         return;
       }
-      setSpot(
+      placeCaption(
         insideStage(
           (event.clientX - stage.left) / stage.width + grab.x,
           (event.clientY - stage.top) / stage.height + grab.y
         )
       );
     },
-    [insideStage]
+    [insideStage, placeCaption]
   );
 
   const endDrag = useCallback(() => {
@@ -4621,33 +4669,33 @@ export const SubtitlesDemo = () => {
         pointerId: event.pointerId,
       };
       setDraggedWindow(app);
-      setPlaced((at) => ({ ...at, [app]: place }));
+      placeWindow(app, place);
       // Taking hold of a window raises it, which here means playing its scene.
       jumpTo(index, true);
     },
-    [jumpTo]
+    [jumpTo, placeWindow]
   );
 
-  const dragWindow = useCallback((event: ReactPointerEvent<HTMLElement>) => {
-    const grab = windowGrabRef.current;
-    const stage = stageRef.current?.getBoundingClientRect();
-    if (!grab || !stage) {
-      return;
-    }
-    const { place } = grab;
-    // Sideways and downwards a window can go where it likes and be clipped by
-    // the screen, which is what happens on a desktop. Upwards it stops at the
-    // top of the stage, which is the underside of the menu bar: on a Mac you
-    // cannot push a window up behind it either.
-    setPlaced((at) => ({
-      ...at,
-      [grab.app]: {
+  const dragWindow = useCallback(
+    (event: ReactPointerEvent<HTMLElement>) => {
+      const grab = windowGrabRef.current;
+      const stage = stageRef.current?.getBoundingClientRect();
+      if (!grab || !stage) {
+        return;
+      }
+      const { place } = grab;
+      // Sideways and downwards a window can go where it likes and be clipped by
+      // the screen, which is what happens on a desktop. Upwards it stops at the
+      // top of the stage, which is the underside of the menu bar: on a Mac you
+      // cannot push a window up behind it either.
+      placeWindow(grab.app, {
         ...place,
         left: (event.clientX - stage.left) / stage.width - grab.x,
         top: Math.max(0, (event.clientY - stage.top) / stage.height - grab.y),
-      },
-    }));
-  }, []);
+      });
+    },
+    [placeWindow]
+  );
 
   const endWindowDrag = useCallback(() => {
     const grab = windowGrabRef.current;
@@ -4742,7 +4790,7 @@ export const SubtitlesDemo = () => {
     resizeGrabRef.current = null;
     setResizedWindow(null);
     setResizeCursor(null);
-  }, []);
+  }, [setResizeCursor]);
 
   const startWindowResize = (event: ReactPointerEvent<HTMLDivElement>) => {
     const stage = stageRef.current;
@@ -4785,7 +4833,7 @@ export const SubtitlesDemo = () => {
       minW: (sizes.minW * u) / bounds.width,
       minH: (sizes.minH * u) / bounds.height,
     };
-    setPlaced((at) => ({ ...at, [hit.app]: box }));
+    placeWindow(hit.app, box);
     setResizedWindow(hit.app);
     setResizeCursor(cursorFor(hit.edges));
     // Taking hold raises, as moving does, which here means playing its scene.
@@ -4860,9 +4908,9 @@ export const SubtitlesDemo = () => {
         height = Math.max(grab.minH, height + dy);
       }
     }
-    setPlaced((at) => ({ ...at, [grab.app]: { left, top, width, height } }));
-    // The window's size in units, against its steps: under each one the class
-    // of that name goes on, and the stylesheet takes something out.
+    placeWindow(grab.app, { left, top, width, height });
+    // The window's size in units, against its steps: under each one the
+    // attribute of that name goes on, and the stylesheet takes something out.
     const wU = (width * bounds.width) / grab.u;
     const hU = (height * bounds.height) / grab.u;
     const sizes = WINDOW_SIZES[grab.app];
@@ -4872,15 +4920,7 @@ export const SubtitlesDemo = () => {
       short: sizes.short !== undefined && hU < sizes.short,
       squat: sizes.squat !== undefined && hU < sizes.squat,
     };
-    setDressed((at) => {
-      const was = at[grab.app] ?? NO_STEPS;
-      return was.narrow === steps.narrow &&
-        was.cramped === steps.cramped &&
-        was.short === steps.short &&
-        was.squat === steps.squat
-        ? at
-        : { ...at, [grab.app]: steps };
-    });
+    dressWindow(grab.app, steps);
   };
 
   // A window you are holding stops being yours when the demo moves on: the loop
@@ -4903,15 +4943,18 @@ export const SubtitlesDemo = () => {
   // can leave it hanging over an edge. Put it back inside.
   useEffect(() => {
     const stage = stageRef.current;
-    if (!stage || !spot) {
+    if (!stage || typeof ResizeObserver !== "function") {
       return;
     }
     const observer = new ResizeObserver(() => {
-      setSpot((at) => (at ? insideStage(at.x, at.y) : at));
+      const at = spotRef.current;
+      if (at) {
+        placeCaption(insideStage(at.x, at.y));
+      }
     });
     observer.observe(stage);
     return () => observer.disconnect();
-  }, [insideStage, spot]);
+  }, [insideStage, placeCaption]);
 
   // Writing, while the notes are the window in front: a line grows under the
   // caret, joins the page when it is done, and a fresh one starts. Nothing is
@@ -5001,8 +5044,6 @@ export const SubtitlesDemo = () => {
   // under it are the same three destinations, as buttons.
   const windowProps = (app: AppId, place: string | undefined) => {
     const index = SCENES.findIndex((item) => item.app === app);
-    const spotted = placed[app];
-    const steps = dressed[app] ?? NO_STEPS;
     return {
       ref: (node: HTMLDivElement | null) => {
         windowRefs.current[app] = node ?? undefined;
@@ -5014,32 +5055,14 @@ export const SubtitlesDemo = () => {
         front !== app && styles.is_reachable,
         (callPlaying ? app === "meeting" : app === "player") &&
           styles.is_playing,
-        draggedWindow === app && styles.is_held,
-        steps.narrow && styles.is_narrow,
-        steps.cramped && styles.is_cramped,
-        steps.short && styles.is_short,
-        steps.squat && styles.is_squat
+        draggedWindow === app && styles.is_held
       ),
       onClick: () => jumpTo(index, true),
-      // Placed by its own corner once dragged, rather than by the insets it
-      // was born with; the size comes along so it doesn't reflow mid-drag.
-      // --z rides along either way: it is the focus order, not the geometry.
-      style: {
-        ["--z"]: stack.indexOf(app) + 1,
-        ...(spotted
-          ? {
-              height: `${spotted.height * 100}%`,
-              inset: "auto",
-              // The position below is absolute; a margin the window was
-              // centred with would move it by that much the moment it is
-              // picked up, which is what sent the call window right on press.
-              marginInline: 0,
-              left: `${spotted.left * 100}%`,
-              top: `${spotted.top * 100}%`,
-              width: `${spotted.width * 100}%`,
-            }
-          : {}),
-      } as CSSProperties,
+      // Once dragged or pulled a window is placed by its own corner, rather
+      // than by the insets it was born with: see placeWindow, which writes
+      // the place to the window itself. --z is React's: it is the focus
+      // order, not the geometry, and changes when a scene does.
+      style: { ["--z"]: stack.indexOf(app) + 1 } as CSSProperties,
     };
   };
 
@@ -5289,7 +5312,6 @@ export const SubtitlesDemo = () => {
         <div
           ref={stageRef}
           className={styles.stage}
-          data-resize={resizeCursor ?? undefined}
           onPointerDownCapture={startWindowResize}
           onPointerMove={resizeWindow}
           onPointerUp={endWindowResize}
@@ -5886,17 +5908,8 @@ export const SubtitlesDemo = () => {
             )}
             data-named={boxApp ? "1" : "0"}
             // Once moved it is placed by its centre, which is also how it is
-            // dragged and how it is kept inside the screen.
-            style={
-              spot
-                ? {
-                    bottom: "auto",
-                    left: `${spot.x * 100}%`,
-                    top: `${spot.y * 100}%`,
-                    transform: "translate(-50%, -50%)",
-                  }
-                : undefined
-            }
+            // dragged and how it is kept inside the screen: see placeCaption,
+            // which writes the place to the box itself.
             onPointerDown={startDrag}
             onPointerMove={onDrag}
             onPointerUp={endDrag}
