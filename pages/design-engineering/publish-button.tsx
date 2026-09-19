@@ -48,10 +48,8 @@ const PublishButtonPageContent = () => {
           when it’s published, you need an action to unpublish it, and maybe
           additional actions that should be available when published. This
           publish button was created at{" "}
-          <a target="_blank" rel="noopener" href="https://beamapp.co">
-            beam
-          </a>{" "}
-          to solve this problem.
+          <Link href="/design-engineering/beam-demo">beam</Link> to solve this
+          problem.
         </p>
         <p>
           Following beam’s minimalistic approach to design, the button is just

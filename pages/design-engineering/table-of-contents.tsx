@@ -45,12 +45,9 @@ const TableOfContentsPageContent = () => {
         <ArticleDates componentId={componentId} />
         <p>
           This component (shown on the left hand-side, play with it!) was
-          crafted at{" "}
-          <a href="https://beamapp.co" target="_blank" rel="noopener">
-            beam
-          </a>
-          , a browser with a first-class note taking experience. With beam, you
-          can point and shoot elements from the pages you’re browsing and build
+          crafted at <Link href="/design-engineering/beam-demo">beam</Link>, a
+          browser with a first-class note taking experience. With beam, you can
+          point and shoot elements from the pages you’re browsing and build
           rich-media notes out of them, complete with references and
           back-linking.
         </p>

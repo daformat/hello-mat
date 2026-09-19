@@ -50,13 +50,11 @@ const DockComponentPageContent = () => {
         <ArticleDates componentId={componentId} />
         <p>
           A macOS inspired dock component. Icons are from{" "}
-          <a href="https://beamapp.co" target="_blank" rel="noopener">
-            beam
-          </a>
-          , a browser with a first-class note taking experience. This is an
-          exploration made for fun. The dock is accessible to mouse and keyboard
-          users, try alternating between mouse and keyboard to see the
-          difference. This is a desktop-only component (for now).
+          <Link href="/design-engineering/beam-demo">beam</Link>, a browser with
+          a first-class note taking experience. This is an exploration made for
+          fun. The dock is accessible to mouse and keyboard users, try
+          alternating between mouse and keyboard to see the difference. This is
+          a desktop-only component (for now).
         </p>
         <div
           className="card"
