@@ -337,6 +337,50 @@
   align-items: center;
   display: inline-flex;
   gap: calc(1.48 * var(--u));
+  position: relative;
+}
+
+/* The microphone-in-use pill, as macOS puts it at the left end of the status
+   items while something listens: the system orange, the mic in white (the
+   app's own glyph). Up while the demo listens to the microphone, from its menu
+   or the seed. Out of the bar's flow, the items' own gap off the first of
+   them, so nothing in the bar moves when it comes: it scales up from its
+   centre as it fades in, with a little overshoot, and back down as it fades
+   out. The size of the wash the app's glyph wears while its menu is up,
+   .mb_glyph::before: the glyph's box and its 0.915u either side and 0.4u above
+   and below, which is the capsule macOS draws behind any status item and so
+   behind this one. The mic is 0.55 of the pill's height, as the real one is. */
+.mb_mic {
+  align-items: center;
+  background: #ff9f0a;
+  border-radius: 999px;
+  display: inline-flex;
+  height: calc((1.48 + 0.8) * var(--u));
+  inset-inline-end: calc(100% + 1.48 * var(--u));
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%) scale(0.5);
+  transition: opacity 0.2s ease-in, transform 0.2s ease-in;
+  width: calc((1.7 + 1.83) * var(--u));
+
+  /* Sized outright against the page's img rules: 44 × 65 is the file's
+     aspect. */
+  img {
+    display: block;
+    height: calc(1.25 * var(--u));
+    max-width: none;
+    width: calc(1.25 * var(--u) * 44 / 65);
+  }
+
+  &.is_on {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+    transition: opacity 0.22s ease-out,
+      transform 0.36s cubic-bezier(0.2, 0.9, 0.3, 1.25);
+  }
 }
 
 /* The glyph keeps its colour; the badge is a separate 6pt dot on the glyph's
@@ -349,11 +393,13 @@
   z-index: 0;
 
   /* Pressed, while its menu is up: a pill of highlight, wider than the glyph,
-     drawn behind it so nothing in the bar moves. */
+     drawn behind it so nothing in the bar moves. 0.915u either side: a little
+     more than the 0.8 the height's 0.4 would suggest, matched by eye against
+     the capsule macOS draws. */
   &::before {
     border-radius: 999px;
     content: "";
-    inset: calc(-0.4 * var(--u)) calc(-0.8 * var(--u));
+    inset: calc(-0.4 * var(--u)) calc(-0.915 * var(--u));
     position: absolute;
     z-index: -1;
   }
@@ -1923,7 +1969,17 @@
   font-size: calc(clamp(10px, 2.61cqw, 27.2px) * var(--text-scale, 1));
   font-weight: 600;
   left: 50%;
-  line-height: 1.34;
+  /* The app's line: the font's own 35pt at 30pt and Pill.paragraph's 2pt of
+     line spacing between lines, 37 a line, so 1.2334 of the size; the last
+     digit makes it 37.002 rather than the 36.999 Safari floors to 36. The
+     last line of a paragraph gets no spacing after it there, which .ov_text
+     and .ov_under take off again with a margin, so a one-line box is 35 + the
+     insets, as the app's fittingSize has it, and two lines are 72. It was 1.34
+     from the landing page's first day, which is nothing the app measures: a
+     box 5pt taller than the app's at 30pt, and, with the other language under
+     the caption, the two paragraphs a seventh of an em further apart than the
+     app sets them. */
+  line-height: 1.2334;
   /* The pointer reveal, and every number in it is the app's own.
      `defaultMaskSize` is 800x400pt against a 30pt overlay, so 26.67 x 13.33em
      here, which is why this is written in em like the rest of the box: the
@@ -2108,30 +2164,64 @@
 
 .ov_text {
   display: block;
+  /* The 2pt of line spacing the app puts after every line but a paragraph's
+     last, taken off the last: see line-height on .overlay. */
+  margin-bottom: -0.0667em;
+}
 
-  /* A shortcut said inside a box is drawn as a keycap on the box's own ink:
-     the same outline the help lines have, white on the black, sized to the
-     caption so it follows the text size the menu sets, and no taller than the
-     line so the box keeps its shape. The component draws these from the text
-     as it types (keycaps, appendKeys), so no line carries markup for it.
-     Written out whole: the page's own kbd rule sets a monospace face, a code
-     background and a shadow, and every one of them has to go. */
-  kbd {
-    background: transparent;
-    border: 1px solid rgb(255 255 255 / 0.45);
-    border-radius: 0.41em;
-    box-shadow: none;
-    color: inherit;
-    display: inline-block;
-    font: inherit;
-    font-size: 0.82em;
-    line-height: 1;
-    min-width: 1.5em;
-    padding: 0.16em 0.4em;
-    text-align: center;
-    transition: none;
-    vertical-align: 0.04em;
+/* Show Both Languages, from the demo's menu or the seed (bothLanguages in the
+   component): the other language under the text, the app's
+   SubtitleView.secondary at its proportions. 0.8 of the caption's size, 0.75
+   of its run's strength (the stack's dimmed text included: it is the run's own
+   opacity that is scaled, as the app scales HistoryStyle's), and its
+   secondaryGap of 0.35 of the caption's size from the caption's last line to
+   its first; the margin collapses with .ov_text's, which is the same
+   subtraction the app makes: the caption's block ends where its last line's
+   glyph box does, and the gap is counted from there. Empty, it takes no room:
+   a box with the one language is the box it always was. The component writes
+   it, keycaps and all. */
+.ov_under {
+  display: block;
+  font-size: 0.8em;
+  margin-bottom: -0.0667em;
+  margin-top: 0.4375em; /* 0.35em of the caption, in this run's 0.8 */
+  opacity: 0.75;
+
+  &:empty {
+    display: none;
   }
+}
+
+/* A shortcut said inside a box is drawn as a keycap on the box's own ink: the
+   same outline the help lines have, white on the black, sized to the caption
+   so it follows the text size the menu sets, and no taller than the line so
+   the box keeps its shape. The component draws these from the text as it
+   types (keycaps, appendKeys), so no line carries markup for it. Written out
+   whole: the page's own kbd rule sets a monospace face, a code background and
+   a shadow, and every one of them has to go. */
+.ov_text kbd,
+.ov_under kbd {
+  background: transparent;
+  border: 1px solid rgb(255 255 255 / 0.45);
+  border-radius: 0.41em;
+  box-shadow: none;
+  color: inherit;
+  display: inline-block;
+  font: inherit;
+  font-size: 0.82em;
+  line-height: 1;
+  /* The padding and border drawn outside the line's reckoning: an
+     inline-block's margin box is what a line box has to contain, and the
+     keycap's padded box is taller than the room under the baseline at the
+     app's line height, so without this the line it sits in grew by a pixel at
+     small sizes and the box with it. Cancelled, its box is its 0.82em of text
+     alone, which any line holds. */
+  margin-block: calc(-0.16em - 1px);
+  min-width: 1.5em;
+  padding: 0.16em 0.4em;
+  text-align: center;
+  transition: none;
+  vertical-align: 0.04em;
 }
 
 /* Show Source App Name → Name Tab, from the menu, see the NameTab class in
@@ -2380,6 +2470,12 @@
   + .mn_more {
     margin-inline-start: calc(0.45 * var(--u));
   }
+}
+
+/* Greyed with its row: Show Both Languages with translation off. */
+.mn_row.is_dim .mn_demo {
+  background: rgb(var(--ink) / 0.06);
+  color: rgb(var(--ink) / 0.3);
 }
 
 .mn_row.is_hot .mn_demo {
@@ -2680,7 +2776,8 @@
   flex: none;
   font-family: var(--demo-font);
   font-weight: 600;
-  line-height: 1.34;
+  /* The live box's, see .overlay. */
+  line-height: 1.2334;
   max-width: min(80.3cqw, 704px);
   /* The same floor the live box has, and for the same reason: `fittingSize`
      gives a history pill the app's 140pt minimum too, so a three-word line is a
