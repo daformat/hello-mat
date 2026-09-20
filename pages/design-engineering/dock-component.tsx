@@ -80,13 +80,13 @@ const DockComponentPageContent = () => {
           Every icon measures how far the pointer is from it and scales between
           a minimum and a maximum, which is the obvious part. The part that
           decides whether it feels right is what counts as{" "}
-          <strong>zero distance</strong>. If you measure to the centre of the
+          <strong>zero distance</strong>. If you measure to the center of the
           icon, the icon reaches full size at exactly one pixel and starts
           shrinking again the moment you move past it, which reads as nervous.
         </p>
         <p>
           So there is a dead zone. Distance is measured to the edges of a band
-          across the middle of each icon rather than to its centre, and anywhere
+          across the middle of each icon rather than to its center, and anywhere
           inside that band the distance is zero. The icon under the pointer
           stays at full size while you cross it, and only starts falling away
           once you have actually left. The falloff itself is linear, over a
@@ -99,11 +99,11 @@ const DockComponentPageContent = () => {
         </h2>
         <p>
           A pointer has a position and a keyboard does not, so reusing the same
-          maths for focus would mean inventing a fake cursor somewhere. Instead
+          math for focus would mean inventing a fake cursor somewhere. Instead
           the component tracks whether the last interaction came from the
           pointer or from the keyboard, and when it came from the keyboard the
           scale is driven by <strong>distance in the list</strong> rather than
-          distance on screen: the focused icon is the peak, its neighbours fall
+          distance on screen: the focused icon is the peak, its neighbors fall
           off by how many positions away they are.
         </p>
         <p>

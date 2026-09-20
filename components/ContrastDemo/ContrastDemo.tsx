@@ -379,7 +379,7 @@ const CASES: { fg: string; bg: string; note: string }[] = [
   {
     fg: "#8b5cf6",
     bg: "#f5f3ff",
-    note: "A brand colour on its own tint, which is where this comes up most. It clears the bar having barely moved, and nobody would call it a different violet.",
+    note: "A brand color on its own tint, which is where this comes up most. It clears the bar having barely moved, and nobody would call it a different violet.",
   },
   {
     fg: "#ef4444",
@@ -475,8 +475,8 @@ const Examples = () => {
 /* ---------- the live lab ---------- */
 
 const PRESETS: { label: string; bg: string; fg: string }[] = [
-  { label: "grey-band failure", bg: "#e25d32", fg: "#7c2d12" },
-  { label: "grey band, lighter", bg: "#00a9fb", fg: "#0c4a6e" },
+  { label: "gray-band failure", bg: "#e25d32", fg: "#7c2d12" },
+  { label: "gray band, lighter", bg: "#00a9fb", fg: "#0c4a6e" },
   { label: "metrics disagree", bg: "#3b82f6", fg: "#1e3a8a" },
   { label: "near threshold", bg: "#787878", fg: "#3f3f46" },
   { label: "dark surface", bg: "#0b1120", fg: "#22c55e" },
@@ -617,11 +617,11 @@ const Lab = () => {
     }
     const parsed = hexToRgb(value);
     if (parsed) {
-      const normalised = rgbToHex(parsed);
+      const normalized = rgbToHex(parsed);
       if (isBackground) {
-        setBg(normalised);
+        setBg(normalized);
       } else {
-        setFg(normalised);
+        setFg(normalized);
       }
     }
   };
@@ -639,13 +639,13 @@ const Lab = () => {
      would have painted instead. */
   const luma = yiqLuma(bgRgb);
   if (cssInk && Math.abs(luma - 128) < GREY_BAND) {
-    const grey = cssYiqFallback(bgRgb, 1000);
+    const gray = cssYiqFallback(bgRgb, 1000);
     notes.push(
-      <span key="grey">
+      <span key="gray">
         <strong>The ×−1000 expression that circulates fails here.</strong> Luma
         is {luma.toFixed(3)}, within 0.255 of the 128 cutoff, so its clamp never
-        saturates: it would return {rgbToHex(grey)} at{" "}
-        {M.fmt(M.score(grey, bgRgb))} instead of {rgbToHex(cssInk.fixed)}.
+        saturates: it would return {rgbToHex(gray)} at{" "}
+        {M.fmt(M.score(gray, bgRgb))} instead of {rgbToHex(cssInk.fixed)}.
         Roughly 1 background in 600 lands here.
       </span>
     );
@@ -682,9 +682,9 @@ const Lab = () => {
     notes.push(
       <span key="unsupported">
         <strong>
-          This browser did not compute the relative-colour expressions
+          This browser did not compute the relative-color expressions
         </strong>
-        , so those two panes are showing a JS mirror of the same maths.
+        , so those two panes are showing a JS mirror of the same math.
       </span>
     );
   }
@@ -700,7 +700,7 @@ const Lab = () => {
             <input
               type="color"
               value={bg}
-              aria-label="Background colour picker"
+              aria-label="Background color picker"
               onChange={(event) => setBoth(event.target.value, true)}
             />
             <input
@@ -717,13 +717,13 @@ const Lab = () => {
 
         <div className={styles.field}>
           <label className={styles.chip_label} htmlFor={fgId}>
-            Text colour
+            Text color
           </label>
           <div className={styles.field_inputs}>
             <input
               type="color"
               value={fg}
-              aria-label="Text colour picker"
+              aria-label="Text color picker"
               onChange={(event) => setBoth(event.target.value, false)}
             />
             <input

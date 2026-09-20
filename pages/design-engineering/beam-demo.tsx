@@ -60,7 +60,7 @@ const BeamDemoPageContent = () => {
           the site in April 2022. beam is no longer around, and the site went
           with it, which is exactly the kind of thing this gallery is for. This
           is that demo, ported to React, with the site&rsquo;s own timings and
-          its own colours, and a couple of things I could not leave as I found
+          its own colors, and a couple of things I could not leave as I found
           them.
         </p>
         {/* Where the demo's stage starts on the page at desktop widths, with
@@ -188,23 +188,23 @@ const BeamDemoPageContent = () => {
             site as well, with three exceptions: the favicons in the tabs were
             PNGs pasted into the markup as data URIs, one of them seven
             kilobytes of a 256 pixel Gmail M. They are drawn now. The M is five
-            paths in its colours. The video badge is a red rounded rectangle and
+            paths in its colors. The video badge is a red rounded rectangle and
             a triangle. And the newspaper&rsquo;s is its own masthead: the site
             had <em>The Beam Times</em> as one blackletter path for the
             page&rsquo;s header, and the favicon is the same path with the
             viewBox closed in on its B, so the tab wears the paper&rsquo;s
-            initial in the text&rsquo;s own colour, and follows it into dark
+            initial in the text&rsquo;s own color, and follows it into dark
             mode with nothing to swap.
           </p>
 
-          <h3 id="two-themes">Two themes, and whose colours they are</h3>
+          <h3 id="two-themes">Two themes, and whose colors they are</h3>
           <p>
-            The window is drawn in beam&rsquo;s colours, all of them, light and
-            dark: white with a stone grey chrome on a light page, the near black
-            the app used on a dark one, its purple for the capture, its greys
+            The window is drawn in beam&rsquo;s colors, all of them, light and
+            dark: white with a stone gray chrome on a light page, the near black
+            the app used on a dark one, its purple for the capture, its grays
             for the placeholders. That is not this page&rsquo;s palette, and it
             should not be, because the window is a drawing of beam and beam was
-            those colours. What is the page&rsquo;s is everything around the
+            those colors. What is the page&rsquo;s is everything around the
             window: the title above it, the chapter bar under it, and the glow
             it stands on, which is the site&rsquo;s four washes, green, purple,
             orange and red, that used to sit behind the whole page, painted

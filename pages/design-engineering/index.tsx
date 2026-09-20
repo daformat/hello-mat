@@ -58,7 +58,7 @@ const DesignEngineeringIndex = () => (
           </Link>
           , a way of{" "}
           <Link href={COMPONENTS["contrast-colors"].metas.url}>
-            finding a readable colour by moving its lightness
+            finding a readable color by moving its lightness
           </Link>{" "}
           instead of reaching for black or white.
         </p>

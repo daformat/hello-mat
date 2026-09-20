@@ -946,9 +946,9 @@ const SwipeableCardsPageContent = (props: CodeBlocks) => {
         <h2 id="send-to-back">Sending to back</h2>
         <p>
           When sending the cards to the back of the stack, we need to ensure the
-          swiped card has travelled enough so that when swapping its z-index,
-          the card doesn’t overlap the stack. Many implementations disregard
-          this issue, as this is not trivial to implement. This package properly
+          swiped card has traveled enough so that when swapping its z-index, the
+          card doesn’t overlap the stack. Many implementations disregard this
+          issue, as this is not trivial to implement. This package properly
           ensures that, no more partial clipping when sending a card to the
           bottom of the stack!
         </p>

@@ -1131,11 +1131,11 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
         </p>
         <p>
           Beyond that it is mostly a question of how much character you want.
-          The boards these are modelled on were not typographically precious:
-          the lettering was condensed, heavy, and slightly crude, because it had
-          to be legible from the other end of a concourse and printed on a piece
-          of hinged plastic. A grotesque with tight apertures gets you closer
-          than anything designed to be admired at close range.
+          The boards these are modeled on were not typographically precious: the
+          lettering was condensed, heavy, and slightly crude, because it had to
+          be legible from the other end of a concourse and printed on a piece of
+          hinged plastic. A grotesque with tight apertures gets you closer than
+          anything designed to be admired at close range.
         </p>
 
         <h2 id="conclusion">That’s a wrap</h2>
@@ -1143,7 +1143,7 @@ const SplitFlapDisplayPageContent = (props: CodeBlocks) => {
           I wanted an a real split-flap display component with a rolling drum
           and implemented it with React, css, and JavaScript, the component
           accepts a range of characters and creates as many flaps as there are
-          characters. While there might be performance implications, I favoured
+          characters. While there might be performance implications, I favored
           recreating the full barrel effect as an exercise. I hope you enjoyed
           the demos. Stay tuned.
         </p>

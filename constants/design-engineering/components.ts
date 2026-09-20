@@ -58,7 +58,7 @@ export const COMPONENTS = {
       shortTitle: "A details (or disclosure) component",
       title: "Animating the native details element in React",
       description:
-        "Animating a disclosure without giving up the native details element, its keyboard behaviour, or its semantics. React, TypeScript, and SCSS.",
+        "Animating a disclosure without giving up the native details element, its keyboard behavior, or its semantics. React, TypeScript, and SCSS.",
       url: "/design-engineering/details-disclosure-component",
       image: "/media/design-engineering/details/og-details-light.png",
       imageWidth: 1200,
@@ -492,18 +492,18 @@ export const COMPONENTS = {
       light:
         "/media/design-engineering/contrast/contrast-overview-light-poster.webp",
     },
-    videoDuration: 6.967,
+    videoDuration: 8.6,
     metas: {
-      shortTitle: "Contrast, without losing your colour",
-      title: "Contrast colours: keep the hue, move the lightness",
+      shortTitle: "Contrast, without losing your color",
+      title: "Contrast colors: keep the hue, move the lightness",
       description:
-        "Black or white ink is the easy half of contrast. The harder half is taking a colour you chose and finding the nearest readable version of it: same hue, same chroma, only the lightness moved.",
+        "Black or white ink is the easy half of contrast. The harder half is taking a color you chose and finding the nearest readable version of it: same hue, same chroma, only the lightness moved.",
       url: "/design-engineering/contrast-colors",
       image: "/media/design-engineering/contrast/og-contrast-light.png",
       imageWidth: 1200,
       imageHeight: 630,
       datePublished: "2026-08-18",
-      dateModified: "2026-09-05",
+      dateModified: "2026-09-20",
     },
   },
   "beam-demo": {

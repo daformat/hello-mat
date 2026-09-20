@@ -192,7 +192,7 @@ const StackingCardsPageContent = () => {
           The timeline here is a <strong>view timeline</strong> rather than a
           scroll timeline: the wrapper declares{" "}
           <code>view-timeline-name: --cards-scrolling</code>, so progress is
-          measured by how far the wrapper has travelled through the viewport
+          measured by how far the wrapper has traveled through the viewport
           rather than by how far the page has scrolled. Each card then attaches
           to that timeline and runs over a slice of it.
         </p>
@@ -225,7 +225,7 @@ const StackingCardsPageContent = () => {
         </p>
         <h2 id="the-rolling-part">What makes it roll</h2>
         <p>
-          Scaling a card down on its own centre makes it recede, which is fine
+          Scaling a card down on its own center makes it recede, which is fine
           but flat. The rolling comes from one line:{" "}
           <code>transform-origin: center 200%</code>, which puts the origin well
           below the card, so the same scale reads as the card tipping away from

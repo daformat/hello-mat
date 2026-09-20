@@ -42,7 +42,7 @@ contrastShift("#1e3a8a", "#3b82f6", { target: 60, metric: "apca" });
 // Let it desaturate when the gamut runs out
 contrastShift("#fde047", "#ffffff", { target: 4.5, preserveChroma: false });
 
-// reached: false means no colour at this hue clears the target.
+// reached: false means no color at this hue clears the target.
 // What comes back is the best available, so check it before shipping.
 const result = contrastShift(fg, bg, { target: 75, metric: "apca" });
 if (!result.reached) {
@@ -75,18 +75,18 @@ const CSS_SNIPPET = `
 
 /* 2. The YIQ expression that circulates, with its two bugs.
 
-   The first is the comma after the origin colour: relative colour syntax is
+   The first is the comma after the origin color: relative color syntax is
    space separated only, so the declaration is a parse error and the text
    silently inherits whatever it was going to inherit anyway.
 
    The second is quieter. clamp() only saturates once the difference exceeds
    0.255, so any background whose luma lands inside that window returns a mid
-   grey instead of black or white. That is 28,358 colours, 0.169%, about one
+   gray instead of black or white. That is 28,358 colors, 0.169%, about one
    background in six hundred. On #e25d32 it emits #878787, which is 1.00:1.
 
    --yiq is the threshold, not the luma. The luma is the sum written out three
    times, and it is written out three times because r, g and b only exist inside
-   the colour function's own scope: there is nowhere outside rgb(from ...) where
+   the color function's own scope: there is nowhere outside rgb(from ...) where
    they mean anything, so the repetition is forced by the language rather than
    chosen. */
 
@@ -99,8 +99,8 @@ const CSS_SNIPPET = `
 
 /* 3. The same expression, fixed: comma gone, multiplier steepened.
 
-   The grey band is now 0.00255 luma units wide, narrower than the 0.001
-   quantisation of 8 bit luma, so no sRGB colour can land in it. Correct as
+   The gray band is now 0.00255 luma units wide, narrower than the 0.001
+   quantization of 8 bit luma, so no sRGB color can land in it. Correct as
    written, and still wrong as designed: the same 14.7% ink error as any YIQ
    threshold, because the number being thresholded is still NTSC coefficients on
    gamma encoded channels. */
@@ -118,7 +118,7 @@ const CSS_SNIPPET = `
      (1 + .05) / (Y + .05) = (Y + .05) / .05   ->   Y = sqrt(.0525) - .05
 
    Use 0.1791288 rather than 0.179: the rounded form disagrees with the
-   greater-of-black-or-white rule on about 0.03% of sRGB colours. pow(x, 2.2)
+   greater-of-black-or-white rule on about 0.03% of sRGB colors. pow(x, 2.2)
    approximates sRGB's piecewise curve closely enough for a threshold. */
 
 .ink-luminance {
@@ -232,24 +232,24 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
         <Link href="/design-engineering" className="back_link">
           Back to gallery
         </Link>
+        <h1 id="design-engineering-contrast-colors">
+          Keep the color. <em>Move the lightness.</em>
+        </h1>
+        <ArticleDates componentId={componentId} />
         <p className={styles.eyebrow}>
           OKLCh<span>/</span>WCAG 2.1<span>/</span>APCA<span>/</span>hue
           preserved
         </p>
-        <h1 id="design-engineering-contrast-colours">
-          Keep the colour. <em>Move the lightness.</em>
-        </h1>
-        <ArticleDates componentId={componentId} />
         <p>
           Every few months I need the same thing, and every few months the web
-          offers me something else. I have a colour I chose, it sits on a
+          offers me something else. I have a color I chose, it sits on a
           background I chose, and it is not readable. What I want back is that
-          colour, still recognisably itself, moved exactly as far as it has to
+          color, still recognizably itself, moved exactly as far as it has to
           be. What I get offered is black or white.
         </p>
         <p>
           Black or white is the easy half of contrast. The harder half is taking
-          a colour you actually chose and finding the nearest version of it that
+          a color you actually chose and finding the nearest version of it that
           stays readable: same hue, same chroma where the gamut allows, only the
           lightness moved, and only as far as it needs to go.
         </p>
@@ -266,7 +266,7 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
                 painted. The <code>×−1000</code> expression that circulates does
                 not get a pane of its own, since it is the fixed one with a bug
                 in it, but the lab still tells you when the background you
-                picked falls into its grey band, which is a thing I would not
+                picked falls into its gray band, which is a thing I would not
                 have believed from a table and which{" "}
                 <a href="#by-hand">rolling it by hand</a> gets to below.
               </p>
@@ -288,8 +288,8 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
               But the question I actually ask, and the one I hear designers ask,
               is a different one:{" "}
               <em>
-                I picked this colour, it isn&rsquo;t readable on that
-                background, give me the nearest version of it that is.
+                I picked this color, it isn&rsquo;t readable on that background,
+                give me the nearest version of it that is.
               </em>
             </p>
             <p className={styles.formula}>
@@ -300,9 +300,9 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
               first one does not. That is the whole difficulty in one line, and
               it took me an embarrassingly long time to see it: no amount of
               improving the first function ever turns it into the second,
-              because the colour you are trying to keep is not even in the room.
+              because the color you are trying to keep is not even in the room.
               This page works through both, in order, the easy one first and
-              honestly labelled as easy.
+              honestly labeled as easy.
             </p>
             <p>
               Everything on it is live. The swatches, the six cases and the four
@@ -318,10 +318,10 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
               <p>CSS does this natively now, and gets it exactly right.</p>
             </div>
             <p>
-              It takes a colour and returns black or white, whichever contrasts
+              It takes a color and returns black or white, whichever contrasts
               more, white on a tie. I checked it against the exact luminance
               threshold, the one part one derives below, over 1.89 million
-              colours and found <strong>zero mismatches</strong>, which is
+              colors and found <strong>zero mismatches</strong>, which is
               unsurprising once you see it: it is that formula, in C++, running
               in the style engine before paint. That makes it strictly better
               than anything I could hand-roll. No main-thread work, no bundle,
@@ -330,9 +330,9 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
             </p>
             <p>
               The last line of each swatch is the one nothing above it can
-              produce: the colour itself, moved until it is readable on itself.
+              produce: the color itself, moved until it is readable on itself.
               Same hue, same chroma, only the lightness changed, and still
-              recognisably the colour you started with rather than the black or
+              recognizably the color you started with rather than the black or
               white that replaced it three lines up. That is the whole point of
               this page, and part two is how it is done.
             </p>
@@ -342,9 +342,9 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
             <div className={`${styles.callout} ${styles.warn}`}>
               <p className={styles.callout_label}>The catch</p>
               <p>
-                It has YIQ&rsquo;s <em>shape</em>. One argument in, two colours
+                It has YIQ&rsquo;s <em>shape</em>. One argument in, two colors
                 out. It fixes the arithmetic and nothing else, and it still
-                cannot take a colour you chose and keep it. That limitation is
+                cannot take a color you chose and keep it. That limitation is
                 the whole of part two, and it is the reason this page does not
                 end here.
               </p>
@@ -369,12 +369,12 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
             <p>
               It is worth being precise about what that number is, because it is
               not luminance and it never was. It is the Y channel of
-              NTSC&rsquo;s YIQ colour space, a 1953 broadcast trick that let one
-              signal serve colour and black-and-white sets at once, on analogue
+              NTSC&rsquo;s YIQ color space, a 1953 broadcast trick that let one
+              signal serve color and black-and-white sets at once, on analog
               hardware where a squaring circuit was an expensive thing to ask
               for. Three consequences follow, and they compound rather than
               cancel. It is applied to gamma-encoded values, with no
-              linearisation step, so what comes out is neither physical light
+              linearization step, so what comes out is neither physical light
               nor perceptual lightness but a number in between that is neither.
               The coefficients are for the wrong primaries: 0.299, 0.587 and
               0.114 are Rec.601, tuned for 1953 phosphors, where sRGB is Rec.709
@@ -386,15 +386,15 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
             <p>
               None of that would matter if the answers came out the same, and
               the reason to care is that they do not. Ask YIQ to order two
-              random colours and it gets them backwards <strong>7.5%</strong> of
+              random colors and it gets them backwards <strong>7.5%</strong> of
               the time; ask it to pick ink and it chooses the lower-contrast
-              option on <strong>14.7%</strong> of colours. That is not a tail of
+              option on <strong>14.7%</strong> of colors. That is not a tail of
               pathological cases either. Tailwind&rsquo;s blue-500, red-500 and
               violet-500 all sit in the disagreement zone, as do{" "}
               <code>steelblue</code>, <code>chocolate</code> and{" "}
               <code>indianred</code>, which is to say: exactly where user
               interface palettes actually live. A formula from the era of vacuum
-              tubes, shipping today, on the colours we use most.
+              tubes, shipping today, on the colors we use most.
             </p>
 
             <h3 id="the-threshold">
@@ -414,24 +414,24 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
             <p>
               Above that value black wins, below it white does. Use the exact
               number rather than 0.179, because the rounded form disagrees with
-              the greater-of-black-or-white rule on about 0.03% of sRGB colours,
+              the greater-of-black-or-white rule on about 0.03% of sRGB colors,
               and if you are going to bother being right you may as well be
               right everywhere. It is also not the same thing as L*=50, which
-              lands at Y=0.184. Neighbours, not synonyms.
+              lands at Y=0.184. Neighbors, not synonyms.
             </p>
 
             <h3 id="by-hand">Rolling it by hand, and why you might have to</h3>
             <p>
               Before the native function, people built this out of relative
-              colour syntax, and those expressions are still worth
-              understanding: for older browsers, and because their failure modes
-              are a good lesson in how a correct-looking declaration can be
-              silently useless.
+              color syntax, and those expressions are still worth understanding:
+              for older browsers, and because their failure modes are a good
+              lesson in how a correct-looking declaration can be silently
+              useless.
             </p>
             <p>
               The version that circulates has two bugs. The first is a comma
-              after the origin colour, which is a parse error, since relative
-              colour syntax is space-separated only. The declaration is dropped,
+              after the origin color, which is a parse error, since relative
+              color syntax is space-separated only. The declaration is dropped,
               the text inherits, and nothing anywhere tells you. The second is
               subtler.
             </p>
@@ -440,7 +440,7 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
             </p>
             <p>
               That only saturates once the difference exceeds 0.255, and inside
-              that window it returns a <em>grey</em>. It is 28,358 colours, or{" "}
+              that window it returns a <em>gray</em>. It is 28,358 colors, or{" "}
               <strong>0.169%</strong>, about one background in six hundred. On{" "}
               <code>#e25d32</code> it emits <code>#878787</code>, which is
               1.00:1 against its own background. Invisible text, from a
@@ -448,17 +448,17 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
             </p>
             <p>
               The fix is one character: <code>−100000</code> instead of{" "}
-              <code>−1000</code>, which narrows the grey band to 0.00255, below
-              the 0.001 quantisation of 8-bit luma, so nothing can land in it.
+              <code>−1000</code>, which narrows the gray band to 0.00255, below
+              the 0.001 quantization of 8-bit luma, so nothing can land in it.
               It is still YIQ though. Correct as written, wrong as designed. To
-              fix the maths as well you need <code>pow()</code>, which lets CSS
+              fix the math as well you need <code>pow()</code>, which lets CSS
               compute real relative luminance and threshold it at 0.1791288.
               Both are in the lab at the top of the page, computing live rather
               than being described, and both are in the code at the end.
             </p>
 
             <div className={styles.sec_head}>
-              <h2 id="shifting-a-colour">Part two: shifting a colour</h2>
+              <h2 id="shifting-a-color">Part two: shifting a color</h2>
               <p>The question none of the above can answer.</p>
             </div>
             <p>
@@ -467,19 +467,19 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
               you can move in that means &ldquo;lighter&rdquo; without dragging
               hue and saturation along with it. Scaling the channels towards
               white desaturates, adding a constant shifts hue, and every naive
-              attempt turns the colour into mush. Which is why people conclude
-              it cannot be done and fall back to black or white, and I did that
-              for years too.
+              attempt turns the color into mush. Which is why people conclude it
+              cannot be done and fall back to black or white, and I did that for
+              years too.
             </p>
             <p>
               Switch to a perceptual polar space and the problem collapses. In
-              OKLCh a colour is lightness, chroma and hue, three axes that move
+              OKLCh a color is lightness, chroma and hue, three axes that move
               independently. So:
             </p>
             <ol>
               <li>
                 Hold <strong>H</strong> and <strong>C</strong>, which is what
-                keeps the colour recognisably itself.
+                keeps the color recognizably itself.
               </li>
               <li>
                 Move <strong>L</strong> away from the background&rsquo;s
@@ -501,11 +501,11 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
 
             <h3 id="what-goes-wrong">The two things that go wrong</h3>
             <p>
-              <strong>The gamut runs out.</strong> Saturated colours hit the
-              edge of sRGB before they run out of lightness, since a vivid
-              yellow simply cannot get dark at full chroma, so either the chroma
-              gets clipped or the colour is allowed to desaturate.{" "}
-              <strong>The target is unreachable.</strong> Sometimes no colour at
+              <strong>The gamut runs out.</strong> Saturated colors hit the edge
+              of sRGB before they run out of lightness, since a vivid yellow
+              simply cannot get dark at full chroma, so either the chroma gets
+              clipped or the color is allowed to desaturate.{" "}
+              <strong>The target is unreachable.</strong> Sometimes no color at
               that hue clears the bar at all, and when that happens a
               plausible-looking wrong answer is worse than an admission, so the
               result carries <code>reached: false</code> and returns its best
@@ -521,7 +521,7 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
               <div className={styles.sec_head}>
                 <h3 id="six-cases">Six cases</h3>
                 <p>
-                  Your colour, the shifted version, and the black-or-white
+                  Your color, the shifted version, and the black-or-white
                   answer, on the same background at the same target.
                 </p>
               </div>
@@ -542,8 +542,8 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
               <thead>
                 <tr>
                   <th>Approach</th>
-                  <th>Maths right</th>
-                  <th>Keeps your colour</th>
+                  <th>Math right</th>
+                  <th>Keeps your color</th>
                   <th>Wins when</th>
                   <th>Fails when</th>
                 </tr>
@@ -558,7 +558,7 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
                     nothing and you want one multiply-add.
                   </td>
                   <td>
-                    Shipped text. It picks the worse ink on 14.7% of colours,
+                    Shipped text. It picks the worse ink on 14.7% of colors,
                     clustered exactly where UI palettes live.
                   </td>
                 </tr>
@@ -568,7 +568,7 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
                   <td className={styles.no}>No</td>
                   <td>Nothing. It is strictly worse than the ×−100000 form.</td>
                   <td>
-                    All of YIQ&rsquo;s problems, plus a grey band on 0.169% of
+                    All of YIQ&rsquo;s problems, plus a gray band on 0.169% of
                     backgrounds that can return 1.00:1 text, plus a comma that
                     drops the declaration.
                   </td>
@@ -613,7 +613,7 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
                     JS, zero bundle, native speed, exactly correct.
                   </td>
                   <td>
-                    You wanted to keep your brand colour. It only ever returns
+                    You wanted to keep your brand color. It only ever returns
                     black or white.
                   </td>
                 </tr>
@@ -622,7 +622,7 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
                   <td className={styles.yes}>Yes</td>
                   <td className={styles.yes}>Yes</td>
                   <td>
-                    The colour carries meaning, whether that is brand, semantics
+                    The color carries meaning, whether that is brand, semantics
                     or a data encoding, and it has to survive being made
                     readable.
                   </td>
@@ -641,8 +641,8 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
               On maximum contrast, black-or-white wins and it is not close: 21:1
               against a shift&rsquo;s 4.5:1. That is not a point being hidden,
               it is the wrong yardstick. The shift solves a <em>constrained</em>{" "}
-              problem, which is to keep this colour and spend the minimum to
-              make it legible. <code>contrast-color()</code> does not solve that
+              problem, which is to keep this color and spend the minimum to make
+              it legible. <code>contrast-color()</code> does not solve that
               problem worse, it discards the constraint. The question is which
               one still has your design in it afterwards, not which number is
               bigger.
@@ -693,7 +693,7 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
                   </td>
                 </tr>
                 <tr>
-                  <th>Shift a colour, hue preserved</th>
+                  <th>Shift a color, hue preserved</th>
                   <td className={styles.part}>Partly</td>
                   <td className={styles.yes}>Yes</td>
                   <td>
@@ -743,7 +743,7 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
             does: it cannot iterate towards an answer, and it cannot report that
             it failed. Every &ldquo;no&rdquo; in that table is one of those two.
             So the practical split is to use <code>contrast-color()</code> for
-            ink, always, and to reach for JS only when the colour itself has to
+            ink, always, and to reach for JS only when the color itself has to
             survive. Run it at build time if you can, since the shift is
             deterministic and a design token pipeline is a much better home for
             it than the main thread.
@@ -752,8 +752,7 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
           <div className={styles.sec_head}>
             <h2 id="which-metric">Which metric?</h2>
             <p>
-              WCAG 2.1 and APCA disagree, sometimes about which colour is
-              better.
+              WCAG 2.1 and APCA disagree, sometimes about which color is better.
             </p>
           </div>
           <p>
@@ -767,12 +766,12 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
           <p>
             APCA scores those two as Lc 106.0 and Lc −107.9. Signed, asymmetric,
             polarity-aware, and built for text legibility rather than as a
-            general colour-difference metric. Flip the metric toggle in the lab
+            general color-difference metric. Flip the metric toggle in the lab
             above and watch every number move.
           </p>
           <p>
             They do not just differ in precision, they pick{" "}
-            <strong>different colours</strong>. On <code>#3b82f6</code> WCAG
+            <strong>different colors</strong>. On <code>#3b82f6</code> WCAG
             prefers black, at 5.71:1 against white&rsquo;s 3.68:1, and APCA
             prefers white, at Lc 69.4 against black&rsquo;s 40.2. Same
             background, opposite answers, and the same thing happens on{" "}
@@ -813,7 +812,7 @@ const ContrastColorsPageContent = (props: CodeBlocks) => {
             dependencies and nothing in it is React, so it runs just as happily
             in a token pipeline at build time as it does under your cursor here.
             It also handles a translucent foreground, scoring the composite over
-            the background rather than the colour you handed it.
+            the background rather than the color you handed it.
           </p>
 
           <h3 id="install">Install</h3>

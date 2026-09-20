@@ -137,11 +137,11 @@ const SubtitlesAppPageContent = () => {
           the notes never do, and the frontmost of the two that can is the
           source. So bringing the notes forward leaves zoom.us on the box, and
           fronting the player hands it to Spotify. Each box in the stack keeps
-          the app its words arrived under, with the icon at full colour while
-          its text dims, because a dimmed icon reads as a disabled app rather
-          than a box that sits back. The boxes wear the app&rsquo;s 16pt corner
-          and a hairline one device pixel wide, and the text fills from the
-          leading edge now rather than re-centring on every word.
+          the app its words arrived under, with the icon at full color while its
+          text dims, because a dimmed icon reads as a disabled app rather than a
+          box that sits back. The boxes wear the app&rsquo;s 16pt corner and a
+          hairline one device pixel wide, and the text fills from the leading
+          edge now rather than re-centring on every word.
         </p>
         <p>
           The ⇧ ring is the app&rsquo;s two-tone dash: white dashes and black
@@ -307,7 +307,7 @@ const SubtitlesAppPageContent = () => {
           desktop is four radial gradients over a linear one, the participants
           are initials on a linear gradient, the album art is a gradient too,
           the waveform is ninety-six divs with a height each, and the notes
-          document is a stack of grey rounded rectangles pretending to be
+          document is a stack of gray rounded rectangles pretending to be
           sentences. Even the Apple mark in the menu bar is an inline path. The
           notes window itself is Apple&rsquo;s Notes, drawn in the demo&rsquo;s
           own tokens and laid out the way macOS 26 lays a sidebar window out:
@@ -375,14 +375,14 @@ const SubtitlesAppPageContent = () => {
           positioned, each with its own inset so they look casually stacked the
           way a real desktop is. Only one carries the front class at a time, and
           what marks it is the chrome rather than the content: the other two get
-          greyed traffic lights, a faded title, and a shallower shadow than the
+          grayed traffic lights, a faded title, and a shallower shadow than the
           window on top of them. That is where macOS puts the difference, and
           copying it is the difference between a stack of windows and a
-          screenshot with something greyed out on it. There is a small
+          screenshot with something grayed out on it. There is a small
           concession, which the palette section gets to below.
         </p>
         <p>
-          The insets are not arbitrary either. They put the windows on centres
+          The insets are not arbitrary either. They put the windows on centers
           6% apart at three different heights, because at 4% and near-identical
           tops they read less as three apps than as one window redrawn three
           times. What they cannot vary is where they end: all three share a
@@ -407,7 +407,7 @@ const SubtitlesAppPageContent = () => {
           a bit of jitter, and a word ending in a comma or a full stop gets an
           extra beat because that is what speech does. The newest word is dimmed
           until the utterance ends and everything commits at once, which is how
-          the real recogniser behaves: it keeps the option of changing its mind
+          the real recognizer behaves: it keeps the option of changing its mind
           about the word you are currently hearing. Then the box holds for a
           base beat plus time per word, so a long caption is not gone before you
           have finished reading it.
@@ -543,17 +543,17 @@ const SubtitlesAppPageContent = () => {
         <p>
           The demo follows this page into dark mode, because a dark screenshot
           sitting in a light page is a screenshot. That could have been two
-          stylesheets. It is instead two values: <code>--ink</code>, the colour
+          stylesheets. It is instead two values: <code>--ink</code>, the color
           of the things on a surface, written as a bare <code>255 255 255</code>{" "}
           triplet so every rule can still set its own alpha with{" "}
           <code>rgb(var(--ink) / 0.11)</code>, and a handful of surfaces.
           Swapping that pair swaps the desktop, and the forty-odd alphas
           underneath keep working, because what I had tuned against the dark
-          screen was never the colour. It was the relationship.
+          screen was never the color. It was the relationship.
         </p>
         <p>
           Three things refuse to follow, and they are the interesting part. The
-          app icons, the avatars and the album art keep their own colours, as
+          app icons, the avatars and the album art keep their own colors, as
           they do on a Mac. The caption box stays black with white text, because
           that is what the app draws over a light desktop too. And the shadows
           get their own values per theme: the dark ones are deep because they
@@ -569,7 +569,7 @@ const SubtitlesAppPageContent = () => {
           did I, until three of them overlapping in a small screen made it
           genuinely unclear which one you were in. The compromise is that the
           content dims very slightly and the chrome does not, which is where
-          macOS puts the difference anyway: greyed traffic lights, a faded
+          macOS puts the difference anyway: grayed traffic lights, a faded
           title, a shallower shadow.
         </p>
 
