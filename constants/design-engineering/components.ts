@@ -558,7 +558,7 @@ export const COMPONENTS = {
       light:
         "/media/design-engineering/audio-borealis/audio-borealis-overview-light-poster.webp",
     },
-    videoDuration: 27.834,
+    videoDuration: 27.8,
     metas: {
       shortTitle: "Audio Borealis, an audio glow effect for the web",
       title: "Audio Borealis: an audio glow effect for the web in Canvas 2D",
