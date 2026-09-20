@@ -12,6 +12,9 @@ importers:
 
   .:
     dependencies:
+      '@daformat/audio-borealis':
+        specifier: link:../audio-borealis
+        version: link:../audio-borealis
       '@daformat/contrast-color':
         specifier: ^1.0.0
         version: 1.0.0

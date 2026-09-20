@@ -20,7 +20,7 @@ const OpenSourceIndex = () => (
     <PageMetas
       shortTitle="Open source components"
       title="Open source React components you can install"
-      description="The work from the gallery that is published on npm: a headless carousel, a swipeable card stack, an animated number input, a split-flap display, and a contrast color function. Zero dependencies, TypeScript throughout."
+      description="The work from the gallery that is published on npm: a headless carousel, a swipeable card stack, an animated number input, a split-flap display, a contrast color function, and a sound-reactive glow. Zero dependencies, TypeScript throughout."
       url={URL}
       image="https://hello-mat.com/media/hello-mat-light.png"
       imageWidth={1200}

@@ -461,7 +461,7 @@ export const COMPONENTS = {
     videoDuration: 55.9,
     metas: {
       shortTitle: "The demo for my Subtitles app",
-      title: "A product demo built entirely in CSS",
+      title: "Subtitles Live interactive product demo",
       description:
         "A looping product demo with no video file in it: three fake macOS windows, a caption overlay that types itself out, and an app switch that happens mid-sentence.",
       url: "/design-engineering/subtitles-app",
@@ -538,6 +538,41 @@ export const COMPONENTS = {
       dateModified: "2026-09-18",
     },
   },
+  "audio-borealis": {
+    oss: true,
+    repo: "https://github.com/daformat/audio-borealis",
+    video: {
+      dark: {
+        src: "/media/design-engineering/audio-borealis/audio-borealis-overview-dark.mp4",
+        type: "video/mp4",
+      },
+      light: {
+        src: "/media/design-engineering/audio-borealis/audio-borealis-overview-light.mp4",
+        type: "video/mp4",
+      },
+    },
+    // The video's own first frame, at the video's exact dimensions, so
+    // the still and the first painted frame are the same image.
+    poster: {
+      dark: "/media/design-engineering/audio-borealis/audio-borealis-overview-dark-poster.webp",
+      light:
+        "/media/design-engineering/audio-borealis/audio-borealis-overview-light-poster.webp",
+    },
+    videoDuration: 27.834,
+    metas: {
+      shortTitle: "Audio Borealis, an audio glow effect for the web",
+      title: "Audio Borealis: an audio glow effect for the web in Canvas 2D",
+      description:
+        "audio-borealis, a zero-dependency library that paints a sound-reactive glow along the edge of any box with plain Canvas 2D. Lifted out of the Subtitles app for macOS.",
+      url: "/design-engineering/audio-borealis",
+      image:
+        "/media/design-engineering/audio-borealis/og-audio-borealis-light.png",
+      imageWidth: 1200,
+      imageHeight: 630,
+      datePublished: "2026-09-20",
+      dateModified: "2026-09-20",
+    },
+  },
 } as const satisfies Record<string, Component>;
 
 export type Component = {
@@ -576,13 +611,10 @@ export const COMPONENT_RELATIONS = {
   ],
   slider: ["carousel-component", "number-flow-input", "swipeable-cards"],
   "tilting-tile": ["stacking-cards", "dock-component", "images-and-embeds"],
-  "subtitles-app": ["beam-demo", "contrast-colors", "tilting-tile"],
-  "contrast-colors": [
-    "subtitles-app",
-    "split-flap-display",
-    "images-and-embeds",
-  ],
+  "subtitles-app": ["audio-borealis", "beam-demo", "contrast-colors"],
+  "contrast-colors": ["audio-borealis", "subtitles-app", "split-flap-display"],
   "beam-demo": ["subtitles-app", "publish-button", "stacking-cards"],
+  "audio-borealis": ["subtitles-app", "beam-demo", "split-flap-display"],
 } as const satisfies Record<ComponentId, readonly ComponentId[]>;
 
 export const getRelatedComponents = (
@@ -638,6 +670,7 @@ export const COMPONENTS_ORDER = createComponentOrder([
   "subtitles-app",
   "contrast-colors",
   "beam-demo",
+  "audio-borealis",
 ] as const);
 
 export const getNextComponent = (
