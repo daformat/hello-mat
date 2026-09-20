@@ -2251,6 +2251,22 @@
   vertical-align: 0.04em;
 }
 
+/* Audio Borealis: the glow the sound raises along the box's bottom edge,
+   painted by the component on a canvas laid inside the box, between its fill
+   and its text (a negative z-index in the box's own stacking context paints
+   after the background and before the in-flow text). It takes the box's
+   corners and, on a tabbed box, the box's mask cuts it to the silhouette with
+   everything else. */
+.ov_borealis {
+  border-radius: inherit;
+  height: 100%;
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  width: 100%;
+  z-index: -1;
+}
+
 /* Show Source App Name → Name Tab, from the menu, see the NameTab class in
    the component. The row becomes a tab on the pill's top edge, flush with the
    leading side and squaring the corner under it, as Pill.tabPath draws it. The

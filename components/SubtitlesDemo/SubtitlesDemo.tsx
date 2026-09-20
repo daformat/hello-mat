@@ -267,6 +267,25 @@ const MENU: MenuRow[] = [
   { label: "Fade Away Under Pointer", id: "reveal", demo: true },
   { label: "Recent Boxes On ⌥", id: "history", demo: true },
   { sep: true },
+  // Audio Borealis: the look, Off among them, and the strength, each a
+  // choice among its group.
+  {
+    label: "Audio Borealis",
+    id: "borealis",
+    demo: true,
+    sub: [
+      { label: "Off", id: "borealis-off", demo: true },
+      { label: "Rainbow", id: "borealis-rainbow", demo: true },
+      { label: "Northern Lights", id: "borealis-northernLights", demo: true },
+      { label: "Autumn", id: "borealis-autumn", demo: true },
+      { label: "White Haze", id: "borealis-whiteHaze", demo: true },
+      { sep: true },
+      { label: "Strong", id: "glow-strong", demo: true },
+      { label: "Medium", id: "glow-medium", demo: true },
+      { label: "Subtle", id: "glow-subtle", demo: true },
+    ],
+  },
+  { sep: true },
   { label: "Reset Overlay Position", id: "reset", demo: true },
   { sep: true },
   { label: "Licensed" },
@@ -398,6 +417,8 @@ type IconStyle = "header" | "nameTab" | "off";
 //   historyExpiry       seconds of silence that does
 //   bothLanguages       Show Both Languages: the original under a translation
 //   microphone          Listen To → the microphone, over whatever is playing
+//   borealis            Audio Borealis: off | rainbow | northernLights | autumn | whiteHaze
+//   borealisStrength    strong | medium | subtle
 type Settings = {
   fontSize: number;
   textAlignment: "start" | "center";
@@ -416,6 +437,8 @@ type Settings = {
   historyExpiry: number;
   bothLanguages: boolean;
   microphone: boolean;
+  borealis: BorealisLook;
+  borealisStrength: BorealisStrength;
 };
 // What the demo runs on before it is seeded: the app's defaults where the demo
 // already drew them, and the demo's own where it differs. The stack keeps
@@ -441,6 +464,8 @@ const DEMO_DEFAULTS: Settings = {
   historyExpiry: 30,
   bothLanguages: false,
   microphone: false,
+  borealis: "rainbow",
+  borealisStrength: "medium",
 };
 const readSettings = (given: unknown): Partial<Settings> => {
   const NUMBER: Partial<Record<keyof Settings, [number, number]>> = {
@@ -466,6 +491,8 @@ const readSettings = (given: unknown): Partial<Settings> => {
   const WORD: Partial<Record<keyof Settings, string[]>> = {
     textAlignment: ["start", "center"],
     iconStyle: ["off", "nameTab", "header"],
+    borealis: ["off", "rainbow", "northernLights", "autumn", "whiteHaze"],
+    borealisStrength: ["strong", "medium", "subtle"],
   };
   const out: Record<string, unknown> = {};
   const take = (key: string, value: unknown) => {
@@ -584,6 +611,880 @@ const searchRanges = (query: string, text: string) => {
 
 const searchMatches = (text: string, query: string) =>
   !query || searchRanges(query, text).length > 0;
+
+// ── AudioBorealis ───────────────────────────────────────────────────────────
+// The glow the sound raises along the bottom of the box, as the app draws it
+// (its AudioBorealis.swift is the driver this is a line-for-line port of, its
+// AudioBorealisPainter.swift the painter): seven soft lobes fanned out from
+// the bottom edge, each on a band of the voice, sliding sideways while a voice
+// is heard, and over them one translucent hill per band, filled with a colour
+// of the hue wheel, rising as its band is heard. Silence is nothing. The page
+// has no sound to read, so a mock voice drives it: syllables while words land
+// in the box, quiet between. Every number is the app's; the menu's Audio
+// Borealis rows pick a look (where on the hue wheel the colours sit, or white
+// alone) and a strength (the whole effect's opacity), and the seed can set
+// both (see Settings).
+//
+// Painted on a canvas laid inside the box under its text, in plain 2D calls
+// every engine has (gradients, clips, destination-in for the masks): no
+// filters, no OffscreenCanvas, no roundRect, so Chrome, Safari and Firefox
+// draw the same picture.
+type BorealisLook =
+  | "off"
+  | "rainbow"
+  | "northernLights"
+  | "autumn"
+  | "whiteHaze";
+type BorealisStrength = "strong" | "medium" | "subtle";
+type BorealisConfig = {
+  sensitivity: number;
+  threshold: number;
+  curve: number;
+  autoGain: boolean;
+  autoGainFloor: number;
+  autoGainRelease: number;
+  attack: number;
+  release: number;
+  idle: number;
+  breatheDuration: number;
+  reach: number;
+  spread: number;
+  flow: number;
+  lobeSpacing: number;
+  hueRange: number;
+  hueDuration: number;
+  hueStart: number;
+  hueWidth: number;
+  saturation: number;
+  colorMode: "spectrum" | "white" | "black";
+  opacity: number;
+  glowOpacity: number;
+  bend: number;
+  curveCount: number;
+  curveOpacity: number;
+  curveEdge: number;
+  curveFade: number;
+  curveBlend: "normal" | "additive";
+  curvePosition: number;
+  curveCeiling: number;
+  curveBase: number;
+  curveOffset: number;
+  curveShape: number;
+  curveSpread: number;
+  curveSpan: number;
+  curveWidthCentre: number;
+  curveWidthEdge: number;
+  curveWander: number;
+};
+type BorealisFrame = {
+  config: BorealisConfig;
+  level: number;
+  bands: number[];
+  glow: number;
+  height: number;
+  width: number;
+  hue: number;
+  lift: number;
+  bend: number;
+  flow: number;
+  lobeX: number[];
+  lobeAmplitude: number[];
+};
+type RGB = [number, number, number];
+const borealis = (() => {
+  const TAU = Math.PI * 2;
+  const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
+  const wrap = (v: number, span: number) => {
+    const m = v % span;
+    return m < 0 ? m + span : m;
+  };
+  const wrapX = (x: number, span: number) =>
+    wrap(x + span / 2, span) - span / 2;
+  const edgeEnvelope = (x: number, span: number) => {
+    const t = x / (span / 2 + 4);
+    return Math.max(0, 1 - t * t);
+  };
+  const pingPong = (phase: number) => (1 - Math.cos(TAU * phase)) / 2;
+  // Noise gate then soft saturation, so a shout rounds off instead of clipping.
+  const shape = (raw: number, threshold: number) => {
+    if (raw <= threshold) {
+      return 0;
+    }
+    const t = (raw - threshold) / Math.max(0.001, 1 - threshold);
+    return clamp01((1 - Math.exp(-3 * t)) / (1 - Math.exp(-3)));
+  };
+  // One-pole follower: fast up (attack), slow down (release).
+  const follow = (
+    prev: number,
+    target: number,
+    dt: number,
+    attack: number,
+    release: number
+  ) => {
+    const tau = target > prev ? attack : release;
+    return prev + (target - prev) * (1 - Math.exp(-dt / Math.max(0.001, tau)));
+  };
+  // A hill, 1 at the centre and exactly 0 at the ends.
+  const bell = (t: number, p: number, sigma: number, skew: number) => {
+    const side = t < 0 ? 1 - skew : 1 + skew;
+    const s = Math.max(0.05, sigma * side);
+    const v = Math.exp(-Math.pow(Math.abs(t) / s, p));
+    const tail = Math.exp(-Math.pow(1 / s, p));
+    return Math.max(0, (v - tail) / (1 - tail));
+  };
+  const hsb = (h: number, s: number, v: number): RGB => {
+    const sector = h * 6;
+    const i = Math.floor(sector) % 6;
+    const f = sector - Math.floor(sector);
+    const p = v * (1 - s);
+    const q = v * (1 - s * f);
+    const t = v * (1 - s * (1 - f));
+    const wheel: RGB[] = [
+      [v, t, p],
+      [q, v, p],
+      [p, v, t],
+      [p, q, v],
+      [t, p, v],
+      [v, p, q],
+    ];
+    return wheel[i] ?? [v, v, v];
+  };
+
+  // The knobs, the app's defaults.
+  const defaults = (): BorealisConfig => ({
+    sensitivity: 3,
+    threshold: 0.06,
+    curve: 0.6,
+    autoGain: true,
+    autoGainFloor: 0.3,
+    autoGainRelease: 4,
+    attack: 0.05,
+    release: 0.2,
+    idle: 0,
+    breatheDuration: 5.2,
+    reach: 1.7,
+    spread: 1.05,
+    flow: 60,
+    lobeSpacing: 0.85,
+    hueRange: 24,
+    hueDuration: 12,
+    hueStart: 0,
+    hueWidth: 360,
+    saturation: 0.85,
+    colorMode: "spectrum",
+    opacity: 0.5,
+    glowOpacity: 1,
+    bend: 60,
+    curveCount: 5,
+    curveOpacity: 0.2,
+    curveEdge: 0.35,
+    curveFade: 0.35,
+    curveBlend: "normal",
+    curvePosition: 0.25,
+    curveCeiling: 0.55,
+    curveBase: 0,
+    curveOffset: -1.5,
+    curveShape: 1.75,
+    curveSpread: 0.87,
+    curveSpan: 0.5,
+    curveWidthCentre: 0.55,
+    curveWidthEdge: 0.32,
+    curveWander: 0.084,
+  });
+  // The bands of the voice, low to high. Five, as the app's meter splits them.
+  const BAND_COUNT = 5;
+  // Seven lobes: the centre on the lows, its neighbours on the mids, the
+  // outer pair on the highs and the far pair on the low mids.
+  const LOBES = [
+    { x: 0, w: 74, h: 46, band: 0 },
+    { x: -36, w: 54, h: 40, band: 2 },
+    { x: 36, w: 54, h: 40, band: 2 },
+    { x: -72, w: 48, h: 32, band: 4 },
+    { x: 72, w: 48, h: 32, band: 4 },
+    { x: -108, w: 42, h: 26, band: 1 },
+    { x: 108, w: 42, h: 26, band: 1 },
+  ];
+  const LOBE_SPAN = 36 * LOBES.length;
+  const CEILING_HALF_WIDTH = 170;
+  const CEILING_HEIGHT = 64;
+  const RANGE_WIDTH = 0.75;
+  // Where on the hue wheel each of the seven colours sits, shuffled so
+  // neighbours contrast. The curves take the first ones, low band to high.
+  const HUE_SHARES = [0.94, 0.56, 0.76, 0.4, 0.08, 0.65, 0.49];
+  const BASE_GAIN = 5;
+  // The menu's looks and strengths.
+  const LOOKS: Record<
+    Exclude<BorealisLook, "off">,
+    Partial<Pick<BorealisConfig, "colorMode" | "hueStart" | "hueWidth">>
+  > = {
+    rainbow: { colorMode: "spectrum", hueStart: 0, hueWidth: 360 },
+    northernLights: { colorMode: "spectrum", hueStart: 100, hueWidth: 180 },
+    autumn: { colorMode: "spectrum", hueStart: 310, hueWidth: 90 },
+    whiteHaze: { colorMode: "white" },
+  };
+  const STRENGTHS: Record<BorealisStrength, number> = {
+    strong: 1,
+    medium: 0.5,
+    subtle: 0.35,
+  };
+
+  // The `index`th colour: its share of the wheel from the start, turned by
+  // the drift, at the saturation; or white or black alone.
+  const color = (index: number, c: BorealisConfig, drift: number): RGB => {
+    if (c.colorMode === "white") {
+      return [1, 1, 1];
+    }
+    if (c.colorMode === "black") {
+      return [0, 0, 0];
+    }
+    const share = HUE_SHARES[index % HUE_SHARES.length] ?? 0;
+    const hue = wrap(c.hueStart + c.hueWidth * share + drift, 360);
+    return hsb(hue / 360, clamp01(c.saturation), 1);
+  };
+  const rgba = (rgb: RGB, a: number) =>
+    `rgba(${Math.round(rgb[0] * 255)}, ${Math.round(
+      rgb[1] * 255
+    )}, ${Math.round(rgb[2] * 255)}, ${a.toFixed(3)})`;
+  // Of `count` curves, where the `index`th rests: the centre-most first, the
+  // rest alternating outward, the outermost at `span`.
+  const curveOffset = (index: number, count: number, span: number) => {
+    if (count < 2) {
+      return 0;
+    }
+    const slots: number[] = [];
+    for (let i = 0; i < count; i++) {
+      slots.push(-span + (2 * span * i) / (count - 1));
+    }
+    slots.sort((a, b) => Math.abs(a) - Math.abs(b) || a - b);
+    return slots[Math.min(index, count - 1)] ?? 0;
+  };
+  const curveBand = (index: number, count: number) =>
+    count < 2 ? 0 : Math.round((index * (BAND_COUNT - 1)) / (count - 1));
+
+  // The driver: a loudness in, a frame out.
+  const driver = (config: BorealisConfig) => {
+    const s = {
+      config,
+      level: 0,
+      bands: new Array<number>(BAND_COUNT).fill(0),
+      levelPeak: 0,
+      bandPeak: 0,
+      phase: 0,
+      time: 0,
+    };
+    const reset = () => {
+      s.level = 0;
+      s.bands.fill(0);
+      s.levelPeak = 0;
+      s.bandPeak = 0;
+      s.phase = 0;
+      s.time = 0;
+    };
+    const step = (
+      dt: number,
+      loudness: number,
+      input: number[] | null
+    ): BorealisFrame => {
+      s.time += dt;
+      const c = s.config;
+      const n = BAND_COUNT;
+      const rawLevel = loudness * BASE_GAIN * c.sensitivity;
+      const rawBands = new Array<number>(n).fill(0);
+      if (input && input.length === n) {
+        for (let b = 0; b < n; b++) {
+          rawBands[b] = input[b] ?? 0;
+        }
+      } else {
+        const raw = clamp01(rawLevel);
+        for (let b = 0; b < n; b++) {
+          const wobble = Math.sin(s.time * (7.3 + 3.1 * b) + b * 1.9);
+          rawBands[b] = raw * (0.55 + 0.45 * wobble) * (1 - 0.12 * b);
+        }
+      }
+      let target = shape(rawLevel, c.threshold);
+      const targets = new Array<number>(n).fill(0);
+      const gate = c.threshold * 0.6;
+      for (let b = 0; b < n; b++) {
+        targets[b] = clamp01(
+          ((rawBands[b] ?? 0) - gate) / Math.max(0.001, 1 - gate)
+        );
+      }
+      if (c.autoGain) {
+        const decay = Math.exp(-dt / Math.max(0.05, c.autoGainRelease));
+        const floor = Math.max(0.01, Math.min(1, c.autoGainFloor));
+        s.levelPeak = Math.max(target, s.levelPeak * decay, floor);
+        target = Math.min(1, target / s.levelPeak);
+        s.bandPeak = Math.max(Math.max(...targets), s.bandPeak * decay, floor);
+        for (let b = 0; b < n; b++) {
+          targets[b] = Math.min(1, (targets[b] ?? 0) / s.bandPeak);
+        }
+      }
+      s.level = follow(s.level, target, dt, c.attack, c.release);
+      for (let b = 0; b < n; b++) {
+        s.bands[b] = follow(
+          s.bands[b] ?? 0,
+          targets[b] ?? 0,
+          dt,
+          c.attack,
+          c.release * 1.15
+        );
+      }
+      const breathe = 0.5 + 0.5 * Math.sin((TAU * s.time) / c.breatheDuration);
+      const eff = s.level + (1 - s.level) * c.idle * breathe;
+      const rise = Math.pow(clamp01(eff), Math.max(0.1, c.curve));
+      const span = LOBE_SPAN * c.lobeSpacing;
+      if (c.flow !== 0) {
+        s.phase = wrap(s.phase + c.flow * rise * dt, span);
+      }
+      const lobeX: number[] = [];
+      const lobeAmplitude: number[] = [];
+      LOBES.forEach((lobe) => {
+        const x = wrapX(lobe.x * c.lobeSpacing + s.phase, span);
+        lobeX.push(x);
+        lobeAmplitude.push(
+          (0.6 + 0.7 * (s.bands[Math.min(lobe.band, n - 1)] ?? 0)) *
+            edgeEnvelope(x, span)
+        );
+      });
+      const hue =
+        c.hueRange === 0
+          ? 0
+          : -c.hueRange + 2 * c.hueRange * pingPong(s.time / c.hueDuration);
+      const lift = Math.max(0, c.bend * rise);
+      return {
+        config: c,
+        level: s.level,
+        bands: s.bands.slice(),
+        glow: rise,
+        height: c.reach * rise,
+        width: 0.85 + c.spread * rise,
+        hue,
+        lift,
+        bend: c.bend > 0 ? Math.min(1, lift / c.bend) : 0,
+        flow: s.phase / Math.max(1, span),
+        lobeX,
+        lobeAmplitude,
+      };
+    };
+    return { state: s, step, reset };
+  };
+
+  // The curves of a frame, one per band: points as [x, y], x from the box's
+  // left edge and y the height above its bottom edge, in the box's px.
+  const curves = (
+    frame: BorealisFrame,
+    width: number,
+    height: number,
+    scaleX: number,
+    scaleY: number,
+    samples: number
+  ) => {
+    const c = frame.config;
+    const ceiling = Math.min(
+      height * c.curveCeiling,
+      (CEILING_HEIGHT * frame.height + frame.lift) * c.curvePosition * scaleY
+    );
+    const base = (c.curveOffset + c.curveBase * frame.bend) * scaleY;
+    const steps = Math.max(1, samples || 40);
+    const count = Math.max(1, c.curveCount);
+    const out: [number, number][][] = [];
+    for (let k = 0; k < count; k++) {
+      const b = Math.min(curveBand(k, count), frame.bands.length - 1);
+      const apex = ceiling * (0.15 + 0.85 * (b >= 0 ? frame.bands[b] ?? 0 : 0));
+      const offset = curveOffset(k, count, c.curveSpan);
+      const wander = c.curveWander * Math.sin(TAU * frame.flow + k * 1.7);
+      const centre = width * (0.5 + offset + wander);
+      const share =
+        c.curveSpan > 0 ? Math.min(1, Math.abs(offset) / c.curveSpan) : 0;
+      const half = Math.max(
+        1,
+        width *
+          (c.curveWidthCentre + (c.curveWidthEdge - c.curveWidthCentre) * share)
+      );
+      const points: [number, number][] = [];
+      for (let i = 0; i <= steps; i++) {
+        const x = (width * i) / steps;
+        const t = Math.max(-1, Math.min(1, (x - centre) / half));
+        points.push([x, base + apex * bell(t, c.curveShape, c.curveSpread, 0)]);
+      }
+      out.push(points);
+    }
+    return out;
+  };
+
+  // The painter: a frame onto a box's canvas.
+  const LAYERS: {
+    sizeX: number;
+    sizeY: number;
+    opacity: number;
+    stops: [number, number][];
+    mask: [number, number];
+    maskStops: [number, number][];
+  }[] = [
+    {
+      sizeX: 1.15 * 1.15,
+      sizeY: 1.5 * 1.15,
+      opacity: 0.5,
+      stops: [
+        [0, 0.5],
+        [0.4, 0.22],
+        [0.75, 0.05],
+        [1, 0],
+      ],
+      mask: [200 * RANGE_WIDTH, 130],
+      maskStops: [
+        [0, 1],
+        [0.35, 0.5],
+        [0.8, 0.1],
+        [1, 0],
+      ],
+    },
+    {
+      sizeX: 1,
+      sizeY: 1.1,
+      opacity: 0.6,
+      stops: [
+        [0, 0.6],
+        [0.45, 0.3],
+        [0.8, 0.06],
+        [1, 0],
+      ],
+      mask: [CEILING_HALF_WIDTH * RANGE_WIDTH, CEILING_HEIGHT],
+      maskStops: [
+        [0, 1],
+        [0.45, 0.5],
+        [0.85, 0.2],
+        [1, 0],
+      ],
+    },
+  ];
+  const GLOW_WIDTH = 0.65;
+  const GLOW_HEIGHT = 1.25;
+  // The vertical scale over the app's: the demo's box is set at a smaller
+  // size inside a screen scaled down to fit, where the app's glow, at the
+  // same share of the type, reads taller against its text. This much has the
+  // peaks clear the top of the last line as they do in the app.
+  const PEAK_LIFT = 1.2;
+  // A radial gradient of one colour squashed into an ellipse, its alpha over
+  // the radius given by the stops; `beyond` paints the last stop past the
+  // radius too (a clip does that here).
+  const ellipse = (
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    rx: number,
+    ry: number,
+    rgb: RGB,
+    stops: [number, number][],
+    beyond: boolean
+  ) => {
+    if (rx <= 0 || ry <= 0) {
+      return;
+    }
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(1, ry / rx);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+    stops.forEach(([at, a]) => g.addColorStop(at, rgba(rgb, a)));
+    ctx.fillStyle = g;
+    if (beyond) {
+      ctx.fillRect(-1e4, -1e4, 2e4, 2e4);
+    } else {
+      ctx.beginPath();
+      ctx.arc(0, 0, rx, 0, TAU);
+      ctx.fill();
+    }
+    ctx.restore();
+  };
+  const roundedRect = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    r: number
+  ) => {
+    const rad = Math.max(0, Math.min(r, w / 2, h / 2));
+    ctx.beginPath();
+    ctx.moveTo(x + rad, y);
+    ctx.lineTo(x + w - rad, y);
+    ctx.arc(x + w - rad, y + rad, rad, -Math.PI / 2, 0);
+    ctx.lineTo(x + w, y + h - rad);
+    ctx.arc(x + w - rad, y + h - rad, rad, 0, Math.PI / 2);
+    ctx.lineTo(x + rad, y + h);
+    ctx.arc(x + rad, y + h - rad, rad, Math.PI / 2, Math.PI);
+    ctx.lineTo(x, y + rad);
+    ctx.arc(x + rad, y + rad, rad, Math.PI, Math.PI * 1.5);
+    ctx.closePath();
+  };
+  // Paint `frame` on `ctx`, a box `w` by `h` CSS px with corners of `radius`
+  // and type of `fontPx`, `scratch` a second canvas the masked layers are
+  // built on. Canvas y runs down: the bottom edge is y = h.
+  const paint = (
+    ctx: CanvasRenderingContext2D,
+    scratch: HTMLCanvasElement,
+    frame: BorealisFrame,
+    w: number,
+    h: number,
+    radius: number,
+    fontPx: number
+  ) => {
+    const c = frame.config;
+    const opacity = clamp01(c.opacity);
+    ctx.clearRect(0, 0, w, h);
+    if (frame.glow <= 0.002 || opacity <= 0) {
+      return;
+    }
+    const sx = Math.min(2.4, Math.max(0.9, w / 350));
+    const sy = Math.max(0.5, fontPx / 30) * PEAK_LIFT;
+    const cx = w / 2;
+    const cy = h;
+    ctx.save();
+    roundedRect(ctx, 0, 0, w, h, radius);
+    ctx.clip();
+    // The two soft layers of lobes, each built on the scratch canvas, masked
+    // to its ellipse there, and laid on at its opacity.
+    const sc = scratch.getContext("2d");
+    if (c.glowOpacity > 0 && sc) {
+      LAYERS.forEach((layer) => {
+        const alpha = Math.min(1, layer.opacity * frame.glow * c.glowOpacity);
+        const rx = layer.mask[0] * frame.width * sx;
+        const ry = (layer.mask[1] * frame.height + frame.lift) * sy;
+        if (alpha <= 0 || rx <= 0.5 || ry <= 0.5) {
+          return;
+        }
+        sc.setTransform(ctx.getTransform());
+        sc.clearRect(0, 0, w, h);
+        sc.save();
+        sc.beginPath();
+        sc.rect(cx - rx, cy - ry, rx * 2, ry * 2);
+        sc.clip();
+        sc.globalCompositeOperation = "source-over";
+        LOBES.forEach((lobe, i) => {
+          const lrx = lobe.w * GLOW_WIDTH * layer.sizeX * frame.width * sx;
+          const lry =
+            lobe.h *
+            GLOW_HEIGHT *
+            layer.sizeY *
+            frame.height *
+            (frame.lobeAmplitude[i] ?? 0) *
+            sy;
+          if (lrx <= 0.5 || lry <= 0.5) {
+            return;
+          }
+          ellipse(
+            sc,
+            cx + (frame.lobeX[i] ?? 0) * frame.width * sx,
+            cy,
+            lrx,
+            lry,
+            color(i, c, frame.hue),
+            layer.stops,
+            false
+          );
+        });
+        sc.globalCompositeOperation = "destination-in";
+        ellipse(sc, cx, cy, rx, ry, [1, 1, 1], layer.maskStops, true);
+        sc.restore();
+        // Laid on at identity, pixel for pixel, the box's transform put back.
+        const t = ctx.getTransform();
+        ctx.globalAlpha = alpha * opacity;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.drawImage(scratch, 0, 0);
+        ctx.setTransform(t);
+        ctx.globalAlpha = 1;
+        sc.setTransform(1, 0, 0, 1, 0, 0);
+      });
+    }
+    // The curves: a hill per band, filled from the bottom edge up to its
+    // curve, the fill anchored at the edge and fading toward the crest, and a
+    // line along the hill above the band it stands on.
+    const fill = c.curveOpacity * opacity;
+    const edge = c.curveEdge * opacity;
+    if (fill > 0.003 || edge > 0.003) {
+      const hills = curves(frame, w, h, sx, sy, 40);
+      const band = (c.curveOffset + c.curveBase * frame.bend) * sy;
+      hills.forEach((points, k) => {
+        if (!points.some((p) => p[1] > 0.3)) {
+          return;
+        }
+        const first = points[0];
+        const last = points[points.length - 1];
+        if (!first || !last) {
+          return;
+        }
+        const rgb = color(k, c, frame.hue);
+        const crest = Math.max(...points.map((p) => p[1]));
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(first[0], h + 4);
+        points.forEach((p) => ctx.lineTo(p[0], h - p[1]));
+        ctx.lineTo(last[0], h + 4);
+        ctx.closePath();
+        ctx.clip();
+        ctx.globalCompositeOperation =
+          c.curveBlend === "additive" ? "lighter" : "source-over";
+        if (fill > 0.003) {
+          const g = ctx.createLinearGradient(0, h, 0, h - Math.max(crest, 1));
+          g.addColorStop(0, rgba(rgb, fill));
+          g.addColorStop(1, rgba(rgb, fill * clamp01(c.curveFade)));
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h + 4);
+        }
+        ctx.restore();
+        if (edge > 0.003 && crest > band + 1.5) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(0, 0, w, h - band - 1.5);
+          ctx.clip();
+          ctx.beginPath();
+          points.forEach((p, i) =>
+            i ? ctx.lineTo(p[0], h - p[1]) : ctx.moveTo(p[0], h - p[1])
+          );
+          ctx.strokeStyle = rgba(rgb, edge);
+          ctx.lineWidth = 1;
+          ctx.lineJoin = "round";
+          ctx.stroke();
+          ctx.restore();
+        }
+      });
+    }
+    ctx.restore();
+  };
+  // A voice that is not there, close enough to one that the meter would read
+  // the same: syllables of uneven length and loudness, some stressed, laid
+  // end to end with a short gap now and then where a word ends, each with a
+  // spectral shape of its own (a vowel sits low and in the mids, a consonant
+  // higher) and a third of them opening on a burst of highs, a sibilant.
+  // Deterministic in time, from a hash, so the loop repeats and nothing is
+  // stored: eight syllables fill a cycle of fixed length, and the cycle's
+  // index reseeds them. `speaking` gates it: quiet otherwise.
+  const CYCLE = 1.7;
+  const PER_CYCLE = 8;
+  // How loud the mock voice is, on the syllables as authored.
+  const MOCK_GAIN = 1.2;
+  const hash = (n: number, k: number) => {
+    const x = Math.sin(n * 127.1 + k * 311.7) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  const mockVoice = (t: number, speaking: boolean) => {
+    const bands = new Array<number>(BAND_COUNT).fill(0);
+    if (!speaking) {
+      return { loudness: 0.0015, bands };
+    }
+    const cycle = Math.floor(t / CYCLE);
+    let local = t - cycle * CYCLE;
+    // The cycle's syllables, their lengths scaled to fill it exactly.
+    const spans: [number, number][] = [];
+    let total = 0;
+    for (let i = 0; i < PER_CYCLE; i++) {
+      const n = cycle * PER_CYCLE + i;
+      const dur = 0.14 + 0.16 * hash(n, 2);
+      const gap = hash(n, 3) < 0.18 ? 0.04 + 0.07 * hash(n, 4) : 0.01;
+      spans.push([dur, gap]);
+      total += dur + gap;
+    }
+    const scale = CYCLE / total;
+    let loudness = 0.0015;
+    for (let i = 0; i < PER_CYCLE; i++) {
+      const n = cycle * PER_CYCLE + i;
+      const span = spans[i] ?? [0, 0];
+      const dur = span[0] * scale;
+      const gap = span[1] * scale;
+      if (local < dur) {
+        // Inside this syllable: a rounded rise, a slight sag, a rounded fall,
+        // as a voice swells rather than switches; loud on the whole, as a
+        // voice the meter reads is once the automatic gain has scaled it to
+        // its own peaks. Where it sits in the spectrum crosses over from the
+        // syllable before, so the bands glide rather than jump.
+        const ease = (u: number) =>
+          0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math.max(0, u)));
+        const amp = n === 0 ? 1 : 0.7 + 0.3 * Math.pow(hash(n, 1), 0.7);
+        const env =
+          Math.min(ease(local / 0.07), ease((dur - local) / 0.09)) *
+          (1 - 0.1 * (local / dur));
+        const focusOf = (m: number) => 0.4 + 2.6 * Math.pow(hash(m, 5), 1.4);
+        const focus =
+          focusOf(n - 1) +
+          (focusOf(n) - focusOf(n - 1)) * ease(local / (dur * 0.6));
+        const burst = hash(n, 6) < 0.35 ? ease(1 - local / 0.09) * 0.7 : 0;
+        for (let b = 0; b < BAND_COUNT; b++) {
+          const d = b - focus;
+          const shapeAt = Math.exp(-(d * d) / 2);
+          bands[b] = Math.min(
+            1,
+            amp * env * (0.15 + 0.85 * shapeAt) + (b >= 3 ? burst : 0)
+          );
+        }
+        loudness = 0.0015 + (0.06 * amp * env + 0.015 * burst) * MOCK_GAIN;
+        break;
+      }
+      local -= dur + gap;
+    }
+    return { loudness, bands };
+  };
+
+  // One shared frame loop for every box on the page, running only while a
+  // box has something to show.
+  type Entry = { tick: (dt: number, ts: number) => boolean };
+  const boxes = new Set<Entry>();
+  let raf = 0;
+  let last = 0;
+  const frameAll = (ts: number) => {
+    raf = 0;
+    const dt = last ? Math.min(0.05, (ts - last) / 1000) : 1 / 60;
+    last = ts;
+    let busy = false;
+    boxes.forEach((b) => {
+      if (b.tick(dt, ts)) {
+        busy = true;
+      }
+    });
+    if (busy && !document.hidden) {
+      raf = requestAnimationFrame(frameAll);
+    } else {
+      last = 0;
+    }
+  };
+  const wake = () => {
+    if (!raf && !document.hidden) {
+      raf = requestAnimationFrame(frameAll);
+    }
+  };
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        wake();
+      }
+    });
+  }
+
+  // The glow on one box, `canvas` laid under its text and sized with it,
+  // stepped on the mock voice while words land in the box. `apply(S)` reads
+  // the demo's settings, its look and strength; `detach()` takes it out of
+  // the frame loop.
+  const attach = (
+    box: HTMLElement,
+    canvas: HTMLCanvasElement,
+    visibleClass: string
+  ) => {
+    const scratch = document.createElement("canvas");
+    const drive = driver(defaults());
+    let enabled = true;
+    let spokeAt = -1e9;
+    // When the caption being spoken began: the mock voice starts over there,
+    // so every caption is said the same way, to the same peak.
+    let captionStart = 0;
+    let wasSpeaking = false;
+    let w = 0;
+    let h = 0;
+    let dpr = 1;
+    let radius = 16;
+    let fontPx = 20;
+    let wasBlank = true;
+    let lastFrame: BorealisFrame | null = null;
+    // The box's own size, not its size on the page: the demo's screen is
+    // scaled to fit, and the canvas is laid out in the box's own px.
+    const size = () => {
+      const cs = getComputedStyle(box);
+      w = Math.max(1, Math.round(box.offsetWidth));
+      h = Math.max(1, Math.round(box.offsetHeight));
+      dpr = Math.min(3, window.devicePixelRatio || 1);
+      radius = parseFloat(cs.borderTopLeftRadius) || 0;
+      fontPx = parseFloat(cs.fontSize) || 20;
+      [canvas, scratch].forEach((el) => {
+        el.width = Math.round(w * dpr);
+        el.height = Math.round(h * dpr);
+      });
+    };
+    const draw = (frame: BorealisFrame) => {
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        return;
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      paint(ctx, scratch, frame, w, h, radius, fontPx);
+    };
+    size();
+    // Sizing a canvas clears it, and the box resizes on almost every word:
+    // painted again at once, in the resize callback (after layout, before
+    // the frame is painted), so the glow never blinks out for a frame.
+    const sizes =
+      typeof ResizeObserver === "function"
+        ? new ResizeObserver(() => {
+            size();
+            if (lastFrame && !wasBlank) {
+              draw(lastFrame);
+            }
+            wake();
+          })
+        : null;
+    sizes?.observe(box);
+    // A word landing: the box's text changed.
+    const speak = () => {
+      spokeAt = performance.now();
+      wake();
+    };
+    const words =
+      typeof MutationObserver === "function"
+        ? new MutationObserver(speak)
+        : null;
+    words?.observe(box, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+    const tick = (dt: number, ts: number) => {
+      // A word landed within the last half second: the voice is still going.
+      const speaking =
+        enabled && box.classList.contains(visibleClass) && ts - spokeAt < 450;
+      if (speaking && !wasSpeaking) {
+        captionStart = ts;
+      }
+      wasSpeaking = speaking;
+      const mock = mockVoice((ts - captionStart) / 1000, speaking);
+      const frame = drive.step(
+        dt,
+        enabled ? mock.loudness : 0,
+        enabled ? mock.bands : null
+      );
+      lastFrame = frame;
+      const blank = frame.glow <= 0.002;
+      if (blank && wasBlank) {
+        return false;
+      }
+      wasBlank = blank;
+      draw(frame);
+      return !blank;
+    };
+    const entry: Entry = { tick };
+    boxes.add(entry);
+    return {
+      apply: (S: {
+        borealis: BorealisLook;
+        borealisStrength: BorealisStrength;
+      }) => {
+        const c = drive.state.config;
+        enabled = S.borealis !== "off";
+        const look = S.borealis === "off" ? LOOKS.rainbow : LOOKS[S.borealis];
+        Object.assign(c, { colorMode: "spectrum" }, look);
+        c.opacity = STRENGTHS[S.borealisStrength] ?? STRENGTHS.medium;
+        if (!enabled) {
+          drive.reset();
+        }
+        wake();
+      },
+      speak,
+      detach: () => {
+        boxes.delete(entry);
+        sizes?.disconnect();
+        words?.disconnect();
+      },
+    };
+  };
+
+  return { attach, defaults, LOOKS, STRENGTHS, mockVoice };
+})();
 
 // A keyboard shortcut said inside a box is drawn as a keycap: a run of
 // modifier glyphs, with the key letter it may carry (⌥F), becomes a <kbd>,
@@ -1894,6 +2795,7 @@ const WORD_MS = 130; // roughly conversational pace
 const JITTER = 80;
 const GAP_MS = 500; // blank between boxes
 const FADE_MS = 400; // .overlay's opacity transition, in the stylesheet
+const START_MS = 1200; // the page up, and nothing said yet, before the first caption
 
 /** A finished box holds long enough to actually be read: a base beat plus time
  *  per word, so a long caption is not gone before you reach the end. */
@@ -2055,6 +2957,10 @@ export const SubtitlesDemo = () => {
   // Languages on: see underLive in the loop.
   const [under, setUnder] = useState("");
   const underRef = useRef<HTMLSpanElement>(null);
+  // The glow along the box's bottom edge, on a mock voice while words land:
+  // its canvas, under the text, and the painter on it, see borealis.
+  const borealisRef = useRef<HTMLCanvasElement>(null);
+  const glowRef = useRef<ReturnType<typeof borealis.attach> | null>(null);
   const nameTabRef = useRef<NameTab | null>(null);
   // The line being said, for ⌃: the pair and the word reached, so the box can
   // be redrawn in whichever language the key asks for while it is still typing.
@@ -2293,6 +3199,8 @@ export const SubtitlesDemo = () => {
       : "icon-header",
     translateTo,
     `audio-${settings.microphone ? "mic" : "all"}`,
+    `borealis-${settings.borealis}`,
+    `glow-${settings.borealisStrength}`,
     ...(settings.revealEnabled ? ["reveal"] : []),
     ...(settings.historyEnabled ? ["history"] : []),
     ...(settings.bothLanguages ? ["both"] : []),
@@ -2420,10 +3328,33 @@ export const SubtitlesDemo = () => {
       if ("historyExpires" in changed || "historyExpiry" in changed) {
         forgetRef.current?.();
       }
+      if ("borealis" in changed || "borealisStrength" in changed) {
+        glowRef.current?.apply(next);
+      }
       queueHoleRef.current?.();
     },
     [boxAppFor]
   );
+  // The glow on the live box, from the box's first paint, dressed to the
+  // settings as they change (see applySettings).
+  useEffect(() => {
+    const box = overlayRef.current;
+    const canvas = borealisRef.current;
+    if (!box || !canvas) {
+      return;
+    }
+    const glow = borealis.attach(
+      box,
+      canvas,
+      styles.is_visible || "is_visible"
+    );
+    glow.apply(settingsRef.current);
+    glowRef.current = glow;
+    return () => {
+      glow.detach();
+      glowRef.current = null;
+    };
+  }, []);
   // The seed, once the page is in a browser to read it from; and the page's
   // later changes, as they come.
   useEffect(() => {
@@ -2457,6 +3388,10 @@ export const SubtitlesDemo = () => {
       });
     } else if (id === "both") {
       applySettings({ bothLanguages: !settingsRef.current.bothLanguages });
+    } else if (id.startsWith("borealis-")) {
+      applySettings({ borealis: id.slice(9) });
+    } else if (id.startsWith("glow-")) {
+      applySettings({ borealisStrength: id.slice(5) });
     } else if (id === "reveal") {
       applySettings({ revealEnabled: !settingsRef.current.revealEnabled });
     } else if (id === "history") {
@@ -3451,10 +4386,13 @@ export const SubtitlesDemo = () => {
       // Set by a jump that found a caption up: that caption fades out whole
       // before the next turn does anything, rather than being wiped mid-fade.
       let fading = false;
-      // Off React's own stack before the first word: the pager in `say`
-      // flushes a render to measure the box, which React refuses from inside
-      // the effect this loop is started by.
-      await step(0);
+      // A beat after the page is up before anything is said: the screen is
+      // seen empty first, and the first caption arrives as every one after
+      // it does, rather than being there when the page opens. It also puts
+      // the loop off React's own stack before the first word: the pager in
+      // `say` flushes a render to measure the box, which React refuses from
+      // inside the effect this loop is started by.
+      await step(START_MS);
 
       for (;;) {
         const current = SCENES[index];
@@ -4601,9 +5539,16 @@ export const SubtitlesDemo = () => {
     // The box changes width on almost every word, which moves its left edge by
     // most of the box. Without this the hole lands off the pointer until the
     // pointer next moves, and reads as the reveal blinking out.
+    // Placed here and now, not on the next frame: a resize callback runs
+    // after layout and before the frame is painted, so the frame the box
+    // grows in already has the hole under the pointer; the queue still runs
+    // what follows a paint.
     const sizes =
       typeof ResizeObserver === "function"
-        ? new ResizeObserver(() => queueHole())
+        ? new ResizeObserver(() => {
+            paintHole();
+            queueHole();
+          })
         : null;
     sizes?.observe(box);
 
@@ -5916,6 +6861,14 @@ export const SubtitlesDemo = () => {
             onPointerCancel={endDrag}
             onLostPointerCapture={endDrag}
           >
+            {/* Audio Borealis: the glow the sound raises along the box's
+                bottom edge, painted by the component on this canvas, between
+                the box's fill and its text. */}
+            <canvas
+              ref={borealisRef}
+              className={styles.ov_borealis}
+              aria-hidden="true"
+            />
             {/* The source app's row: the icon and name of the app whose audio
                 the words are, above the caption, the way the app draws it by
                 default since 1.7.0. */}
