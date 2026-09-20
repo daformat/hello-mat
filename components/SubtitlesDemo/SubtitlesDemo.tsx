@@ -267,6 +267,17 @@ const MENU: MenuRow[] = [
   { label: "Fade Away Under Pointer", id: "reveal", demo: true },
   { label: "Recent Boxes On ⌥", id: "history", demo: true },
   { sep: true },
+  // Color Theme: auto, light or dark, a choice among the three.
+  {
+    label: "Color Theme",
+    id: "theme",
+    demo: true,
+    sub: [
+      { label: "Auto", id: "theme-auto", demo: true },
+      { label: "Light", id: "theme-light", demo: true },
+      { label: "Dark", id: "theme-dark", demo: true },
+    ],
+  },
   // Audio Borealis: the look, Off among them, and the strength, each a
   // choice among its group.
   {
@@ -278,7 +289,7 @@ const MENU: MenuRow[] = [
       { label: "Rainbow", id: "borealis-rainbow", demo: true },
       { label: "Northern Lights", id: "borealis-northernLights", demo: true },
       { label: "Autumn", id: "borealis-autumn", demo: true },
-      { label: "White Haze", id: "borealis-whiteHaze", demo: true },
+      { label: "Monochrome Haze", id: "borealis-monochromeHaze", demo: true },
       { sep: true },
       { label: "Strong", id: "glow-strong", demo: true },
       { label: "Medium", id: "glow-medium", demo: true },
@@ -417,8 +428,9 @@ type IconStyle = "header" | "nameTab" | "off";
 //   historyExpiry       seconds of silence that does
 //   bothLanguages       Show Both Languages: the original under a translation
 //   microphone          Listen To → the microphone, over whatever is playing
-//   borealis            Audio Borealis: off | rainbow | northernLights | autumn | whiteHaze
+//   borealis            Audio Borealis: off | rainbow | northernLights | autumn | monochromeHaze
 //   borealisStrength    strong | medium | subtle
+//   theme               Color Theme, the boxes' colors: auto (the page's) | light | dark
 type Settings = {
   fontSize: number;
   textAlignment: "start" | "center";
@@ -439,6 +451,7 @@ type Settings = {
   microphone: boolean;
   borealis: BorealisLook;
   borealisStrength: BorealisStrength;
+  theme: "auto" | "light" | "dark";
 };
 // What the demo runs on before it is seeded: the app's defaults where the demo
 // already drew them, and the demo's own where it differs. The stack keeps
@@ -466,6 +479,25 @@ const DEMO_DEFAULTS: Settings = {
   microphone: false,
   borealis: "rainbow",
   borealisStrength: "medium",
+  theme: "auto",
+};
+// Color Theme: the boxes' colors for a chosen theme, as the stylesheet's two
+// palettes state them (--box-rgb, --ink-rgb, --box-name and --pill-line under
+// .demo), restated here so a pick can write the other palette's box over the
+// page's. Auto has no entry: the page's own tokens stand.
+const BOX_THEMES: Record<"light" | "dark", Record<string, string>> = {
+  light: {
+    "--box-rgb": "255 255 255",
+    "--ink-rgb": "62 62 66",
+    "--box-name": "rgb(0 0 0 / 0.55)",
+    "--pill-line": "rgb(0 0 0 / 0.08)",
+  },
+  dark: {
+    "--box-rgb": "0 0 0",
+    "--ink-rgb": "255 255 255",
+    "--box-name": "#d2d2d3",
+    "--pill-line": "rgb(210 210 211 / 0.16)",
+  },
 };
 const readSettings = (given: unknown): Partial<Settings> => {
   const NUMBER: Partial<Record<keyof Settings, [number, number]>> = {
@@ -491,8 +523,9 @@ const readSettings = (given: unknown): Partial<Settings> => {
   const WORD: Partial<Record<keyof Settings, string[]>> = {
     textAlignment: ["start", "center"],
     iconStyle: ["off", "nameTab", "header"],
-    borealis: ["off", "rainbow", "northernLights", "autumn", "whiteHaze"],
+    borealis: ["off", "rainbow", "northernLights", "autumn", "monochromeHaze"],
     borealisStrength: ["strong", "medium", "subtle"],
+    theme: ["auto", "light", "dark"],
   };
   const out: Record<string, unknown> = {};
   const take = (key: string, value: unknown) => {
@@ -634,7 +667,7 @@ type BorealisLook =
   | "rainbow"
   | "northernLights"
   | "autumn"
-  | "whiteHaze";
+  | "monochromeHaze";
 type BorealisStrength = "strong" | "medium" | "subtle";
 type BorealisConfig = {
   sensitivity: number;
@@ -656,7 +689,7 @@ type BorealisConfig = {
   hueStart: number;
   hueWidth: number;
   saturation: number;
-  colorMode: "spectrum" | "white" | "black";
+  colorMode: "spectrum" | "white" | "black" | "monochrome";
   opacity: number;
   glowOpacity: number;
   bend: number;
@@ -820,7 +853,9 @@ const borealis = (() => {
     rainbow: { colorMode: "spectrum", hueStart: 0, hueWidth: 360 },
     northernLights: { colorMode: "spectrum", hueStart: 100, hueWidth: 180 },
     autumn: { colorMode: "spectrum", hueStart: 310, hueWidth: 90 },
-    whiteHaze: { colorMode: "white" },
+    // The opposite of the box's color: white on the dark box, a dark grey on
+    // the light one, read off the box where it is painted (inkOf).
+    monochromeHaze: { colorMode: "monochrome" },
   };
   const STRENGTHS: Record<BorealisStrength, number> = {
     strong: 1,
@@ -829,13 +864,22 @@ const borealis = (() => {
   };
 
   // The `index`th colour: its share of the wheel from the start, turned by
-  // the drift, at the saturation; or white or black alone.
-  const color = (index: number, c: BorealisConfig, drift: number): RGB => {
+  // the drift, at the saturation; or white or black alone; or, monochrome,
+  // `ink`, the box's counter-colour, white unless the box says otherwise.
+  const color = (
+    index: number,
+    c: BorealisConfig,
+    drift: number,
+    ink: RGB | null
+  ): RGB => {
     if (c.colorMode === "white") {
       return [1, 1, 1];
     }
     if (c.colorMode === "black") {
       return [0, 0, 0];
+    }
+    if (c.colorMode === "monochrome") {
+      return ink ?? [1, 1, 1];
     }
     const share = HUE_SHARES[index % HUE_SHARES.length] ?? 0;
     const hue = wrap(c.hueStart + c.hueWidth * share + drift, 360);
@@ -1127,7 +1171,8 @@ const borealis = (() => {
     w: number,
     h: number,
     radius: number,
-    fontPx: number
+    fontPx: number,
+    ink: RGB | null
   ) => {
     const c = frame.config;
     const opacity = clamp01(c.opacity);
@@ -1178,7 +1223,7 @@ const borealis = (() => {
             cy,
             lrx,
             lry,
-            color(i, c, frame.hue),
+            color(i, c, frame.hue, ink),
             layer.stops,
             false
           );
@@ -1213,7 +1258,7 @@ const borealis = (() => {
         if (!first || !last) {
           return;
         }
-        const rgb = color(k, c, frame.hue);
+        const rgb = color(k, c, frame.hue, ink);
         const crest = Math.max(...points.map((p) => p[1]));
         ctx.save();
         ctx.beginPath();
@@ -1397,13 +1442,32 @@ const borealis = (() => {
         el.height = Math.round(h * dpr);
       });
     };
+    // The monochrome haze's colour: the opposite of the box's, which is read
+    // off the box's own type, white on a dark box and on a light one a 65%
+    // grey leaning blue (#475975), as the app's painter has it (black read as
+    // a stain, neutral grey as concrete), so it follows the theme wherever the
+    // theme comes from, the page's or the menu's. Read only when the look asks
+    // for it.
+    const inkOf = (): RGB | null => {
+      if (drive.state.config.colorMode !== "monochrome") {
+        return null;
+      }
+      const rgb = (
+        getComputedStyle(box).color.match(/[\d.]+/g) ?? ["255", "255", "255"]
+      ).map(Number);
+      const luma =
+        (rgb[0] ?? 255) * 0.299 +
+        (rgb[1] ?? 255) * 0.587 +
+        (rgb[2] ?? 255) * 0.114;
+      return luma > 128 ? [1, 1, 1] : [0.28, 0.35, 0.46];
+    };
     const draw = (frame: BorealisFrame) => {
       const ctx = canvas.getContext("2d");
       if (!ctx) {
         return;
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      paint(ctx, scratch, frame, w, h, radius, fontPx);
+      paint(ctx, scratch, frame, w, h, radius, fontPx, inkOf());
     };
     size();
     // Sizing a canvas clears it, and the box resizes on almost every word:
@@ -3201,6 +3265,7 @@ export const SubtitlesDemo = () => {
     `audio-${settings.microphone ? "mic" : "all"}`,
     `borealis-${settings.borealis}`,
     `glow-${settings.borealisStrength}`,
+    `theme-${settings.theme}`,
     ...(settings.revealEnabled ? ["reveal"] : []),
     ...(settings.historyEnabled ? ["history"] : []),
     ...(settings.bothLanguages ? ["both"] : []),
@@ -3392,6 +3457,8 @@ export const SubtitlesDemo = () => {
       applySettings({ borealis: id.slice(9) });
     } else if (id.startsWith("glow-")) {
       applySettings({ borealisStrength: id.slice(5) });
+    } else if (id.startsWith("theme-")) {
+      applySettings({ theme: id.slice(6) });
     } else if (id === "reveal") {
       applySettings({ revealEnabled: !settingsRef.current.revealEnabled });
     } else if (id === "history") {
@@ -6196,6 +6263,9 @@ export const SubtitlesDemo = () => {
             "--hole-w": `${(settings.revealWidth / 60).toFixed(3)}em`,
             "--hole-h": `${(settings.revealHeight / 60).toFixed(3)}em`,
             "--hist-text-alpha": settings.historyTextOpacity,
+            // The boxes' colors: the chosen palette's over the page's, or, on
+            // Auto, nothing of their own, so the page's tokens show through.
+            ...(settings.theme === "auto" ? {} : BOX_THEMES[settings.theme]),
           } as CSSProperties
         }
       >

@@ -229,8 +229,16 @@ const SubtitlesAppPageContent = () => {
           read, so a mock voice drives it, syllables of uneven length and
           loudness while words land in the box and quiet between, seeded from a
           hash so every caption is said the same way. The submenu picks a look,
-          Rainbow, Northern Lights, Autumn or White Haze, and a strength, and
-          Off is a row like the others.
+          Rainbow, Northern Lights, Autumn or Monochrome Haze, which takes the
+          box&rsquo;s own counter-color, and a strength, and Off is a row like
+          the others. The same effect is on npm as{" "}
+          <code>@daformat/audio-borealis</code>, for any element with an audio
+          source or a level to feed it, and has{" "}
+          <Link href="/design-engineering/audio-borealis">
+            a page of its own
+          </Link>{" "}
+          in this gallery. Beside it, Color Theme pins the box to the light or
+          the dark palette, where Auto lets it follow the page.
         </p>
         <p>
           The one option with real machinery behind it is the Name Tab, the
@@ -409,12 +417,14 @@ const SubtitlesAppPageContent = () => {
 
         <h3 id="the-caption-box">The caption box</h3>
         <p>
-          The overlay is drawn from the app&rsquo;s own numbers: black at 72%
-          opacity, SF Rounded semibold, the same radius and the same insets the
-          app uses at its default size. It hugs its content, with a minimum
-          width so that short lines don&rsquo;t make the box jitter, and it sits
-          above every window and above the switcher, because that is literally
-          what it is for.
+          The overlay is drawn from the app&rsquo;s own numbers: the box at 72%
+          opacity, black with white type under a dark page and, as the
+          app&rsquo;s does on Auto, white with dark type under a light one, SF
+          Rounded semibold, the same radius and the same insets the app uses at
+          its default size. It hugs its content, with a minimum width so that
+          short lines don&rsquo;t make the box jitter, and it sits above every
+          window and above the switcher, because that is literally what it is
+          for.
         </p>
         <p>
           Captions arrive a word at a time, at roughly conversational pace with
@@ -566,17 +576,15 @@ const SubtitlesAppPageContent = () => {
           screen was never the color. It was the relationship.
         </p>
         <p>
-          Three things refuse to follow, and they are the interesting part. The
+          Two things refuse to follow, and they are the interesting part. The
           app icons, the avatars and the album art keep their own colors, as
-          they do on a Mac. The caption box stays black with white text, because
-          that is what the app draws over a light desktop too. And the shadows
-          get their own values per theme: the dark ones are deep because they
-          fall on a near-black desktop where nothing shallower would read at
-          all, and the same shadow on a light desktop is a smear. The windows
-          have no border at all: what edges them is the half-pixel ring macOS
-          draws, dark outside on both desktops and, on the dark one, light
-          inside as well, drawn over the content so it does not disappear under
-          the title bar.
+          they do on a Mac. And the shadows get their own values per theme: the
+          dark ones are deep because they fall on a near-black desktop where
+          nothing shallower would read at all, and the same shadow on a light
+          desktop is a smear. The windows have no border at all: what edges them
+          is the half-pixel ring macOS draws, dark outside on both desktops and,
+          on the dark one, light inside as well, drawn over the content so it
+          does not disappear under the title bar.
         </p>
         <p>
           A background window is a fourth. macOS does not dim one, so neither
