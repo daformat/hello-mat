@@ -219,6 +219,20 @@ const SubtitlesAppPageContent = () => {
           side it came from.
         </p>
         <p>
+          The newest row is Audio Borealis, the glow the app raises along the
+          bottom of the box as somebody speaks: seven soft lobes fanned out from
+          the edge, each on a band of the voice, sliding sideways while a voice
+          is heard, and over them a translucent hill per band in a color of the
+          hue wheel. It is a line-for-line port of the app&rsquo;s own driver
+          and painter onto a canvas laid between the box&rsquo;s fill and its
+          text, in plain 2D calls every engine has. The page has no sound to
+          read, so a mock voice drives it, syllables of uneven length and
+          loudness while words land in the box and quiet between, seeded from a
+          hash so every caption is said the same way. The submenu picks a look,
+          Rainbow, Northern Lights, Autumn or White Haze, and a strength, and
+          Off is a row like the others.
+        </p>
+        <p>
           The one option with real machinery behind it is the Name Tab, the
           app&rsquo;s second style for naming the source: the row becomes a tab
           on the pill&rsquo;s top edge, and the box is masked to the silhouette
