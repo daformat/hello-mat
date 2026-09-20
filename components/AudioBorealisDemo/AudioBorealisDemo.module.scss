@@ -1,0 +1,577 @@
+@use "sass:color";
+@use "/styles/lib/mixins.scss";
+@use "/styles/lib/palette.scss";
+
+/*
+ * The Audio Borealis playground.
+ *
+ * The surround is the site's own palette rather than a set of grays: the warm
+ * desert sky in the light theme, the near-black violet in the dark one. Every
+ * surface, rule and label below is either a palette color or mixed out of
+ * one, so the bench reads as part of the page it sits in. The only colors in
+ * here that are not from the palette are the glow's own, which come off the
+ * hue wheel and are the specimen, and the caption box, which is the app's:
+ * black at 0.72 over whatever is behind it, white type.
+ *
+ * Every color is a light-dark() pair, so the theme is one property rather
+ * than a second stylesheet: each block root sets color-scheme and the whole
+ * palette re-resolves.
+ */
+
+$light-fail: color.mix(#c0392b, palette.$light-ivory-1, 80%);
+$light-ok: color.mix(#1f7a4c, palette.$light-ivory-1, 80%);
+$dark-fail: color.mix(#ff8f7a, palette.$dark-ivory-1, 82%);
+$dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
+
+@mixin tokens {
+  --paper: light-dark(
+    #{palette.$light-desert-sky-3},
+    #{palette.$dark-desert-sky-2}
+  );
+  --ink: light-dark(#{palette.$light-ivory-1}, #{palette.$dark-ivory-1});
+  --text: light-dark(#{palette.$light-ivory-2}, #{palette.$dark-ivory-2});
+  --text-soft: light-dark(#{palette.$light-ivory-3}, #{palette.$dark-ivory-3});
+  --muted: light-dark(#{palette.$light-ivory-4}, #{palette.$dark-ivory-4});
+  --rule: light-dark(#{palette.$light-ivory-5}, #{palette.$dark-ivory-5});
+  --fail: light-dark(#{$light-fail}, #{$dark-fail});
+  --ok: light-dark(#{$light-ok}, #{$dark-ok});
+  --glass: light-dark(
+    #{rgba(palette.$light-desert-sky-3, 0.86)},
+    #{rgba(palette.$dark-desert-sky-2, 0.86)}
+  );
+  --glass-up: light-dark(
+    #{rgba(palette.$light-desert-sky-3, 0.97)},
+    #{rgba(palette.$dark-desert-sky-2, 0.97)}
+  );
+  --inline: light-dark(
+    #{rgba(palette.$light-ivory-1, 0.07)},
+    #{rgba(palette.$dark-ivory-1, 0.09)}
+  );
+  --shadow: light-dark(
+    #{rgba(palette.$light-shadow, 0.35)},
+    #{rgba(palette.$dark-shadow, 0.75)}
+  );
+
+  /* The desk the caption box sits on: the Subtitles site's own wallpaper,
+     indigo, pink, peach and cyan, one radial each, over a lilac-to-peach
+     wash, as the SubtitlesDemo carries it. A gradient is not a color, so
+     the dark theme's is set under a media query below rather than through
+     light-dark(); the desk follows the page, only the box has a switch. */
+  --desk: radial-gradient(
+      55% 60% at 16% 10%,
+      rgb(112 100 255 / 0.62),
+      transparent 64%
+    ),
+    radial-gradient(48% 55% at 86% 18%, rgb(255 110 170 / 0.5), transparent 66%),
+    radial-gradient(
+      58% 50% at 72% 96%,
+      rgb(255 168 100 / 0.66),
+      transparent 66%
+    ),
+    radial-gradient(42% 46% at 12% 90%, rgb(80 196 235 / 0.5), transparent 66%),
+    linear-gradient(160deg, #c7c2ff 0%, #ead6f4 48%, #ffd8c2 100%);
+
+  /* The box: the app's, black at 0.72 with white type, in the dark theme;
+     in the light theme it is turned inside out, white at the same opacity
+     with dark type, so it reads as a box on a light desk rather than a hole
+     in one. The hairline inside the edge follows: dark on the white box,
+     pale on the black one. */
+  --box-bg: light-dark(rgb(255 255 255 / 0.78), rgb(0 0 0 / 0.72));
+  --box-ink: light-dark(#3e3e42, #fff);
+  --box-name: light-dark(rgb(0 0 0 / 0.55), #d2d2d3);
+  --pill-line: light-dark(rgb(0 0 0 / 0.08), rgb(210 210 211 / 0.16));
+  --step: 6px;
+  --mono: ui-monospace, sfmono-regular, "SF Mono", menlo, monospace;
+  --demo-font: ui-rounded, "SF Pro Rounded", system-ui, -apple-system,
+    sans-serif;
+
+  /* light-dark() resolves against this, and the page root never sets it, so
+     every block that pulls in these tokens has to declare it too. */
+  color-scheme: light dark;
+}
+
+/* Only the tokens and the sticky context. No color and no font, because the
+   page puts its own prose between these blocks and that prose belongs to the
+   page. */
+.bench {
+  @include tokens;
+
+  position: relative;
+}
+
+/* The same picture with the lights turned down: the site's dark wallpaper,
+   the four radials at the same places over a near-black wash. */
+@media (prefers-color-scheme: dark) {
+  .bench {
+    --desk: radial-gradient(
+        55% 60% at 16% 10%,
+        rgb(104 88 255 / 0.5),
+        transparent 64%
+      ),
+      radial-gradient(
+        48% 55% at 86% 18%,
+        rgb(225 70 150 / 0.36),
+        transparent 66%
+      ),
+      radial-gradient(
+        58% 50% at 72% 96%,
+        rgb(255 138 76 / 0.36),
+        transparent 66%
+      ),
+      radial-gradient(
+        42% 46% at 12% 90%,
+        rgb(40 160 225 / 0.32),
+        transparent 66%
+      ),
+      linear-gradient(160deg, #17142f 0%, #2b1b40 50%, #3a1e2b 100%);
+  }
+}
+
+/* ---------- the bar ---------- */
+
+/* The controls, as the carousel page lays its own out: the site's card, one
+   wrapping row of small labels and the site's own buttons, nothing sticky
+   and nothing of its own. */
+.controls {
+  margin-block: 1.5em;
+}
+
+.row {
+  align-items: center;
+  column-gap: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  row-gap: 8px;
+}
+
+.field {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.field_label {
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+/* The pickers: the site's button with the chevron the other demos put on a
+   menu trigger. */
+.picker {
+  svg {
+    flex: none;
+    margin-left: auto;
+    opacity: 0.7;
+  }
+}
+
+/* The picker's name, for a screen reader: the button shows the value alone. */
+.sr_only {
+  @include mixins.visually-hidden;
+}
+
+/* The tick's column in the menu, kept even when empty so the names line up. */
+.tick {
+  display: inline-flex;
+  justify-content: center;
+  width: 12px;
+}
+
+/* The recording's sound: a speaker, barred while it is muted. The site's
+   button, squared up to the height of the others. */
+.icon_button {
+  height: 29px;
+  padding: 0 8px;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.45;
+  }
+}
+
+/* A choice among a few, at the size of the site's button: the same padding
+   and corners, the buttons joined, the picked one filled. */
+.segmented {
+  background-color: var(--color-toolbar-background);
+  border-radius: 8px;
+  box-shadow: 0 1px 12px var(--color-shadow-1),
+    inset 0 0 2px 0.75px var(--color-border-2),
+    inset 0 0 0 0.75px var(--color-border-1);
+  display: inline-flex;
+  flex-wrap: wrap;
+  overflow: hidden;
+
+  button {
+    background: transparent;
+    border: 0;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 7px 10px;
+    white-space: nowrap;
+
+    + button {
+      box-shadow: inset 0.75px 0 0 var(--color-border-1);
+    }
+
+    &:hover,
+    &:focus-visible {
+      background-color: var(--color-toolbar-button-background-hover);
+      outline: none;
+    }
+
+    &[aria-pressed="true"] {
+      background-color: var(--color-toolbar-button-background-active);
+      color: var(--text-secondary-hover);
+    }
+
+    &[aria-busy="true"] {
+      opacity: 0.6;
+    }
+  }
+}
+
+/* The two icon buttons, at the same height as the text ones. */
+.icons button {
+  display: inline-flex;
+  padding: 7px 9px;
+}
+
+.small button {
+  font-size: 0.875em;
+  padding: 5px 8px;
+}
+
+/* The meter's and the knobs' small labels, as the bar's. */
+.chip_label {
+  font-size: 0.875em;
+  margin: 0;
+  opacity: 0.8;
+}
+
+.bench {
+  input,
+  select,
+  button {
+    &:focus-visible {
+      outline: 2px solid var(--ink);
+      outline-offset: 2px;
+    }
+  }
+}
+
+/* ---------- the stage ---------- */
+
+/* A desk with a caption box in the middle of it, at the card's own proportions so the
+   clip the gallery shows is this, whole. The box's type is sized off the
+   stage rather than the page, as the app's demo sizes it off its screen, so
+   the glow keeps its share of the type at every width. */
+.stage {
+  aspect-ratio: 99 / 50;
+  background: var(--desk);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  container-type: inline-size;
+  overflow: hidden;
+  position: relative;
+
+  /* The wallpaper's lights, softened: the site draws its four radials sharp
+     enough to read as ellipses, which a desktop the size of a screen carries
+     and a stage this size does not. So the same picture is painted again on
+     a layer under the box, 200px past every edge so the blur has nothing to
+     fade into, and blurred hard. The plain one underneath is the fallback. */
+  &::before {
+    background: var(--desk);
+    content: "";
+    filter: blur(64px);
+    inset: -200px;
+    pointer-events: none;
+    position: absolute;
+  }
+}
+
+/* The app's box, as its landing page draws it: black at 0.72 over a blur,
+   white rounded type at 600, the app's own line of 1.2334, and the hairline
+   inside the edge; in the light theme the same box in white with dark type,
+   see the tokens. The type is the app's default 30pt at the stage's full
+   width, since the stage is at real size rather than a screen scaled down,
+   and it comes down with the stage so a phone still gets a caption that fits
+   two lines. The glow is scaled off this size, so the box has to be the
+   app's for the glow to be the app's. */
+.caption {
+  backdrop-filter: blur(6px);
+  background: var(--box-bg);
+  border-radius: 0.533em;
+  box-shadow: inset 0 0 0 1px var(--pill-line);
+  color: var(--box-ink);
+  font-family: var(--demo-font);
+  font-size: clamp(15px, 4.1cqw, 30px);
+  font-weight: 600;
+  left: 50%;
+  line-height: 1.2334;
+  max-width: min(80cqw, 704px);
+  min-width: 4.67em;
+  opacity: 0;
+  padding: 0.47em 0.73em;
+  position: absolute;
+  text-align: start;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.4s ease;
+  width: max-content;
+
+  &[data-visible="true"] {
+    opacity: 1;
+  }
+
+  /* The sun and the moon in the bar: the box's colors are light-dark()
+     pairs, and light-dark() resolves against the scheme of the element it is
+     used on, so one property here turns the box, its hairline and its type
+     over together, and leaves the desk in the page's theme. */
+  &[data-theme="light"] {
+    color-scheme: light;
+  }
+
+  &[data-theme="dark"] {
+    color-scheme: dark;
+  }
+}
+
+/* The source's row, at the proportions the app draws its header row: the
+   icon 0.9 of the type and the name 0.6 of it, dimmed against the box. */
+.cap_app {
+  align-items: center;
+  display: flex;
+  gap: 0.333em;
+  height: 0.9em;
+  margin-bottom: 0.3em;
+  min-width: 0;
+
+  img {
+    display: block;
+    flex: none;
+    height: 0.9em;
+    width: 0.9em;
+  }
+}
+
+.cap_name {
+  color: var(--box-name);
+  font-size: 0.6em;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cap_text {
+  display: block;
+  /* The 2pt of line spacing the app puts after every line but a paragraph's
+     last, taken off the last. */
+  margin-bottom: -0.0667em;
+}
+
+/* The word the model has not settled on yet, as the app dims it. */
+.tentative {
+  opacity: 0.5;
+}
+
+/* The package lays the canvas out itself; the class is here for the capture
+   script and the devtools to find it by. */
+.glow {
+  display: block;
+}
+
+/* ---------- the meter ---------- */
+
+.meter {
+  align-items: end;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  color: var(--ink);
+  display: grid;
+  gap: calc(var(--step) * 3);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  margin-block: 1.5em;
+  padding: calc(var(--step) * 3);
+
+  @include mixins.up-to-medium {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Aligned at the top, not the bottom: a label that wraps to two lines would
+   otherwise lift its own bar out of line with the others. */
+.bars {
+  align-items: start;
+  display: grid;
+  gap: calc(var(--step) * 1.5);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.bar {
+  display: grid;
+  gap: calc(var(--step) * 1);
+  justify-items: center;
+}
+
+.bar_track {
+  background: var(--inline);
+  border-radius: 3px;
+  height: 64px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+/* Scaled rather than resized: a transform is the one property the compositor
+   can move without a layout, which is what a bar that moves sixty times a
+   second wants. */
+.bar_fill {
+  --v: 0;
+  background: var(--ink);
+  border-radius: 3px;
+  bottom: 0;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transform: scaleY(var(--v));
+  transform-origin: bottom;
+}
+
+.bar_level .bar_fill {
+  background: var(--text-soft);
+}
+
+.bar_name {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.rise {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--step) * 1.5);
+  margin: 0;
+}
+
+.rise_value {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  min-width: 3.2ch;
+}
+
+.rise_note {
+  color: var(--text-soft);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+/* ---------- the knobs ---------- */
+
+.knobs {
+  background: transparent;
+  border-radius: 8px;
+  color: var(--ink);
+  margin-block: 1.5em;
+}
+
+.knobs_head {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--step) * 2);
+  justify-content: space-between;
+  margin-bottom: calc(var(--step) * 3);
+}
+
+.knobs_foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: calc(var(--step) * 3);
+}
+
+.reset {
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  padding: calc(var(--step) * 1.25) calc(var(--step) * 2);
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.45;
+  }
+}
+
+/* One group of knobs, under its tab: its brief, then the rows in as many
+   columns as fit. */
+.knob_group {
+  display: grid;
+  gap: calc(var(--step) * 2.5);
+  padding-top: calc(var(--step) * 2.5);
+}
+
+.group_brief {
+  color: var(--text-soft);
+  font-size: 0.875em;
+  margin: 0;
+}
+
+/* The rows fill down a column and then the next, as a settings sheet reads,
+   rather than across: multi-column layout does that without knowing how
+   many rows there are, one column on a phone and two where 300px fit
+   twice. */
+.knob_list {
+  column-gap: calc(var(--step) * 5);
+  column-width: 300px;
+}
+
+/* A knob as the carousel page lays its card size out: the label, the
+   slider and the value on one line, the label at a fixed width so the
+   sliders line up down a group, and the input nudged the 1.5px the site
+   nudges its own to sit on the label's baseline. */
+.knob {
+  align-items: center;
+  break-inside: avoid;
+  display: flex;
+  gap: 8px;
+  padding-bottom: calc(var(--step) * 2);
+
+  input[type="range"] {
+    flex: 1;
+    min-width: 80px;
+    translate: 0 1.5px;
+  }
+}
+
+.knob_label {
+  flex: none;
+  opacity: 0.8;
+  width: 7.5em;
+}
+
+.knob_value {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  min-width: 4.5em;
+  opacity: 0.8;
+  text-align: right;
+
+  span {
+    margin-left: 0.25em;
+    opacity: 0.7;
+  }
+}
