@@ -40,7 +40,13 @@
 // PNG keeps the pixels lossless until the single h264 pass at the end.
 
 import { execFileSync, spawn } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -76,6 +82,30 @@ const MARK_HEIGHT = 4;
 /** Seconds the screen recording runs: a round of the recording plus room to
     pick it and to close on the loop. */
 const RECORD_S = 44;
+
+/** The recording's word timings, as the demo has them. */
+const CLIP = JSON.parse(
+  readFileSync(
+    join(ROOT, "components", "AudioBorealisDemo", "voice-clip.json"),
+    "utf8"
+  )
+);
+/** The morph, for the clip: the box goes to the phone a third of the way
+    into the second caption and comes back a third into the fourth, on the
+    word that has landed by then in the recording's timings. Each is done
+    once a round, and again when the caption comes round. */
+const MORPHS = [
+  { line: 1, shape: "Phone box" },
+  { line: 3, shape: "Caption box" },
+].map(({ line, shape }) => {
+  const sentence = CLIP.sentences[line];
+  const third = sentence.start + (sentence.end - sentence.start) / 3;
+  const words = Math.max(
+    1,
+    sentence.words.filter((word) => word.at <= third).length
+  );
+  return { text: sentence.text, words, shape };
+});
 /** How long after the last word lands the still is taken and the clip begins:
     the voice is still "speaking" for 450ms after a word, and the glow takes a
     while to come down after that, so this is well inside the glow. */
@@ -201,19 +231,27 @@ const isolateForScreen = ({ width, height, inset, mark }) => {
  * again when that same caption comes round after the last line. Resolves
  * once the second mark is down.
  */
-const markRound = () =>
+const markRound = (morphs) =>
   new Promise((resolve, reject) => {
     const strip = document.getElementById("__mark");
+    const pick = (shape) =>
+      document
+        .querySelector(
+          `[role="radiogroup"][aria-label="Box shape"] [role="radio"][aria-label="${shape}"]`
+        )
+        ?.click();
     const read = () => {
       const box = document.querySelector(
         '[class*="AudioBorealisDemo_caption__"]'
       );
-      const said =
-        box?.querySelector('[class*="AudioBorealisDemo_cap_text__"] > span')
-          ?.textContent ?? "";
-      const next =
-        box?.querySelector('[class*="AudioBorealisDemo_tentative__"]')
-          ?.textContent ?? "";
+      const tentative = box?.querySelector(
+        '[class*="AudioBorealisDemo_tentative__"]'
+      );
+      const said = [...(box?.querySelectorAll("[data-word]") ?? [])]
+        .filter((word) => word !== tentative)
+        .map((word) => word.textContent)
+        .join(" ");
+      const next = tentative?.textContent ?? "";
       const who =
         box?.querySelector('[class*="AudioBorealisDemo_cap_name__"]')
           ?.textContent ?? "";
@@ -242,6 +280,23 @@ const markRound = () =>
         return;
       }
       const state = read();
+      // The morphs, on the recording's captions alone: each fires once the
+      // caption is its line with its word landed, and is armed again once
+      // the caption has moved on, for the next round.
+      if (state.who === "Recording") {
+        for (const morph of morphs) {
+          const onLine = state.said !== "" && morph.text.startsWith(state.said);
+          if (!onLine) {
+            morph.done = false;
+          } else if (
+            !morph.done &&
+            state.said.split(" ").length >= morph.words
+          ) {
+            morph.done = true;
+            pick(morph.shape);
+          }
+        }
+      }
       if (phase === "arming") {
         if (state.who === "Recording" && state.said === "Audio") {
           phase = "opening";
@@ -367,12 +422,14 @@ const waitForFirstLine = async (page) => {
 /** What the box says: the words landed, the dimmed one after them, and who is speaking. */
 const captionState = () => {
   const box = document.querySelector('[class*="AudioBorealisDemo_caption__"]');
-  const said =
-    box?.querySelector('[class*="AudioBorealisDemo_cap_text__"] > span')
-      ?.textContent ?? "";
-  const next =
-    box?.querySelector('[class*="AudioBorealisDemo_tentative__"]')
-      ?.textContent ?? "";
+  const tentative = box?.querySelector(
+    '[class*="AudioBorealisDemo_tentative__"]'
+  );
+  const said = [...(box?.querySelectorAll("[data-word]") ?? [])]
+    .filter((word) => word !== tentative)
+    .map((word) => word.textContent)
+    .join(" ");
+  const next = tentative?.textContent ?? "";
   const who =
     box?.querySelector('[class*="AudioBorealisDemo_cap_name__"]')
       ?.textContent ?? "";
@@ -553,7 +610,7 @@ const recordClip = async (theme) => {
   });
   await wait(1000);
   await startRecording(page);
-  await page.evaluate(markRound);
+  await page.evaluate(markRound, MORPHS);
   console.log(`${theme}: round marked, waiting for the recorder to finish`);
   await recorded;
   await browser.close();

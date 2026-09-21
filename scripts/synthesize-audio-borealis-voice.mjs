@@ -53,7 +53,7 @@ const SENTENCES = [
   "The glow sits under the words, and it rises with the voice.",
   "The low sounds sit in the middle, and the high ones spread out toward the edges.",
   "It slides along while a sound is heard, and it holds still during silence.",
-  "And when there is no sound anymore, it goes away.",
+  "And when there is no sound anymore, it gently goes away.",
   "Now available on GitHub and npm.",
 ];
 
