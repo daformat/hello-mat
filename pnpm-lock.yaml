@@ -13,8 +13,8 @@ importers:
   .:
     dependencies:
       '@daformat/audio-borealis':
-        specifier: ^1.0.0
-        version: 1.0.0
+        specifier: ^1.0.1
+        version: 1.0.1
       '@daformat/contrast-color':
         specifier: ^1.0.0
         version: 1.0.0
@@ -309,8 +309,8 @@ packages:
     peerDependencies:
       postcss-selector-parser: ^6.0.13
 
-  '@daformat/audio-borealis@1.0.0':
-    resolution: {integrity: sha512-VNJqFTAQQFn4vRcULm94ElTtUofRhm6izoB+rY4G9OGyvSJw1YZ2ZPPq9V24wX1YB8IRL0GtlviLiFCBAHzr+w==}
+  '@daformat/audio-borealis@1.0.1':
+    resolution: {integrity: sha512-8E+FlbLbNqJbMV14ndylv27hwQoAdrJ5NI7O6Tl9+rrFVg0MT69pit88inmjOOAH6M72RQWPYwH8Ais9rQTMXA==}
 
   '@daformat/contrast-color@1.0.0':
     resolution: {integrity: sha512-n0a8cwW1c5MDv8wDFE23xXVtgAuKJr1D1aa+7qDs6EaDUxL3GCbcbtKpISEKEfK4d8QZhJf8xMN3ir7Qu+ZwTg==}
@@ -4596,7 +4596,7 @@ snapshots:
     dependencies:
       postcss-selector-parser: 6.1.4
 
-  '@daformat/audio-borealis@1.0.0': {}
+  '@daformat/audio-borealis@1.0.1': {}
 
   '@daformat/contrast-color@1.0.0': {}
 

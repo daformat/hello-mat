@@ -34,7 +34,7 @@ import {
 // A caption box, spoken to by a voice that is not there
 const voice = createMockVoice();
 const glow = attachBorealis(box, {
-  look: "rainbow", // or northernLights, autumn, whiteHaze, or your own
+  look: "rainbow", // or northernLights, autumn, monochromeHaze, or your own
   strength: "medium", // or strong, subtle, or an opacity in 0..1
   source: (dt) => voice.read(dt, isSomeoneTalking()),
 });
@@ -399,9 +399,13 @@ const AudioBorealisPageContent = (props: CodeBlocks) => {
             package calls it a look. Rainbow takes the whole thing. Northern
             lights takes the half from green through blue to violet, starting at
             100°. Autumn takes a quarter from magenta round through red to
-            orange, starting at 310°. White haze is white, which sounds like the
-            boring option and is the one I use most, because on a busy screen
-            the colors are one more thing moving. Then the whole set drifts, 24°
+            orange, starting at 310°. Monochrome haze takes none of the wheel:
+            its one color is the box&rsquo;s counter-color, white on the dark
+            box and a blue-leaning gray on the light one, read off the
+            box&rsquo;s own type when the frame is painted, so it follows the
+            theme wherever the theme comes from. It sounds like the boring
+            option and is the one I use most, because on a busy screen the
+            colors are one more thing moving. Then the whole set drifts, 24°
             either side of where it started, out and back over twelve seconds on
             a cosine, so the colors are never quite the same twice and never
             jump. Zero the drift in the knobs and watch how much staler it gets.

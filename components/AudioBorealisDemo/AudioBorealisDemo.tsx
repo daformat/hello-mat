@@ -401,7 +401,7 @@ const LOOK_CHOICES: [LookChoice, string][] = [
   ["rainbow", "Rainbow"],
   ["northernLights", "Northern lights"],
   ["autumn", "Autumn"],
-  ["whiteHaze", "White haze"],
+  ["monochromeHaze", "Monochrome haze"],
   ["off", "Off"],
 ];
 
