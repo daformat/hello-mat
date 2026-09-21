@@ -16,12 +16,15 @@ import {
 import {
   createContext,
   CSSProperties,
+  Fragment,
+  KeyboardEvent,
   MutableRefObject,
   ReactNode,
   useCallback,
   useContext,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -32,7 +35,12 @@ import {
   IoMoonOutline,
   IoSunnyOutline,
 } from "react-icons/io5";
-import { TbVolume, TbVolumeOff } from "react-icons/tb";
+import {
+  TbRectangle,
+  TbRectangleVertical,
+  TbVolume,
+  TbVolumeOff,
+} from "react-icons/tb";
 
 import { Dropdown } from "@/components/ButtonGroup/Dropdown/Dropdown";
 import { DropdownRadioGroup } from "@/components/ButtonGroup/Dropdown/DropdownRadioGroup";
@@ -64,6 +72,8 @@ const cx = (...names: (string | undefined | false)[]) =>
 
 export type LookChoice = LookName | "off";
 type Input = "voice" | "clip" | "mic";
+/** What the glow is drawn on: the app's caption box, or one the shape of a phone. */
+type Shape = "caption" | "phone";
 /** The stage's own theme, or null to follow the page's. */
 type Theme = "light" | "dark";
 type MicState = "idle" | "asking" | "live" | "denied" | "unavailable";
@@ -121,6 +131,8 @@ type BorealisContextValue = {
   /** What the stage is drawn in: the visitor's pick, or the page's theme. */
   theme: Theme;
   setTheme: (next: Theme) => void;
+  shape: Shape;
+  setShape: (next: Shape) => void;
   knobs: Partial<BorealisConfig>;
   setKnob: <K extends keyof BorealisConfig>(
     key: K,
@@ -164,6 +176,10 @@ const Provider = ({ children }: { children: ReactNode }) => {
     return () => query.removeEventListener("change", update);
   }, []);
   const theme = themePick ?? pageTheme;
+  // The box the glow is drawn on: the caption, or the same box stood on
+  // end at a phone's proportions. The glow is not told; it measures the
+  // box it is on and paints the edge it finds.
+  const [shape, setShape] = useState<Shape>("caption");
   const [knobs, setKnobs] = useState<Partial<BorealisConfig>>({});
   const glowRef = useRef<Borealis | null>(null);
   const micRef = useRef<MicrophoneSource | null>(null);
@@ -346,6 +362,8 @@ const Provider = ({ children }: { children: ReactNode }) => {
       setMuted,
       theme,
       setTheme,
+      shape,
+      setShape,
       knobs,
       setKnob,
       resetKnobs,
@@ -363,6 +381,7 @@ const Provider = ({ children }: { children: ReactNode }) => {
       muted,
       setMuted,
       theme,
+      shape,
       knobs,
       setKnob,
       resetKnobs,
@@ -456,6 +475,87 @@ const Picker = <T extends string>({
   );
 };
 
+type Segment<T extends string> = {
+  value: T;
+  /** Its name: what the button says, or what a screen reader hears when an icon is shown instead. */
+  label: string;
+  icon?: ReactNode;
+  busy?: boolean;
+};
+
+/**
+ * A choice among a few, at the size of the site's button: the buttons
+ * joined, the picked one filled, and the arrow keys walking them. One radio
+ * group, as the pattern goes: the picked option is the group's one tab
+ * stop, left and right, or up and down, move the pick along and wrap, and
+ * Home and End go to the ends. No focus ring of its own: the hover fill
+ * marks the focused option, and the pick is the filled one.
+ */
+const Segmented = <T extends string>({
+  label,
+  value,
+  segments,
+  onChange,
+  className,
+}: {
+  label: string;
+  value: T;
+  segments: Segment<T>[];
+  onChange: (next: T) => void;
+  className?: string;
+}) => {
+  const buttonsRef = useRef<(HTMLButtonElement | null)[]>([]);
+  const onKeyDown = (
+    event: KeyboardEvent<HTMLButtonElement>,
+    index: number
+  ) => {
+    const last = segments.length - 1;
+    const next =
+      event.key === "ArrowRight" || event.key === "ArrowDown"
+        ? (index + 1) % segments.length
+        : event.key === "ArrowLeft" || event.key === "ArrowUp"
+        ? (index + last) % segments.length
+        : event.key === "Home"
+        ? 0
+        : event.key === "End"
+        ? last
+        : -1;
+    const segment = segments[next];
+    if (!segment) {
+      return;
+    }
+    event.preventDefault();
+    onChange(segment.value);
+    buttonsRef.current[next]?.focus();
+  };
+  return (
+    <span
+      className={cx(styles.segmented, className)}
+      role="radiogroup"
+      aria-label={label}
+    >
+      {segments.map((segment, index) => (
+        <button
+          key={segment.value}
+          ref={(node) => {
+            buttonsRef.current[index] = node;
+          }}
+          type="button"
+          role="radio"
+          aria-checked={segment.value === value}
+          aria-label={segment.icon ? segment.label : undefined}
+          aria-busy={segment.busy || undefined}
+          tabIndex={segment.value === value ? 0 : -1}
+          onClick={() => onChange(segment.value)}
+          onKeyDown={(event) => onKeyDown(event, index)}
+        >
+          {segment.icon ?? segment.label}
+        </button>
+      ))}
+    </span>
+  );
+};
+
 const Toolbar = () => {
   const {
     look,
@@ -469,6 +569,8 @@ const Toolbar = () => {
     setMuted,
     theme,
     setTheme,
+    shape,
+    setShape,
     knobs,
   } = useBorealis();
   const customHue =
@@ -496,34 +598,20 @@ const Toolbar = () => {
           onChange={setStrength}
         />
         <span className={styles.field}>
-          <span
-            className={styles.segmented}
-            role="group"
-            aria-label="Listening to"
-          >
-            <button
-              type="button"
-              aria-pressed={input === "voice"}
-              onClick={() => setInput("voice")}
-            >
-              Mock voice
-            </button>
-            <button
-              type="button"
-              aria-pressed={input === "clip"}
-              onClick={() => setInput("clip")}
-            >
-              Recording
-            </button>
-            <button
-              type="button"
-              aria-pressed={input === "mic"}
-              aria-busy={micState === "asking"}
-              onClick={() => setInput("mic")}
-            >
-              Microphone
-            </button>
-          </span>
+          <Segmented
+            label="Listening to"
+            value={input}
+            onChange={setInput}
+            segments={[
+              { value: "voice", label: "Mock" },
+              { value: "clip", label: "Recording" },
+              {
+                value: "mic",
+                label: "Microphone",
+                busy: micState === "asking",
+              },
+            ]}
+          />
         </span>
         {/* The recording's sound. Always in the row, so picking the recording
             does not reflow the bar, and live only while it plays. */}
@@ -541,28 +629,44 @@ const Toolbar = () => {
             <TbVolume size={16} aria-hidden="true" />
           )}
         </button>
-        <span
-          className={cx(styles.segmented, styles.icons)}
-          role="group"
-          aria-label="Stage theme"
-        >
-          <button
-            type="button"
-            aria-label="Light"
-            aria-pressed={theme === "light"}
-            onClick={() => setTheme("light")}
-          >
-            <IoSunnyOutline size={15} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            aria-label="Dark"
-            aria-pressed={theme === "dark"}
-            onClick={() => setTheme("dark")}
-          >
-            <IoMoonOutline size={15} aria-hidden="true" />
-          </button>
-        </span>
+        {/* The box the glow is drawn on: the app's caption, or the same box
+            at a phone's proportions. */}
+        <Segmented
+          label="Box shape"
+          value={shape}
+          onChange={setShape}
+          className={styles.icons}
+          segments={[
+            {
+              value: "caption",
+              label: "Caption box",
+              icon: <TbRectangle size={16} aria-hidden="true" />,
+            },
+            {
+              value: "phone",
+              label: "Phone box",
+              icon: <TbRectangleVertical size={16} aria-hidden="true" />,
+            },
+          ]}
+        />
+        <Segmented
+          label="Stage theme"
+          value={theme}
+          onChange={setTheme}
+          className={styles.icons}
+          segments={[
+            {
+              value: "light",
+              label: "Light",
+              icon: <IoSunnyOutline size={15} aria-hidden="true" />,
+            },
+            {
+              value: "dark",
+              label: "Dark",
+              icon: <IoMoonOutline size={15} aria-hidden="true" />,
+            },
+          ]}
+        />
       </div>
     </div>
   );
@@ -588,6 +692,84 @@ const baseConfig = (): Partial<BorealisConfig> => {
   return base;
 };
 
+/** The class the box carries for the flight, which turns its transition on. */
+const MORPHING = styles.morphing ?? "morphing";
+
+/** A shape's layout of the words, as they are now: measured on a copy of the box. */
+type End = {
+  outer: DOMRect;
+  block: DOMRect;
+  words: { x: number; y: number }[];
+};
+
+const layoutIn = (box: HTMLDivElement, shape: Shape): End => {
+  const ghost = box.cloneNode(true) as HTMLDivElement;
+  ghost.querySelector("canvas")?.remove();
+  ghost.dataset.shape = shape;
+  // The words as inline blocks, so each one's box is its line's height and
+  // sits where the flight will set it, an absolute box of the same height.
+  ghost.dataset.measure = "";
+  ghost.classList.remove(MORPHING);
+  ghost.style.transition = "none";
+  ghost.style.visibility = "hidden";
+  ghost.setAttribute("aria-hidden", "true");
+  box.parentElement?.appendChild(ghost);
+  const outer = ghost.getBoundingClientRect();
+  const block =
+    ghost.querySelector("[data-words]")?.getBoundingClientRect() ?? outer;
+  const words = [...ghost.querySelectorAll("[data-word]")].map((word) => {
+    const rect = word.getBoundingClientRect();
+    return { x: rect.left - block.left, y: rect.top - block.top };
+  });
+  ghost.remove();
+  return { outer, block, words };
+};
+
+/**
+ * Both ends of a flight, for the words as they are now: the caption layout
+ * and the phone layout, each measured on a copy of the box laid in the
+ * stage unseen. The box gets its outer size at the caption end, the words'
+ * block its size at both ends, and each word its place in the block at
+ * both, all in px on the elements, and the stylesheet mixes them by the
+ * flight's progress: a word goes straight from its place on one line to
+ * its place on another, and no wrapping in between is ever laid out.
+ * Max-content has no transition to a length in any browser but one, and
+ * this way needs none.
+ */
+const END_PROPERTIES = [
+  "--cap-w",
+  "--cap-h",
+  "--cap-tw",
+  "--cap-th",
+  "--phone-tw",
+  "--phone-th",
+];
+
+const measureEnds = (box: HTMLDivElement) => {
+  const cap = layoutIn(box, "caption");
+  const phone = layoutIn(box, "phone");
+  const set = (name: string, value: number) =>
+    box.style.setProperty(name, `${value}px`);
+  // To the fraction: a width rounded down by half a pixel would wrap the
+  // words' last line one line further than the box at rest does.
+  set("--cap-w", cap.outer.width);
+  set("--cap-h", cap.outer.height);
+  set("--cap-tw", cap.block.width);
+  set("--cap-th", cap.block.height);
+  set("--phone-tw", phone.block.width);
+  set("--phone-th", phone.block.height);
+  box.querySelectorAll<HTMLElement>("[data-word]").forEach((word, i) => {
+    const from = cap.words[i];
+    const to = phone.words[i];
+    if (from && to) {
+      word.style.setProperty("--x0", `${from.x}px`);
+      word.style.setProperty("--y0", `${from.y}px`);
+      word.style.setProperty("--x1", `${to.x}px`);
+      word.style.setProperty("--y1", `${to.y}px`);
+    }
+  });
+};
+
 const Stage = () => {
   const {
     look,
@@ -596,6 +778,7 @@ const Stage = () => {
     micState,
     clipState,
     theme,
+    shape,
     knobs,
     glowRef,
     micRef,
@@ -674,6 +857,129 @@ const Stage = () => {
       ...knobs,
     });
   }, [knobs, reducedMotion, glowRef]);
+
+  // The morph between the shapes is a transition, not an animation, so a
+  // flip in mid-flight turns the box around from wherever it is. One number
+  // transitions, --p, and the stylesheet mixes every size on the box from
+  // it; the stage only measures the caption end, turns the class on for the
+  // flight, and takes it off when it lands, so at rest the box follows its
+  // words at once, as the app's does.
+  const prevShapeRef = useRef(shape);
+  // The flight's bookkeeping: whether one is on, the frame loop that
+  // watches it, and the transition's measured speed, in its own seconds
+  // per second of the clock.
+  const morphRef = useRef({ active: false, raf: 0, rate: 1 });
+
+  const settle = useCallback(() => {
+    const box = boxRef.current;
+    const morph = morphRef.current;
+    cancelAnimationFrame(morph.raf);
+    morph.raf = 0;
+    if (!box || !morph.active) {
+      return;
+    }
+    morph.active = false;
+    // At either end the mix is the shape's own size, so letting go of the
+    // class is not a change that shows.
+    box.classList.remove(MORPHING);
+    for (const end of END_PROPERTIES) {
+      box.style.removeProperty(end);
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    const box = boxRef.current;
+    const prev = prevShapeRef.current;
+    prevShapeRef.current = shape;
+    if (!box || prev === shape) {
+      return;
+    }
+    if (reducedMotion) {
+      settle();
+      return;
+    }
+    const morph = morphRef.current;
+    // Back to the shape it was in, flushed: React has written the new one,
+    // and the flight has to start from a style the box was painted in.
+    box.dataset.shape = prev;
+    void box.offsetWidth;
+    measureEnds(box);
+    // Flushed again with the ends written and the class still off: the
+    // ends transition under a flight, and the take-off is not a change of
+    // ends but the start of one.
+    void box.offsetWidth;
+    box.classList.add(MORPHING);
+    box.dataset.shape = shape;
+    morph.active = true;
+    // The transition's own end event lands first. Behind it, a frame loop
+    // watches the transition itself rather than the clock: the devtools can
+    // play every animation at a tenth of its speed, or hold it, and a timer
+    // set to the stylesheet's 0.7s would let go of the flight in the middle
+    // of it. Each frame the loop reads how far the transition's own time
+    // has come against the clock's, which is its real speed, and lets go
+    // only once the transition is gone and --p rests at an end.
+    cancelAnimationFrame(morph.raf);
+    let ownTime: number | null = null;
+    let clock = 0;
+    const watch = (now: number) => {
+      morph.raf = 0;
+      if (!morph.active) {
+        return;
+      }
+      const flight = box
+        .getAnimations()
+        .find(
+          (animation): animation is CSSTransition =>
+            animation instanceof CSSTransition &&
+            animation.transitionProperty === "--p"
+        );
+      if (flight) {
+        const time =
+          typeof flight.currentTime === "number" ? flight.currentTime : null;
+        if (time !== null && ownTime !== null && now > clock) {
+          morph.rate = (time - ownTime) / (now - clock);
+        }
+        ownTime = time;
+        clock = now;
+        morph.raf = requestAnimationFrame(watch);
+        return;
+      }
+      const p = parseFloat(getComputedStyle(box).getPropertyValue("--p"));
+      if (p === 0 || p === 1) {
+        settle();
+        return;
+      }
+      morph.raf = requestAnimationFrame(watch);
+    };
+    morph.raf = requestAnimationFrame(watch);
+  }, [shape, reducedMotion, settle]);
+
+  // Words landing during a flight move both its ends: measured again. The
+  // words snap to their new places, and the box glides to its new size.
+  useLayoutEffect(() => {
+    const box = boxRef.current;
+    if (box && morphRef.current.active) {
+      measureEnds(box);
+    }
+  }, [text]);
+
+  useEffect(() => {
+    const box = boxRef.current;
+    const morph = morphRef.current;
+    if (!box) {
+      return;
+    }
+    const onEnd = (event: TransitionEvent) => {
+      if (event.target === box && event.propertyName === "--p") {
+        settle();
+      }
+    };
+    box.addEventListener("transitionend", onEnd);
+    return () => {
+      box.removeEventListener("transitionend", onEnd);
+      cancelAnimationFrame(morph.raf);
+    };
+  }, [settle]);
 
   const listening = input === "mic" && micState === "live";
   const playing = input === "clip" && clipState === "playing";
@@ -867,6 +1173,7 @@ const Stage = () => {
         className={styles.caption}
         data-visible={text.visible ? "true" : "false"}
         data-theme={theme}
+        data-shape={shape}
       >
         {/* The source's row, as the app draws it by default: the icon and
             name of what the words are being read from. */}
@@ -881,10 +1188,25 @@ const Stage = () => {
             {listening ? "Microphone" : playing ? "Recording" : "Mock voice"}
           </span>
         </span>
-        <span className={styles.cap_text}>
-          <span>{text.committed}</span>
+        {/* One span a word, so a flight between the shapes can set each
+            word where it goes; at rest they read as the one run of text. */}
+        <span className={styles.cap_text} data-words="">
+          {text.committed
+            .split(" ")
+            .filter(Boolean)
+            .map((word, i) => (
+              <Fragment key={i}>
+                {i > 0 ? " " : null}
+                <span data-word="">{word}</span>
+              </Fragment>
+            ))}
           {text.tentative && (
-            <span className={styles.tentative}> {text.tentative}</span>
+            <>
+              {" "}
+              <span data-word="" className={styles.tentative}>
+                {text.tentative}
+              </span>
+            </>
           )}
         </span>
       </div>
@@ -1122,22 +1444,21 @@ const Knobs = () => {
       <span className={styles.knob_label}>
         <small>{label}</small>
       </span>
-      <div
-        className={cx(styles.segmented, styles.small)}
-        role="group"
-        aria-label={label}
-      >
-        {choices.map(([value, text]) => (
-          <button
-            key={String(value)}
-            type="button"
-            aria-pressed={(knobs[key] ?? base[key]) === value}
-            onClick={() => setKnob(key, value)}
-          >
-            {text}
-          </button>
-        ))}
-      </div>
+      <Segmented
+        label={label}
+        className={styles.small}
+        value={String(knobs[key] ?? base[key])}
+        onChange={(next) => {
+          const choice = choices.find(([value]) => String(value) === next);
+          if (choice) {
+            setKnob(key, choice[0]);
+          }
+        }}
+        segments={choices.map(([value, text]) => ({
+          value: String(value),
+          label: text,
+        }))}
+      />
     </div>
   );
 

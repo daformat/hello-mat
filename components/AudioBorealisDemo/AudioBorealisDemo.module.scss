@@ -81,6 +81,94 @@ $dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
   --box-name: light-dark(rgb(0 0 0 / 0.55), #d2d2d3);
   --pill-line: light-dark(rgb(0 0 0 / 0.08), rgb(210 210 211 / 0.16));
   --step: 6px;
+
+  /* The spring the box's two shapes morph on: mass 1, stiffness 170,
+     damping 21, which overshoots by 1.4% and settles in 0.7s, sampled into
+     linear() at 48 steps. The stage's MORPH_MS is this duration. */
+  --spring: linear(
+    0,
+    0.0163,
+    0.0589,
+    0.1194,
+    0.1913,
+    0.2694,
+    0.3495,
+    0.4287,
+    0.5048,
+    0.5762,
+    0.6418,
+    0.7013,
+    0.7544,
+    0.8011,
+    0.8416,
+    0.8764,
+    0.9059,
+    0.9304,
+    0.9507,
+    0.9672,
+    0.9803,
+    0.9906,
+    0.9984,
+    1.0043,
+    1.0084,
+    1.0112,
+    1.0129,
+    1.0138,
+    1.014,
+    1.0137,
+    1.0131,
+    1.0122,
+    1.0112,
+    1.0101,
+    1.009,
+    1.0079,
+    1.0068,
+    1.0058,
+    1.0049,
+    1.0041,
+    1.0034,
+    1.0027,
+    1.0022,
+    1.0017,
+    1.0013,
+    1.0009,
+    1.0007,
+    1.0004,
+    1
+  );
+  --spring-time: 0.7s;
+
+  /* What a flight's ends move on when the words change under it, a word
+     landing or a line starting over: a spring of the same family with the
+     bounce taken out, critically damped at 25 a second, settled in 0.35s. */
+  --settle: linear(
+    0,
+    0.0523,
+    0.166,
+    0.2987,
+    0.4281,
+    0.5439,
+    0.6424,
+    0.7232,
+    0.7881,
+    0.8391,
+    0.8787,
+    0.9092,
+    0.9323,
+    0.9498,
+    0.9629,
+    0.9727,
+    0.98,
+    0.9854,
+    0.9893,
+    0.9922,
+    0.9944,
+    0.9959,
+    0.997,
+    0.9979,
+    1
+  );
+  --settle-time: 0.35s;
   --mono: ui-monospace, sfmono-regular, "SF Mono", menlo, monospace;
   --demo-font: ui-rounded, "SF Pro Rounded", system-ui, -apple-system,
     sans-serif;
@@ -191,7 +279,8 @@ $dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
 }
 
 /* A choice among a few, at the size of the site's button: the same padding
-   and corners, the buttons joined, the picked one filled. */
+   and corners, the buttons joined, the picked one filled, the focused one
+   on the hover fill. */
 .segmented {
   background-color: var(--color-toolbar-background);
   border-radius: 8px;
@@ -220,7 +309,7 @@ $dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
       outline: none;
     }
 
-    &[aria-pressed="true"] {
+    &[aria-checked="true"] {
       background-color: var(--color-toolbar-button-background-active);
       color: var(--text-secondary-hover);
     }
@@ -258,9 +347,55 @@ $dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
       outline-offset: 2px;
     }
   }
+
+  /* The segmented controls draw no ring: the focused option takes the
+     hover fill, and the arrow keys move the pick. */
+  .segmented button:focus-visible {
+    outline: none;
+  }
 }
 
 /* ---------- the stage ---------- */
+
+/* Where the box is between its two shapes: 0 as the caption, 1 as the
+   phone, and the one thing that transitions on a flight. Every size on the
+   box is a mix of its two ends by this number, and the children take
+   theirs from the box each frame, so the whole box moves on one clock. A
+   child with a transition of its own on a size that follows its parent's
+   would restart that transition on every frame the parent moved, and
+   crawl. Registered, so a number interpolates. */
+@property --p {
+  inherits: true;
+  initial-value: 0;
+  syntax: "<number>";
+}
+
+/* The same progress with the spring's bounce taken out: what the words
+   wrap by. The box may overshoot its landing by a hair and come back; the
+   words' width and type may not, or a line that fits at the landing would
+   not for a few frames and the last word would jump lines twice. */
+@property --q {
+  inherits: true;
+  initial-value: 0;
+  syntax: "<number>";
+}
+
+/* The box's two ends as the caption, measured by the stage and written on
+   the box. Registered as lengths so a change under a flight, from a word
+   landing or a line starting over, is a transition and not a jump; the
+   words' block and places, written the same way, are not registered and
+   snap. */
+@property --cap-w {
+  inherits: true;
+  initial-value: 0px;
+  syntax: "<length>";
+}
+
+@property --cap-h {
+  inherits: true;
+  initial-value: 0px;
+  syntax: "<length>";
+}
 
 /* A desk with a caption box in the middle of it, at the card's own proportions so the
    clip the gallery shows is this, whole. The box's type is sized off the
@@ -271,9 +406,21 @@ $dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
   background: var(--desk);
   border: 1px solid var(--rule);
   border-radius: 12px;
+  /* The corners again, as a clip: Safari draws the box's backdrop blur on
+     a layer of its own, and squares off the corners of an ancestor that
+     clips by overflow alone. A clip-path it applies to every layer. */
+  clip-path: inset(0 round 12px);
   container-type: inline-size;
   overflow: hidden;
   position: relative;
+
+  /* Under a phone's width the stage is squared up, whichever box is on it:
+     a phone box on a stage two to one would be a thumbnail, and the stage
+     keeps one height across the two shapes, so switching moves nothing
+     under it. */
+  @include mixins.up-to-medium {
+    aspect-ratio: 1;
+  }
 
   /* The wallpaper's lights, softened: the site draws its four radials sharp
      enough to read as ellipses, which a desktop the size of a screen carries
@@ -297,28 +444,67 @@ $dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
    width, since the stage is at real size rather than a screen scaled down,
    and it comes down with the stage so a phone still gets a caption that fits
    two lines. The glow is scaled off this size, so the box has to be the
-   app's for the glow to be the app's. */
+   app's for the glow to be the app's.
+
+   The phone shape is the same box stood on end, about 9 by 19.5 and a
+   little squarer, the source's row at the top and the words at the bottom
+   over the glow, at a type size that stands it 88% of the stage's height.
+   Each size below is written as its caption end mixed with its phone end by
+   --p, so the box at 0 is the caption exactly, at 1 the phone exactly, and
+   in between the flight. */
 .caption {
+  --cap-fs: clamp(15px, 4.1cqw, 30px);
+  --phone-fs: min(3.03cqw, 30px);
+  --p: 0;
+  --q: clamp(0, var(--p), 1);
+  /* The source's row at 0.85 of the box's type in the phone, the words at
+     0.6: the icon and the name are sized in ems of the row, so one number
+     brings both down together. */
+  --row: calc(1 - 0.15 * var(--p));
+  --words: calc(1 - 0.4 * var(--p));
   backdrop-filter: blur(6px);
   background: var(--box-bg);
-  border-radius: 0.533em;
+  border-radius: calc(
+    0.533 * var(--cap-fs) * (1 - var(--p)) + var(--phone-fs) * var(--p)
+  );
   box-shadow: inset 0 0 0 1px var(--pill-line);
   color: var(--box-ink);
+  /* A column, the source's row at the top and the words at the bottom. As
+     the caption the box hugs its words and the two sit as they would in
+     flow; as the phone, and on the way to it, the words ride the bottom
+     edge. */
+  display: flex;
+  flex-direction: column;
   font-family: var(--demo-font);
-  font-size: clamp(15px, 4.1cqw, 30px);
+  font-size: calc(var(--cap-fs) * (1 - var(--p)) + var(--phone-fs) * var(--p));
   font-weight: 600;
+  justify-content: space-between;
   left: 50%;
   line-height: 1.2334;
   max-width: min(80cqw, 704px);
   min-width: 4.67em;
   opacity: 0;
-  padding: 0.47em 0.73em;
+  padding: calc(
+      0.47 * var(--cap-fs) * (1 - var(--p)) + 0.87 * var(--phone-fs) * var(--p)
+    )
+    calc(
+      0.73 * var(--cap-fs) * (1 - var(--p)) + 1.13 * var(--phone-fs) * var(--p)
+    )
+    calc(
+      0.47 * var(--cap-fs) * (1 - var(--p)) + 1.3 * var(--phone-fs) * var(--p)
+    );
   position: absolute;
   text-align: start;
   top: 50%;
   transform: translate(-50%, -50%);
   transition: opacity 0.4s ease;
   width: max-content;
+
+  /* Under a phone's width the stage is square, and the box stands 88% of
+     that at 6cqw. */
+  @include mixins.up-to-medium {
+    --phone-fs: min(6cqw, 30px);
+  }
 
   &[data-visible="true"] {
     opacity: 1;
@@ -335,6 +521,79 @@ $dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
   &[data-theme="dark"] {
     color-scheme: dark;
   }
+
+  /* The phone: 7.46 by 14.7 of its own type. */
+  &[data-shape="phone"] {
+    --p: 1;
+    height: calc(14.7 * var(--phone-fs));
+    max-width: none;
+    min-width: 0;
+    width: calc(7.46 * var(--phone-fs));
+  }
+
+  /* The flight between the shapes: a spring on --p, as a transition and not
+     an animation, so a flip in mid-flight turns the box around from
+     wherever it is. The width and the height are max-content and auto as
+     the caption, which have no transition to a length, so for the flight
+     both are the two ends mixed by --p, the caption end measured by the
+     stage in px and measured again as words land, so the flight lands on
+     whatever the words are by then. Only the flight carries the class: at
+     rest the box follows its words at once, as the app's does. */
+  &.morphing {
+    /* The two heights mixed, as the widths are: the words fly inside the
+       mix of their two blocks, which the mix of the two boxes always holds.
+       When the words change under a flight, a word landing or a line
+       starting over, the words snap to their new places as they do at
+       rest, and only the box moves, its two ends gliding to the new
+       measure on the settle; until it gets there it clips, so a word that
+       landed past the edge is revealed as the edge reaches it rather than
+       shown outside. */
+    height: calc(
+      var(--cap-h) * (1 - var(--p)) + 14.7 * var(--phone-fs) * var(--p)
+    );
+    max-width: none;
+    min-width: 0;
+    overflow: hidden;
+    transition: opacity 0.4s ease, --p var(--spring-time) var(--spring),
+      --cap-w var(--settle-time) var(--settle),
+      --cap-h var(--settle-time) var(--settle);
+    width: calc(
+      var(--cap-w) * (1 - var(--p)) + 7.46 * var(--phone-fs) * var(--p)
+    );
+
+    /* The words fly, by --q and not --p: the block is the two blocks mixed,
+       each word is set at its two places mixed, one span a word, and its
+       type is the two sizes mixed. The places come from measureEnds in the
+       stage, which lays the words out both ways on copies of the box, so a
+       word goes straight from its place on one line to its place on
+       another and no wrapping in between is ever laid out, and once --q
+       reaches its end the words are laid out as they will rest, whatever
+       the box does around them. */
+    .cap_text {
+      font-size: calc(
+        (var(--cap-fs) * (1 - var(--q)) + var(--phone-fs) * var(--q)) *
+          (1 - 0.4 * var(--q))
+      );
+      height: calc(var(--cap-th) * (1 - var(--q)) + var(--phone-th) * var(--q));
+      position: relative;
+      width: calc(var(--cap-tw) * (1 - var(--q)) + var(--phone-tw) * var(--q));
+
+      [data-word] {
+        left: 0;
+        position: absolute;
+        top: 0;
+        translate: calc(var(--x0) * (1 - var(--q)) + var(--x1) * var(--q))
+          calc(var(--y0) * (1 - var(--q)) + var(--y1) * var(--q));
+        white-space: nowrap;
+      }
+    }
+  }
+
+  /* For the measure: a word as an inline block is its line's height, top
+     to bottom, which is the box the flight gives it. */
+  &[data-measure] [data-word] {
+    display: inline-block;
+  }
 }
 
 /* The source's row, at the proportions the app draws its header row: the
@@ -342,6 +601,7 @@ $dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
 .cap_app {
   align-items: center;
   display: flex;
+  font-size: calc(1em * var(--row));
   gap: 0.333em;
   height: 0.9em;
   margin-bottom: 0.3em;
@@ -366,6 +626,7 @@ $dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
 
 .cap_text {
   display: block;
+  font-size: calc(1em * var(--words));
   /* The 2pt of line spacing the app puts after every line but a paragraph's
      last, taken off the last. */
   margin-bottom: -0.0667em;
