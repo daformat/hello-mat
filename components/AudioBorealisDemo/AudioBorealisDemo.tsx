@@ -1,15 +1,20 @@
 import {
   AnalyserSource,
   attachBorealis,
+  AttachOptions,
   Borealis,
   BorealisConfig,
   createAnalyserSource,
   createMicrophoneSource,
   createMockVoice,
   defaults,
+  hsbToRgb,
+  inkFor,
+  Look,
   LookName,
   LOOKS,
   MicrophoneSource,
+  Rgb,
   Source,
   StrengthName,
 } from "@daformat/audio-borealis";
@@ -71,6 +76,51 @@ const cx = (...names: (string | undefined | false)[]) =>
   names.filter(Boolean).join(" ");
 
 export type LookChoice = LookName | "off";
+/** The knobs a preset owns: its color mode and, for a spectrum, where on the wheel it sits. */
+const LOOK_KEYS: readonly (keyof Look)[] = [
+  "colorMode",
+  "hueStart",
+  "hueWidth",
+];
+/** The app's values, which every knob rests at unless a preset says otherwise. */
+const BASE = defaults();
+/** What a preset says, where it says anything. */
+const presetOf = (look: LookChoice): Partial<BorealisConfig> =>
+  look === "off" ? {} : LOOKS[look];
+/**
+ * A knob as the glow has it: the knob's own, else the preset's where the
+ * preset says, else the app's, in the order they are configured.
+ */
+const settingOf =
+  (knobs: Partial<BorealisConfig>, look: LookChoice) =>
+  <K extends keyof BorealisConfig>(key: K): BorealisConfig[K] =>
+    knobs[key] ?? presetOf(look)[key] ?? BASE[key];
+
+/** A color as the ink sliders hold it: hue in degrees, saturation and brightness in 0..1. */
+type Hsb = [hue: number, saturation: number, brightness: number];
+
+/** sRGB channels in 0..1 to hue in degrees and saturation and brightness in 0..1. */
+const rgbToHsb = ([r, g, b]: Rgb): Hsb => {
+  const max = Math.max(r, g, b);
+  const range = max - Math.min(r, g, b);
+  const hue =
+    range === 0
+      ? 0
+      : max === r
+      ? ((g - b) / range + 6) % 6
+      : max === g
+      ? (b - r) / range + 2
+      : (r - g) / range + 4;
+  return [hue * 60, max === 0 ? 0 : range / max, max];
+};
+
+/** The counter-color of an element's type, as the package reads it for the haze. */
+const inkOf = (element: HTMLElement): Rgb => {
+  const [r = 255, g = 255, b = 255] = (
+    getComputedStyle(element).color.match(/[\d.]+/g) ?? []
+  ).map(Number);
+  return inkFor([r / 255, g / 255, b / 255]);
+};
 type Input = "voice" | "clip" | "mic";
 /** What the glow is drawn on: the app's caption box, or one the shape of a phone. */
 type Shape = "caption" | "phone";
@@ -139,6 +189,12 @@ type BorealisContextValue = {
     value: BorealisConfig[K]
   ) => void;
   resetKnobs: () => void;
+  /** The haze's color when one is picked, or null for the box's own. */
+  ink: Hsb | null;
+  setInk: (next: Hsb | null) => void;
+  /** The box's counter-color, as the stage reads it: where the ink rests. */
+  boxInk: Rgb;
+  setBoxInk: (next: Rgb) => void;
   glowRef: MutableRefObject<Borealis | null>;
   micRef: MutableRefObject<MicrophoneSource | null>;
   clipRef: MutableRefObject<Clip | null>;
@@ -181,6 +237,8 @@ const Provider = ({ children }: { children: ReactNode }) => {
   // box it is on and paints the edge it finds.
   const [shape, setShape] = useState<Shape>("caption");
   const [knobs, setKnobs] = useState<Partial<BorealisConfig>>({});
+  const [ink, setInk] = useState<Hsb | null>(null);
+  const [boxInk, setBoxInk] = useState<Rgb>([1, 1, 1]);
   const glowRef = useRef<Borealis | null>(null);
   const micRef = useRef<MicrophoneSource | null>(null);
   const clipRef = useRef<Clip | null>(null);
@@ -335,17 +393,25 @@ const Provider = ({ children }: { children: ReactNode }) => {
       setKnobs((previous) => ({ ...previous, [key]: value })),
     []
   );
-  const resetKnobs = useCallback(() => setKnobs({}), []);
+  const resetKnobs = useCallback(() => {
+    setKnobs({});
+    setInk(null);
+  }, []);
 
-  // A preset is a hue start and a hue width, and so are two of the knobs.
-  // Picking a preset lets go of the knobs' own, so the two never disagree;
-  // dragging a knob afterwards makes the preset a custom one.
+  // A preset is a color mode and, for a spectrum, a hue start and a hue
+  // width, and so are three of the knobs; the haze's is the box's own ink.
+  // Picking a preset lets go of the knobs' own and of a picked ink, so the
+  // two never disagree; moving one afterwards makes the preset a custom one.
   const setLook = useCallback((next: LookChoice) => {
     setLookState(next);
     setKnobs((previous) => {
-      const { hueStart: _start, hueWidth: _width, ...rest } = previous;
+      const rest = { ...previous };
+      for (const key of LOOK_KEYS) {
+        delete rest[key];
+      }
       return rest;
     });
+    setInk(null);
   }, []);
 
   const value = useMemo(
@@ -367,6 +433,10 @@ const Provider = ({ children }: { children: ReactNode }) => {
       knobs,
       setKnob,
       resetKnobs,
+      ink,
+      setInk,
+      boxInk,
+      setBoxInk,
       glowRef,
       micRef,
       clipRef,
@@ -385,6 +455,8 @@ const Provider = ({ children }: { children: ReactNode }) => {
       knobs,
       setKnob,
       resetKnobs,
+      ink,
+      boxInk,
     ]
   );
 
@@ -572,9 +644,17 @@ const Toolbar = () => {
     shape,
     setShape,
     knobs,
+    ink,
   } = useBorealis();
-  const customHue =
-    knobs.hueStart !== undefined || knobs.hueWidth !== undefined;
+  // The preset is no longer the one named: a knob it owns has been moved off
+  // what it says, or the haze has been given an ink of its own.
+  const preset = presetOf(look);
+  const custom =
+    LOOK_KEYS.some(
+      (key) =>
+        knobs[key] !== undefined && knobs[key] !== (preset[key] ?? BASE[key])
+    ) ||
+    (ink !== null && settingOf(knobs, look)("colorMode") === "monochrome");
 
   return (
     // The card's own padding is a page rule with more weight than a module's,
@@ -589,7 +669,7 @@ const Toolbar = () => {
           value={look}
           choices={LOOK_CHOICES}
           onChange={setLook}
-          currentLabel={customHue && look !== "off" ? "Custom" : undefined}
+          currentLabel={custom && look !== "off" ? "Custom" : undefined}
         />
         <Picker
           label="Strength"
@@ -680,14 +760,12 @@ const Bench = ({ children }: { children: ReactNode }) => (
 /* ---------- the stage ---------- */
 
 /**
- * The knobs the look and the strength own, taken out of the defaults before
- * the rest is written back, so a reset of the knobs does not reset the menu.
+ * The app's defaults less the strength's own knob, so writing them back does
+ * not reset the strength menu. The preset's own are kept: the preset is laid
+ * over them when the glow is configured.
  */
 const baseConfig = (): Partial<BorealisConfig> => {
   const base: Partial<BorealisConfig> = defaults();
-  delete base.colorMode;
-  delete base.hueStart;
-  delete base.hueWidth;
   delete base.opacity;
   return base;
 };
@@ -780,6 +858,8 @@ const Stage = () => {
     theme,
     shape,
     knobs,
+    ink,
+    setBoxInk,
     glowRef,
     micRef,
     clipRef,
@@ -787,6 +867,9 @@ const Stage = () => {
   const rootRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const voiceRef = useRef<Source | null>(null);
+  // The options the glow was attached with, kept: the picked ink goes in
+  // through them, see below.
+  const optionsRef = useRef<AttachOptions | null>(null);
   // When the last word landed, on the frame clock. A ref, not state: the
   // source reads it once a frame, and nothing needs to render for it.
   const spokeAtRef = useRef(-1e9);
@@ -817,15 +900,18 @@ const Stage = () => {
     // the app's does, and 1.2 has the peaks clear the top of the last line as
     // they do in the app. The box here is at the app's size, and it keeps the
     // lift so the glow is the one the site shows.
-    const glow = attachBorealis(box, {
+    const options: AttachOptions = {
       className: styles.glow,
       source,
       scaleY: 1.2,
-    });
+    };
+    const glow = attachBorealis(box, options);
     glowRef.current = glow;
+    optionsRef.current = options;
     return () => {
       glow.destroy();
       glowRef.current = null;
+      optionsRef.current = null;
       voiceRef.current = null;
     };
   }, [glowRef]);
@@ -839,7 +925,6 @@ const Stage = () => {
       glow.reset();
       glow.pause();
     } else {
-      glow.setLook(look);
       glow.resume();
     }
   }, [look, glowRef]);
@@ -848,15 +933,43 @@ const Stage = () => {
     glowRef.current?.setStrength(strength);
   }, [strength, glowRef]);
 
-  // The knobs over the app's defaults, and under a reduced-motion preference
-  // the lobes hold still and the hue stays put, unless a knob says otherwise.
+  // The whole config each time: the app's defaults, the preset's color mode
+  // and, for a spectrum, its place on the wheel, then under a reduced-motion
+  // preference the lobes hold still and the hue stays put, and the knobs
+  // over all of it. Whole, rather than the preset alone through `setLook`,
+  // so a preset that says nothing about the wheel leaves it at the defaults
+  // the knobs show, not wherever the preset before it had it.
   useEffect(() => {
     glowRef.current?.configure({
       ...baseConfig(),
+      ...presetOf(look),
       ...(reducedMotion ? { flow: 0, hueRange: 0 } : {}),
       ...knobs,
     });
-  }, [knobs, reducedMotion, glowRef]);
+  }, [look, knobs, reducedMotion, glowRef]);
+
+  // The haze's ink. The package has no setter for it: it reads `ink` off the
+  // options it was attached with on every frame it paints, so a picked one
+  // is written there, and taken out again to let the glow read the box.
+  useEffect(() => {
+    const options = optionsRef.current;
+    if (!options) {
+      return;
+    }
+    if (ink) {
+      options.ink = hsbToRgb(ink[0] / 360, ink[1], ink[2]);
+    } else {
+      delete options.ink;
+    }
+  }, [ink]);
+
+  // The box's counter-color, read off its type as the package reads it, so
+  // the ink sliders rest where the haze is; it turns with the stage's theme.
+  useLayoutEffect(() => {
+    if (boxRef.current) {
+      setBoxInk(inkOf(boxRef.current));
+    }
+  }, [theme, setBoxInk]);
 
   // The morph between the shapes is a transition, not an animation, so a
   // flip in mid-flight turns the box around from wherever it is. One number
@@ -1318,14 +1431,22 @@ type NumberKnob = {
   [K in keyof BorealisConfig]: BorealisConfig[K] extends number ? K : never;
 }[keyof BorealisConfig];
 
-type Knob = {
-  key: NumberKnob;
+type Range = {
   label: string;
   min: number;
   max: number;
   step: number;
   unit?: string;
 };
+
+type Knob = Range & { key: NumberKnob };
+
+/** The ink's three sliders, each over one part of its HSB. */
+const INK_SLIDERS: (Range & { key: 0 | 1 | 2 })[] = [
+  { key: 0, label: "Hue", min: 0, max: 360, step: 1, unit: "°" },
+  { key: 1, label: "Saturation", min: 0, max: 1, step: 0.01 },
+  { key: 2, label: "Brightness", min: 0, max: 1, step: 0.01 },
+];
 
 type KnobGroup = {
   id: "voice" | "lobes" | "hills" | "colors";
@@ -1426,16 +1547,58 @@ const KNOB_GROUPS: KnobGroup[] = [
 const format = (value: number, step: number) =>
   step >= 1 ? String(Math.round(value)) : value.toFixed(step < 0.01 ? 3 : 2);
 
-const Knobs = () => {
-  const { knobs, setKnob, resetKnobs, look } = useBorealis();
-  const id = useId();
-  const base = useMemo(() => defaults(), []);
-  const changed = Object.keys(knobs).length > 0;
-  // The preset's own hue start and width, where it has them: the two hue
-  // knobs rest there rather than at the config's defaults.
-  const preset = look === "off" ? undefined : LOOKS[look];
+/** A slider on one line: its name, the track and the value, as the carousel page lays its card size out. */
+const Slider = ({
+  id,
+  range,
+  value,
+  onChange,
+}: {
+  id: string;
+  range: Range;
+  value: number;
+  onChange: (next: number) => void;
+}) => {
+  const percent = ((value - range.min) / (range.max - range.min)) * 100;
+  return (
+    <div className={styles.knob}>
+      <label htmlFor={id} className={styles.knob_label}>
+        <small>{range.label}</small>
+      </label>
+      <input
+        id={id}
+        type="range"
+        min={range.min}
+        max={range.max}
+        step={range.step}
+        value={value}
+        style={{ "--value": `${percent}%` } as CSSProperties}
+        onChange={(event) => onChange(parseFloat(event.target.value))}
+      />
+      <output htmlFor={id} className={styles.knob_value}>
+        <small>
+          {format(value, range.step)}
+          {range.unit ? <span>{range.unit}</span> : null}
+        </small>
+      </output>
+    </div>
+  );
+};
 
-  const toggle = <K extends "autoGain" | "curveBlend">(
+const Knobs = () => {
+  const { knobs, setKnob, resetKnobs, look, ink, setInk, boxInk } =
+    useBorealis();
+  const id = useId();
+  const changed = Object.keys(knobs).length > 0 || ink !== null;
+  const setting = settingOf(knobs, look);
+  // On the wheel, the colors group is the wheel's knobs. Off it, the haze
+  // has one color, and the group is that color's sliders instead, resting
+  // at the box's own ink until one is moved, when the three together become
+  // the ink picked, and the sliders keep the hue a gray would lose.
+  const wheel = setting("colorMode") === "spectrum";
+  const inkNow = useMemo(() => ink ?? rgbToHsb(boxInk), [ink, boxInk]);
+
+  const toggle = <K extends "autoGain" | "curveBlend" | "colorMode">(
     key: K,
     label: string,
     choices: [BorealisConfig[K], string][]
@@ -1447,7 +1610,7 @@ const Knobs = () => {
       <Segmented
         label={label}
         className={styles.small}
-        value={String(knobs[key] ?? base[key])}
+        value={String(setting(key))}
         onChange={(next) => {
           const choice = choices.find(([value]) => String(value) === next);
           if (choice) {
@@ -1475,41 +1638,36 @@ const Knobs = () => {
           content: (
             <div className={styles.knob_group}>
               <div className={styles.knob_list}>
-                {group.knobs.map((knob) => {
-                  const value =
-                    knobs[knob.key] ??
-                    (knob.key === "hueStart" || knob.key === "hueWidth"
-                      ? preset?.[knob.key] ?? base[knob.key]
-                      : base[knob.key]);
-                  const percent =
-                    ((value - knob.min) / (knob.max - knob.min)) * 100;
-                  const inputId = `${id}-${knob.key}`;
-                  return (
-                    <div key={knob.key} className={styles.knob}>
-                      <label htmlFor={inputId} className={styles.knob_label}>
-                        <small>{knob.label}</small>
-                      </label>
-                      <input
-                        id={inputId}
-                        type="range"
-                        min={knob.min}
-                        max={knob.max}
-                        step={knob.step}
-                        value={value}
-                        style={{ "--value": `${percent}%` } as CSSProperties}
-                        onChange={(event) =>
-                          setKnob(knob.key, parseFloat(event.target.value))
-                        }
+                {/* Where the colors come from, first: it decides what the
+                    sliders under it are. */}
+                {group.id === "colors" &&
+                  toggle("colorMode", "Color mode", [
+                    ["spectrum", "Spectrum"],
+                    ["monochrome", "Monochrome"],
+                  ])}
+                {group.id === "colors" && !wheel
+                  ? INK_SLIDERS.map((slider) => (
+                      <Slider
+                        key={slider.key}
+                        id={`${id}-ink-${slider.key}`}
+                        range={slider}
+                        value={inkNow[slider.key]}
+                        onChange={(next) => {
+                          const picked: Hsb = [...inkNow];
+                          picked[slider.key] = next;
+                          setInk(picked);
+                        }}
                       />
-                      <output htmlFor={inputId} className={styles.knob_value}>
-                        <small>
-                          {format(value, knob.step)}
-                          {knob.unit ? <span>{knob.unit}</span> : null}
-                        </small>
-                      </output>
-                    </div>
-                  );
-                })}
+                    ))
+                  : group.knobs.map((knob) => (
+                      <Slider
+                        key={knob.key}
+                        id={`${id}-${knob.key}`}
+                        range={knob}
+                        value={setting(knob.key)}
+                        onChange={(next) => setKnob(knob.key, next)}
+                      />
+                    ))}
                 {group.id === "voice" &&
                   toggle("autoGain", "Auto gain", [
                     [true, "On"],
