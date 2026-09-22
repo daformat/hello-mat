@@ -742,7 +742,6 @@ $dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
 .knobs {
   background: transparent;
   border-radius: 8px;
-  color: var(--ink);
   margin-block: 1.5em;
 }
 
@@ -778,8 +777,10 @@ $dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
 }
 
 /* One group of knobs, under its tab: its brief, then the rows in as many
-   columns as fit. */
+   columns as fit. The demo's ink is set here and not on the block, so the
+   tabs above inherit the page's text color as the site's other tabs do. */
 .knob_group {
+  color: var(--ink);
   display: grid;
   gap: calc(var(--step) * 2.5);
   padding-top: calc(var(--step) * 2.5);
