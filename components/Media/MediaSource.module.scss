@@ -1,4 +1,5 @@
 @use "/styles/lib/mixins";
+@use "/styles/lib/palette.scss";
 
 .source {
   // Color and associated default values
@@ -93,9 +94,12 @@
   // Upon hovering the source link
   &:hover,
   &:focus-visible {
-    --color: var(--media-source-hover-icon-color, #fff);
+    // Same glyph color in both themes: `.prose a` sets `color` with a higher
+    // specificity than `.source`, so it has to be restated here
+    --color: var(--media-source-hover-icon-color, #{palette.$dark-ivory-2});
     background-color: var(--background-color-2);
     border-color: var(--border-color-2);
+    color: var(--color);
     outline: none;
     transform: scale(1.15);
 
