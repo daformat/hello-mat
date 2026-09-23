@@ -1,37 +1,212 @@
+import { GetStaticProps } from "next";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import { codeToHtml } from "shiki";
 
+import { CodeBlock } from "@/components/CodeBlock/CodeBlock";
 import { ArticleDates } from "@/components/Navigation/ArticleDates";
 import { PrevNextNavigation } from "@/components/Navigation/PrevNextNavigation";
 import { ComponentPageMetas } from "@/components/PageMetas/ComponentPageMetas";
 import { RollingStackedCards } from "@/components/RollingStackedCards/RollingStackedCards";
 import { TableOfContents } from "@/components/TableOfContents/TocComponent";
+import { Tabs } from "@/components/Tabs/Tabs";
 import { VideoPlayer } from "@/components/VideoPlayer/VideoPlayer";
 import { ComponentId } from "@/constants/design-engineering/components";
 import { describePreview } from "@/utils/media-alt";
 
 const componentId: ComponentId = "stacking-cards";
 
-const StackingCardsPage = () => {
+const GITHUB_SOURCE =
+  "https://github.com/daformat/hello-mat/blob/master/components/RollingStackedCards";
+
+const cssSource = `
+/* full source: ${GITHUB_SOURCE}/RollingStackedCards.module.scss */
+
+@keyframes scale {
+  to {
+    scale: 0.9;
+  }
+}
+
+@keyframes discard {
+  to {
+    margin-top: calc(-1 * var(--card-margin));
+    opacity: 0;
+    padding-top: 0;
+    scale: 0.78;
+  }
+}
+
+.wrapper {
+  view-timeline-name: --cards-scrolling;
+}
+
+/* --index0 is the card's position in the stack, starting at 0 */
+.card {
+  --start-range: calc(
+    (var(--index0) + var(--rolling-count) - 1) *
+      (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%
+  );
+  --end-range: calc(
+    (var(--index0) + var(--rolling-count)) *
+      (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%
+  );
+  position: sticky;
+  top: 0;
+  padding-top: calc(
+    var(--card-top-distance) + var(--index0) * var(--card-top-offset)
+  );
+  transform-origin: center 200%;
+  animation: discard linear forwards;
+  animation-timeline: --cards-scrolling;
+  animation-range: exit-crossing var(--start-range) exit-crossing
+    var(--end-range);
+}
+
+/* each card is wrapped in one layer per card that can stack over it,
+   every layer scales it back one more step as the next card arrives */
+.layer {
+  --start-range: calc(
+    (var(--index0) + var(--depth0)) *
+      (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%
+  );
+  --end-range: calc(
+    (var(--index0) + var(--depth0) + 1) *
+      (var(--card-height) + var(--card-margin)) / var(--block-size) * 100%
+  );
+  transform-origin: 50% 0%;
+  animation: scale linear forwards;
+  animation-timeline: --cards-scrolling;
+  animation-range: exit-crossing var(--start-range) exit-crossing
+    var(--end-range);
+}
+`.trim();
+
+const jsSource = `
+// full source: ${GITHUB_SOURCE}/RollingStackedCards.tsx
+
+const handleScroll = () => {
+  const cards = [...root.querySelectorAll("[data-card]")];
+  // a card that has started its discard animation has a computed scale
+  const discarded = cards.filter(
+    (card) => getComputedStyle(card).scale !== "none"
+  );
+  const last = discarded.at(-1);
+  // how far the latest discard has gone, from 0 to 1 (scale goes 1 to 0.78)
+  const ratio = last
+    ? 1 - (parseFloat(getComputedStyle(last).scale) - 0.78) / 0.22
+    : 0;
+  // shift every card up by the cards that are gone, plus the one leaving
+  const shift = Math.max(discarded.length - 1, 0) + ratio;
+  cards.forEach((card) => {
+    card.style.paddingTop = \`calc(var(--card-top-distance) + (var(--index0) - \${shift}) * var(--card-top-offset))\`;
+  });
+};
+
+document.addEventListener("scroll", handleScroll);
+`.trim();
+
+interface CodeBlocks {
+  css: string;
+  js: string;
+}
+
+export const getStaticProps: GetStaticProps<CodeBlocks> = async () => {
+  const themes = { light: "vitesse-light", dark: "houston" } as const;
+  const [css, js] = await Promise.all([
+    codeToHtml(cssSource, { lang: "css", themes, tabindex: false }),
+    codeToHtml(jsSource, { lang: "js", themes, tabindex: false }),
+  ]);
+  return { props: { css, js } };
+};
+
+const StackingCardsPage = (props: CodeBlocks) => {
   return (
     <>
       <ComponentPageMetas componentId={componentId} />
       <TableOfContents.Provider>
-        <StackingCardsPageContent />
+        <StackingCardsPageContent {...props} />
       </TableOfContents.Provider>
     </>
   );
 };
 
-const StackingCardsPageContent = () => {
+const StackingCardsPageContent = (props: CodeBlocks) => {
   const tocContext = TableOfContents.useToc();
   const contentRef = useRef<HTMLDivElement>(null);
+  const demoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (contentRef.current) {
       tocContext.setRootElement(contentRef.current);
     }
   });
+
+  // The stack pulls everything after it up as cards are discarded, by a few
+  // hundred pixels once you are past it, so a smooth scroll from above it to a
+  // heading below it overshoots: it aims at where the heading was when you
+  // clicked. Aim at where the heading will be once every card is discarded,
+  // which the browser can tell us by resolving the stack's margin with the end
+  // state's values, synchronously, before anything paints.
+  useEffect(() => {
+    const handleClick = (event: MouseEvent) => {
+      const href = (event.target as Element | null)
+        ?.closest?.('a[href^="#"]')
+        ?.getAttribute("href");
+      const heading = href
+        ? document.getElementById(decodeURIComponent(href.slice(1)))
+        : null;
+      const stack = demoRef.current?.firstElementChild;
+      if (
+        !href ||
+        !heading ||
+        !(stack instanceof HTMLElement) ||
+        // Unsupported browsers hide the demo, so nothing moves
+        !stack.getClientRects().length ||
+        // Only headings after the stack move
+        !(
+          stack.compareDocumentPosition(heading) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+        )
+      ) {
+        return;
+      }
+      const marginBottom = () =>
+        parseFloat(getComputedStyle(stack).marginBottom) || 0;
+      const current = marginBottom();
+      const amount = stack.style.getPropertyValue("--discarded-amount");
+      const ratio = stack.style.getPropertyValue("--discarded-ratio");
+      stack.style.setProperty(
+        "--discarded-amount",
+        `${stack.querySelectorAll("[data-card]").length}`
+      );
+      stack.style.setProperty("--discarded-ratio", "1");
+      const final = marginBottom();
+      stack.style.setProperty("--discarded-amount", amount);
+      stack.style.setProperty("--discarded-ratio", ratio);
+
+      event.preventDefault();
+      history.pushState(null, "", href);
+      window.scrollTo({
+        top:
+          heading.getBoundingClientRect().top +
+          window.scrollY +
+          (final - current) -
+          parseFloat(getComputedStyle(heading).scrollMarginTop),
+        behavior: "smooth",
+      });
+      // pushState does not update :target, so highlight it the way the table
+      // of contents does
+      heading.classList.add("targeted");
+      heading.addEventListener(
+        "animationend",
+        () => heading.classList.remove("targeted"),
+        { once: true }
+      );
+    };
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, []);
 
   const cardsSources = [
     { dark: "/media/hello-mat-dark.png", light: "/media/hello-mat-light.png" },
@@ -95,7 +270,7 @@ const StackingCardsPageContent = () => {
           is discarded off the top once four are stacked up, so the pile never
           grows past four. It is built with{" "}
           <strong>scroll-driven CSS animations</strong> and about fifteen lines
-          of JavaScript. Scroll the page to see it.
+          of JavaScript. <a href="#the-code">Scroll the page</a> to see it.
         </p>
         <style
           dangerouslySetInnerHTML={{
@@ -144,7 +319,7 @@ const StackingCardsPageContent = () => {
             }}
           />
         </div>
-        <div className="demo" style={{ paddingBottom: 48 }}>
+        <div ref={demoRef} className="demo" style={{ paddingBottom: 48 }}>
           <RollingStackedCards
             cards={[...cards, ...cards, ...cards, ...cards.slice(0, 1)]}
             topDistance={"32px"}
@@ -238,6 +413,51 @@ const StackingCardsPageContent = () => {
           underneath close the gap as it leaves rather than waiting for it to
           finish fading.
         </p>
+        <h2 id="the-code">The code</h2>
+        <p>
+          Stripped down to the parts that make the effect: the css holds the
+          sticky cards, the view timeline and the two animations, and the
+          javascript shifts the stack up as cards are discarded. The full{" "}
+          <a
+            href={`${GITHUB_SOURCE}/RollingStackedCards.module.scss`}
+            target="_blank"
+            rel="noopener"
+          >
+            scss
+          </a>{" "}
+          and{" "}
+          <a
+            href={`${GITHUB_SOURCE}/RollingStackedCards.tsx`}
+            target="_blank"
+            rel="noopener"
+          >
+            tsx
+          </a>{" "}
+          are on github.
+        </p>
+        <Tabs
+          defaultValue="css"
+          tabs={[
+            {
+              id: "css",
+              trigger: (
+                <h4 id="css" data-no-toc={""}>
+                  css
+                </h4>
+              ),
+              content: <CodeBlock html={props.css} label="css" />,
+            },
+            {
+              id: "js",
+              trigger: (
+                <h4 id="js" data-no-toc={""}>
+                  js
+                </h4>
+              ),
+              content: <CodeBlock html={props.js} label="js" />,
+            },
+          ]}
+        />
         <h2 id="when-the-browser-cannot">When the browser cannot do it</h2>
         <p>
           Scroll-driven animations are still not everywhere, so the demo above
