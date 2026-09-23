@@ -19,6 +19,55 @@ const componentId: ComponentId = "stacking-cards";
 const GITHUB_SOURCE =
   "https://github.com/daformat/hello-mat/blob/master/components/RollingStackedCards";
 
+const htmlSource = `
+<!-- each card gets one layer per card that can still land on it, capped at
+     --rolling-count - 1, and every layer scales it back one more step -->
+<div class="wrapper">
+  <div class="card" style="--index0: 0">
+    <div class="layer" style="--depth0: 0">
+      <div class="layer" style="--depth0: 1">
+        <div class="layer" style="--depth0: 2">
+          <div class="content">Card 1</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="--index0: 1">
+    <div class="layer" style="--depth0: 0">
+      <div class="layer" style="--depth0: 1">
+        <div class="layer" style="--depth0: 2">
+          <div class="content">Card 2</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="--index0: 2">
+    <div class="layer" style="--depth0: 0">
+      <div class="layer" style="--depth0: 1">
+        <div class="layer" style="--depth0: 2">
+          <div class="content">Card 3</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="--index0: 3">
+    <div class="layer" style="--depth0: 0">
+      <div class="layer" style="--depth0: 1">
+        <div class="content">Card 4</div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="--index0: 4">
+    <div class="layer" style="--depth0: 0">
+      <div class="content">Card 5</div>
+    </div>
+  </div>
+  <div class="card" style="--index0: 5">
+    <div class="content">Card 6</div>
+  </div>
+</div>
+`.trim();
+
 const cssSource = `
 /* full source: ${GITHUB_SOURCE}/RollingStackedCards.module.scss */
 
@@ -38,10 +87,24 @@ const cssSource = `
 }
 
 .wrapper {
+  --cards-amount: 6;
+  --rolling-count: 4;
+  --card-height: 300px;
+  --card-margin: 0px;
+  --cards-gap: 28px;
+  --card-top-distance: 32px;
+  --card-top-offset: 20px;
+  --block-size: calc(
+    var(--cards-amount) * (var(--card-height) + var(--card-top-offset)) +
+      (var(--cards-amount) - 1) * var(--cards-gap)
+  );
+  display: grid;
+  gap: var(--cards-gap);
+  grid-template-rows: repeat(var(--cards-amount), var(--card-height));
+  padding-bottom: calc(var(--cards-amount) * var(--card-top-offset));
   view-timeline-name: --cards-scrolling;
 }
 
-/* --index0 is the card's position in the stack, starting at 0 */
 .card {
   --start-range: calc(
     (var(--index0) + var(--rolling-count) - 1) *
@@ -63,8 +126,6 @@ const cssSource = `
     var(--end-range);
 }
 
-/* each card is wrapped in one layer per card that can stack over it,
-   every layer scales it back one more step as the next card arrives */
 .layer {
   --start-range: calc(
     (var(--index0) + var(--depth0)) *
@@ -85,8 +146,10 @@ const cssSource = `
 const jsSource = `
 // full source: ${GITHUB_SOURCE}/RollingStackedCards.tsx
 
+const root = document.querySelector(".wrapper");
+
 const handleScroll = () => {
-  const cards = [...root.querySelectorAll("[data-card]")];
+  const cards = [...root.querySelectorAll(".card")];
   // a card that has started its discard animation has a computed scale
   const discarded = cards.filter(
     (card) => getComputedStyle(card).scale !== "none"
@@ -107,17 +170,19 @@ document.addEventListener("scroll", handleScroll);
 `.trim();
 
 interface CodeBlocks {
+  html: string;
   css: string;
   js: string;
 }
 
 export const getStaticProps: GetStaticProps<CodeBlocks> = async () => {
   const themes = { light: "vitesse-light", dark: "houston" } as const;
-  const [css, js] = await Promise.all([
+  const [html, css, js] = await Promise.all([
+    codeToHtml(htmlSource, { lang: "html", themes, tabindex: false }),
     codeToHtml(cssSource, { lang: "css", themes, tabindex: false }),
     codeToHtml(jsSource, { lang: "js", themes, tabindex: false }),
   ]);
-  return { props: { css, js } };
+  return { props: { html, css, js } };
 };
 
 const StackingCardsPage = (props: CodeBlocks) => {
@@ -415,9 +480,11 @@ const StackingCardsPageContent = (props: CodeBlocks) => {
         </p>
         <h2 id="the-code">The code</h2>
         <p>
-          Stripped down to the parts that make the effect: the css holds the
-          sticky cards, the view timeline and the two animations, and the
-          javascript shifts the stack up as cards are discarded. The full{" "}
+          Stripped down to the parts that make the effect, and complete enough
+          to paste into a page as is: the html nests each card in its scale
+          layers, the css holds the settings, the sticky cards, the view
+          timeline and the two animations, and the javascript shifts the stack
+          up as cards are discarded. The full{" "}
           <a
             href={`${GITHUB_SOURCE}/RollingStackedCards.module.scss`}
             target="_blank"
@@ -436,8 +503,17 @@ const StackingCardsPageContent = (props: CodeBlocks) => {
           are on github.
         </p>
         <Tabs
-          defaultValue="css"
+          defaultValue="html"
           tabs={[
+            {
+              id: "html",
+              trigger: (
+                <h4 id="html" data-no-toc={""}>
+                  html
+                </h4>
+              ),
+              content: <CodeBlock html={props.html} label="html" />,
+            },
             {
               id: "css",
               trigger: (
