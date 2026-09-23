@@ -20,8 +20,6 @@ const GITHUB_SOURCE =
   "https://github.com/daformat/hello-mat/blob/master/components/RollingStackedCards";
 
 const htmlSource = `
-<!-- each card gets one layer per card that can still land on it, capped at
-     --rolling-count - 1, and every layer scales it back one more step -->
 <div class="wrapper">
   <div class="card" style="--index0: 0">
     <div class="layer" style="--depth0: 0">
@@ -41,30 +39,17 @@ const htmlSource = `
       </div>
     </div>
   </div>
-  <div class="card" style="--index0: 2">
-    <div class="layer" style="--depth0: 0">
-      <div class="layer" style="--depth0: 1">
-        <div class="layer" style="--depth0: 2">
-          <div class="content">Card 3</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="card" style="--index0: 3">
-    <div class="layer" style="--depth0: 0">
-      <div class="layer" style="--depth0: 1">
-        <div class="content">Card 4</div>
-      </div>
-    </div>
-  </div>
-  <div class="card" style="--index0: 4">
-    <div class="layer" style="--depth0: 0">
-      <div class="content">Card 5</div>
-    </div>
-  </div>
-  <div class="card" style="--index0: 5">
-    <div class="content">Card 6</div>
-  </div>
+  <!--
+    To add a card, copy the one above and increase --index0 by one, then
+    set --cards-amount in the css to the number of cards.
+
+    Each card has --rolling-count - 1 layers, one per card that can land on
+    it, and each layer scales it back one more step. The last cards have
+    fewer cards after them, so they get fewer layers: drop the innermost
+    layer from the third to last card, two from the second to last, and all
+    three from the last one. Extra layers would keep shrinking them once
+    you scroll past.
+  -->
 </div>
 `.trim();
 
@@ -87,6 +72,7 @@ const cssSource = `
 }
 
 .wrapper {
+  /* the number of .card elements in the html */
   --cards-amount: 6;
   --rolling-count: 4;
   --card-height: 300px;
@@ -481,10 +467,11 @@ const StackingCardsPageContent = (props: CodeBlocks) => {
         <h2 id="the-code">The code</h2>
         <p>
           Stripped down to the parts that make the effect, and complete enough
-          to paste into a page as is: the html nests each card in its scale
-          layers, the css holds the settings, the sticky cards, the view
-          timeline and the two animations, and the javascript shifts the stack
-          up as cards are discarded. The full{" "}
+          to paste into a page once you have added a few more cards, the html
+          explains how. The html nests each card in its scale layers, the css
+          holds the settings, the sticky cards, the view timeline and the two
+          animations, and the javascript shifts the stack up as cards are
+          discarded. The full{" "}
           <a
             href={`${GITHUB_SOURCE}/RollingStackedCards.module.scss`}
             target="_blank"
