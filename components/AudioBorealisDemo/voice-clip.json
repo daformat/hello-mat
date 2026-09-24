@@ -1,12 +1,12 @@
 {
-  "voice": "Ava (Premium)",
-  "rate": 170,
-  "duration": 28.343,
+  "voice": "ElevenLabs EXAVITQu4vr4xnSDxMaL",
+  "rate": null,
+  "duration": 27.533,
   "sentences": [
     {
       "text": "Audio Borealis draws a sound reactive glow at the bottom of any HTML element.",
       "start": 0,
-      "end": 5.161,
+      "end": 5.155,
       "words": [
         {
           "word": "Audio",
@@ -14,326 +14,326 @@
         },
         {
           "word": "Borealis",
-          "at": 0.393
+          "at": 0.36
         },
         {
           "word": "draws",
-          "at": 0.976
+          "at": 0.987
         },
         {
           "word": "a",
-          "at": 1.37
+          "at": 1.335
         },
         {
           "word": "sound",
-          "at": 1.509
+          "at": 1.428
         },
         {
           "word": "reactive",
-          "at": 1.902
+          "at": 1.858
         },
         {
           "word": "glow",
-          "at": 2.485
+          "at": 2.438
         },
         {
           "word": "at",
-          "at": 2.815
+          "at": 2.798
         },
         {
           "word": "the",
-          "at": 3.018
+          "at": 2.902
         },
         {
           "word": "bottom",
-          "at": 3.284
+          "at": 3.03
         },
         {
           "word": "of",
-          "at": 3.741
+          "at": 3.39
         },
         {
           "word": "any",
-          "at": 3.944
+          "at": 3.518
         },
         {
           "word": "HTML",
-          "at": 4.21
+          "at": 3.785
         },
         {
           "word": "element.",
-          "at": 4.54
+          "at": 4.516
         }
       ]
     },
     {
       "text": "The glow sits under the words, and it rises with the voice.",
-      "start": 5.911,
-      "end": 9.176,
+      "start": 5.905,
+      "end": 9.321,
       "words": [
         {
           "word": "The",
-          "at": 5.911
+          "at": 5.905
         },
         {
           "word": "glow",
-          "at": 6.127
+          "at": 6.091
         },
         {
           "word": "sits",
-          "at": 6.394
+          "at": 6.381
         },
         {
           "word": "under",
-          "at": 6.661
+          "at": 6.694
         },
         {
           "word": "the",
-          "at": 6.979
+          "at": 6.927
         },
         {
           "word": "words,",
-          "at": 7.195
+          "at": 7.043
         },
         {
           "word": "and",
-          "at": 7.595
+          "at": 7.658
         },
         {
           "word": "it",
-          "at": 7.811
+          "at": 7.879
         },
         {
           "word": "rises",
-          "at": 7.975
+          "at": 8.006
         },
         {
           "word": "with",
-          "at": 8.293
+          "at": 8.517
         },
         {
           "word": "the",
-          "at": 8.56
+          "at": 8.691
         },
         {
           "word": "voice.",
-          "at": 8.776
+          "at": 8.807
         }
       ]
     },
     {
       "text": "The low sounds sit in the middle, and the high ones spread out toward the edges.",
-      "start": 9.926,
-      "end": 14.244,
+      "start": 10.071,
+      "end": 13.784,
       "words": [
         {
           "word": "The",
-          "at": 9.926
+          "at": 10.071
         },
         {
           "word": "low",
-          "at": 10.139
+          "at": 10.28
         },
         {
           "word": "sounds",
-          "at": 10.351
+          "at": 10.512
         },
         {
           "word": "sit",
-          "at": 10.715
+          "at": 10.884
         },
         {
           "word": "in",
-          "at": 10.928
+          "at": 11.093
         },
         {
           "word": "the",
-          "at": 11.089
+          "at": 11.162
         },
         {
           "word": "middle,",
-          "at": 11.302
+          "at": 11.255
         },
         {
           "word": "and",
-          "at": 11.747
+          "at": 11.557
         },
         {
           "word": "the",
-          "at": 11.959
+          "at": 11.696
         },
         {
           "word": "high",
-          "at": 12.171
+          "at": 11.824
         },
         {
           "word": "ones",
-          "at": 12.434
+          "at": 12.068
         },
         {
           "word": "spread",
-          "at": 12.697
+          "at": 12.358
         },
         {
           "word": "out",
-          "at": 13.061
+          "at": 12.695
         },
         {
           "word": "toward",
-          "at": 13.274
+          "at": 12.857
         },
         {
           "word": "the",
-          "at": 13.638
+          "at": 13.113
         },
         {
           "word": "edges.",
-          "at": 13.85
+          "at": 13.252
         }
       ]
     },
     {
       "text": "It slides along while a sound is heard, and it holds still during silence.",
-      "start": 14.994,
-      "end": 19.274,
+      "start": 14.534,
+      "end": 19.291,
       "words": [
         {
           "word": "It",
-          "at": 14.994
+          "at": 14.534
         },
         {
           "word": "slides",
-          "at": 15.168
+          "at": 14.72
         },
         {
           "word": "along",
-          "at": 15.558
+          "at": 15.149
         },
         {
           "word": "while",
-          "at": 15.894
+          "at": 15.602
         },
         {
           "word": "a",
-          "at": 16.229
+          "at": 15.869
         },
         {
           "word": "sound",
-          "at": 16.349
+          "at": 15.962
         },
         {
           "word": "is",
-          "at": 16.685
+          "at": 16.357
         },
         {
           "word": "heard,",
-          "at": 16.858
+          "at": 16.508
         },
         {
           "word": "and",
-          "at": 17.28
+          "at": 17.135
         },
         {
           "word": "it",
-          "at": 17.508
+          "at": 17.355
         },
         {
           "word": "holds",
-          "at": 17.681
+          "at": 17.483
         },
         {
           "word": "still",
-          "at": 18.017
+          "at": 17.796
         },
         {
           "word": "during",
-          "at": 18.353
+          "at": 18.249
         },
         {
           "word": "silence.",
-          "at": 18.743
+          "at": 18.597
         }
       ]
     },
     {
       "text": "And when there is no sound anymore, it gently goes away.",
-      "start": 20.024,
-      "end": 23.548,
+      "start": 20.041,
+      "end": 23.109,
       "words": [
         {
           "word": "And",
-          "at": 20.024
+          "at": 20.041
         },
         {
           "word": "when",
-          "at": 20.269
+          "at": 20.227
         },
         {
           "word": "there",
-          "at": 20.572
+          "at": 20.389
         },
         {
           "word": "is",
-          "at": 20.934
+          "at": 20.587
         },
         {
           "word": "no",
-          "at": 21.121
+          "at": 20.738
         },
         {
           "word": "sound",
-          "at": 21.307
+          "at": 20.912
         },
         {
           "word": "anymore,",
-          "at": 21.669
+          "at": 21.283
         },
         {
           "word": "it",
-          "at": 22.241
+          "at": 21.794
         },
         {
           "word": "gently",
-          "at": 22.427
+          "at": 21.933
         },
         {
           "word": "goes",
-          "at": 22.847
+          "at": 22.293
         },
         {
           "word": "away.",
-          "at": 23.151
+          "at": 22.549
         }
       ]
     },
     {
       "text": "Now available on GitHub and npm.",
-      "start": 24.298,
-      "end": 26.673,
+      "start": 23.859,
+      "end": 25.884,
       "words": [
         {
           "word": "Now",
-          "at": 24.298
+          "at": 23.859
         },
         {
           "word": "available",
-          "at": 24.584
+          "at": 24.103
         },
         {
           "word": "on",
-          "at": 25.281
+          "at": 24.567
         },
         {
           "word": "GitHub",
-          "at": 25.499
+          "at": 24.707
         },
         {
           "word": "and",
-          "at": 25.991
+          "at": 25.101
         },
         {
           "word": "npm.",
-          "at": 26.277
+          "at": 25.229
         }
       ]
     }
