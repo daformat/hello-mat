@@ -72,6 +72,15 @@ const nextConfig = {
     return config;
   },
   reactStrictMode: true,
+  // Sass marks any compressed stylesheet containing non-ASCII characters (a
+  // literal non-breaking space in `content: " "`, "↩︎"...) with a byte order
+  // mark. Next concatenates the per-module stylesheets, which leaves that
+  // U+FEFF in the middle of the bundle, where CSS treats it as part of the
+  // next selector, so the rule never matches (the media component lost its
+  // collapsed min-height this way). Files are served as UTF-8 anyway.
+  sassOptions: {
+    charset: false,
+  },
 };
 
 module.exports = nextConfig;
