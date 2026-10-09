@@ -1,0 +1,818 @@
+/* stylelint-disable */
+/* Ported from glea-site/assets/glea/glea.css, as written: the Glea window's
+   own stylesheet, its class names left global under .glea so the ported
+   script's markup matches them. Its dark rules follow the system's scheme, as
+   the rest of this site does, rather than a data-theme attribute. */
+
+.glea {
+  :global {
+    /* Glea's journal, as the app draws it (glea/src/app: Theme.swift,
+       MarkdownEditor.swift, NoteViews.swift, Media.swift, TableOfContents.swift).
+       Points are CSS pixels. AppKit puts a line's extra spacing (lineSpacing 3)
+       under the glyphs; CSS centers it, so every line is pulled up 1.5px and
+       given the 1.5px back underneath. */
+    .gl {
+      --gl-bg: #ffffff;
+      --gl-text: rgba(0, 0, 0, 0.85);
+      --gl-secondary: rgba(0, 0, 0, 0.5);
+      --gl-tertiary: rgba(0, 0, 0, 0.26);
+      --gl-accent: #5459f2;
+      --gl-wash: rgba(84, 89, 242, 0.1);
+      --gl-code: rgba(0, 0, 0, 0.04);
+      --gl-bar: rgba(0, 0, 0, 0.35);
+      --gl-handle: #c6c8cc;
+      --gl-handle-hover: #a6a8ab;
+      --gl-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter,
+        system-ui, sans-serif;
+      --gl-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --gl-ease-in-out: cubic-bezier(0.42, 0, 0.58, 1);
+      /* Springs (stiffness/damping, mass 1), sampled. */
+      --gl-spring-dash: linear(
+        0,
+        0.0469,
+        0.158,
+        0.2983,
+        0.4441,
+        0.5807,
+        0.6999,
+        0.7981,
+        0.8752,
+        0.9327,
+        0.9734,
+        1.0004,
+        1.0167,
+        1.0252,
+        1.0281,
+        1.0274,
+        1.0247,
+        1.0209,
+        1.0167,
+        1.0128,
+        1.0093,
+        1.0064,
+        1.004,
+        1.0023,
+        1
+      );
+      --gl-spring-label: linear(
+        0,
+        0.0525,
+        0.1725,
+        0.3189,
+        0.4659,
+        0.5993,
+        0.7123,
+        0.8031,
+        0.8727,
+        0.9238,
+        0.9597,
+        0.9837,
+        0.9986,
+        1.0071,
+        1.0112,
+        1.0124,
+        1.0119,
+        1.0105,
+        1.0087,
+        1.0068,
+        1.0052,
+        1.0037,
+        1.0026,
+        1.0017,
+        1
+      );
+      position: relative;
+      background: var(--gl-bg);
+      color: var(--gl-text);
+      font: 400 15px/21px var(--gl-font);
+      -webkit-font-smoothing: antialiased;
+      text-align: left;
+      overflow: hidden;
+    }
+    @media (prefers-color-scheme: dark) {
+      .gl {
+        --gl-bg: #1c1c1f;
+        --gl-text: rgba(255, 255, 255, 0.85);
+        --gl-secondary: rgba(255, 255, 255, 0.55);
+        --gl-tertiary: rgba(255, 255, 255, 0.25);
+        --gl-accent: #8c94ff;
+        --gl-wash: rgba(140, 148, 255, 0.18);
+        --gl-code: rgba(255, 255, 255, 0.06);
+        --gl-bar: rgba(255, 255, 255, 0.35);
+        --gl-handle: #4d4d4d;
+        --gl-handle-hover: #737373;
+      }
+    }
+
+    /* The page scrolls; the contents rail stays put over it. */
+    .gl-scroll {
+      position: absolute;
+      inset: 0;
+      overflow-y: auto;
+      scrollbar-width: thin;
+    }
+    /* Centered with a length, not margin: auto: the area screenshots
+       (modern-screenshot) don't always copy an auto margin, and draw the
+       column at the window's left edge. Same result: the width is
+       min(700, 100% - 112). */
+    .gl-col {
+      position: relative;
+      width: min(700px, calc(100% - 112px));
+      margin: 0 max(56px, calc(50% - 350px));
+      padding: 48px 0 160px;
+    }
+
+    /* Today's header: 30 semibold, then the date (13, tertiary), 2 apart; 10 to the editor. */
+    .gl-title {
+      font: 600 30px/36px var(--gl-font);
+      margin: 0;
+      position: relative;
+    }
+    .gl-date {
+      font: 400 13px/16px var(--gl-font);
+      color: var(--gl-tertiary);
+      margin-top: 0.5px;
+    }
+    .gl-editor {
+      margin-top: 10px;
+      padding-top: 2px;
+      position: relative;
+    }
+    /* No paragraph spacing after the last line. */
+    .gl-editor {
+      margin-bottom: -7.5px;
+    }
+
+    /* Lines: one per source line, as in the app. */
+    .gl-ln {
+      position: relative;
+      min-height: 21px;
+      margin: -1.5px 0 7.5px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    .gl-ln.li {
+      margin-bottom: 4.5px;
+      display: flex;
+    }
+    .gl-ln.li .gl-pre {
+      white-space: pre;
+      color: transparent;
+      flex: none;
+      position: relative;
+    }
+    .gl-ln.li .gl-txt {
+      min-width: 0;
+      flex: 1;
+    }
+    .gl-dot {
+      position: absolute;
+      left: 1.5px;
+      top: 10.35px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--gl-secondary);
+    }
+    .gl-box {
+      position: absolute;
+      top: 3.5px;
+      width: 14px;
+      height: 14px;
+      border-radius: 3.5px;
+      box-shadow: inset 0 0 0 1.3px var(--gl-tertiary);
+    }
+    .gl-box.on {
+      background: var(--gl-accent)
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 7L6 10.5L11 3.5'/%3E%3C/svg%3E")
+        center / 14px no-repeat;
+      box-shadow: none;
+    }
+    .gl-ln.done .gl-txt {
+      color: var(--gl-tertiary);
+      text-decoration: line-through;
+      text-decoration-color: var(--gl-tertiary);
+      text-decoration-thickness: 1px;
+    }
+    .gl-ln .num {
+      color: var(--gl-tertiary);
+    }
+
+    .gl-h {
+      font-weight: 600;
+    }
+    .gl-h1 {
+      font-size: 28px;
+      line-height: 36px;
+      margin-top: 11.5px;
+      margin-bottom: 6.5px;
+    }
+    .gl-h2 {
+      font-size: 22px;
+      line-height: 29px;
+      margin-top: 11.5px;
+      margin-bottom: 6.5px;
+    }
+    .gl-h3 {
+      font-size: 18px;
+      line-height: 24px;
+      margin-top: 6.5px;
+      margin-bottom: 5.5px;
+    }
+    .gl-h4 {
+      font-size: 16px;
+      line-height: 22px;
+      margin-top: 6.5px;
+      margin-bottom: 5.5px;
+    }
+    .gl-h5,
+    .gl-h6 {
+      font-size: 15px;
+      line-height: 21px;
+      margin-top: 6.5px;
+      margin-bottom: 5.5px;
+    }
+    /* AppKit drops the space before the text's first paragraph. */
+    .gl-editor > .gl-sec:first-child > .gl-h,
+    .gl-editor > .gl-ln:first-child {
+      margin-top: -1.5px;
+    }
+    .gl-h .gl-hl {
+      position: absolute;
+      z-index: -1;
+      inset: 0 auto 0 0;
+      border-radius: 8px;
+      background: var(--gl-wash);
+      pointer-events: none;
+    }
+
+    .gl-ln.q {
+      color: var(--gl-secondary);
+      padding-left: 16px;
+      margin-bottom: 3.5px;
+    }
+    /* A quote's last line takes the usual paragraph spacing. */
+    .gl-ln.q:last-child {
+      margin-bottom: 7.5px;
+    }
+    /* Tertiary label color with its alpha set to 0.35 (withAlphaComponent replaces it). */
+    .gl-bar {
+      position: absolute;
+      left: 2px;
+      width: 3px;
+      border-radius: 1.5px;
+      background: var(--gl-bar);
+      pointer-events: none;
+    }
+    .gl-quote {
+      position: relative;
+    }
+
+    .gl a {
+      color: var(--gl-accent);
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .gl a.wiki {
+      font-weight: 500;
+    }
+    .gl code {
+      font: 400 13.5px/1 ui-monospace, "SF Mono", Menlo, monospace;
+      background: var(--gl-code);
+    }
+    .gl mark {
+      background: rgba(255, 217, 51, 0.4);
+      color: inherit;
+    }
+    .gl-hr {
+      height: 24px;
+      position: relative;
+    }
+    .gl-hr::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 1px;
+      background: rgba(0, 0, 0, 0.07);
+    }
+
+    /* Fold chevron (chevron.right, 12 semibold), always shown; grip on hover. */
+    .gl-chev {
+      position: absolute;
+      left: -23px;
+      width: 18px;
+      height: 18px;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--gl-tertiary);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+    .gl-chev:hover {
+      color: var(--gl-text);
+    }
+    .gl-sym {
+      display: block;
+      background: currentColor;
+      -webkit-mask: var(--m) center / 100% 100% no-repeat;
+      mask: var(--m) center / 100% 100% no-repeat;
+    }
+    .gl-chev::after {
+      content: "";
+      position: absolute;
+      inset: -3px;
+    }
+    .gl-dgrip {
+      position: absolute;
+      left: -42px;
+      width: 14px;
+      height: 18px;
+      color: var(--gl-tertiary);
+      cursor: grab;
+      z-index: 3;
+    }
+    .gl-dgrip::after {
+      content: "";
+      position: absolute;
+      inset: -3px;
+    }
+    .gl-dgrip.over {
+      color: var(--gl-secondary);
+    }
+    .gl-dgrip[hidden] {
+      display: none;
+    }
+    .gl-dgrip svg {
+      display: block;
+    }
+    /* Dragging: the blank over the block's place, its lifted copy, the drop line. */
+    .gl-dcover {
+      position: absolute;
+      left: -48px;
+      background: var(--gl-bg);
+      z-index: 4;
+      pointer-events: none;
+    }
+    .gl-dcopy {
+      position: absolute;
+      left: -48px;
+      z-index: 5;
+      pointer-events: none;
+    }
+    .gl-dcopy .gl-dgrip {
+      position: absolute;
+    }
+    .gl-drop {
+      position: absolute;
+      left: -7px;
+      height: 6px;
+      z-index: 6;
+      pointer-events: none;
+    }
+    .gl-drop::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gl-accent);
+    }
+    .gl-drop::after {
+      content: "";
+      position: absolute;
+      left: 3px;
+      right: 0;
+      top: 2px;
+      height: 2px;
+      border-radius: 1px;
+      background: var(--gl-accent);
+    }
+    .gl.gl-dragging,
+    .gl.gl-dragging * {
+      cursor: grabbing !important;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .gl-sec-body {
+      display: flow-root;
+    }
+    /* A folded heading loses its spacing after (it goes with the hidden text). */
+    .gl-sec > .gl-h {
+      transition: margin-bottom 0.28s cubic-bezier(0.33, 1, 0.68, 1);
+    }
+    .gl-sec.folded > .gl-h {
+      margin-bottom: 1px;
+    }
+
+    /* Media blocks: 4 above, 10 below, radius 6, never upscaled. */
+    .gl-media {
+      position: relative;
+      margin: 4px 0 13.5px;
+    }
+    .gl-clip {
+      position: absolute;
+      left: 0;
+      top: 0;
+      overflow: hidden;
+      border-radius: 6px;
+    }
+    .gl-clip img,
+    .gl-clip video {
+      display: block;
+      transform-origin: 0 0;
+    }
+    .gl-row {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .gl-row .thumb {
+      width: 18px;
+      height: 18px;
+      margin: -1px 10px 0 0;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+    }
+    .gl-row .thumb img,
+    .gl-row .thumb video {
+      max-width: 18px;
+      max-height: 18px;
+      border-radius: 3px;
+      display: block;
+    }
+    .gl-row .t {
+      text-decoration: underline;
+      text-decoration-color: var(--gl-tertiary);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 1px;
+      cursor: pointer;
+    }
+    .gl-row .t + .go {
+      font: 500 11px/1 var(--gl-font);
+      color: var(--gl-tertiary);
+      position: relative;
+      top: -3px;
+    }
+    .gl-media.collapsed .gl-row {
+      pointer-events: auto;
+    }
+    .gl-toggle {
+      position: absolute;
+      top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 4px 3px 2px;
+      border: 0;
+      background: none;
+      color: var(--gl-tertiary);
+      font: 400 12px/1 var(--gl-font);
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s var(--gl-ease-in-out);
+      white-space: nowrap;
+    }
+    .gl-toggle:hover {
+      color: var(--gl-text);
+    }
+
+    .gl-media:hover .gl-toggle {
+      opacity: 1;
+    }
+    .gl-handle {
+      position: absolute;
+      width: 12px;
+      cursor: ew-resize;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+    .gl-handle::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      translate: -50% -50%;
+      width: 2px;
+      height: var(--len);
+      border-radius: 2px;
+      background: var(--gl-handle);
+      transition: width 0.25s ease, background 0.25s ease;
+    }
+    .gl-handle:hover::after,
+    .gl-handle.drag::after {
+      width: 4px;
+      background: var(--gl-handle-hover);
+    }
+    .gl-media:not(.collapsed):hover .gl-handle,
+    .gl-handle.drag {
+      opacity: 1;
+    }
+    .gl-ph {
+      position: absolute;
+      inset: 0;
+      background: var(--gl-code);
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+    }
+    .gl-ph svg {
+      width: 26px;
+      height: 26px;
+      opacity: 0.6;
+      color: var(--gl-secondary);
+    }
+
+    /* The contents rail: dashes that become titles on hover. */
+    .gl-toc {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 320px;
+      pointer-events: none;
+      transition: translate 0.32s var(--gl-ease-out),
+        opacity 0.2s var(--gl-ease-out);
+    }
+    .gl-toc.tucked {
+      translate: -24px 0;
+      opacity: 0;
+    }
+    .gl-toc.static,
+    .gl-toc.static * {
+      transition: none !important;
+    }
+    .gl-toc .row {
+      position: absolute;
+      left: 0;
+      height: 24px;
+      width: 0;
+      transition: top 0.28s var(--gl-ease-out), opacity 0.28s var(--gl-ease-out),
+        translate 0.28s var(--gl-ease-out);
+    }
+    .gl-toc .row.enter {
+      opacity: 0;
+      translate: -10px 0;
+    }
+    .gl-toc .dash {
+      position: absolute;
+      top: 11px;
+      height: 2px;
+      border-radius: 1px;
+      background: var(--gl-text);
+      transform-origin: 0 50%;
+      opacity: 0.35;
+      transition: width 0.46s var(--gl-spring-dash),
+        opacity 0.2s var(--gl-ease-in-out), transform 0.3s var(--gl-ease-in-out);
+    }
+    .gl-toc .row.on .dash {
+      opacity: 1;
+    }
+    .gl-toc .label {
+      position: absolute;
+      top: 4.2px;
+      height: 15.6px;
+      font: 500 12px/15.6px var(--gl-font);
+      color: var(--gl-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: 0;
+      transition: translate 0.61s var(--gl-spring-label),
+        opacity 0.2s var(--gl-ease-in-out), color 0.15s ease;
+    }
+    .gl-toc .label.emph {
+      color: var(--gl-text);
+    }
+    .gl-toc.open .row .dash {
+      opacity: 0;
+      transform: scaleX(0.5);
+      transition: width 0.46s var(--gl-spring-dash),
+        opacity 0.1s var(--gl-ease-in-out), transform 0.3s var(--gl-ease-in-out);
+    }
+    .gl-toc.open .label {
+      opacity: 1;
+      translate: 0 0 !important;
+      transition: translate 0.61s var(--gl-spring-label),
+        opacity 0.35s var(--gl-ease-in-out) 0.04s, color 0.15s ease;
+    }
+    .gl-toc.hand {
+      cursor: pointer;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .gl *,
+      .gl *::after {
+        transition-duration: 0s !important;
+        transition-delay: 0s !important;
+      }
+    }
+
+    /* --- The window (BrowserWindowController.swift, TopBar.swift) ------------- */
+    /* macOS 26's continuous corner, fitted to the app's window outline. */
+    .glw {
+      --glw-label: rgba(0, 0, 0, 0.85);
+      --glw-secondary: rgba(0, 0, 0, 0.5);
+      --glw-hover: rgba(0, 0, 0, 0.05);
+      --glw-selected: rgba(0, 0, 0, 0.08);
+      --glw-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.2),
+        0 18px 39px 1px rgba(0, 0, 0, 0.39);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--glw-shadow);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter,
+        system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-align: left;
+      transform-origin: 0 0;
+    }
+    @supports (corner-shape: superellipse(2)) {
+      .glw {
+        border-radius: 22.25px;
+        corner-shape: superellipse(1.54);
+      }
+    }
+    @media (prefers-color-scheme: dark) {
+      .glw {
+        --glw-label: rgba(255, 255, 255, 0.85);
+        --glw-secondary: rgba(255, 255, 255, 0.55);
+        --glw-hover: rgba(255, 255, 255, 0.07);
+        --glw-selected: rgba(255, 255, 255, 0.12);
+        /* Dark windows: a dark outline, a lit inner edge, and a short stacked
+           shadow (a long one bands on the dark page). */
+        --glw-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.7),
+          0 1px 1px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.08),
+          0 4px 8px -2px rgba(0, 0, 0, 0.1), 0 8px 16px -4px rgba(0, 0, 0, 0.12),
+          0 16px 32px -12px rgba(0, 0, 0, 0.16);
+        background: #1c1c1f;
+      }
+      .glw::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        corner-shape: inherit;
+        pointer-events: none;
+        box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.16);
+        z-index: 5;
+      }
+    }
+    .glw-bar {
+      position: relative;
+      height: 52px;
+      flex: none;
+      background: inherit;
+    }
+    .glw-page {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* Traffic lights: 14pt, at 18/38/58, centered in the bar; a darker half-point ring. */
+    .glw-lights {
+      position: absolute;
+      left: 18px;
+      top: 19px;
+      display: flex;
+      gap: 6px;
+    }
+    .glw-lights i {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      box-shadow: inset 0 0 0 0.5px var(--ring);
+      background: var(--fill);
+    }
+    .glw-lights i:nth-child(1) {
+      --fill: #ec6765;
+      --ring: #e73935;
+    }
+    .glw-lights i:nth-child(2) {
+      --fill: #f2ca44;
+      --ring: #efba0b;
+    }
+    .glw-lights i:nth-child(3) {
+      --fill: #65c466;
+      --ring: #35b338;
+    }
+
+    /* 28×28 icon buttons: secondary label color, label color and a wash on hover. */
+    .glw-btn {
+      position: absolute;
+      top: 12px;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--glw-secondary);
+      cursor: default;
+      transition: background-color 0.12s cubic-bezier(0.42, 0, 0.58, 1);
+    }
+    @supports (corner-shape: superellipse(2)) {
+      .glw-btn,
+      .glw-seg {
+        border-radius: 9.75px;
+        corner-shape: superellipse(1.54);
+      }
+    }
+    .glw-btn:not(:disabled):hover {
+      background: var(--glw-hover);
+      color: var(--glw-label);
+    }
+    .glw-btn:not(:disabled):active {
+      background: var(--glw-selected);
+    }
+    .glw-btn:disabled .glw-sym {
+      opacity: 0.35;
+    }
+    .glw-sym {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      translate: -50% -50%;
+      background: currentColor;
+      -webkit-mask: var(--m) center / 100% 100% no-repeat;
+      mask: var(--m) center / 100% 100% no-repeat;
+      transition: scale 0.08s cubic-bezier(0.42, 0, 0.58, 1);
+    }
+    .glw-btn:not(:disabled):active .glw-sym {
+      scale: 0.86;
+    }
+
+    /* Journal / All Notes: two buttons, 13 medium, 29 tall, 2 apart. */
+    .glw-seg {
+      position: absolute;
+      top: 11.5px;
+      height: 29px;
+      padding: 0 0 0 12px;
+      text-align: left;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--glw-secondary);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 29px;
+      white-space: nowrap;
+      cursor: default;
+      transition: background-color 0.12s cubic-bezier(0.42, 0, 0.58, 1),
+        scale 0.08s cubic-bezier(0.42, 0, 0.58, 1);
+    }
+    .glw-seg:hover {
+      background: var(--glw-hover);
+      color: var(--glw-label);
+    }
+    .glw-seg[aria-current] {
+      background: var(--glw-selected);
+      color: var(--glw-label);
+    }
+    .glw-seg:active {
+      scale: 0.96;
+    }
+  }
+}
+
+/* The placeholder's pulse, while a screenshot is drawn. Out here because CSS
+   modules keep keyframes local: the rule naming them has to be local too. */
+.glea :global(.gl-ph) svg {
+  animation: pulse 1.6s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    scale: 1;
+  }
+
+  19% {
+    scale: 1.12;
+  }
+
+  37.5% {
+    scale: 1;
+  }
+
+  56% {
+    scale: 1.1;
+  }
+}

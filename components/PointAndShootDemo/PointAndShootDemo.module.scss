@@ -1,0 +1,297 @@
+@use "sass:color";
+@use "/styles/lib/palette.scss";
+
+/*
+ * The point-and-shoot playground: the bar, Glea's window and its file, and
+ * the hint. The window is Glea's own (Glea.module.scss) and keeps the app's
+ * colors, as a screenshot of the app would; everything around it is the
+ * site's palette.
+ */
+
+/* ---------- the bar ---------- */
+
+/* Under the window, the bar that drives it, then room before the essay
+   carries on. */
+.controls {
+  margin-block: 1.5em 2.5em;
+}
+
+.row {
+  align-items: center;
+  column-gap: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  row-gap: 8px;
+}
+
+.field {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.field_label {
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+.picker {
+  svg {
+    flex: none;
+    margin-left: auto;
+    opacity: 0.7;
+  }
+}
+
+.tick {
+  display: inline-flex;
+  justify-content: center;
+  width: 12px;
+}
+
+/* On, it reads as pressed, the way the site's toggles do. */
+.start[aria-pressed="true"] {
+  background-color: var(--color-toolbar-button-background-active);
+  color: var(--text-secondary-hover);
+}
+
+.segmented {
+  background-color: var(--color-toolbar-background);
+  border-radius: 8px;
+  box-shadow: 0 1px 12px var(--color-shadow-1),
+    inset 0 0 2px 0.75px var(--color-border-2),
+    inset 0 0 0 0.75px var(--color-border-1);
+  display: inline-flex;
+  overflow: hidden;
+
+  button {
+    background: transparent;
+    border: 0;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 7px 10px;
+    white-space: nowrap;
+
+    + button {
+      box-shadow: inset 0.75px 0 0 var(--color-border-1);
+    }
+
+    &:hover,
+    &:focus-visible {
+      background-color: var(--color-toolbar-button-background-hover);
+      outline: none;
+    }
+
+    &[aria-checked="true"] {
+      background-color: var(--color-toolbar-button-background-active);
+      color: var(--text-secondary-hover);
+    }
+  }
+}
+
+/* ---------- the window ---------- */
+
+/* Room under the window before the settings, so the bar reads as its own
+   section rather than as the window's footer. */
+.stage {
+  margin-block: 1.5em 3.5em;
+}
+
+.view_switch {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.25em;
+}
+
+/* The app's window at the app's own size (1024 × 720), scaled down to fit,
+   framed like a screenshot rather than with the system's shadow. */
+.window {
+  margin: 0 auto;
+  max-width: 100%;
+  width: 1024px;
+
+  :global(.glw) {
+    box-shadow: 0 0 0 1px var(--color-border-3),
+      0 30px 70px -40px var(--color-shadow-strong);
+    height: 720px;
+    width: 1024px;
+  }
+
+  :global(.glw::after) {
+    display: none;
+  }
+
+  /* Light, its white leans a little toward the page's own background, so
+     the window sits in the page's colors. Both the window and its page are
+     set (the window draws the bar, the page draws the journal). */
+  @media (prefers-color-scheme: light) {
+    > :global(div.glw) {
+      --gl-light: color-mix(in srgb, #fff 82%, var(--color-background));
+
+      background: var(--gl-light);
+
+      :global(.gl) {
+        --gl-bg: var(--gl-light);
+      }
+    }
+  }
+
+  /* Dark, as macOS draws a dark window: a half-point dark outline with a lit
+     half-point edge inside it (the window's own ::after), and a deeper
+     shadow, since a soft one is lost on a dark page. */
+  @media (prefers-color-scheme: dark) {
+    :global(.glw) {
+      box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.85), 0 2px 6px rgba(0, 0, 0, 0.3),
+        0 12px 28px -8px rgba(0, 0, 0, 0.55),
+        0 40px 90px -30px rgba(0, 0, 0, 0.8);
+    }
+
+    :global(.glw::after) {
+      display: block;
+    }
+
+    /* And its dark leans a little toward the page's, as the light does. */
+    > :global(div.glw) {
+      --gl-dark: color-mix(in srgb, #1c1c1f 82%, var(--color-background));
+
+      background: var(--gl-dark);
+
+      :global(.gl) {
+        --gl-bg: var(--gl-dark);
+      }
+    }
+  }
+
+  /* The page's external links get an underline and an arrow; Glea's don't,
+     and the window is Glea's. (The page's rule outweighs the window's own.) */
+  :global(.gl) a[target="_blank"]:not([class]) {
+    background: none;
+    box-shadow: none;
+    color: var(--gl-accent);
+    text-decoration: none;
+
+    &::after {
+      content: none;
+    }
+  }
+}
+
+/* The entry as it is on disk. */
+.file {
+  background-color: var(--color-card-background);
+  border-radius: 14px;
+  box-shadow: 0 1px 12px var(--color-shadow-1),
+    inset 0 0 0 0.75px var(--color-border-1);
+  margin: 0 auto;
+  max-width: 40rem;
+  overflow: hidden;
+
+  header {
+    border-bottom: 1px solid var(--color-border-3);
+    color: var(--text-primary);
+    font-family: monospace;
+    font-size: 0.75rem;
+    overflow-x: auto;
+    padding: 12px 16px;
+    white-space: nowrap;
+  }
+
+  pre {
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-primary);
+    font-family: monospace;
+    font-size: 0.82rem;
+    line-height: 1.75;
+    margin: 0;
+    max-height: 32rem;
+    overflow-y: auto;
+    padding: 22px 22px 26px;
+    scrollbar-width: thin;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
+
+.file_heading {
+  color: var(--text-secondary-hover);
+}
+
+.file_link {
+  color: var(--text-strong);
+}
+
+.file_quote {
+  opacity: 0.6;
+}
+
+.file_symbol {
+  font-family: system-ui, sans-serif;
+}
+
+.file_new {
+  animation: arrive 700ms ease-out;
+  color: var(--text-secondary-hover);
+}
+
+@keyframes arrive {
+  from {
+    background-color: var(--color-toolbar-button-background-active);
+  }
+
+  to {
+    background-color: transparent;
+  }
+}
+
+/* ---------- the hint ---------- */
+
+.hint {
+  align-items: center;
+  backdrop-filter: blur(16px);
+  background-color: color-mix(
+    in srgb,
+    var(--color-toolbar-background) 88%,
+    transparent
+  );
+  border-radius: 999px;
+  bottom: 18px;
+  box-shadow: 0 0 0 0.75px var(--color-border-1),
+    0 8px 24px -8px var(--color-shadow-strong);
+  color: var(--text-primary);
+  display: flex;
+  font-size: 13px;
+  gap: 10px;
+  left: 0;
+  margin: 0 auto;
+  opacity: 0;
+  padding: 7px 14px 7px 8px;
+  pointer-events: none;
+  position: fixed;
+  right: 0;
+  transition: opacity 200ms ease, translate 300ms ease;
+  translate: 0 12px;
+  white-space: nowrap;
+  width: fit-content;
+  z-index: 10;
+
+  &[data-shown] {
+    opacity: 1;
+    pointer-events: auto;
+    translate: 0 0;
+  }
+
+  kbd {
+    font-family: system-ui, sans-serif;
+  }
+
+  a {
+    color: var(--text-strong);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: opacity 200ms ease;
+    translate: none;
+  }
+}
