@@ -18,6 +18,9 @@ importers:
       '@daformat/contrast-color':
         specifier: ^1.0.0
         version: 1.0.0
+      '@daformat/point-and-shoot':
+        specifier: ^1.0.2
+        version: 1.0.2
       '@daformat/react-headless-carousel':
         specifier: ^1.2.0
         version: 1.2.0(react@19.2.1)
@@ -30,6 +33,9 @@ importers:
       '@daformat/react-swipeable-cards':
         specifier: ^1.0.4
         version: 1.0.4(react@19.2.1)
+      modern-screenshot:
+        specifier: ^4.7.0
+        version: 4.7.0
       next:
         specifier: 15.5.25
         version: 15.5.25(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@18.7.23)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(sass@1.104.0)
@@ -314,6 +320,9 @@ packages:
 
   '@daformat/contrast-color@1.0.0':
     resolution: {integrity: sha512-n0a8cwW1c5MDv8wDFE23xXVtgAuKJr1D1aa+7qDs6EaDUxL3GCbcbtKpISEKEfK4d8QZhJf8xMN3ir7Qu+ZwTg==}
+
+  '@daformat/point-and-shoot@1.0.2':
+    resolution: {integrity: sha512-ENcEvRmesDGr77ecSeJ0vWhz5dFy9pCXJ3NYrBr8oJ9z4EHOhsBwLWpYI/1QiokTAHgiScs4pcV+gJ8OH8X5vA==}
 
   '@daformat/react-headless-carousel@1.2.0':
     resolution: {integrity: sha512-eOa8DVMKCYteGpT2/IKA4I1fJ40VMXJ2QRbLyyDUOqWEJEC57gP7fVE/SYezI1H+i3g5b6SZOIo8MTMRvc9CJw==}
@@ -3371,6 +3380,9 @@ packages:
   minimist@1.2.8:
     resolution: {integrity: sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==}
 
+  modern-screenshot@4.7.0:
+    resolution: {integrity: sha512-9YxN+ddPSMMlhylOv25VHzXrl9u67QRxoh7+SEewGtgUw7t6hHTrjptSDJUSne9oG4Xk/h2cwG15nIt4Hc9ujg==}
+
   mrmime@1.0.1:
     resolution: {integrity: sha512-hzzEagAgDyoU1Q6yg5uI+AorQgdvMCur3FcKf7NhMKWsaYg+RnbTyHRa/9IlLF9rf455MOCtcqqrQQ83pPP7Uw==}
     engines: {node: '>=10'}
@@ -4599,6 +4611,8 @@ snapshots:
   '@daformat/audio-borealis@1.0.1': {}
 
   '@daformat/contrast-color@1.0.0': {}
+
+  '@daformat/point-and-shoot@1.0.2': {}
 
   '@daformat/react-headless-carousel@1.2.0(react@19.2.1)':
     dependencies:
@@ -7816,6 +7830,8 @@ snapshots:
       kind-of: 6.0.3
 
   minimist@1.2.8: {}
+
+  modern-screenshot@4.7.0: {}
 
   mrmime@1.0.1: {}
 

@@ -573,6 +573,41 @@ export const COMPONENTS = {
       dateModified: "2026-09-20",
     },
   },
+  "point-and-shoot": {
+    oss: true,
+    repo: "https://github.com/daformat/point-and-shoot",
+    video: {
+      dark: {
+        src: "/media/design-engineering/point-and-shoot/point-and-shoot-overview-dark.mp4",
+        type: "video/mp4",
+      },
+      light: {
+        src: "/media/design-engineering/point-and-shoot/point-and-shoot-overview-light.mp4",
+        type: "video/mp4",
+      },
+    },
+    // The video's own first frame, at the video's exact dimensions, so
+    // the still and the first painted frame are the same image.
+    poster: {
+      dark: "/media/design-engineering/point-and-shoot/point-and-shoot-overview-dark-poster.webp",
+      light:
+        "/media/design-engineering/point-and-shoot/point-and-shoot-overview-light-poster.webp",
+    },
+    videoDuration: 13.2,
+    metas: {
+      shortTitle: "Point and shoot, capture anything on a page",
+      title: "Point and shoot: point at anything on a web page and keep it",
+      description:
+        "point-and-shoot, a zero-dependency library for pointing at anything on a web page and capturing it: a spotlight morphs onto the block under the pointer, a click shoots it, a drag captures an area. Lifted out of Glea, the browser with a journal.",
+      url: "/design-engineering/point-and-shoot",
+      image:
+        "/media/design-engineering/point-and-shoot/og-point-and-shoot-light.png",
+      imageWidth: 1200,
+      imageHeight: 630,
+      datePublished: "2026-10-09",
+      dateModified: "2026-10-09",
+    },
+  },
 } as const satisfies Record<string, Component>;
 
 export type Component = {
@@ -615,6 +650,7 @@ export const COMPONENT_RELATIONS = {
   "contrast-colors": ["audio-borealis", "subtitles-app", "split-flap-display"],
   "beam-demo": ["subtitles-app", "publish-button", "stacking-cards"],
   "audio-borealis": ["subtitles-app", "beam-demo", "split-flap-display"],
+  "point-and-shoot": ["beam-demo", "audio-borealis", "subtitles-app"],
 } as const satisfies Record<ComponentId, readonly ComponentId[]>;
 
 export const getRelatedComponents = (
@@ -671,6 +707,7 @@ export const COMPONENTS_ORDER = createComponentOrder([
   "contrast-colors",
   "beam-demo",
   "audio-borealis",
+  "point-and-shoot",
 ] as const);
 
 export const getNextComponent = (
