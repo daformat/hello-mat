@@ -235,8 +235,8 @@ const setAfter = (page, after) =>
 const hold = (page, on) =>
   page.evaluate((on) => {
     document.getElementById("key").classList.toggle("held", on);
-    if (on) window.pns.activate();
-    else window.pns.deactivate();
+    if (on) {window.pns.activate();}
+    else {window.pns.deactivate();}
   }, on);
 
 /**
@@ -299,7 +299,7 @@ const perform = async (page) => {
   await page.evaluate(() =>
     document.getElementById("journal").classList.add("clearing")
   );
-  at = await glide(page, at, home, 700);
+  await glide(page, at, home, 700);
   await wait(200);
   await page.evaluate(() => {
     document.getElementById("entries").replaceChildren();
@@ -375,7 +375,7 @@ const captureOg = async (browser, theme) => {
   await page.mouse.down();
   await page.mouse.up();
   await wait(1300);
-  at = await glide(page, at, await center(page, "photo", 0.62, 0.55), 500);
+  await glide(page, at, await center(page, "photo", 0.62, 0.55), 500);
   await wait(900);
 
   const work = mkdtempSync(join(tmpdir(), "point-and-shoot-og-"));

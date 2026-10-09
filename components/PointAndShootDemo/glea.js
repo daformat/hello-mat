@@ -27,7 +27,7 @@ function bezier(x1, y1, x2, y2) {
     for (let i = 0; i < 8; i++) {
       const e = x(t) - p,
         d = dx(t);
-      if (Math.abs(e) < 1e-6 || !d) break;
+      if (Math.abs(e) < 1e-6 || !d) {break;}
       t -= e / d;
     }
     return y(Math.min(1, Math.max(0, t)));
@@ -85,45 +85,45 @@ function parse(md) {
             end: i + 1,
           });
           fence = null;
-        } else fence.lines.push(line);
+        } else {fence.lines.push(line);}
         return;
       }
       let m;
       const at = (b) => out.push({ ...b, line: i });
-      if (/^\s*(```|~~~)/.test(line)) fence = { lines: [], line: i };
+      if (/^\s*(```|~~~)/.test(line)) {fence = { lines: [], line: i };}
       else if ((m = line.match(/^(#{1,6})\s+(.*)$/)))
-        at({ type: "h", level: m[1].length, text: m[2] });
+        {at({ type: "h", level: m[1].length, text: m[2] });}
       else if ((m = line.match(/^(\s*)([-*+])\s\[([ xX])\]\s?(.*)$/)))
-        at({
+        {at({
           type: "li",
           pre: `${m[1]}${m[2]} [${m[3]}] `,
           bulletAt: m[1],
           task: m[3] !== " ",
           text: m[4],
-        });
+        });}
       else if ((m = line.match(/^(\s*)([-*+])\s(.*)$/)))
-        at({ type: "li", pre: `${m[1]}${m[2]} `, bulletAt: m[1], text: m[3] });
+        {at({ type: "li", pre: `${m[1]}${m[2]} `, bulletAt: m[1], text: m[3] });}
       else if ((m = line.match(/^(\s*)(\d+[.)])\s(.*)$/)))
-        at({
+        {at({
           type: "li",
           pre: `${m[1]}${m[2]} `,
           number: m[2],
           indent: m[1],
           text: m[3],
-        });
-      else if ((m = line.match(/^>\s?(.*)$/))) at({ type: "q", text: m[1] });
+        });}
+      else if ((m = line.match(/^>\s?(.*)$/))) {at({ type: "q", text: m[1] });}
       else if ((m = line.match(/^!\[([^\]]*)\]\(([^)\s]+)\)\s*$/)))
-        at({ type: "media", alt: m[1], src: m[2] });
-      else if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) at({ type: "hr" });
-      else at({ type: "p", text: line });
+        {at({ type: "media", alt: m[1], src: m[2] });}
+      else if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) {at({ type: "hr" });}
+      else {at({ type: "p", text: line });}
     });
   if (fence)
-    out.push({
+    {out.push({
       type: "code",
       lines: fence.lines,
       line: fence.line,
       end: Infinity,
-    });
+    });}
   return out;
 }
 
@@ -147,7 +147,7 @@ function inFences(lines) {
       inside[i] = false;
       open = !open;
       fence[i] = open ? "open" : "close";
-    } else inside[i] = open;
+    } else {inside[i] = open;}
   });
   return { inside, fence };
 }
@@ -162,27 +162,27 @@ function blocksOf(lines) {
   for (let i = 0; i < n; i++) {
     if (fence[i] === "open") {
       let end = i + 1;
-      while (end < n && fence[end] !== "close") end++;
+      while (end < n && fence[end] !== "close") {end++;}
       out.push({ start: i, end: Math.min(n, end + 1) });
       continue;
     }
-    if (fence[i] || inside[i] || blank(i)) continue;
-    if (isCredit(lines[i]) && i > 0 && !blank(i - 1) && !level(i - 1)) continue;
+    if (fence[i] || inside[i] || blank(i)) {continue;}
+    if (isCredit(lines[i]) && i > 0 && !blank(i - 1) && !level(i - 1)) {continue;}
     let end = i + 1;
     const L = level(i);
     if (L) {
-      while (end < n && !(level(end) && level(end) <= L)) end++;
+      while (end < n && !(level(end) && level(end) <= L)) {end++;}
     } else if (LIST.test(lines[i])) {
-      while (end < n && !blank(end) && indent(end) > indent(i)) end++;
+      while (end < n && !blank(end) && indent(end) > indent(i)) {end++;}
     } else if (isQuote(lines[i])) {
-      if (i > 0 && isQuote(lines[i - 1])) continue;
-      while (end < n && isQuote(lines[end])) end++;
+      if (i > 0 && isQuote(lines[i - 1])) {continue;}
+      while (end < n && isQuote(lines[end])) {end++;}
     } else if (isTable(lines[i])) {
-      if (i > 0 && isTable(lines[i - 1])) continue;
-      while (end < n && isTable(lines[end])) end++;
+      if (i > 0 && isTable(lines[i - 1])) {continue;}
+      while (end < n && isTable(lines[end])) {end++;}
     }
-    if (!L && end < n && !inside[end] && isCredit(lines[end])) end++;
-    while (end > i + 1 && blank(end - 1)) end--;
+    if (!L && end < n && !inside[end] && isCredit(lines[end])) {end++;}
+    while (end > i + 1 && blank(end - 1)) {end--;}
     out.push({ start: i, end });
   }
   return out;
@@ -192,7 +192,7 @@ function blocksOf(lines) {
 // (null when that changes nothing). Quotes and tables that would merge
 // with their new neighbours get a blank line between.
 function moving(lines, a, b, target) {
-  if (target >= a && target <= b) return null;
+  if (target >= a && target <= b) {return null;}
   const out = lines.slice();
   const moved = out.splice(a, b - a);
   const kind = (l) =>
@@ -203,14 +203,14 @@ function moving(lines, a, b, target) {
     kind(out[a - 1]) &&
     kind(out[a - 1]) === kind(out[a])
   )
-    out.splice(a, 0, "");
+    {out.splice(a, 0, "");}
   let at = target > a ? target - (b - a) : target;
-  if (at > a && out.length > lines.length - (b - a)) at += 1;
+  if (at > a && out.length > lines.length - (b - a)) {at += 1;}
   out.splice(at, 0, ...moved);
   let start = at;
   const after = at + moved.length;
   if (kind(out[after - 1]) && kind(out[after - 1]) === kind(out[after]))
-    out.splice(after, 0, "");
+    {out.splice(after, 0, "");}
   if (at > 0 && kind(out[at]) && kind(out[at]) === kind(out[at - 1])) {
     out.splice(at, 0, "");
     start += 1;
@@ -307,7 +307,7 @@ class GleaView {
     for (const b of blocks) {
       if (b.type === "h") {
         while (stack.length > 1 && stack[stack.length - 1].level >= b.level)
-          stack.pop();
+          {stack.pop();}
         const depth = stack.length - 1;
         const sec = document.createElement("div");
         sec.className = "gl-sec";
@@ -354,7 +354,7 @@ class GleaView {
         continue;
       }
       quote = null;
-      if (b.type === "media") el = this.media(b, key("m:" + b.src));
+      if (b.type === "media") {el = this.media(b, key("m:" + b.src));}
       else {
         el = document.createElement("div");
         if (b.type === "li") {
@@ -393,13 +393,13 @@ class GleaView {
       }
       el.style.marginLeft = indent + "px";
       el.dataset.line = b.line;
-      if (b.end) el.dataset.end = b.end;
+      if (b.end) {el.dataset.end = b.end;}
       parent.append(el);
     }
 
     // Chevrons for headings whose section has a body.
     for (const h of this.headings) {
-      if (!h.body.childElementCount) continue;
+      if (!h.body.childElementCount) {continue;}
       const chev = document.createElement("button");
       chev.className = "gl-chev";
       chev.setAttribute("aria-label", "Fold section");
@@ -440,7 +440,7 @@ class GleaView {
       // descent, ~1.193em) sits at its top in AppKit.
       const baseline = 1.5 + 0.952 * size + (lh - 3 - 1.193 * size) / 2;
       const center = baseline - (0.705 * size) / 2;
-      if (h.chev) h.chev.style.top = center - 8 + "px";
+      if (h.chev) {h.chev.style.top = center - 8 + "px";}
       h.center = center;
     }
     // Bullets 1.5 right of the marker's place, checkboxes 1 right of the "[".
@@ -468,8 +468,8 @@ class GleaView {
 
   // --- Folding ----------------------------------------------------------
   toggleFold(h, open = this.folded.has(h.key)) {
-    if (open === !this.folded.has(h.key)) return;
-    open ? this.folded.delete(h.key) : this.folded.add(h.key);
+    if (open === !this.folded.has(h.key)) {return;}
+    if (open) {this.folded.delete(h.key);} else {this.folded.add(h.key);}
     h.sec.classList.toggle("folded", !open);
     const d = reduce() ? 0 : 280;
     const svg = h.chev.querySelector(".gl-sym");
@@ -555,7 +555,7 @@ class GleaView {
       el._h = h / ratio;
       this.layoutMedia();
     };
-    if (video ? img.readyState >= 1 : img.complete && img.naturalWidth) ready();
+    if (video ? img.readyState >= 1 : img.complete && img.naturalWidth) {ready();}
     else {
       // Loading: the app's placeholder, the image hidden until it arrives.
       el.querySelector(".gl-clip").insertAdjacentHTML(
@@ -573,7 +573,7 @@ class GleaView {
         el.querySelector(".gl-ph")?.remove();
         ready();
         const { w, h } = this.size(el);
-        if (this.collapsed.has(key) || reduce() || !w || !h) return;
+        if (this.collapsed.has(key) || reduce() || !w || !h) {return;}
         const clip = el.querySelector(".gl-clip");
         const o = { duration: 300, easing: MEDIA };
         clip.animate(
@@ -613,7 +613,7 @@ class GleaView {
 
   layoutMedia() {
     for (const el of this.editor.querySelectorAll(".gl-media")) {
-      if (el._animating) continue;
+      if (el._animating) {continue;}
       const { w, h } = this.size(el);
       const c = this.collapsed.has(el.dataset.key);
       const clip = el.querySelector(".gl-clip");
@@ -645,8 +645,8 @@ class GleaView {
 
   setCollapsed(el, c) {
     const key = el.dataset.key;
-    if (c === this.collapsed.has(key)) return;
-    c ? this.collapsed.add(key) : this.collapsed.delete(key);
+    if (c === this.collapsed.has(key)) {return;}
+    if (c) {this.collapsed.add(key);} else {this.collapsed.delete(key);}
     const { w, h } = this.size(el);
     const d = reduce() ? 0 : 300;
     const clip = el.querySelector(".gl-clip");
@@ -755,8 +755,8 @@ class GleaView {
     const step = (now) => {
       const p = d ? Math.min(1, (now - t0) / d) : 1;
       this.scroller.scrollTop = start + (target - start) * easeOut(p);
-      if (p < 1) this.scrollFrame = requestAnimationFrame(step);
-      else done?.();
+      if (p < 1) {this.scrollFrame = requestAnimationFrame(step);}
+      else {done?.();}
     };
     this.scrollFrame = requestAnimationFrame(step);
     this.highlight(entry.el);
@@ -817,16 +817,16 @@ class BlockDrag {
     this.grip.addEventListener("pointerdown", (e) => this.lift(e));
     view.root.addEventListener("pointermove", (e) => {
       this.pointer = e;
-      if (!this.dragging) this.hover();
+      if (!this.dragging) {this.hover();}
     });
     view.root.addEventListener("pointerleave", () => {
       this.pointer = null;
-      if (!this.dragging) this.show(null);
+      if (!this.dragging) {this.show(null);}
     });
     view.scroller.addEventListener(
       "scroll",
       () => {
-        if (!this.dragging) this.hover();
+        if (!this.dragging) {this.hover();}
       },
       { passive: true }
     );
@@ -834,7 +834,7 @@ class BlockDrag {
 
   reset() {
     this.handles = null;
-    if (!this.dragging) this.show(null);
+    if (!this.dragging) {this.show(null);}
   }
 
   // The editor's top in the column, unrounded (offsetTop rounds, and a
@@ -885,7 +885,7 @@ class BlockDrag {
     for (const b of this.blocks) {
       const els = this.elements(b.start, b.end);
       const first = els.find((el) => +el.dataset.line === b.start);
-      if (!first) continue;
+      if (!first) {continue;}
       const rects = els.map((el) => this.rectOf(el));
       const band = {
         top: Math.min(...rects.map((r) => r.top)),
@@ -895,8 +895,8 @@ class BlockDrag {
       // Text lines are drawn 1.5px above AppKit's line top (see glea.css).
       let center = fr.top + 1.5 + 14.28 - 5.3;
       if (first.classList.contains("gl-h"))
-        center = fr.top + this.view.headings.find((h) => h.el === first).center;
-      else if (first.classList.contains("gl-media")) center = fr.top + 17.5;
+        {center = fr.top + this.view.headings.find((h) => h.el === first).center;}
+      else if (first.classList.contains("gl-media")) {center = fr.top + 17.5;}
       this.handles.push({ ...b, els, band, center });
     }
   }
@@ -904,8 +904,8 @@ class BlockDrag {
   // The pointer anywhere across the text, or the gutter to its left, shows
   // the grip of the innermost block at its height; the gaps between show none.
   hover() {
-    if (!this.pointer) return this.show(null);
-    if (!this.handles) this.compute();
+    if (!this.pointer) {return this.show(null);}
+    if (!this.handles) {this.compute();}
     const p = this.local(this.pointer);
     const width = this.view.editor.clientWidth;
     const sr = this.view.scroller.getBoundingClientRect();
@@ -919,7 +919,7 @@ class BlockDrag {
           p.y <= h.band.bottom &&
           (!hit || h.band.bottom - h.band.top < hit.band.bottom - hit.band.top)
         )
-          hit = h;
+          {hit = h;}
       }
     }
     this.show(hit, p);
@@ -928,7 +928,7 @@ class BlockDrag {
   show(h, p) {
     this.current = h;
     this.grip.hidden = !h;
-    if (!h) return;
+    if (!h) {return;}
     const top = this.edTop();
     this.grip.style.top = top + h.center - 9 + "px";
     // Secondary over the grip (its 20 × 24 hit area), tertiary otherwise.
@@ -941,7 +941,7 @@ class BlockDrag {
   // to 0.5 around the grab point; its place is blanked; nothing else moves.
   lift(e) {
     const h = this.current;
-    if (!h || e.button !== 0) return;
+    if (!h || e.button !== 0) {return;}
     e.preventDefault();
     this.dragging = h;
     const col = this.view.col,
@@ -957,28 +957,28 @@ class BlockDrag {
     const starts = new Set(this.blocks.map((b) => b.start));
     const inside = new Set();
     for (const b of this.blocks) {
-      if (/^#{1,6}\s/.test(this.lines[b.start])) continue;
-      for (let i = b.start + 1; i < b.end; i++) inside.add(i);
+      if (/^#{1,6}\s/.test(this.lines[b.start])) {continue;}
+      for (let i = b.start + 1; i < b.end; i++) {inside.add(i);}
     }
     const lineEl = new Map();
     for (const el of this.elements(0, Infinity))
-      if (!lineEl.has(+el.dataset.line)) lineEl.set(+el.dataset.line, el);
+      {if (!lineEl.has(+el.dataset.line)) {lineEl.set(+el.dataset.line, el);}}
     this.targets = [];
     let last = 0;
     for (const [line, el] of lineEl) {
       const r = this.rectOf(el);
       last = Math.max(last, r.bottom);
-      if (inside.has(line) && !starts.has(line)) continue;
-      if (!starts.has(line) && this.lines[line].trim()) continue;
+      if (inside.has(line) && !starts.has(line)) {continue;}
+      if (!starts.has(line) && this.lines[line].trim()) {continue;}
       const lineTop = el.classList.contains("gl-media")
         ? r.top - 4
         : r.top + 1.5;
       if (moving(this.lines, h.start, h.end, line))
-        this.targets.push({ line, y: lineTop - 2 });
+        {this.targets.push({ line, y: lineTop - 2 });}
     }
     const endLine = this.lines.length;
     if (moving(this.lines, h.start, h.end, endLine))
-      this.targets.push({ line: endLine, y: last + 2 });
+      {this.targets.push({ line: endLine, y: last + 2 });}
 
     // The blank over its place, gutter included, and the copy above it.
     this.cover = document.createElement("div");
@@ -1005,7 +1005,7 @@ class BlockDrag {
       let node = el.classList.contains("gl-h")
         ? el.parentElement
         : el.closest(".gl-quote") || el;
-      if (tops.has(node) || [...tops].some((t) => t.contains(node))) continue;
+      if (tops.has(node) || [...tops].some((t) => t.contains(node))) {continue;}
       tops.add(node);
     }
     for (const node of tops) {
@@ -1046,7 +1046,7 @@ class BlockDrag {
     for (const [node, clone] of pairs) {
       const a = lineOf(node),
         b = lineOf(clone);
-      if (!a || !b) continue;
+      if (!a || !b) {continue;}
       const k = this.view.k();
       const dy =
         (a.getBoundingClientRect().top - b.getBoundingClientRect().top) / k;
@@ -1076,7 +1076,7 @@ class BlockDrag {
       }
     };
     const up = (ev) => {
-      if (ev.pointerId !== undefined && ev.pointerId !== e.pointerId) return;
+      if (ev.pointerId !== undefined && ev.pointerId !== e.pointerId) {return;}
       removeEventListener("pointermove", move, true);
       removeEventListener("pointerup", up, true);
       removeEventListener("pointercancel", up, true);
@@ -1101,8 +1101,8 @@ class BlockDrag {
     this.copy.style.top = this.edTop() + top + "px";
     let nearest = null;
     for (const t of this.targets)
-      if (!nearest || Math.abs(t.y - top) < Math.abs(nearest.y - top))
-        nearest = t;
+      {if (!nearest || Math.abs(t.y - top) < Math.abs(nearest.y - top))
+        {nearest = t;}}
     const stay =
       !nearest || Math.abs(top - this.rect.top) < Math.abs(nearest.y - top);
     this.target = stay ? null : nearest;
@@ -1125,12 +1125,12 @@ class BlockDrag {
     const y = (this.pointer.clientY - r.top) / k,
       h = r.height / k;
     let pull = 0;
-    if (y < zone) pull = -Math.min(1, (zone - y) / zone);
-    else if (y > h - zone) pull = Math.min(1, (y - (h - zone)) / zone);
+    if (y < zone) {pull = -Math.min(1, (zone - y) / zone);}
+    else if (y > h - zone) {pull = Math.min(1, (y - (h - zone)) / zone);}
     if (pull) {
       const before = s.scrollTop;
       s.scrollTop += pull * Math.abs(pull) * 1400 * dt;
-      if (s.scrollTop !== before) this.move();
+      if (s.scrollTop !== before) {this.move();}
     }
     this.scrollFrame = requestAnimationFrame((t) => this.autoscroll(t));
   }
@@ -1198,9 +1198,9 @@ class Toc {
     page.addEventListener("pointermove", (e) => this.pointer(e));
     page.addEventListener("pointerleave", () => this.setHover(null, false));
     page.addEventListener("click", (e) => {
-      if (this.hover === null) return;
+      if (this.hover === null) {return;}
       const entry = this.entries[this.hover];
-      if (!entry) return;
+      if (!entry) {return;}
       e.preventDefault();
       this.pinned = { index: this.hover, scroll: null };
       view.scrollTo(entry, () => {
@@ -1216,19 +1216,19 @@ class Toc {
     const before = new Map(this.rows);
     this.rows = new Map();
     this.entries = entries;
-    entries.forEach((entry, i) => {
+    entries.forEach((entry) => {
       const id = entry.depth + ":" + entry.title;
       let row = before.get(id);
-      if (row) before.delete(id);
+      if (row) {before.delete(id);}
       else {
         row = document.createElement("div");
         row.className = "row" + (this.initialized ? " enter" : "");
         row.innerHTML = '<div class="dash"></div><div class="label"></div>';
         this.el.append(row);
         if (this.initialized)
-          requestAnimationFrame(() =>
+          {requestAnimationFrame(() =>
             requestAnimationFrame(() => row.classList.remove("enter"))
-          );
+          );}
       }
       row.querySelector(".label").textContent = entry.title;
       this.rows.set(id, row);
@@ -1248,8 +1248,8 @@ class Toc {
   layout(animated = false) {
     const W = this.view.root.clientWidth,
       H = this.view.root.clientHeight;
-    if (!W || !H) return;
-    if (!animated || !this.sized) this.el.classList.add("static");
+    if (!W || !H) {return;}
+    if (!animated || !this.sized) {this.el.classList.add("static");}
     this.sized = true;
     const colX = this.view.col.offsetLeft;
     const n = this.entries.length;
@@ -1285,14 +1285,14 @@ class Toc {
       this.pinned.scroll !== null &&
       Math.abs(s.scrollTop - this.pinned.scroll) > 1
     )
-      this.pinned = null;
+      {this.pinned = null;}
     if (!this.pinned) {
       const top = s.getBoundingClientRect().top,
         k = this.view.k();
       let a = 0;
       this.entries.forEach((e, i) => {
-        if (!e.el.isConnected || !e.el.offsetParent) return;
-        if (i && (e.el.getBoundingClientRect().top - top) / k <= 72) a = i;
+        if (!e.el.isConnected || !e.el.offsetParent) {return;}
+        if (i && (e.el.getBoundingClientRect().top - top) / k <= 72) {a = i;}
       });
       this.active = a;
     }
@@ -1324,7 +1324,7 @@ class Toc {
       y = (e.clientY - r.top) / k;
     const n = this.entries.length;
     if (n < 2 || this.el.classList.contains("tucked"))
-      return this.setHover(null, false);
+      {return this.setHover(null, false);}
     const inRows = y >= this.listTop - 4 && y <= this.listTop + n * 24 + 4;
     let reach = 26 + 44 + 8;
     if (this.open) {
@@ -1344,7 +1344,7 @@ class Toc {
   }
 
   setHover(row, open) {
-    if (row === this.hover && open === this.open) return;
+    if (row === this.hover && open === this.open) {return;}
     this.hover = row;
     this.open = open;
     this.view.root.style.cursor = row !== null ? "pointer" : "";
@@ -1400,7 +1400,7 @@ class GleaWindow {
         const el = b.classList.contains("glw-seg")
           ? b
           : b.querySelector(".glw-sym");
-        if (b.disabled || reduce()) return;
+        if (b.disabled || reduce()) {return;}
         el.animate(
           { scale: [b.classList.contains("glw-seg") ? 0.96 : 0.86, 1] },
           {

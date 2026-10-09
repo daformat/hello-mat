@@ -387,13 +387,13 @@ $dark-ok: color.mix(#6fd39b, palette.$dark-ivory-1, 82%);
    snap. */
 @property --cap-w {
   inherits: true;
-  initial-value: 0px;
+  initial-value: 0;
   syntax: "<length>";
 }
 
 @property --cap-h {
   inherits: true;
-  initial-value: 0px;
+  initial-value: 0;
   syntax: "<length>";
 }
 

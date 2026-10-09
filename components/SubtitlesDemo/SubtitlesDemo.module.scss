@@ -3177,6 +3177,9 @@
   opacity: 0.7;
   text-align: center;
 
+  /* Help text, not chrome: it can be selected and copied like any prose. */
+  user-select: text;
+
   /* A key, drawn as the app draws one (KeycapView in its Welcome.swift): an
      outline with nothing behind it, the glyph a shade down from the prose and
      the line a shade down from that, and the app's proportions at its 11pt,
@@ -3199,9 +3202,6 @@
     padding: 0.22em 0.56em;
     text-align: center;
   }
-
-  /* Help text, not chrome: it can be selected and copied like any prose. */
-  user-select: text;
 
   /* The lines under the demo are one block of help text, so they sit closer to
      each other than the block does to the screen above it. */

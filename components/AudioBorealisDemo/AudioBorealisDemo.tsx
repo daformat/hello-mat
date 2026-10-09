@@ -443,6 +443,7 @@ const Provider = ({ children }: { children: ReactNode }) => {
     }),
     [
       look,
+      setLook,
       strength,
       input,
       setInput,
@@ -1218,7 +1219,7 @@ const Stage = () => {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playing, clipRef]);
+  }, [playing, glowRef, clipRef]);
 
   // The lines, a word at a time: the next word shows dimmed before it lands,
   // as the app shows what the model has not settled on yet. A line holds
